@@ -3,6 +3,7 @@ const S={session:null,profile:null,products:[],requests:[],team:[],categories:[]
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const email=u=>u.trim().toLowerCase().includes('@')?u.trim().toLowerCase():u.trim().toLowerCase()+'@'+AUTH_DOMAIN;
 const initials=n=>String(n||'?').split(' ').filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+const profilePhotoUrl=p=>p?.avatar_path?API+'/storage/v1/object/public/profile-images/'+p.avatar_path:'';
 const fmt=d=>d?new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'A definir';
 const labels={pending:'Pendente',separating:'Em separação',scheduled:'Agendada',delivered:'Entregue',cancelled:'Cancelada'};
 function toast(m){$('#toast').innerHTML=`<div class="toast">✓ ${esc(m)}</div>`;setTimeout(()=>$('#toast').innerHTML='',3200)}
@@ -53,16 +54,80 @@ async function requestModalV2(r){
     let editor=ownEdit
       ?`<label>Observação da solicitação<textarea id="ownRequestNotes">${esc(r.notes||'')}</textarea></label><div class="products-grid">${S.products.filter(p=>p.active).map(p=>{let i=items.find(x=>x.product_id===p.id);return `<article class="product"><div><small>${esc(p.unit)}</small><h3>${esc(p.name)}</h3><b>${+p.physical_stock-+p.reserved_stock} disponíveis</b></div><label>Quantidade<input data-own-product="${p.id}" type="number" min="0" step=".001" value="${i?.requested_quantity||0}"></label></article>`}).join('')}</div><button class="primary full" id="saveOwnRequest">Salvar alterações</button>`
       :`<div class="item-list">${items.map(i=>{let p=S.products.find(x=>x.id===i.product_id);return `<div class="item-editor" data-item="${i.id}"><div><h4>${esc(p?.name||'Produto')}</h4><small>Solicitado: ${i.requested_quantity} ${esc(p?.unit||'')}</small></div><label>Aprovado<input data-approved type="number" min="0" max="${i.requested_quantity}" step=".001" value="${i.approved_quantity??i.requested_quantity}" ${a&&!['delivered','cancelled'].includes(r.status)?'':'disabled'}></label><label>Observação<input data-note value="${esc(i.admin_note||'')}" ${a?'':'disabled'}></label><label class="check"><input data-removed type="checkbox" ${i.removed_by_admin?'checked':''} ${a&&!['delivered','cancelled'].includes(r.status)?'':'disabled'}>Excluir item</label></div>`}).join('')}</div>${a&&!['delivered','cancelled'].includes(r.status)?`<label>Observações do ADM<textarea id="adminNotes">${esc(r.admin_notes||'')}</textarea></label><button class="primary full" id="prepareReq">Salvar separação</button>`:''}`;
-    $('#modal').innerHTML=`<div class="modal"><div class="modal-box large"><div class="modal-head"><div><p class="eyebrow">SOLICITAÇÃO #${String(r.protocol).padStart(4,'0')}</p><h2>${esc(requester.full_name)}</h2></div><button type="button" data-close>×</button></div><div class="request-detail"><section>${editor}</section><aside class="timeline"><p><b>Status:</b> ${labels[r.status]}</p><p><b>Criada:</b> ${fmt(r.created_at)}</p><p><b>Modalidade:</b> ${r.fulfillment_method==='delivery'?'Entrega':r.fulfillment_method==='pickup'?'Coleta':'A definir'}</p><p><b>Data:</b> ${fmt(r.scheduled_for)}</p>${r.delivered_by_name?`<p><b>Entregou:</b> ${esc(r.delivered_by_name)}</p><p><b>Recebeu:</b> ${esc(r.received_by_name)}</p>`:''}${a&&r.status==='separating'?`<hr><label>Entrega ou coleta<select id="method"><option value="delivery">Entrega</option><option value="pickup">Coleta</option></select></label><label>Data e horário<input id="schedule" type="datetime-local"></label><button class="primary full" id="scheduleReq">Agendar</button>`:''}${a&&r.status==='scheduled'?`<hr><label>Quem entregou<input id="deliveredBy"></label><label>Quem recebeu<input id="receivedBy"></label><button class="primary full" id="completeReq">Concluir entrega</button>`:''}${a?'<button class="danger full" id="deleteReq">Excluir definitivamente</button>':''}${!a&&r.status==='pending'?'<button class="danger full" id="cancelOwn">Cancelar meu pedido</button>':''}</aside></div></div></div>`;
+    $('#modal').innerHTML=`<div class="modal"><div class="modal-box large"><div class="modal-head"><div><p class="eyebrow">SOLICITAÇÃO #${String(r.protocol).padStart(4,'0')}</p><h2>${esc(requester.full_name)}</h2></div><div class="modal-head-actions">${a?'<button type="button" class="danger mobile-delete" id="deleteReqMobile">Excluir definitivamente</button>':''}<button type="button" class="modal-close" data-close aria-label="Fechar">×</button></div></div><div class="request-detail"><section>${editor}</section><aside class="timeline"><p><b>Status:</b> ${labels[r.status]}</p><p><b>Criada:</b> ${fmt(r.created_at)}</p><p><b>Modalidade:</b> ${r.fulfillment_method==='delivery'?'Entrega':r.fulfillment_method==='pickup'?'Coleta':'A definir'}</p><p><b>Data:</b> ${fmt(r.scheduled_for)}</p>${r.delivered_by_name?`<p><b>Entregou:</b> ${esc(r.delivered_by_name)}</p><p><b>Recebeu:</b> ${esc(r.received_by_name)}</p>`:''}${a&&r.status==='separating'?`<hr><label>Entrega ou coleta<select id="method"><option value="delivery">Entrega</option><option value="pickup">Coleta</option></select></label><label>Data e horário<input id="schedule" type="datetime-local"></label><button class="primary full" id="scheduleReq">Agendar</button>`:''}${a&&r.status==='scheduled'?`<hr><label>Quem entregou<input id="deliveredBy"></label><label>Quem recebeu<input id="receivedBy"></label><button class="primary full" id="completeReq">Concluir entrega</button>`:''}${a?'<button class="danger full" id="deleteReq">Excluir definitivamente</button>':''}${!a&&r.status==='pending'?'<button class="danger full" id="cancelOwn">Cancelar meu pedido</button>':''}</aside></div></div></div>`;
     document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#modal').innerHTML='');
     if($('#saveOwnRequest'))$('#saveOwnRequest').onclick=async()=>{let payload=[...document.querySelectorAll('[data-own-product]')].map(x=>({product_id:x.dataset.ownProduct,requested_quantity:+x.value})).filter(x=>x.requested_quantity>0);try{await rpc('update_own_pending_request',{p_request_id:r.id,p_notes:$('#ownRequestNotes').value,p_items:payload});await refreshClose('Solicitação atualizada.')}catch(e){alert(e.message)}};
     if($('#prepareReq'))$('#prepareReq').onclick=async()=>{let payload=[...document.querySelectorAll('[data-item]')].map(x=>({item_id:x.dataset.item,approved_quantity:+x.querySelector('[data-approved]').value,removed:x.querySelector('[data-removed]').checked,admin_note:x.querySelector('[data-note]').value}));try{await rpc('admin_prepare_request',{p_request_id:r.id,p_items:payload,p_admin_notes:$('#adminNotes').value});await refreshClose('Separação salva.')}catch(e){alert(e.message)}};
     if($('#scheduleReq'))$('#scheduleReq').onclick=async()=>{try{await rpc('admin_schedule_request',{p_request_id:r.id,p_fulfillment_method:$('#method').value,p_scheduled_for:$('#schedule').value});await refreshClose('Entrega agendada.')}catch(e){alert(e.message)}};
     if($('#completeReq'))$('#completeReq').onclick=async()=>{try{await rpc('admin_complete_request',{p_request_id:r.id,p_delivered_by_name:$('#deliveredBy').value,p_received_by_name:$('#receivedBy').value});await refreshClose('Entrega concluída e estoque atualizado.')}catch(e){alert(e.message)}};
-    if($('#deleteReq'))$('#deleteReq').onclick=async()=>{if(!confirm(`Excluir definitivamente a solicitação #${String(r.protocol).padStart(4,'0')}? Esta ação não poderá ser desfeita.`))return;try{await rpc('admin_delete_request',{p_request_id:r.id});await refreshClose('Solicitação excluída definitivamente.')}catch(e){alert(e.message)}};
+    const deleteRequest=async()=>{if(!confirm(`Excluir definitivamente a solicitação #${String(r.protocol).padStart(4,'0')}? Esta ação não poderá ser desfeita.`))return;try{await rpc('admin_delete_request',{p_request_id:r.id});await refreshClose('Solicitação excluída definitivamente.')}catch(e){alert(e.message)}};
+    if($('#deleteReq'))$('#deleteReq').onclick=deleteRequest;
+    if($('#deleteReqMobile'))$('#deleteReqMobile').onclick=deleteRequest;
     if($('#cancelOwn'))$('#cancelOwn').onclick=async()=>{if(!confirm('Cancelar este pedido?'))return;try{await rpc('cancel_own_pending_request',{p_request_id:r.id});await refreshClose('Pedido cancelado.')}catch(e){alert(e.message)}};
   }catch(e){alert(e.message)}
 }
+function replaceAvatar(element,profile){
+  if(!element||!profile?.avatar_path||element.dataset.avatarPath===profile.avatar_path)return;
+  const image=document.createElement('img');
+  image.className='avatar avatar-photo';
+  image.src=profilePhotoUrl(profile);
+  image.alt='Foto de '+profile.full_name;
+  image.dataset.avatarPath=profile.avatar_path;
+  element.replaceWith(image);
+}
+
+function enhanceProfilePhotos(){
+  if(!S.profile)return;
+  replaceAvatar(document.querySelector('.account .avatar'),S.profile);
+  replaceAvatar(document.querySelector('.profile-head .avatar'),S.profile);
+  document.querySelectorAll('.person').forEach(card=>{
+    const name=card.querySelector('h3')?.textContent;
+    replaceAvatar(card.querySelector('.avatar'),S.team.find(person=>person.full_name===name));
+  });
+  const actions=document.querySelector('.profile .actions');
+  if(actions&&!document.querySelector('#changePhoto')){
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='primary';
+    button.id='changePhoto';
+    button.textContent=S.profile.avatar_path?'Alterar foto':'Adicionar foto';
+    button.onclick=profilePhotoModal;
+    actions.prepend(button);
+  }
+}
+
+async function deleteProfilePhoto(path){
+  if(!path)return;
+  const response=await fetch(API+'/storage/v1/object/profile-images/'+path,{method:'DELETE',headers:{apikey:KEY,Authorization:'Bearer '+S.session.access_token}});
+  if(!response.ok)throw Error('Não foi possível remover a foto anterior.');
+}
+
+function profilePhotoModal(){
+  $('#modal').innerHTML=`<div class="modal"><form class="modal-box" id="profilePhotoForm"><div class="modal-head"><div><p class="eyebrow">FOTO DE PERFIL</p><h2>${S.profile.avatar_path?'Alterar foto':'Adicionar foto'}</h2></div><button type="button" data-close>×</button></div><div class="profile-photo-editor">${S.profile.avatar_path?`<img src="${esc(profilePhotoUrl(S.profile))}" alt="Foto atual">`:`<i class="avatar">${initials(S.profile.full_name)}</i>`}<p>Escolha uma imagem JPG, PNG ou WebP com até 2 MB.</p><label>Nova foto<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="form-actions">${S.profile.avatar_path?'<button type="button" class="danger" id="removeProfilePhoto">Remover foto</button>':''}<button type="button" class="outline" data-close>Cancelar</button><button class="primary">Salvar foto</button></div></div></form></div>`;
+  document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>$('#modal').innerHTML='');
+  if($('#removeProfilePhoto'))$('#removeProfilePhoto').onclick=async()=>{
+    if(!confirm('Remover sua foto de perfil?'))return;
+    try{const old=S.profile.avatar_path;await rpc('update_own_avatar',{p_avatar_path:null});await deleteProfilePhoto(old);$('#modal').innerHTML='';await loadAccount();renderApp();toast('Foto removida.')}catch(error){alert(error.message)}
+  };
+  $('#profilePhotoForm').onsubmit=async event=>{
+    event.preventDefault();
+    const button=event.submitter,file=new FormData(event.target).get('photo');
+    if(!file?.size)return alert('Escolha uma foto para enviar.');
+    if(file.size>2097152)return alert('A foto deve ter no máximo 2 MB.');
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type))return alert('Use uma imagem JPG, PNG ou WebP.');
+    button.disabled=true;
+    const old=S.profile.avatar_path,path=S.profile.id+'/'+crypto.randomUUID()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'-');
+    try{
+      await json(await fetch(API+'/storage/v1/object/profile-images/'+path,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+S.session.access_token,'Content-Type':file.type},body:file}));
+      await rpc('update_own_avatar',{p_avatar_path:path});
+      if(old)await deleteProfilePhoto(old).catch(()=>{});
+      $('#modal').innerHTML='';await loadAccount();renderApp();toast('Foto de perfil atualizada.');
+    }catch(error){alert(error.message);button.disabled=false}
+  };
+}
+
+new MutationObserver(enhanceProfilePhotos).observe($('#app'),{childList:true,subtree:true});
+
 async function refreshClose(message){$('#modal').innerHTML='';await loadData();renderApp();toast(message)}
 
 $('#app').innerHTML='<div class="loading"><img src="logo.jpg" alt="Harmony Store"><span>Preparando ambiente seguro…</span></div>';restore().then(ok=>ok?renderApp():renderLogin());
