@@ -88,3 +88,9 @@
   .signatures span{border-top:1px solid #62515b;padding-top:7px;text-align:center;font-size:11px}
   .print-note{margin-top:25px;color:#88727f;font-size:9px;text-align:center}
 }
+
+html[data-role="receiver"] .production-tabs button.active{background:linear-gradient(135deg,#6797e9,#4777c5);box-shadow:0 6px 16px rgba(103,151,233,.25)}
+html[data-role="receiver"] .production-tabs{border-color:#d8e4f6}
+html[data-role="receiver"] .production-metrics article{border-color:#dbe5f5;background:linear-gradient(145deg,#fff,#f5f9ff)}
+html[data-role="receiver"] .collection-card>header{background:linear-gradient(135deg,#f5f9ff,#fff7fb)}
+html[data-role="receiver"] .finished-model-photo{color:#6797e9;background:linear-gradient(135deg,#edf4ff,#fff0f7)}

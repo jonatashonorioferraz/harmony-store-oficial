@@ -1,5 +1,5 @@
-const CACHE='harmony-store-v18';
-const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./app.js','./pwa.js','./enhancements.js','./intelligence.js','./production-receipts.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./app-icon-master.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png'];
+const CACHE='harmony-store-v19';
+const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./app.js','./pwa.js','./enhancements.js','./intelligence.js','./production-receipts.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./app-icon-master.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png','./notification-badge.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
@@ -23,13 +23,17 @@ self.addEventListener('fetch',event=>{
 self.addEventListener('push',event=>{
   let data={};
   try{data=event.data?.json()||{}}catch{data={body:event.data?.text()||'Há uma atualização no sistema.'}}
-  event.waitUntil(self.registration.showNotification(data.title||'Harmony Store',{
+  const asset=path=>new URL(path,self.registration.scope).href;
+  event.waitUntil(self.registration.showNotification(data.title||'Harmony Store Oficial',{
     body:data.body||'Há uma atualização no sistema.',
-    icon:'./icon-192-v2.png',
-    badge:'./icon-192-v2.png',
+    icon:asset(data.icon||'./icon-192-v2.png'),
+    badge:asset(data.badge||'./notification-badge.svg'),
     tag:data.tag||'harmony-notification',
     renotify:true,
-    data:{url:data.url||'./'}
+    vibrate:[90,45,90],
+    timestamp:Date.now(),
+    actions:[{action:'open',title:'Abrir aplicativo'}],
+    data:{url:data.url||'./',event:data.event||'update'}
   }));
 });
 

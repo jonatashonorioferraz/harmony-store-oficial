@@ -10,7 +10,9 @@ async function keepPortraitOrientation(){
 window.addEventListener('load',keepPortraitOrientation);
 
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  window.addEventListener('load',async()=>{
+    try{const registration=await navigator.serviceWorker.register('./service-worker.js',{updateViaCache:'none'});await registration.update()}catch{}
+  });
 }
 
 if(!installed){
@@ -93,6 +95,20 @@ async function updateNotificationButton(button){
   const active=Notification.permission==='granted'&&!!(await currentPushSubscription());
   button.textContent=active?'🔔 Notificações ativas':'🔔 Ativar notificações';
   button.dataset.active=active?'true':'false';
+  const testButton=document.querySelector('#testPushNotification');
+  if(testButton)testButton.hidden=!active;
+}
+
+async function showHarmonyTestNotification(){
+  if(Notification.permission!=='granted')throw Error('Ative as notificações antes de fazer o teste.');
+  const registration=await navigator.serviceWorker.ready;
+  await registration.showNotification('Harmony Store • Notificação personalizada',{
+    body:'Pronto! As notificações deste aparelho estão usando a identidade da Harmony Store.',
+    icon:new URL('./icon-192-v2.png',location.href).href,
+    badge:new URL('./notification-badge.svg',location.href).href,
+    tag:'harmony-brand-test',renotify:true,vibrate:[90,45,90],
+    actions:[{action:'open',title:'Abrir aplicativo'}],data:{url:'./',event:'brand_test'}
+  });
 }
 
 function addNotificationControl(){
@@ -102,6 +118,10 @@ function addNotificationControl(){
   const button=document.createElement('button');
   button.type='button';button.id='pushNotifications';button.className='outline';button.textContent='🔔 Verificando notificações…';
   actions.prepend(button);
+  const testButton=document.createElement('button');
+  testButton.type='button';testButton.id='testPushNotification';testButton.className='ghost';testButton.textContent='✨ Testar notificação';testButton.hidden=true;
+  button.insertAdjacentElement('afterend',testButton);
+  testButton.onclick=async()=>{testButton.disabled=true;try{await showHarmonyTestNotification();toast('Notificação de teste enviada para este aparelho.')}catch(error){alert(error.message)}finally{testButton.disabled=false}};
   updateNotificationButton(button).catch(()=>{button.textContent='🔔 Ativar notificações'});
   button.onclick=async()=>{
     button.disabled=true;

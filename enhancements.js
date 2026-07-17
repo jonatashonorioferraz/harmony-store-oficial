@@ -121,6 +121,57 @@ const expressiveMenuIcons={
   profile:'👤'
 };
 
+const harmonyRoleThemes={
+  admin:{label:'Administração',icon:'✦',color:'#d84f91'},
+  receiver:{label:'Recebimento',icon:'◈',color:'#6797e9'},
+  collaborator:{label:'Ateliê',icon:'♡',color:'#c95d94'},
+  guest:{label:'Harmony Store',icon:'✦',color:'#d84f91'}
+};
+
+function applyHarmonyRoleTheme(){
+  const role=S?.profile?.role||'guest',theme=harmonyRoleThemes[role]||harmonyRoleThemes.guest;
+  document.documentElement.dataset.role=role;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',theme.color);
+  const topbar=document.querySelector('.topbar');
+  if(topbar&&!topbar.querySelector('.role-theme-pill')){
+    const pill=document.createElement('span');
+    pill.className='role-theme-pill';
+    pill.innerHTML=`<i>${theme.icon}</i>${theme.label}`;
+    topbar.appendChild(pill);
+  }
+}
+
+function enhanceLoginAtmosphere(){
+  const story=document.querySelector('.login .story');
+  if(!story||story.querySelector('.soap-bubbles'))return;
+  const bubbles=document.createElement('div');
+  bubbles.className='soap-bubbles';
+  bubbles.setAttribute('aria-hidden','true');
+  bubbles.innerHTML=Array.from({length:9},(_,index)=>`<i style="--bubble:${index}"></i>`).join('');
+  story.appendChild(bubbles);
+}
+
+function animateFreshElements(){
+  document.querySelectorAll('.metric,.card,.production-metrics article,.production-section,.intelligence-metrics article').forEach((element,index)=>{
+    if(element.dataset.harmonyAnimated)return;
+    element.dataset.harmonyAnimated='true';
+    element.style.setProperty('--enter-order',String(Math.min(index,7)));
+    element.classList.add('harmony-enter');
+  });
+}
+
+function addButtonFeedback(){
+  if(document.body.dataset.harmonyFeedback)return;
+  document.body.dataset.harmonyFeedback='true';
+  document.addEventListener('pointerdown',event=>{
+    const button=event.target.closest('button');
+    if(!button||button.disabled)return;
+    button.classList.remove('harmony-tap');
+    void button.offsetWidth;
+    button.classList.add('harmony-tap');
+  });
+}
+
 function enhanceMobileMenu(){
   document.querySelectorAll('.nav[data-view]').forEach(button=>{
     const icon=button.querySelector('i'),value=expressiveMenuIcons[button.dataset.view];
@@ -170,7 +221,7 @@ function enhanceLoginMascot(){
   }
 }
 
-function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();updateConnectionBanner()}
+function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();enhanceLoginAtmosphere();animateFreshElements();addButtonFeedback();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});
