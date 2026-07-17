@@ -2,6 +2,13 @@ const VAPID_PUBLIC_KEY='BO3nbsxNRC1fxbrKCtZXI30JbGz7AJqVFmO5ddksAEAODDFyZM-qF3fL
 let deferredInstallPrompt=null;
 const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
 
+async function keepPortraitOrientation(){
+  if(!installed||!screen.orientation?.lock)return;
+  try{await screen.orientation.lock('portrait-primary')}catch{}
+}
+
+window.addEventListener('load',keepPortraitOrientation);
+
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 }

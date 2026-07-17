@@ -109,7 +109,26 @@ function addAdminCancelControl(){
   deleteButton.parentNode.insertBefore(button,deleteButton);
 }
 
-function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();updateConnectionBanner()}
+const expressiveMenuIcons={
+  home:'🏠',
+  new:'📝',
+  requests:'📋',
+  products:'🧼',
+  categories:'🎨',
+  team:'👥',
+  fields:'🛠️',
+  audit:'📜',
+  profile:'👤'
+};
+
+function enhanceMobileMenu(){
+  document.querySelectorAll('.nav[data-view]').forEach(button=>{
+    const icon=button.querySelector('i'),value=expressiveMenuIcons[button.dataset.view];
+    if(icon&&value&&icon.textContent!==value)icon.textContent=value;
+  });
+}
+
+function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});
