@@ -135,7 +135,42 @@ function enhanceBrandPresentation(){
   });
 }
 
-function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();updateConnectionBanner()}
+function enhanceLoginMessage(){
+  const story=document.querySelector('.login .story'),box=document.querySelector('.login-box');
+  if(story&&!story.querySelector('.brand-message')){
+    const message=document.createElement('blockquote');
+    message.className='brand-message brand-message-desktop';
+    message.textContent='“Um sonho que virou realidade. Deus é bom tempo todo.”';
+    story.insertBefore(message,story.querySelector('.artisan'));
+  }
+  if(box&&!box.querySelector('.brand-message')){
+    const message=document.createElement('blockquote');
+    message.className='brand-message brand-message-mobile';
+    message.textContent='“Um sonho que virou realidade. Deus é bom tempo todo.”';
+    box.appendChild(message);
+  }
+}
+
+function enhanceLoginMascot(){
+  const story=document.querySelector('.login .story'),box=document.querySelector('.login-box');
+  if(story&&!story.querySelector('.login-mascot-desktop')){
+    const mascot=document.createElement('img');
+    mascot.src='mascote-artesa.png';
+    mascot.alt='Mascote artesã loira da Harmony Store';
+    mascot.className='login-mascot login-mascot-desktop';
+    story.appendChild(mascot);
+  }
+  if(box&&!box.querySelector('.login-mascot-mobile')){
+    const mascot=document.createElement('img');
+    mascot.src='mascote-artesa.png';
+    mascot.alt='Mascote artesã loira da Harmony Store';
+    mascot.className='login-mascot login-mascot-mobile';
+    const message=box.querySelector('.brand-message-mobile');
+    if(message)box.insertBefore(mascot,message);else box.appendChild(mascot);
+  }
+}
+
+function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});

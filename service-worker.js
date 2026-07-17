@@ -1,5 +1,5 @@
-const CACHE='harmony-store-v6';
-const SHELL=['./','./index.html','./styles.css','./app.js','./pwa.js','./enhancements.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const CACHE='harmony-store-v10';
+const SHELL=['./','./index.html','./styles.css','./app.js','./pwa.js','./enhancements.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./app-icon-master.png','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
