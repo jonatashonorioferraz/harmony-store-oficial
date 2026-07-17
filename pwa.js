@@ -17,7 +17,7 @@ if(!installed){
   const installButton=document.createElement('button');
   installButton.type='button';
   installButton.className='install-app';
-  installButton.innerHTML='<img src="icon-192.png" alt=""><span>Instalar aplicativo</span>';
+  installButton.innerHTML='<img src="icon-192-v2.png" alt=""><span>Instalar aplicativo</span>';
   document.body.appendChild(installButton);
   window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event});
   installButton.addEventListener('click',async()=>{

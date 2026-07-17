@@ -1,5 +1,5 @@
-const CACHE='harmony-store-v10';
-const SHELL=['./','./index.html','./styles.css','./app.js','./pwa.js','./enhancements.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./app-icon-master.png','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const CACHE='harmony-store-v12';
+const SHELL=['./','./index.html','./styles.css','./app.js','./pwa.js','./enhancements.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./app-icon-master.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
@@ -25,8 +25,8 @@ self.addEventListener('push',event=>{
   try{data=event.data?.json()||{}}catch{data={body:event.data?.text()||'Há uma atualização no sistema.'}}
   event.waitUntil(self.registration.showNotification(data.title||'Harmony Store',{
     body:data.body||'Há uma atualização no sistema.',
-    icon:'./icon-192.png',
-    badge:'./icon-192.png',
+    icon:'./icon-192-v2.png',
+    badge:'./icon-192-v2.png',
     tag:data.tag||'harmony-notification',
     renotify:true,
     data:{url:data.url||'./'}

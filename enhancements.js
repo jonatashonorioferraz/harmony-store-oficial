@@ -140,13 +140,13 @@ function enhanceLoginMessage(){
   if(story&&!story.querySelector('.brand-message')){
     const message=document.createElement('blockquote');
     message.className='brand-message brand-message-desktop';
-    message.textContent='“Um sonho que virou realidade. Deus é bom tempo todo.”';
+    message.textContent='“Um Sonho que virou realidade. Deus é bom o tempo todo”';
     story.insertBefore(message,story.querySelector('.artisan'));
   }
   if(box&&!box.querySelector('.brand-message')){
     const message=document.createElement('blockquote');
     message.className='brand-message brand-message-mobile';
-    message.textContent='“Um sonho que virou realidade. Deus é bom tempo todo.”';
+    message.textContent='“Um Sonho que virou realidade. Deus é bom o tempo todo”';
     box.appendChild(message);
   }
 }
