@@ -58,9 +58,16 @@ async function disablePushNotifications(){
   await subscription.unsubscribe();
 }
 
+async function cleanupPushSubscription(){
+  const subscription=await currentPushSubscription();
+  if(!subscription)return;
+  try{await rpc('remove_own_push_subscription',{p_endpoint:subscription.endpoint})}finally{await subscription.unsubscribe()}
+}
+
 async function sendNotificationEvent(event,requestId){
   if(!requestId||!S?.session?.access_token)return;
   try{
+    await ensureSession();
     await json(await fetch(API+'/functions/v1/send-push',{
       method:'POST',
       headers:{apikey:KEY,Authorization:'Bearer '+S.session.access_token,'Content-Type':'application/json'},
@@ -127,6 +134,7 @@ function enhanceNotificationFeatures(){
   wrapRequestAction('#prepareReq','status_changed');
   wrapRequestAction('#scheduleReq','status_changed');
   wrapRequestAction('#completeReq','status_changed');
+  wrapRequestAction('#cancelReq','status_changed');
 }
 
 new MutationObserver(enhanceNotificationFeatures).observe(document.body,{childList:true,subtree:true});
