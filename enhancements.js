@@ -128,7 +128,14 @@ function enhanceMobileMenu(){
   });
 }
 
-function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();updateConnectionBanner()}
+function enhanceBrandPresentation(){
+  document.querySelectorAll('img[src="logo.jpg"]').forEach(image=>{
+    image.src='brand-mark.png';
+    image.classList.add('harmony-brand-mark');
+  });
+}
+
+function improveApp(){addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});
