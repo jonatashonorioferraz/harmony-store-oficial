@@ -18,7 +18,13 @@ if(!installed){
   installButton.type='button';
   installButton.className='install-app';
   installButton.innerHTML='<img src="icon-192-v2.png" alt=""><span>Instalar aplicativo</span>';
-  document.body.appendChild(installButton);
+  const placeInstallButton=()=>{
+    const host=document.querySelector('.login-box')||document.body;
+    if(installButton.parentElement!==host)host.appendChild(installButton);
+  };
+  const installPlacementObserver=new MutationObserver(placeInstallButton);
+  installPlacementObserver.observe(document.body,{childList:true,subtree:true});
+  placeInstallButton();
   window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event});
   installButton.addEventListener('click',async()=>{
     if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;return}
@@ -27,7 +33,7 @@ if(!installed){
       ?'No Safari, toque no botão Compartilhar e escolha “Adicionar à Tela de Início”.'
       :'No Chrome, abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');
   });
-  window.addEventListener('appinstalled',()=>installButton.remove());
+  window.addEventListener('appinstalled',()=>{installPlacementObserver.disconnect();installButton.remove()});
 }
 
 function applicationServerKey(value){
