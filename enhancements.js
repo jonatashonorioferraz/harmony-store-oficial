@@ -221,7 +221,24 @@ function enhanceLoginMascot(){
   }
 }
 
-function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();enhanceLoginAtmosphere();animateFreshElements();addButtonFeedback();updateConnectionBanner()}
+function enhanceDailyWelcome(){
+  if(!S?.profile||S.view!=='home'||!window.HarmonyDaily)return;
+  const page=document.querySelector('#page .page'),pageHead=page?.querySelector('.page-head');
+  if(!page||!pageHead||page.querySelector('.daily-welcome'))return;
+  const now=new Date(),dateCode=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`,firstName=String(S.profile.full_name||'').trim().split(/\s+/)[0]||'bem-vinda';
+  const roleMessage=S.profile.role==='admin'
+    ?'Painel organizado, ideias no lugar e um novo dia para cuidar da nossa história.'
+    :S.profile.role==='receiver'
+      ?'Olhar atento, caixas por perto e carinho em cada conferência. Vamos começar?'
+      :'Seu cantinho de produção está prontinho. Vamos criar coisas lindas hoje?';
+  const card=document.createElement('section');
+  card.className='daily-welcome';
+  card.setAttribute('aria-label','Boas-vindas e mensagem do dia');
+  card.innerHTML=`<div class="daily-welcome-copy"><div class="daily-kicker"><span>HOJE NA HARMONY</span><time datetime="${dateCode}">${esc(now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'}))}</time></div><h2>${esc(window.HarmonyDaily.greetingForDate(now))}, <em>${esc(firstName)}</em>! <i aria-hidden="true">🌷</i></h2><p>${esc(roleMessage)}</p></div><blockquote><i aria-hidden="true">✦</i><div><small>MENSAGEM DO DIA</small><p>${esc(window.HarmonyDaily.messageForDate(now))}</p></div></blockquote><div class="daily-decor" aria-hidden="true"><i>✦</i><i>♡</i><i>·</i></div>`;
+  pageHead.insertAdjacentElement('afterend',card);
+}
+
+function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();enhanceLoginAtmosphere();enhanceDailyWelcome();animateFreshElements();addButtonFeedback();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});
