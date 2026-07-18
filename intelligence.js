@@ -49,6 +49,28 @@ function preferredLink(productId){
   return BI.supplierProducts.find(link=>link.product_id===productId&&link.is_preferred)||BI.supplierProducts.find(link=>link.product_id===productId)||null;
 }
 
+async function productSupplyContext(productId=''){
+  const [suppliers,links]=await Promise.all([
+    rest('suppliers?select=*&order=name.asc'),
+    productId?rest(`supplier_products?product_id=eq.${encodeURIComponent(productId)}&select=*&order=is_preferred.desc,created_at.asc`):Promise.resolve([])
+  ]);
+  const selected=links.find(link=>link.is_preferred)||links[0]||null;
+  return {suppliers:suppliers.filter(supplier=>supplier.active||supplier.id===selected?.supplier_id),links,selectedSupplierId:selected?.supplier_id||''};
+}
+
+async function savePreferredSupplier(productId,supplierId){
+  const links=await rest(`supplier_products?product_id=eq.${encodeURIComponent(productId)}&select=*`);
+  if(links.some(link=>link.is_preferred))await rest(`supplier_products?product_id=eq.${encodeURIComponent(productId)}&is_preferred=eq.true`,{method:'PATCH',body:JSON.stringify({is_preferred:false})});
+  if(supplierId){
+    await rest('supplier_products?on_conflict=supplier_id,product_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},body:JSON.stringify({supplier_id:supplierId,product_id:productId,is_preferred:true})});
+  }
+  BI.loaded=false;
+}
+
+function linksForSupplier(supplierId){
+  return BI.supplierProducts.filter(link=>link.supplier_id===supplierId);
+}
+
 function materialReport(rows=filteredRows()){
   const days=Math.max(1,Math.floor((startOfDay(BI.to)-startOfDay(BI.from))/86400000)+1),months=Math.max(days/30,1/30);
   const grouped=new Map();
@@ -186,8 +208,11 @@ function productPlanningModal(product){
 
 function purchaseModal(suggestions=[]){
   const suggestedMap=new Map(suggestions.map(item=>[item.product.id,item]));
-  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box large" id="purchaseForm"><div class="modal-head"><div><p class="eyebrow">PEDIDO DE COMPRA</p><h2>Novo pedido ao fornecedor</h2></div><button type="button" data-intel-close>×</button></div><div class="form"><label>Fornecedor<select name="supplier_id" required><option value="">Selecione</option>${BI.suppliers.filter(item=>item.active).map(item=>`<option value="${item.id}">${esc(item.name)}</option>`).join('')}</select></label><label>Previsão de entrega<input name="expected_at" type="date"></label><label class="wide">Observações<textarea name="notes" placeholder="Condições, orçamento ou referência do fornecedor"></textarea></label></div><div class="purchase-builder"><div class="purchase-builder-head"><b>Matéria-prima</b><b>Quantidade</b><b>Custo unitário</b></div>${S.products.filter(product=>product.active).map(product=>{const suggestion=suggestedMap.get(product.id),link=preferredLink(product.id),cost=n(link?.last_unit_cost)||n(product.unit_cost);return `<label class="purchase-builder-row"><span><input type="checkbox" data-buy-check="${product.id}" ${suggestion?'checked':''}><b>${esc(product.name)}</b><small>${esc(product.unit)}</small></span><input data-buy-qty="${product.id}" type="number" min="0" step=".001" value="${suggestion?.suggested||0}"><input data-buy-cost="${product.id}" type="number" min="0" step=".0001" value="${cost}"></label>`}).join('')}</div><div class="form-actions"><button type="button" class="outline" data-intel-close>Cancelar</button><button class="primary">Salvar rascunho</button></div></form></div>`;
-  modalClose();document.querySelector('#purchaseForm').onsubmit=async event=>{event.preventDefault();const f=new FormData(event.target),items=[...document.querySelectorAll('[data-buy-check]:checked')].map(check=>({product_id:check.dataset.buyCheck,quantity:n(document.querySelector(`[data-buy-qty="${check.dataset.buyCheck}"]`).value),unit_cost:n(document.querySelector(`[data-buy-cost="${check.dataset.buyCheck}"]`).value)})).filter(item=>item.quantity>0);if(!items.length)return alert('Selecione ao menos um material e informe a quantidade.');try{await rpc('admin_create_purchase_order',{p_supplier_id:f.get('supplier_id'),p_expected_at:f.get('expected_at')||null,p_notes:f.get('notes')||null,p_items:items});await refreshIntelligence('Rascunho de compra criado.')}catch(error){alert(error.message)}};
+  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box large" id="purchaseForm"><div class="modal-head"><div><p class="eyebrow">PEDIDO DE COMPRA</p><h2>Novo pedido ao fornecedor</h2></div><button type="button" data-intel-close>×</button></div><div class="form"><label>Fornecedor<select name="supplier_id" required><option value="">Selecione</option>${BI.suppliers.filter(item=>item.active).map(item=>`<option value="${item.id}">${esc(item.name)}</option>`).join('')}</select><small class="field-help">A lista abaixo mostrará somente as matérias-primas vinculadas.</small></label><label>Previsão de entrega<input name="expected_at" type="date"></label><label class="wide">Observações<textarea name="notes" placeholder="Condições, orçamento ou referência do fornecedor"></textarea></label></div><div class="purchase-builder"><div class="purchase-builder-head"><b>Matéria-prima</b><b>Quantidade</b><b>Custo unitário</b></div><div class="empty" id="purchaseSupplierHint">Selecione um fornecedor para carregar suas matérias-primas.</div>${S.products.filter(product=>product.active).map(product=>{const suggestion=suggestedMap.get(product.id),link=preferredLink(product.id),cost=n(link?.last_unit_cost)||n(product.unit_cost);return `<label class="purchase-builder-row" data-buy-row="${product.id}" hidden><span><input type="checkbox" data-buy-check="${product.id}"><b>${esc(product.name)}</b><small>${esc(product.unit)}</small></span><input data-buy-qty="${product.id}" type="number" min="0" step=".001" value="${suggestion?.suggested||0}"><input data-buy-cost="${product.id}" type="number" min="0" step=".0001" value="${cost}"></label>`}).join('')}</div><div class="form-actions"><button type="button" class="outline" data-intel-close>Cancelar</button><button class="primary">Salvar rascunho</button></div></form></div>`;
+  const form=document.querySelector('#purchaseForm'),supplierSelect=form.querySelector('[name="supplier_id"]'),hint=document.querySelector('#purchaseSupplierHint');
+  const filterProducts=()=>{const supplierId=supplierSelect.value,links=linksForSupplier(supplierId),allowed=new Map(links.map(link=>[link.product_id,link]));let visible=0;document.querySelectorAll('[data-buy-row]').forEach(row=>{const productId=row.dataset.buyRow,link=allowed.get(productId),show=Boolean(link);row.hidden=!show;const check=row.querySelector('[data-buy-check]');if(!show){check.checked=false;return}visible++;check.checked=suggestedMap.has(productId);const cost=row.querySelector('[data-buy-cost]'),product=S.products.find(item=>item.id===productId);cost.value=n(link.last_unit_cost)||n(product?.unit_cost)});hint.hidden=Boolean(visible);hint.textContent=supplierId?'Nenhuma matéria-prima está vinculada a este fornecedor. Edite o produto ou crie o vínculo na aba Fornecedores.':'Selecione um fornecedor para carregar suas matérias-primas.'};
+  supplierSelect.onchange=filterProducts;filterProducts();
+  modalClose();form.onsubmit=async event=>{event.preventDefault();const f=new FormData(event.target),items=[...document.querySelectorAll('[data-buy-check]:checked')].map(check=>({product_id:check.dataset.buyCheck,quantity:n(document.querySelector(`[data-buy-qty="${check.dataset.buyCheck}"]`).value),unit_cost:n(document.querySelector(`[data-buy-cost="${check.dataset.buyCheck}"]`).value)})).filter(item=>item.quantity>0);if(!items.length)return alert('Este fornecedor não possui materiais selecionados com quantidade maior que zero.');try{await rpc('admin_create_purchase_order',{p_supplier_id:f.get('supplier_id'),p_expected_at:f.get('expected_at')||null,p_notes:f.get('notes')||null,p_items:items});await refreshIntelligence('Rascunho de compra criado.')}catch(error){alert(error.message)}};
 }
 
 async function changePurchase(functionName,id,message){try{await rpc(functionName,{p_order_id:id});await refreshIntelligence(message)}catch(error){alert(error.message)}}
@@ -209,5 +234,5 @@ function ensureIntelligenceNav(){
 
 new MutationObserver(ensureIntelligenceNav).observe(document.body,{childList:true,subtree:true});
 ensureIntelligenceNav();
-window.HarmonyIntelligence=Object.freeze({state:BI,materialReport,collaboratorReport,filteredRows,setDefaultPeriod});
+window.HarmonyIntelligence=Object.freeze({state:BI,materialReport,collaboratorReport,filteredRows,setDefaultPeriod,productSupplyContext,savePreferredSupplier,linksForSupplier});
 })();

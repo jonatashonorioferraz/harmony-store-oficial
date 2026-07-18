@@ -11,7 +11,9 @@ const differenceFor=item=>pn(item?.quantity)-pn(item?.declared_quantity??item?.q
 const role=()=>S.profile?.role||'';
 const isAdmin=()=>role()==='admin';
 const canReceive=()=>isAdmin()||role()==='receiver';
-const canSeeValues=()=>role()!=='receiver';
+const canSeeReceiptValues=()=>isAdmin();
+const canSeePaymentValues=()=>role()!=='receiver';
+const canSeeValues=()=>PR.tab==='weeks'?canSeePaymentValues():canSeeReceiptValues();
 const modelImageUrl=model=>model?.image_path?API+'/storage/v1/object/public/product-images/'+model.image_path:'';
 function weekBounds(value=new Date()){
   const base=typeof value==='string'?new Date(value+'T12:00:00'):new Date(value);
@@ -209,5 +211,5 @@ async function printStatement(id){
 
 new MutationObserver(productionNav).observe(document.body,{childList:true,subtree:true});
 productionNav();
-window.HarmonyProduction=Object.freeze({state:PR,paymentFor,differenceFor,weekBounds,groupReport,groupedCollections});
+window.HarmonyProduction=Object.freeze({state:PR,paymentFor,differenceFor,weekBounds,groupReport,groupedCollections,canSeeReceiptValues,canSeePaymentValues});
 })();
