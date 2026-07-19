@@ -23,6 +23,9 @@ Produção: <https://app.harmonylembrancinhas.com.br/>
 - `supabase/rollbacks/`: rollback operacional das mudanças sensíveis.
 - `tests/`: testes automatizados de regras de negócio e segurança.
 - `docs/audit/`: auditoria, matriz de permissões, fases e evidências.
+- `docs/manual/`: manual completo por módulos e perfis.
+- `docs/technical/`: arquitetura, fluxos e operação técnica.
+- `docs/operations/`: backup, recuperação e resposta a incidentes.
 - `scripts/`: build e servidor estático local.
 
 O frontend usa somente a chave publicável. Chaves administrativas, senha do
@@ -61,3 +64,7 @@ do Supabase.
 Consulte [o plano por fases](docs/audit/PLANO-POR-FASES.md) e
 [a matriz de permissões](docs/audit/MATRIZ-DE-PERMISSOES.md) antes de mudanças
 estruturais.
+
+Também estão disponíveis o [manual do aplicativo](docs/manual/MANUAL-DO-APLICATIVO.md),
+a [documentação técnica](docs/technical/ARQUITETURA-E-OPERACAO.md) e o
+[runbook de recuperação](docs/operations/RUNBOOK-BACKUP-RECUPERACAO.md).

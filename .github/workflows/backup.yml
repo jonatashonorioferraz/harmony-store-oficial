@@ -1,0 +1,54 @@
+name: Backup externo criptografado
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harmony-production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: https://tyzfznwvjzmudxtcbbaf.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_BACKUP_SECRET_KEY }}
+      BACKUP_ENCRYPTION_PASSWORD: ${{ secrets.BACKUP_ENCRYPTION_PASSWORD }}
+      BACKUP_DIR: backups/current
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validar configuração protegida
+        run: test -n "$SUPABASE_SECRET_KEY" && test -n "$BACKUP_ENCRYPTION_PASSWORD"
+      - name: Exportar banco lógico, usuários e Storage
+        run: node scripts/create-api-backup.mjs
+      - name: Verificar arquivos e hashes
+        run: node scripts/verify-api-backup.mjs "$BACKUP_DIR"
+      - name: Criptografar pacote
+        run: |
+          tar -C backups -czf harmony-backup.tar.gz current
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in harmony-backup.tar.gz -out harmony-backup.tar.gz.enc -pass env:BACKUP_ENCRYPTION_PASSWORD
+          sha256sum harmony-backup.tar.gz.enc > harmony-backup.tar.gz.enc.sha256
+          rm harmony-backup.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harmony-backup-${{ github.run_id }}
+          path: |
+            harmony-backup.tar.gz.enc
+            harmony-backup.tar.gz.enc.sha256
+          retention-days: 30
+          if-no-files-found: error
+      - name: Registrar backup válido no painel de saúde
+        run: node scripts/record-backup-result.mjs
+      - name: Registrar falha saneada no painel
+        if: failure()
+        continue-on-error: true
+        run: node scripts/record-backup-failure.mjs

@@ -1,0 +1,27 @@
+name: Changelog automático da versão
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Confirmar versão do pacote e changelog
+        shell: bash
+        run: |
+          VERSION="v$(node -p "require('./package.json').version.split('.')[0]")"
+          test "$GITHUB_REF_NAME" = "$VERSION"
+          grep -F "[$VERSION]" CHANGELOG.md
+      - name: Criar notas automáticas da versão
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "Harmony Store $GITHUB_REF_NAME"

@@ -1,0 +1,39 @@
+name: Qualidade e segurança
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Confirmar cópias oficiais sincronizadas
+        run: |
+          cmp app.js web/app.js
+          cmp intelligence.js web/intelligence.js
+          cmp styles.css web/styles.css
+          cmp service-worker.js web/service-worker.js
+          cmp help-center.js web/help-center.js
+          cmp system-health.js web/system-health.js
+      - name: Bloquear segredos conhecidos no repositório
+        shell: bash
+        run: |
+          ! git grep -nE 'sb_secret_[A-Za-z0-9_-]{20,}|SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]|BACKUP_ENCRYPTION_PASSWORD=[^[:space:]]' -- ':!*.md' ':!tests/**'

@@ -77,7 +77,7 @@ Deno.serve(async request => {
       event,
     });
 
-    let sent = 0;
+    let sent = 0, failed = 0;
     await Promise.all((subscriptions || []).map(async subscription => {
       try {
         await webpush.sendNotification({
@@ -86,12 +86,20 @@ Deno.serve(async request => {
         }, payload, { TTL: 86400 });
         sent++;
       } catch (error) {
+        failed++;
         const status = Number((error as { statusCode?: number }).statusCode || 0);
         if (status === 404 || status === 410) await admin.from("push_subscriptions").delete().eq("id", subscription.id);
       }
     }));
+    await admin.from("system_events").insert({
+      source: "notification", level: failed ? "warning" : "info",
+      code: failed ? "push_partial" : "push_sent",
+      actor_id: caller.id, details: { event, sent, failed, recipients: recipients.length },
+    });
     return reply({ sent });
   } catch (error) {
-    return reply({ error: error instanceof Error ? error.message : "Falha ao enviar notificações." }, 400);
+    const errorId = crypto.randomUUID();
+    console.error(JSON.stringify({ event: "send_push_error", error_id: errorId, name: error instanceof Error ? error.name : "Unknown" }));
+    return reply({ error: "Não foi possível enviar as notificações.", error_id: errorId }, 500);
   }
 });

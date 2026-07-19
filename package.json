@@ -1,6 +1,6 @@
 {
-  "name": "site-creator-vinext-starter",
-  "version": "0.1.0",
+  "name": "harmony-store-oficial",
+  "version": "25.0.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -10,6 +10,8 @@
     "build": "node scripts/build-static.mjs",
     "start": "node scripts/serve-static.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
+    "backup:verify": "node scripts/verify-api-backup.mjs",
+    "backup:restore:check": "node scripts/restore-api-backup.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },
