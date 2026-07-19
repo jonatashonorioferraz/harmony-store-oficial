@@ -5,6 +5,20 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.6] — 19/07/2026
+
+### Tablets e instalação
+
+- Novo layout intermediário entre 721 e 1100 pixels, com menu lateral compacto, área útil ampliada, tabelas roláveis e formulários ajustados para tablets.
+- Botão **Instalar aplicativo** agora aparece também em tablets e aparelhos com tela sensível ao toque, não apenas em celulares pequenos.
+- Orientação de instalação reconhece iPads modernos que se identificam como computador e explica corretamente o processo pelo Safari.
+- Android tablets usam o instalador nativo quando o navegador oferece o evento de instalação e mantêm instrução alternativa pelo menu do Chrome.
+
+### Compatibilidade
+
+- O modo já instalado continua escondendo o botão de instalação.
+- O comportamento existente de celular e computador foi preservado.
+
 ## [v25.5] — 19/07/2026
 
 ### Adicionado

@@ -1,6 +1,7 @@
 const VAPID_PUBLIC_KEY='BO3nbsxNRC1fxbrKCtZXI30JbGz7AJqVFmO5ddksAEAODDFyZM-qF3fLxlqVdBfwd3cAtMvQq5vB3Xu-uXK2kMA';
 let deferredInstallPrompt=null;
 const installed=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+const appleTouchDevice=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
 async function keepPortraitOrientation(){
   if(!installed||!screen.orientation?.lock)return;
@@ -19,6 +20,7 @@ if(!installed){
   const installButton=document.createElement('button');
   installButton.type='button';
   installButton.className='install-app';
+  installButton.setAttribute('aria-label','Instalar Harmony Store neste aparelho');
   installButton.innerHTML='<img src="icon-192-v2.png" alt=""><span>Instalar aplicativo</span>';
   const placeInstallButton=()=>{
     const host=document.querySelector('.login-box')||document.body;
@@ -30,10 +32,9 @@ if(!installed){
   window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event});
   installButton.addEventListener('click',async()=>{
     if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;return}
-    const apple=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    alert(apple
-      ?'No Safari, toque no botão Compartilhar e escolha “Adicionar à Tela de Início”.'
-      :'No Chrome, abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');
+    alert(appleTouchDevice
+      ?'No Safari do iPhone ou iPad, toque em Compartilhar e escolha “Adicionar à Tela de Início”.'
+      :'No Chrome do celular ou tablet, abra o menu do navegador e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');
   });
   window.addEventListener('appinstalled',()=>{installPlacementObserver.disconnect();installButton.remove()});
 }
@@ -50,7 +51,7 @@ async function currentPushSubscription(){
 
 async function enablePushNotifications(){
   if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))throw Error('Este aparelho não oferece suporte a notificações.');
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!installed)throw Error('No iPhone, adicione primeiro o aplicativo à Tela de Início e abra pelo ícone.');
+  if(appleTouchDevice&&!installed)throw Error('No iPhone ou iPad, adicione primeiro o aplicativo à Tela de Início e abra pelo ícone.');
   const permission=await Notification.requestPermission();
   if(permission!=='granted')throw Error('Permissão não concedida. Ative as notificações nas configurações do aparelho.');
   const registration=await navigator.serviceWorker.ready;
