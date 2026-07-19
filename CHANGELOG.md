@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.8] — 19/07/2026
+
+### Exclusão segura de cupons de teste
+
+- O ADM principal pode excluir definitivamente um cupom criado por engano ou somente para teste.
+- A operação exige confirmação digitada e motivo, estorna o estoque, remove a foto privada e preserva uma trilha de auditoria.
+- Produtos criados automaticamente pelo cupom podem ser removidos junto quando estiverem sem estoque e sem qualquer outro vínculo.
+- ADMs normais continuam com a opção de cancelar e estornar, sem permissão para exclusão definitiva.
+
 ## [v25.7] — 19/07/2026
 
 ### Suprimentos e compras internas
