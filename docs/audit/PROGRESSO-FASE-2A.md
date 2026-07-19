@@ -59,3 +59,9 @@ Estado atual:
 - Advisors executados após a mudança: nenhuma função `SECURITY DEFINER` permanece
   executável por `anon`; pendências de Storage, auditoria e performance seguem
   registradas para as próximas fases.
+- Repositório Git local reconstruído e vinculado ao histórico oficial do GitHub.
+- Branch `main` integrou o site publicado com fontes, migrations, rollbacks,
+  testes e documentação no commit `7dd31f5`, sem alterar os arquivos ativos do site.
+- `.env.local`, backups, builds, pacotes e cache confirmados fora do Git.
+- Sincronização dos novos commits com o GitHub pendente de autenticação própria
+  para Git via linha de comando; os commits permanecem preservados localmente.
