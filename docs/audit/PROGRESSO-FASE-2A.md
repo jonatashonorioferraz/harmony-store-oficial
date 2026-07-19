@@ -63,5 +63,15 @@ Estado atual:
 - Branch `main` integrou o site publicado com fontes, migrations, rollbacks,
   testes e documentação no commit `7dd31f5`, sem alterar os arquivos ativos do site.
 - `.env.local`, backups, builds, pacotes e cache confirmados fora do Git.
-- Sincronização dos novos commits com o GitHub pendente de autenticação própria
-  para Git via linha de comando; os commits permanecem preservados localmente.
+- Repositório sincronizado com o GitHub e GitHub Pages validado no domínio oficial.
+
+## Fase 2B iniciada e validada
+
+- Migração de preparação aplicada sem remover a compatibilidade do app v23.
+- Auditoria imutável, correlacionada e paginada no servidor.
+- RPCs transacionais de produto, exclusão e planejamento validadas em transação
+  revertida, sem deixar dados de teste.
+- Segredo HMAC do CPF criado no Supabase sem exposição no código-fonte.
+- Edge Function `manage-user` v10 publicada com JWT obrigatório e erros sanitizados.
+- Build aprovado e suíte ampliada para 51 testes aprovados.
+- Plano, riscos, evidências e rollback documentados em `PLANO-FASE-2B.md`.

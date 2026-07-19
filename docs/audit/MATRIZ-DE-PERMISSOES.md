@@ -28,19 +28,20 @@ Legenda: **Sim** = permitido pela regra atual; **Próprio** = somente registros 
 | Excluir usuário sem histórico | Não | Não | Não | Somente se ADM principal | Sim |
 | Alterar credenciais do ADM principal | Não | Não | Não | Não | Próprias |
 | Ver histórico de atividades | Não | Não | Não | Sim | Sim |
-| Inserir evento no histórico | Não | Próprio ator, conteúdo livre | Próprio ator, conteúdo livre | Sim | Sim |
-| Ler fotos de perfil por URL conhecida | **Sim atualmente** | Sim | Sim | Sim | Sim |
+| Inserir evento no histórico | Não | Não | Não | Somente por RPC/Edge confiável | Somente por RPC/Edge confiável |
+| Ler a própria foto de perfil | Não | Próprio | Próprio | Sim | Sim |
+| Ler fotos de perfil da equipe | Não | Não | Sim | Sim | Sim |
 
 ## Regras formalizadas e pendências
 
 1. **Concluído:** somente o ADM principal altera suas próprias credenciais e os privilégios de outros ADMs.
 2. **Concluído:** ADM comum administra colaboradoras e recebimento, mas não cria nem promove outro ADM.
 3. **Concluído:** exclusão de pessoa com histórico vira desativação e preserva o histórico financeiro e operacional.
-4. **Pendente — Fase 2B:** a trilha de auditoria de segurança deve ser escrita somente por banco/Edge confiável, nunca livremente pelo navegador.
+4. **Concluído — Fase 2B:** a trilha de auditoria é imutável e escrita somente por banco/Edge confiável, nunca livremente pelo navegador.
 5. **Concluído:** recebimento pode solicitar matéria-prima, registrar conferências e ver produção sem valores.
 6. **Concluído:** colaboradoras veem o pagamento semanal fechado, mas não estimativas de produção ainda não conferida/fechada.
 7. **Concluído:** o papel anônimo não possui privilégios em tabelas, sequências ou funções do schema `public`.
-8. **Pendente — Fase 2B:** fotos de perfil ainda usam leitura pública por URL e serão migradas sem quebrar os avatares existentes.
+8. **Concluído — Fase 2B:** fotos de perfil usam leitura autenticada com regra de proprietária, recebimento ou ADM.
 
 ## Fluxo de decisão recomendado para ações sensíveis
 

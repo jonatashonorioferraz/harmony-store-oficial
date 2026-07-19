@@ -33,7 +33,8 @@ test("build contains the official complete app", async () => {
   assert.match(js, /change-own-password/);
   assert.match(js, /must_change_password/);
   assert.match(css, /password-gate/);
-  assert.match(js, /stock_movements/);
+  assert.match(js, /admin_save_product/);
+  assert.match(js, /admin_list_audit_logs/);
   assert.match(css, /@media\(max-width:720px\)/);
   assert.match(css, /\.mobile-delete\{display:inline-flex/);
   await access(new URL("../dist/client/logo.jpg", import.meta.url));
@@ -54,7 +55,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v23/);
+  assert.match(worker, /harmony-store-v24/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);

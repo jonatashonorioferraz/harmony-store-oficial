@@ -11,6 +11,9 @@ const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body)
 const emailFor = (username: string) => `${username.trim().toLowerCase()}@auth.harmonylembrancinhas.com.br`;
 const digits = (value = "") => value.replace(/\D/g, "");
 const safeRole = (value: unknown) => value === "admin" ? "admin" : value === "receiver" ? "receiver" : "collaborator";
+class AppError extends Error {
+  constructor(message: string, readonly status = 400) { super(message); }
+}
 const passwordIssue = (value: unknown) => {
   const password = String(value || "");
   if (password.length < 10) return "A nova senha deve ter pelo menos 10 caracteres.";
@@ -20,11 +23,48 @@ const passwordIssue = (value: unknown) => {
   }
   return "";
 };
-async function cpfHash(cpf?: string) {
+const bytesToHex = (value: ArrayBuffer) => [...new Uint8Array(value)]
+  .map(x => x.toString(16).padStart(2, "0")).join("");
+async function sha256(value: string) {
+  return bytesToHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
+}
+async function cpfHashes(cpf?: string) {
   const clean = digits(cpf);
-  if (!clean) return { cpf_hash: null, cpf_last4: null };
-  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(clean));
-  return { cpf_hash: [...new Uint8Array(hash)].map(x => x.toString(16).padStart(2,"0")).join(""), cpf_last4: clean.slice(-4) };
+  if (!clean) return { cpf_hash: null, cpf_last4: null, cpf_hash_version: null, candidates: [] as string[] };
+  const secret = Deno.env.get("CPF_HMAC_SECRET");
+  if (!secret || secret.length < 32) throw new AppError("Proteção de CPF indisponível. Tente novamente mais tarde.", 503);
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const hmac = "h2_" + bytesToHex(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(clean)));
+  const legacy = await sha256(clean);
+  return {
+    cpf_hash: hmac,
+    cpf_last4: clean.slice(-4),
+    cpf_hash_version: "hmac-sha256-v2",
+    candidates: [hmac, legacy],
+  };
+}
+
+async function ensureCpfAvailable(
+  admin: ReturnType<typeof createClient>,
+  candidates: string[],
+  exceptId?: string,
+) {
+  if (!candidates.length) return;
+  let query = admin.from("profiles").select("id").in("cpf_hash", candidates).limit(1);
+  if (exceptId) query = query.neq("id", exceptId);
+  const { data, error } = await query;
+  if (error) throw error;
+  if (data?.length) throw new AppError("Este CPF já possui cadastro.", 409);
+}
+
+async function writeAudit(
+  admin: ReturnType<typeof createClient>,
+  entry: Record<string, unknown>,
+) {
+  const { error } = await admin.from("audit_logs").insert({ origin: "edge", ...entry });
+  if (error) throw error;
 }
 
 const operationalHistoryReferences = [
@@ -69,8 +109,9 @@ Deno.serve(async req => {
     if (authError || !authData.user) return reply({ error: "Sessão inválida." }, 401);
     const { data: caller } = await admin.from("profiles").select("role,status,is_primary_admin,must_change_password").eq("id", authData.user.id).single();
     if (!caller || caller.status !== "active") return reply({ error: "Acesso negado." }, 403);
-    const body = await req.json();
+    const body = await req.json().catch(() => { throw new AppError("Dados da solicitação inválidos.", 400); });
     const action = String(body.action || "");
+    const correlationId = crypto.randomUUID();
 
     if (action === "change-own-password") {
       const password = String(body.password || "");
@@ -97,11 +138,12 @@ Deno.serve(async req => {
         .eq("id", authData.user.id)
         .eq("status", "active");
       if (profileError) throw profileError;
-      await admin.from("audit_logs").insert({
+      await writeAudit(admin, {
         actor_id: authData.user.id,
         action: "password.self_update",
         entity_type: "profile",
         entity_id: authData.user.id,
+        correlation_id: correlationId,
       });
       return reply({ ok: true });
     }
@@ -116,26 +158,34 @@ Deno.serve(async req => {
       if (requestedRole === "admin" && !caller.is_primary_admin) {
         return reply({ error: "Somente a administradora principal pode criar outro ADM." }, 403);
       }
+      const cpf = await cpfHashes(body.cpf);
+      await ensureCpfAvailable(admin, cpf.candidates);
       const { data, error } = await admin.auth.admin.createUser({
         email: emailFor(body.username), password: body.password, email_confirm: true,
         user_metadata: { full_name: body.full_name },
       });
       if (error) throw error;
-      const cpf = await cpfHash(body.cpf);
       const { error: profileError } = await admin.from("profiles").update({
         full_name: body.full_name.trim(), username: body.username.trim().toLowerCase(),
         role: requestedRole, department: body.department || null,
         phone: body.phone || null, status: body.status === "inactive" ? "inactive" : "active",
-        must_change_password: true, ...cpf,
+        must_change_password: true,
+        cpf_hash: cpf.cpf_hash, cpf_last4: cpf.cpf_last4, cpf_hash_version: cpf.cpf_hash_version,
       }).eq("id", data.user.id);
       if (profileError) { await admin.auth.admin.deleteUser(data.user.id); throw profileError; }
-      await admin.from("audit_logs").insert({ actor_id: authData.user.id, action: "profile.created", entity_type: "profile", entity_id: data.user.id });
+      await writeAudit(admin, {
+        actor_id: authData.user.id, action: "profile.created", entity_type: "profile", entity_id: data.user.id,
+        correlation_id: correlationId,
+        details: { after: { username: body.username.trim().toLowerCase(), role: requestedRole, status: body.status === "inactive" ? "inactive" : "active", department: body.department || null } },
+      });
       return reply({ id: data.user.id });
     }
 
     const id = String(body.id || "");
     if (!id) return reply({ error: "Usuário inválido." }, 400);
-    const { data: target } = await admin.from("profiles").select("role,status,is_primary_admin").eq("id", id).single();
+    const { data: target } = await admin.from("profiles")
+      .select("role,status,is_primary_admin,username,full_name,department,phone,cpf_hash_version")
+      .eq("id", id).single();
     if (!target) return reply({ error: "Usuário não localizado." }, 404);
 
     if (action === "delete") {
@@ -144,12 +194,18 @@ Deno.serve(async req => {
       if (await hasOperationalHistory(admin, id)) {
         await setAccessStatus(admin, id, "inactive");
         await admin.from("push_subscriptions").delete().eq("user_id", id);
-        await admin.from("audit_logs").insert({ actor_id: authData.user.id, action: "profile.deactivated", entity_type: "profile", entity_id: id });
+        await writeAudit(admin, {
+          actor_id: authData.user.id, action: "profile.deactivated", entity_type: "profile", entity_id: id,
+          correlation_id: correlationId, details: { before: target, after: { ...target, status: "inactive" } },
+        });
         return reply({ ok: true, mode: "deactivated" });
       }
       const { error } = await admin.auth.admin.deleteUser(id);
       if (error) throw error;
-      await admin.from("audit_logs").insert({ actor_id: authData.user.id, action: "profile.deleted", entity_type: "profile", entity_id: id });
+      await writeAudit(admin, {
+        actor_id: authData.user.id, action: "profile.deleted", entity_type: "profile", entity_id: id,
+        correlation_id: correlationId, details: { before: target },
+      });
       return reply({ ok: true, mode: "deleted" });
     }
 
@@ -187,22 +243,43 @@ Deno.serve(async req => {
         const { error } = await admin.auth.admin.updateUserById(id, authUpdate);
         if (error) throw error;
       }
-      const cpf = body.cpf ? await cpfHash(body.cpf) : {};
+      const cpf = body.cpf ? await cpfHashes(body.cpf) : null;
+      if (cpf) await ensureCpfAvailable(admin, cpf.candidates, id);
       const patch: Record<string, unknown> = {
         full_name: body.full_name?.trim(), username: body.username?.trim().toLowerCase(),
         role: protectedRole,
         department: body.department || null, phone: body.phone || null,
-        status: protectedStatus, ...cpf,
+        status: protectedStatus,
       };
+      if (cpf) {
+        patch.cpf_hash = cpf.cpf_hash;
+        patch.cpf_last4 = cpf.cpf_last4;
+        patch.cpf_hash_version = cpf.cpf_hash_version;
+      }
       if (body.password) patch.must_change_password = !isSelf;
       Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
       const { error } = await admin.from("profiles").update(patch).eq("id", id);
       if (error) throw error;
-      await admin.from("audit_logs").insert({ actor_id: authData.user.id, action: "profile.updated", entity_type: "profile", entity_id: id });
+      await writeAudit(admin, {
+        actor_id: authData.user.id, action: "profile.updated", entity_type: "profile", entity_id: id,
+        correlation_id: correlationId,
+        details: {
+          before: target,
+          after: { username: patch.username, full_name: patch.full_name, role: protectedRole, status: protectedStatus, department: patch.department, phone: patch.phone, cpf_hash_version: cpf?.cpf_hash_version || target.cpf_hash_version },
+        },
+      });
       return reply({ ok: true });
     }
     return reply({ error: "Ação inválida." }, 400);
   } catch (error) {
-    return reply({ error: error instanceof Error ? error.message : "Falha interna." }, 400);
+    const errorId = crypto.randomUUID();
+    const code = typeof error === "object" && error && "code" in error ? String(error.code) : undefined;
+    console.error(JSON.stringify({ event: "manage_user_error", error_id: errorId, name: error instanceof Error ? error.name : "Unknown", code }));
+    if (error instanceof AppError) return reply({ error: error.message }, error.status);
+    const message = error instanceof Error ? error.message.toLowerCase() : "";
+    if (message.includes("already registered") || message.includes("already been registered") || message.includes("duplicate key")) {
+      return reply({ error: "Login, CPF ou identificador já está em uso." }, 409);
+    }
+    return reply({ error: "Não foi possível concluir a operação. Tente novamente.", error_id: errorId }, 500);
   }
 });

@@ -103,7 +103,9 @@ test("product form uses the intelligence supplier integration", async () => {
   const app = await readFile(new URL("../web/app.js", import.meta.url), "utf8");
   assert.match(app, /Fornecedor principal/);
   assert.match(app, /productSupplyContext/);
-  assert.match(app, /savePreferredSupplier/);
+  assert.match(app, /admin_save_product/);
+  assert.match(app, /p_supplier_id/);
+  assert.match(app, /p_manage_supplier/);
   assert.match(app, /Cadastro compartilhado com Inteligência e Compras/);
 });
 

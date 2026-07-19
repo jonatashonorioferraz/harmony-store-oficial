@@ -8,6 +8,14 @@ const rollback = await readFile(
   new URL('../supabase/rollbacks/20260719053406_explicit_data_api_grants.sql', import.meta.url),
   'utf8',
 );
+const phase2b = await readFile(
+  new URL('../supabase/migrations/20260719060830_phase_2b_integrity_privacy.sql', import.meta.url),
+  'utf8',
+);
+const phase2bEnforce = await readFile(
+  new URL('../supabase/migrations/20260719062234_phase_2b_enforce_security.sql', import.meta.url),
+  'utf8',
+);
 const webDir = new URL('../web/', import.meta.url);
 const webFiles = (await readdir(webDir)).filter(file => file.endsWith('.js'));
 const webSources = await Promise.all(webFiles.map(file => readFile(new URL(file, webDir), 'utf8')));
@@ -33,9 +41,10 @@ test('every statically named RPC used by the web app remains granted', () => {
   for (const match of webSource.matchAll(/\bchangePurchase\('([^']+)'/g)) rpcNames.add(match[1]);
 
   assert.ok(rpcNames.size >= 20, `RPC inventory unexpectedly small: ${rpcNames.size}`);
+  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}`;
   for (const rpcName of rpcNames) {
     assert.match(
-      sql,
+      effectiveGrants,
       new RegExp(`grant execute on function public\\.${rpcName}\\(`, 'i'),
       `Missing authenticated grant for web RPC ${rpcName}`,
     );
@@ -46,6 +55,10 @@ test('authenticated direct table privileges match current UI operations', () => 
   assert.match(sql, /grant select on table public\.profiles to authenticated/i);
   assert.match(sql, /grant insert, update, delete on table public\.products to authenticated/i);
   assert.match(sql, /grant select, insert on table public\.audit_logs to authenticated/i);
+  assert.match(phase2bEnforce, /revoke insert, update, delete on table public\.products from authenticated/i);
+  assert.match(phase2bEnforce, /revoke insert, update, delete, truncate on table public\.audit_logs from authenticated/i);
+  assert.match(phase2b, /grant execute on function public\.admin_save_product/i);
+  assert.match(phase2b, /grant execute on function public\.admin_list_audit_logs/i);
   assert.match(sql, /grant select on table public\.purchase_orders to authenticated/i);
   assert.doesNotMatch(sql, /grant[^;]+on table public\.push_subscriptions to authenticated/i);
   assert.doesNotMatch(sql, /grant[^;]+on table public\.production_weekly_closings to authenticated/i);
