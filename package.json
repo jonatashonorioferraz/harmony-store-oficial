@@ -12,6 +12,7 @@
     "test": "npm run build && node --test tests/*.test.mjs",
     "backup:verify": "node scripts/verify-api-backup.mjs",
     "backup:restore:check": "node scripts/restore-api-backup.mjs",
+    "backup:restore:isolated": "node scripts/execute-api-recovery.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },

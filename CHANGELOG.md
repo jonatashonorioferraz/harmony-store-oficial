@@ -1,5 +1,7 @@
 # Changelog
 
+> Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
+
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
 ## [v25] — 19/07/2026

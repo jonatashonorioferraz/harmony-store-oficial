@@ -16,6 +16,8 @@ const performanceMigration = await readFile(new URL('../supabase/migrations/2026
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 const monitorWorkflow = await readFile(new URL('../.github/workflows/monitor.yml', import.meta.url), 'utf8');
 const monitorScript = await readFile(new URL('../scripts/monitor-production.mjs', import.meta.url), 'utf8');
+const recoveryWorkflow = await readFile(new URL('../.github/workflows/recovery-drill.yml', import.meta.url), 'utf8');
+const recoveryScript = await readFile(new URL('../scripts/execute-api-recovery.mjs', import.meta.url), 'utf8');
 
 test('CI validates the complete build, test suite and synchronized official files', () => {
   assert.match(quality, /actions\/checkout@v7/);
@@ -72,6 +74,19 @@ test('external monitor checks the complete service chain and records sanitized s
   assert.doesNotMatch(monitorScript, /console\.log\([^\n]*(secretKey|SUPABASE_SECRET_KEY)/);
   assert.match(healthEdge, /external_monitor/);
   assert.match(healthEdge, /monitorAge > 12/);
+});
+
+test('full recovery drill is isolated, guarded and reconciles restored data', () => {
+  assert.match(recoveryWorkflow, /workflow_dispatch/);
+  assert.match(recoveryWorkflow, /environment: recovery/);
+  assert.match(recoveryWorkflow, /RECOVERY_PROJECT_REF: jwluqaycxoeyraxsleri/);
+  assert.match(recoveryWorkflow, /execute-api-recovery\.mjs/);
+  assert.match(recoveryScript, /BLOQUEADO: restauração nunca pode usar o projeto de produção/);
+  assert.match(recoveryScript, /RESTORE_ISOLATED_HARMONY/);
+  assert.match(recoveryScript, /O destino isolado não está vazio/);
+  assert.match(recoveryScript, /Contagem divergente/);
+  assert.match(recoveryScript, /storage\/v1\/object/);
+  assert.doesNotMatch(recoveryScript, /console\.log\([^\n]*(SECRET|password)/);
 });
 
 test('help center offers contextual, module and technical documentation', () => {

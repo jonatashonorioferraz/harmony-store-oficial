@@ -1,0 +1,42 @@
+name: Recuperação completa isolada
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harmony-isolated-recovery
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: recovery
+    env:
+      SUPABASE_URL: https://tyzfznwvjzmudxtcbbaf.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_BACKUP_SECRET_KEY }}
+      RECOVERY_SUPABASE_URL: ${{ secrets.RECOVERY_SUPABASE_URL }}
+      RECOVERY_SUPABASE_SECRET_KEY: ${{ secrets.RECOVERY_SUPABASE_SECRET_KEY }}
+      RECOVERY_PROJECT_REF: jwluqaycxoeyraxsleri
+      RECOVERY_CONFIRM: RESTORE_ISOLATED_HARMONY
+      BACKUP_DIR: backups/current
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Validar configuração isolada
+        run: |
+          test -n "$SUPABASE_SECRET_KEY"
+          test -n "$RECOVERY_SUPABASE_SECRET_KEY"
+          test "$RECOVERY_SUPABASE_URL" = "https://$RECOVERY_PROJECT_REF.supabase.co"
+          test "$RECOVERY_PROJECT_REF" != "tyzfznwvjzmudxtcbbaf"
+      - name: Criar backup atual da produção
+        run: node scripts/create-api-backup.mjs
+      - name: Validar integridade do backup
+        run: node scripts/verify-api-backup.mjs "$BACKUP_DIR"
+      - name: Restaurar no projeto isolado
+        run: node scripts/execute-api-recovery.mjs "$BACKUP_DIR"
