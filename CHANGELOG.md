@@ -21,7 +21,8 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
 ### Validação
 
-- Build aprovado, 55 testes automatizados e bloqueio externo confirmado com HTTP 401.
+- Build aprovado, 58 testes automatizados e bloqueio externo confirmado com HTTP 401.
+- Primeiro backup criptografado validado de ponta a ponta, com hash registrado e retenção de 30 dias.
 
 ## [v24] — 19/07/2026
 

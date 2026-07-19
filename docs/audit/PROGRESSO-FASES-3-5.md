@@ -20,7 +20,10 @@ Data: 19/07/2026
 - Testes automatizados: 55 aprovados, 0 falhas.
 - Banco: tabelas criadas, RLS ativo, RPC de backup negada a `authenticated` e concedida a `service_role`.
 - Edge sem autenticação: HTTP 401.
-- Backup real: pendente apenas da instalação segura dos dois segredos no GitHub.
+- Backup inaugural executado pelo GitHub Actions no run `29678744646` em
+  19/07/2026: 17 tabelas, 120 registros, 2 contas Auth, 30 objetos do Storage e
+  48 arquivos verificados. O pacote criptografado possui aproximadamente 34 MB,
+  hash registrado no Supabase e retenção válida até 18/08/2026.
 
 ## Compatibilidade
 
