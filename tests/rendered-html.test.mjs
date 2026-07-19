@@ -1,0 +1,117 @@
+import assert from "node:assert/strict";
+import { access, readFile } from "node:fs/promises";
+import test from "node:test";
+
+test("build contains the official complete app", async () => {
+  const [html, js, css] = await Promise.all([
+    readFile(new URL("../dist/client/index.html", import.meta.url), "utf8"),
+    readFile(new URL("../dist/client/app.js", import.meta.url), "utf8"),
+    readFile(new URL("../dist/client/styles.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(html, /Harmony Store Oficial/);
+  assert.match(html, /manifest\.webmanifest/);
+  assert.match(html, /apple-touch-icon/);
+  assert.match(html, /enhancements\.js/);
+  assert.match(html, /daily-messages\.js/);
+  assert.match(html, /intelligence\.js/);
+  assert.match(html, /intelligence\.css/);
+  assert.match(html, /production-receipts\.js/);
+  assert.match(html, /production-receipts\.css/);
+  assert.match(js, /admin_prepare_request/);
+  assert.match(js, /admin_complete_request/);
+  assert.match(js, /update_own_pending_request/);
+  assert.match(js, /admin_delete_request/);
+  assert.match(js, /deleteReqMobile/);
+  assert.match(js, /update_own_avatar/);
+  assert.match(js, /profile-images/);
+  assert.match(js, /refreshSession/);
+  assert.match(js, /create_own_request/);
+  assert.match(css, /install-app/);
+  assert.match(js, /functions\/v1\/manage-user/);
+  assert.match(js, /custom_field_definitions/);
+  assert.match(js, /renderRequiredPasswordChange/);
+  assert.match(js, /change-own-password/);
+  assert.match(js, /must_change_password/);
+  assert.match(css, /password-gate/);
+  assert.match(js, /stock_movements/);
+  assert.match(css, /@media\(max-width:720px\)/);
+  assert.match(css, /\.mobile-delete\{display:inline-flex/);
+  await access(new URL("../dist/client/logo.jpg", import.meta.url));
+  await access(new URL("../dist/client/.nojekyll", import.meta.url));
+  await access(new URL("../dist/client/manifest.webmanifest", import.meta.url));
+  await access(new URL("../dist/client/service-worker.js", import.meta.url));
+  await access(new URL("../dist/client/enhancements.js", import.meta.url));
+  await access(new URL("../dist/client/icon-192-v2.png", import.meta.url));
+  await access(new URL("../dist/client/icon-512-v2.png", import.meta.url));
+  await access(new URL("../dist/client/apple-touch-icon-v2.png", import.meta.url));
+  await access(new URL("../dist/client/notification-badge.svg", import.meta.url));
+  const pwa = await readFile(new URL("../dist/client/pwa.js", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../dist/client/service-worker.js", import.meta.url), "utf8");
+  const manifest = await readFile(new URL("../dist/client/manifest.webmanifest", import.meta.url), "utf8");
+  assert.match(pwa, /save_own_push_subscription/);
+  assert.match(pwa, /send-push/);
+  assert.match(pwa, /placeInstallButton/);
+  assert.match(worker, /showNotification/);
+  assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
+  assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
+  assert.match(worker, /harmony-store-v23/);
+  assert.match(worker, /notification-badge\.svg/);
+  assert.match(worker, /Abrir aplicativo/);
+  assert.match(manifest, /icon-512-v2\.png/);
+  const enhancements = await readFile(new URL("../dist/client/enhancements.js", import.meta.url), "utf8");
+  assert.match(enhancements, /createListToolbar/);
+  assert.match(enhancements, /connectionBanner/);
+  assert.match(enhancements, /admin_cancel_request/);
+  assert.match(enhancements, /expressiveMenuIcons/);
+  assert.match(enhancements, /🧼/);
+  assert.match(enhancements, /brand-mark\.png/);
+  assert.match(enhancements, /Um Sonho que virou realidade\. Deus é bom o tempo todo/);
+  assert.match(enhancements, /mascote-artesa\.png/);
+  assert.match(enhancements, /enhanceDailyWelcome/);
+  assert.match(enhancements, /HOJE NA HARMONY/);
+  assert.match(enhancements, /harmonyRoleThemes/);
+  assert.match(enhancements, /soap-bubbles/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(pwa, /showHarmonyTestNotification/);
+  await access(new URL("../dist/client/brand-mark.png", import.meta.url));
+  await access(new URL("../dist/client/mascote-artesa.png", import.meta.url));
+  await access(new URL("../dist/client/daily-messages.js", import.meta.url));
+  await access(new URL("../dist/client/app-icon-master.png", import.meta.url));
+  await access(new URL("../dist/client/intelligence.js", import.meta.url));
+  await access(new URL("../dist/client/intelligence.css", import.meta.url));
+  await access(new URL("../dist/client/production-receipts.js", import.meta.url));
+  await access(new URL("../dist/client/production-receipts.css", import.meta.url));
+  const intelligence = await readFile(new URL("../dist/client/intelligence.js", import.meta.url), "utf8");
+  assert.match(intelligence, /inteligência de consumo/i);
+  assert.match(intelligence, /admin_receive_purchase_order/);
+  assert.match(intelligence, /admin_create_purchase_order/);
+  assert.match(intelligence, /Exportar Excel/);
+  assert.match(intelligence, /productSupplyContext/);
+  assert.match(intelligence, /savePreferredSupplier/);
+  assert.match(intelligence, /purchaseSupplierHint/);
+  const production = await readFile(new URL("../dist/client/production-receipts.js", import.meta.url), "utf8");
+  const productionCss = await readFile(new URL("../dist/client/production-receipts.css", import.meta.url), "utf8");
+  assert.match(production, /create_finished_production_collection/);
+  assert.match(production, /Adicionar outro produto/);
+  assert.match(production, /admin_close_production_week/);
+  assert.match(production, /admin_production_statement/);
+  assert.match(production, /VALOR TOTAL PELA CONTAGEM OFICIAL/);
+  assert.match(production, /Colaboradora de recebimento/);
+  assert.match(production, /canSeeReceiptValues=\(\)=>isAdmin\(\)/);
+  assert.match(production, /canSeePaymentValues/);
+  assert.match(productionCss, /@media\(max-width:700px\)/);
+  assert.match(productionCss, /@media print/);
+  const pushFunction = await readFile(new URL("../supabase/functions/send-push/index.ts", import.meta.url), "utf8");
+  assert.match(pushFunction, /Harmony Store • Nova solicitação/);
+  assert.match(pushFunction, /notification-badge\.svg/);
+  assert.match(pushFunction, /\["collaborator", "receiver"\]\.includes\(caller\.role\)/);
+});
+
+test("server falls back to the app shell", async () => {
+  const workerUrl = new URL(`../dist/server/index.js?${Date.now()}`, import.meta.url);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(new Request("http://localhost/requests"), {
+    ASSETS: { fetch: async request => new URL(request.url).pathname === "/index.html" ? new Response("APP") : new Response("Not found", { status: 404 }) },
+  });
+  assert.equal(await response.text(), "APP");
+});
