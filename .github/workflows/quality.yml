@@ -31,6 +31,8 @@ jobs:
         run: |
           cmp app.js web/app.js
           cmp intelligence.js web/intelligence.js
+          cmp internal-supplies.js web/internal-supplies.js
+          cmp internal-supplies.css web/internal-supplies.css
           cmp styles.css web/styles.css
           cmp service-worker.js web/service-worker.js
           cmp help-center.js web/help-center.js

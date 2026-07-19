@@ -17,6 +17,8 @@ test("build contains the official complete app", async () => {
   assert.match(html, /intelligence\.css/);
   assert.match(html, /production-receipts\.js/);
   assert.match(html, /production-receipts\.css/);
+  assert.match(html, /internal-supplies\.js/);
+  assert.match(html, /internal-supplies\.css/);
   assert.match(js, /admin_prepare_request/);
   assert.match(js, /admin_complete_request/);
   assert.match(js, /update_own_pending_request/);
@@ -55,7 +57,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v25-6/);
+  assert.match(worker, /harmony-store-v25-7/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);
@@ -82,6 +84,8 @@ test("build contains the official complete app", async () => {
   await access(new URL("../dist/client/intelligence.css", import.meta.url));
   await access(new URL("../dist/client/production-receipts.js", import.meta.url));
   await access(new URL("../dist/client/production-receipts.css", import.meta.url));
+  await access(new URL("../dist/client/internal-supplies.js", import.meta.url));
+  await access(new URL("../dist/client/internal-supplies.css", import.meta.url));
   const intelligence = await readFile(new URL("../dist/client/intelligence.js", import.meta.url), "utf8");
   assert.match(intelligence, /inteligência de consumo/i);
   assert.match(intelligence, /admin_receive_purchase_order/);
@@ -102,6 +106,15 @@ test("build contains the official complete app", async () => {
   assert.match(production, /canSeePaymentValues/);
   assert.match(productionCss, /@media\(max-width:700px\)/);
   assert.match(productionCss, /@media print/);
+  const internalSupplies = await readFile(new URL("../dist/client/internal-supplies.js", import.meta.url), "utf8");
+  const internalSuppliesCss = await readFile(new URL("../dist/client/internal-supplies.css", import.meta.url), "utf8");
+  assert.match(internalSupplies, /Suprimentos e Compras/);
+  assert.match(internalSupplies, /Registrar compra direta/);
+  assert.match(internalSupplies, /Anexar cupom da compra/);
+  assert.match(internalSupplies, /Preço anterior/);
+  assert.match(internalSupplies, /variationPct/);
+  assert.match(internalSuppliesCss, /price-history-table/);
+  assert.match(internalSuppliesCss, /@media\(max-width:720px\)/);
   const pushFunction = await readFile(new URL("../supabase/functions/send-push/index.ts", import.meta.url), "utf8");
   assert.match(pushFunction, /Harmony Store • Nova solicitação/);
   assert.match(pushFunction, /notification-badge\.svg/);

@@ -94,6 +94,34 @@ O campo `products.hidden_from_collaborators` controla apenas a composição de n
 
 Coletas de produção são corrigidas pela operação transacional `update_finished_production_collection`. Os perfis `admin` e `receiver` podem corrigir qualquer coleta ainda não paga. Se a coleta pertence a um fechamento com status `closed`, a função mantém `worker_id`, `received_on` e `closing_id`, substitui atomicamente os itens, recalcula `total_quantity` e `total_amount` de toda a semana e grava `production.collection_reopened_updated` na auditoria. Fechamentos `paid` são imutáveis para impedir alteração retroativa de pagamentos.
 
+### Suprimentos internos e leitura de cupom
+
+```mermaid
+sequenceDiagram
+  participant R as Recebimento
+  participant A as ADM
+  participant P as PWA
+  participant S as Storage privado
+  participant E as Edge Function
+  participant O as OpenAI API
+  participant D as Postgres/RPC
+  R->>D: Solicita uma lista de itens sem quantidades
+  A->>P: Abre a solicitação e fotografa o cupom
+  P->>S: Envia imagem para pasta do próprio ADM
+  P->>E: Solicita leitura autenticada
+  E->>E: Revalida JWT, perfil ativo e limite por hora
+  E->>O: Envia imagem com esquema estruturado
+  O-->>P: Dados extraídos para revisão
+  A->>D: Confirma itens revisados em uma RPC atômica
+  D->>D: Registra cupom, estoque, preços, fornecedor e auditoria
+```
+
+`products.usage_scope='internal'` separa o catálogo interno dos catálogos de produção e e-commerce. `internal_supply_requests` e seus itens não armazenam quantidade solicitada pelo usuário; o valor técnico padrão é 1 e significa apenas “item necessário”. O cupom é a fonte das quantidades e dos valores efetivamente comprados.
+
+Fotos ficam no bucket privado `internal-receipts`. A chave da OpenAI existe apenas como segredo da Edge Function `analyze-internal-receipt`; ela nunca é enviada ao navegador. Somente ADM ativo pode executar a leitura e confirmar compras. O perfil Recebimento acessa solicitações e catálogo, mas RLS bloqueia cupons, itens financeiros, custos de IA e relatórios de valores.
+
+A confirmação usa `confirm_internal_purchase_receipt` para gravar a compra, aumentar o estoque, atualizar custo/fornecedor e concluir parcial ou totalmente a solicitação dentro de uma única transação. Compras diretas usam `request_id=null` e não fabricam solicitações. O histórico de itens do cupom é imutável; cancelamento administrativo preserva o registro, estorna o estoque e grava auditoria.
+
 ## Componentes versionados
 
 - `web/`: fonte estática publicada.
