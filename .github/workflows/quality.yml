@@ -36,4 +36,4 @@ jobs:
       - name: Bloquear segredos conhecidos no repositório
         shell: bash
         run: |
-          ! git grep -nE 'sb_secret_[A-Za-z0-9_-]{20,}|SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]|BACKUP_ENCRYPTION_PASSWORD=[^[:space:]]' -- ':!*.md' ':!tests/**'
+          ! git grep -nE 'sb_secret_[A-Za-z0-9_-]{20,}|SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]|BACKUP_ENCRYPTION_PASSWORD=[^[:space:]]' -- ':!*.md' ':!tests/**' ':!.github/workflows/quality.yml'
