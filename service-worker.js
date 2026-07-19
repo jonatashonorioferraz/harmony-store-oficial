@@ -1,4 +1,4 @@
-const CACHE='harmony-store-v22';
+const CACHE='harmony-store-v23';
 const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./app.js','./pwa.js','./daily-messages.js','./enhancements.js','./intelligence.js','./production-receipts.js','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./app-icon-master.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png','./notification-badge.svg'];
 
 self.addEventListener('install',event=>{
