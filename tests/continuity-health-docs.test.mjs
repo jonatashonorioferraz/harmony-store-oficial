@@ -16,6 +16,8 @@ const performanceMigration = await readFile(new URL('../supabase/migrations/2026
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
 
 test('CI validates the complete build, test suite and synchronized official files', () => {
+  assert.match(quality, /actions\/checkout@v7/);
+  assert.match(quality, /actions\/setup-node@v7/);
   assert.match(quality, /npm ci --ignore-scripts/);
   assert.match(quality, /npm test/);
   assert.match(quality, /cmp app\.js web\/app\.js/);
@@ -24,7 +26,13 @@ test('CI validates the complete build, test suite and synchronized official file
 
 test('daily backup exports data, Auth and Storage before encryption', () => {
   assert.match(backup, /cron: '17 3 \* \* \*'/);
+  assert.match(backup, /actions\/checkout@v7/);
+  assert.match(backup, /actions\/setup-node@v7/);
+  assert.match(backup, /actions\/upload-artifact@v7/);
   assert.match(backup, /aes-256-cbc/);
+  assert.match(backup, /openssl enc -d -aes-256-cbc/);
+  assert.match(backup, /restore-api-backup\.mjs restore-drill\/current/);
+  assert.ok(backup.indexOf('restore-api-backup.mjs restore-drill/current') < backup.indexOf('actions/upload-artifact@v7'));
   assert.match(backup, /retention-days: 30/);
   assert.match(backup, /record-backup-result\.mjs/);
   assert.match(backup, /if: failure\(\)/);
@@ -34,6 +42,8 @@ test('daily backup exports data, Auth and Storage before encryption', () => {
 });
 
 test('version tags generate a validated automatic changelog release', () => {
+  assert.match(release, /actions\/checkout@v7/);
+  assert.match(release, /actions\/setup-node@v7/);
   assert.match(release, /tags: \['v\*'\]/);
   assert.match(release, /--generate-notes/);
   assert.match(release, /grep -F "\[\$VERSION\]" CHANGELOG\.md/);

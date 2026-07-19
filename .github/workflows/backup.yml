@@ -22,8 +22,8 @@ jobs:
       BACKUP_ENCRYPTION_PASSWORD: ${{ secrets.BACKUP_ENCRYPTION_PASSWORD }}
       BACKUP_DIR: backups/current
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Validar configuração protegida
@@ -38,7 +38,16 @@ jobs:
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in harmony-backup.tar.gz -out harmony-backup.tar.gz.enc -pass env:BACKUP_ENCRYPTION_PASSWORD
           sha256sum harmony-backup.tar.gz.enc > harmony-backup.tar.gz.enc.sha256
           rm harmony-backup.tar.gz
-      - uses: actions/upload-artifact@v4
+      - name: Ensaiar descriptografia e recuperação segura
+        run: |
+          umask 077
+          trap 'rm -rf restore-drill restore-drill.tar.gz' EXIT
+          mkdir restore-drill
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in harmony-backup.tar.gz.enc -out restore-drill.tar.gz -pass env:BACKUP_ENCRYPTION_PASSWORD
+          tar -C restore-drill -xzf restore-drill.tar.gz
+          node scripts/verify-api-backup.mjs restore-drill/current
+          node scripts/restore-api-backup.mjs restore-drill/current
+      - uses: actions/upload-artifact@v7
         with:
           name: harmony-backup-${{ github.run_id }}
           path: |

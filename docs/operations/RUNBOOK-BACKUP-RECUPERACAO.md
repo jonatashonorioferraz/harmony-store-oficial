@@ -15,8 +15,12 @@ O plano gratuito do Supabase não oferece backups agendados do banco. Esta rotin
 3. Gera manifesto com contagens, migrations e SHA-256 de cada arquivo.
 4. Revalida todos os hashes.
 5. Compacta e criptografa com AES-256-CBC/PBKDF2.
-6. Registra apenas status, tamanho, hash e estatísticas no Supabase.
-7. Guarda o artefato criptografado por 30 dias.
+6. Descriptografa uma cópia temporária, revalida os hashes e executa o ensaio de recuperação em modo somente leitura.
+7. Apaga imediatamente a cópia descriptografada do ambiente temporário.
+8. Guarda somente o artefato criptografado por 30 dias.
+9. Registra apenas status, tamanho, hash e estatísticas no Supabase.
+
+O workflow só considera um backup válido depois que a descriptografia e o ensaio de recuperação terminam com sucesso. O ensaio nunca grava na produção e não restaura dados sobre o projeto ativo.
 
 Segredos exigidos no repositório: `SUPABASE_BACKUP_SECRET_KEY`, uma chave `sb_secret_` exclusiva e revogável, e `BACKUP_ENCRYPTION_PASSWORD`, uma senha longa exclusiva. Nunca cole esses valores em arquivos, issues, logs ou commits.
 
