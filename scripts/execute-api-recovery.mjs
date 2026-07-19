@@ -14,6 +14,7 @@ const tables = [
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
   'purchase_orders', 'purchase_order_items', 'finished_product_models',
   'production_weekly_closings', 'finished_production_receipts',
+  'improvement_ideas', 'improvement_idea_events',
 ];
 const generatedColumns = {
   requests: ['protocol'],
@@ -21,6 +22,7 @@ const generatedColumns = {
   purchase_orders: ['protocol'],
   production_weekly_closings: ['protocol', 'week_end'],
   finished_production_receipts: ['protocol', 'quantity_difference'],
+  improvement_ideas: ['protocol'],
 };
 
 if (!process.argv[2] && !process.env.BACKUP_DIR) throw new Error('Informe a pasta descriptografada do backup.');

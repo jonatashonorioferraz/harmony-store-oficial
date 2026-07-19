@@ -55,6 +55,22 @@ sequenceDiagram
   A->>D: Marca pagamento
 ```
 
+```mermaid
+sequenceDiagram
+  participant M as ADM
+  participant A as Aplicativo
+  participant D as Banco com RLS
+  participant S as Storage privado
+  M->>A: Registra uma ideia
+  A->>S: Envia imagem opcional
+  A->>D: Salva ideia
+  D->>D: Registra histórico e auditoria
+  M->>A: Preparar para o Codex
+  A-->>M: Texto estruturado copiado
+```
+
+As tabelas `improvement_ideas` e `improvement_idea_events` e o bucket privado `idea-attachments` são exclusivos de administradores. O autor original não pode ser substituído, exclusões não são concedidas e cada alteração gera histórico automático. Preparar uma ideia apenas organiza e copia o texto; não autoriza nem executa mudanças no sistema.
+
 ## Componentes versionados
 
 - `web/`: fonte estática publicada.

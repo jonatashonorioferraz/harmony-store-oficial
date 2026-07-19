@@ -1,6 +1,6 @@
 {
   "name": "harmony-store-oficial",
-  "version": "25.1.0",
+  "version": "25.2.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"

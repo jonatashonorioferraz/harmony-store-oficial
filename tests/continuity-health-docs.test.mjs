@@ -43,6 +43,8 @@ test('daily backup exports data, Auth and Storage before encryption', () => {
   assert.match(backup, /if: failure\(\)/);
   assert.match(createBackup, /auth\/v1\/admin\/users/);
   assert.match(createBackup, /storage\/v1\/object\/list/);
+  assert.match(createBackup, /'improvement_ideas', 'improvement_idea_events'/);
+  assert.match(recoveryScript, /'improvement_ideas', 'improvement_idea_events'/);
   assert.match(verifyBackup, /Falha de integridade/);
 });
 
@@ -94,6 +96,7 @@ test('help center offers contextual, module and technical documentation', () => 
   assert.match(help, /MANUAL HARMONY/);
   assert.match(help, /DOCUMENTAÇÃO TÉCNICA/);
   assert.match(help, /Histórico de versões/);
+  assert.match(help, /Ideias e Evolução/);
   assert.match(index, /help-center\.js/);
   assert.match(index, /system-health\.js/);
 });

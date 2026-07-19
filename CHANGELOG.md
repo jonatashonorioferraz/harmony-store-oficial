@@ -5,6 +5,25 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.2] — 19/07/2026
+
+### Adicionado
+
+- Aba administrativa **Ideias e Evolução**, com cadastro, busca, prioridades, status, histórico automático e imagem privada opcional.
+- Botão **Preparar para o Codex**, que transforma cada proposta em uma solicitação estruturada para análise de impacto, segurança, banco, celular, riscos e plano por fases.
+- Fotos dos produtos na conferência e separação das solicitações, com ampliação ao toque e apresentação responsiva no celular.
+
+### Segurança e continuidade
+
+- Acesso às ideias, histórico e anexos limitado a ADMs ativos por RLS e privilégios explícitos.
+- Exclusão de ideias não concedida; o status **Descartada** preserva decisões e auditoria.
+- Novas tabelas e imagens incluídas no backup criptografado e no ensaio de recuperação.
+
+### Validação
+
+- Banco validado com criação, alteração, histórico e auditoria em transação revertida, sem dados residuais.
+- Build, segurança estática, responsividade e geração do texto para o Codex cobertos pela suíte automatizada.
+
 ## [v25.1] — 19/07/2026
 
 ### Melhorado

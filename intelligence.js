@@ -1,5 +1,5 @@
 (()=>{
-const BI={loaded:false,loading:false,error:'',items:[],suppliers:[],supplierProducts:[],orders:[],orderItems:[],tab:'overview',period:'month',from:'',to:'',profileId:'',productId:''};
+const BI={loaded:false,loading:false,error:'',items:[],suppliers:[],supplierProducts:[],orders:[],orderItems:[],ideas:[],ideaEvents:[],tab:'overview',period:'month',from:'',to:'',profileId:'',productId:'',ideaQuery:'',ideaStatus:''};
 const n=value=>Number(value||0);
 const round=value=>Math.round((n(value)+Number.EPSILON)*1000)/1000;
 const qty=(value,unit='')=>`${round(value).toLocaleString('pt-BR',{maximumFractionDigits:3})}${unit?' '+unit:''}`;
@@ -8,6 +8,9 @@ const dateOnly=value=>new Date(value).toISOString().slice(0,10);
 const addDays=(date,days)=>{const result=new Date(date);result.setDate(result.getDate()+days);return result};
 const startOfDay=value=>new Date(`${value}T00:00:00`);
 const endOfDay=value=>new Date(`${value}T23:59:59.999`);
+const ideaStatusLabels={new:'Nova',analysis:'Em análise',approved:'Aprovada',development:'Em desenvolvimento',completed:'Concluída',discarded:'Descartada'};
+const ideaPriorityLabels={low:'Baixa',medium:'Média',high:'Alta'};
+const ideaAreaLabels={geral:'Geral',solicitacoes:'Solicitações',produtos:'Produtos',producao:'Produção',pagamentos:'Pagamentos',relatorios:'Relatórios',usuarios:'Usuários',inteligencia:'Inteligência',outro:'Outro'};
 
 function setDefaultPeriod(period=BI.period){
   const today=new Date();let from;
@@ -22,14 +25,16 @@ async function loadIntelligence(force=false){
   if(BI.loading||BI.loaded&&!force)return;
   BI.loading=true;BI.error='';
   try{
-    const [items,suppliers,supplierProducts,orders,orderItems]=await Promise.all([
+    const [items,suppliers,supplierProducts,orders,orderItems,ideas,ideaEvents]=await Promise.all([
       rest('request_items?select=*'),
       rest('suppliers?select=*&order=name.asc'),
       rest('supplier_products?select=*&order=created_at.desc'),
       rest('purchase_orders?select=*&order=created_at.desc'),
-      rest('purchase_order_items?select=*')
+      rest('purchase_order_items?select=*'),
+      rest('improvement_ideas?select=*&order=updated_at.desc'),
+      rest('improvement_idea_events?select=*&order=created_at.desc')
     ]);
-    Object.assign(BI,{items,suppliers,supplierProducts,orders,orderItems,loaded:true});
+    Object.assign(BI,{items,suppliers,supplierProducts,orders,orderItems,ideas,ideaEvents,loaded:true});
   }catch(error){BI.error=error.message||'Não foi possível carregar a inteligência de consumo.'}
   finally{BI.loading=false}
 }
@@ -119,7 +124,7 @@ function filterBar(){
   return `<section class="intel-filters card"><label>Período<select id="intelPeriod"><option value="week" ${BI.period==='week'?'selected':''}>Últimos 7 dias</option><option value="month" ${BI.period==='month'?'selected':''}>Mês atual</option><option value="year" ${BI.period==='year'?'selected':''}>Ano atual</option><option value="custom" ${BI.period==='custom'?'selected':''}>Personalizado</option></select></label><label>De<input id="intelFrom" type="date" value="${BI.from}"></label><label>Até<input id="intelTo" type="date" value="${BI.to}"></label><label>Colaboradora<select id="intelPerson"><option value="">Todas</option>${S.team.filter(person=>person.role!=='admin').map(person=>`<option value="${person.id}" ${BI.profileId===person.id?'selected':''}>${esc(person.full_name)}</option>`).join('')}</select></label><label>Matéria-prima<select id="intelProduct"><option value="">Todas</option>${S.products.map(product=>`<option value="${product.id}" ${BI.productId===product.id?'selected':''}>${esc(product.name)}</option>`).join('')}</select></label><button class="outline compact-action" id="applyIntel">Aplicar filtros</button></section>`;
 }
 
-function tabBar(){return `<div class="intel-tabs"><button data-intel-tab="overview" class="${BI.tab==='overview'?'active':''}">Visão geral</button><button data-intel-tab="people" class="${BI.tab==='people'?'active':''}">Colaboradoras</button><button data-intel-tab="materials" class="${BI.tab==='materials'?'active':''}">Matérias-primas</button><button data-intel-tab="suppliers" class="${BI.tab==='suppliers'?'active':''}">Fornecedores</button><button data-intel-tab="purchases" class="${BI.tab==='purchases'?'active':''}">Compras</button></div>`}
+function tabBar(){return `<div class="intel-tabs"><button data-intel-tab="overview" class="${BI.tab==='overview'?'active':''}">Visão geral</button><button data-intel-tab="people" class="${BI.tab==='people'?'active':''}">Colaboradoras</button><button data-intel-tab="materials" class="${BI.tab==='materials'?'active':''}">Matérias-primas</button><button data-intel-tab="suppliers" class="${BI.tab==='suppliers'?'active':''}">Fornecedores</button><button data-intel-tab="purchases" class="${BI.tab==='purchases'?'active':''}">Compras</button><button data-intel-tab="ideas" class="${BI.tab==='ideas'?'active':''}">💡 Ideias e Evolução</button></div>`}
 
 function overviewView(){
   const rows=filteredRows(),materials=materialReport(rows),requestCount=new Set(rows.map(row=>row.request.id)).size,deliveredCount=new Set(rows.filter(row=>row.request.status==='delivered').map(row=>row.request.id)).size;
@@ -150,6 +155,128 @@ function purchasesView(){
   return `<section class="card intel-section"><div class="card-head"><div><p class="eyebrow">COMPRAS</p><h2>Pedidos aos fornecedores</h2></div><button class="primary" id="newPurchase">＋ Novo pedido</button></div><div class="purchase-list">${BI.orders.map(order=>{const supplier=BI.suppliers.find(item=>item.id===order.supplier_id),items=BI.orderItems.filter(item=>item.purchase_order_id===order.id);return `<article><div><small>PEDIDO</small><b>#${String(order.protocol).padStart(4,'0')}</b></div><div><strong>${esc(supplier?.name||'Fornecedor')}</strong><small>${items.length} materiais · ${currency(order.total_value)}</small></div><div><small>PREVISÃO</small><b>${order.expected_at?new Date(order.expected_at).toLocaleDateString('pt-BR'):'Não definida'}</b></div><span class="badge purchase-${order.status}">${labels[order.status]||order.status}</span><div class="actions">${order.status==='draft'?`<button class="outline compact-action" data-order-purchase="${order.id}">Enviar pedido</button>`:''}${order.status==='ordered'?`<button class="primary compact-action" data-receive-purchase="${order.id}">Confirmar recebimento</button>`:''}${['draft','ordered'].includes(order.status)?`<button class="danger compact-action" data-cancel-purchase="${order.id}">Cancelar</button>`:''}</div></article>`}).join('')||'<div class="empty">Nenhum pedido de compra registrado.</div>'}</div></section>`;
 }
 
+function ideaAuthor(idea){return S.team.find(person=>person.id===idea.created_by)?.full_name||'Administradora'}
+function ideaEventText(event){
+  if(event.event_type==='created')return'Ideia criada';
+  if(event.event_type==='status_changed')return`Status alterado de ${ideaStatusLabels[event.from_status]||event.from_status||'—'} para ${ideaStatusLabels[event.to_status]||event.to_status}`;
+  return'Informações atualizadas';
+}
+function buildIdeaPrompt(idea){
+  return `Analise esta proposta de melhoria para o Harmony Store. Verifique impacto nas funcionalidades existentes, segurança, banco de dados, experiência no celular, riscos e apresente um plano antes de implementar.
+
+IDEIA #${String(idea.protocol).padStart(4,'0')} — ${idea.title}
+Área: ${ideaAreaLabels[idea.area]||idea.area}
+Prioridade: ${ideaPriorityLabels[idea.priority]||idea.priority}
+Status atual: ${ideaStatusLabels[idea.status]||idea.status}
+
+Descrição:
+${idea.description}
+
+Problema que pretende resolver:
+${idea.problem||'Não informado.'}
+
+Observações da análise:
+${idea.review_notes||'Nenhuma observação registrada.'}
+
+Antes de qualquer alteração:
+1. Preserve todas as funcionalidades e regras que já estão corretas.
+2. Avalie arquitetura, Supabase, permissões, segurança, desempenho e responsividade.
+3. Liste benefícios, riscos e possíveis efeitos sobre outros módulos.
+4. Apresente um plano por fases e os testes necessários.
+5. Só implemente depois da aprovação do plano.`;
+}
+
+function ideasView(){
+  return `<section class="idea-hero card"><div><p class="eyebrow">LABORATÓRIO HARMONY</p><h2>Ideias e Evolução</h2><p>Registre melhorias, acompanhe decisões e prepare cada proposta para uma análise organizada no Codex.</p></div><button class="primary" id="newIdea">＋ Registrar ideia</button></section><section class="idea-toolbar card"><label><span>Buscar</span><input id="ideaSearch" type="search" placeholder="Título, descrição, área ou autora" value="${esc(BI.ideaQuery)}"></label><label><span>Status</span><select id="ideaStatus"><option value="">Todos</option>${Object.entries(ideaStatusLabels).map(([value,label])=>`<option value="${value}" ${BI.ideaStatus===value?'selected':''}>${label}</option>`).join('')}</select></label><small id="ideaResultCount" aria-live="polite"></small></section><div class="idea-grid">${BI.ideas.map(idea=>`<article class="card idea-card" data-idea-card="${idea.id}" data-idea-status="${idea.status}"><div class="idea-card-top"><span class="idea-number">#${String(idea.protocol).padStart(4,'0')}</span><div><span class="badge idea-status-${idea.status}">${ideaStatusLabels[idea.status]||idea.status}</span><span class="badge idea-priority-${idea.priority}">${ideaPriorityLabels[idea.priority]||idea.priority}</span></div></div><small>${esc(ideaAreaLabels[idea.area]||idea.area)} · ${esc(ideaAuthor(idea))}</small><h3>${esc(idea.title)}</h3><p>${esc(idea.description)}</p>${idea.attachment_path?'<span class="idea-attachment-label">📎 Imagem anexada</span>':''}<footer><time>${fmt(idea.updated_at)}</time><div class="actions"><button class="ghost compact-action" data-view-idea="${idea.id}">Visualizar</button><button class="outline compact-action" data-edit-idea="${idea.id}">Editar</button><button class="primary compact-action" data-prepare-idea="${idea.id}">Preparar para o Codex</button></div></footer></article>`).join('')||'<div class="empty card">Nenhuma ideia registrada. Use este espaço para construir as próximas evoluções do aplicativo.</div>'}</div>`;
+}
+
+function filterIdeaCards(){
+  const input=document.querySelector('#ideaSearch'),select=document.querySelector('#ideaStatus'),count=document.querySelector('#ideaResultCount');
+  if(!input||!select||!count)return;
+  BI.ideaQuery=input.value;BI.ideaStatus=select.value;
+  const term=String(input.value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();let visible=0;
+  document.querySelectorAll('[data-idea-card]').forEach(card=>{
+    const text=String(card.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    card.hidden=Boolean(term&&!text.includes(term)||select.value&&card.dataset.ideaStatus!==select.value);
+    if(!card.hidden)visible++;
+  });
+  count.textContent=`${visible} ${visible===1?'ideia':'ideias'}`;
+}
+
+async function uploadIdeaAttachment(file){
+  if(!file)return'';
+  const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'},extension=types[file.type];
+  if(!extension)throw Error('Envie uma imagem JPG, PNG ou WEBP.');
+  if(file.size>3145728)throw Error('A imagem deve ter no máximo 3 MB.');
+  const token=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const path=`${S.profile.id}/${token}.${extension}`;
+  const response=await storageFetch('/storage/v1/object/idea-attachments/'+encodedStoragePath(path),{method:'POST',headers:{'Content-Type':file.type,'x-upsert':'false'},body:file});
+  if(!response.ok)throw Error('Não foi possível enviar a imagem da ideia.');
+  return path;
+}
+
+async function deleteIdeaAttachment(path){
+  if(!path)return;
+  const response=await storageFetch('/storage/v1/object/idea-attachments/'+encodedStoragePath(path),{method:'DELETE'});
+  if(!response.ok)throw Error('Não foi possível remover a imagem anterior.');
+}
+
+async function openIdeaAttachment(path,title){
+  try{
+    const response=await storageFetch('/storage/v1/object/authenticated/idea-attachments/'+encodedStoragePath(path));
+    if(!response.ok)throw Error('Não foi possível abrir a imagem.');
+    const url=URL.createObjectURL(await response.blob()),viewer=document.createElement('div');
+    viewer.className='photo-lightbox';viewer.innerHTML=`<button type="button" aria-label="Fechar imagem">×</button><img src="${esc(url)}" alt="Anexo da ideia ${esc(title)}"><small>${esc(title)}</small>`;
+    document.querySelector('#modal .modal')?.appendChild(viewer);
+    viewer.querySelector('button').onclick=()=>{URL.revokeObjectURL(url);viewer.remove()};
+    viewer.onclick=event=>{if(event.target===viewer){URL.revokeObjectURL(url);viewer.remove()}};
+  }catch(error){alert(error.message)}
+}
+
+function ideaModal(idea={}){
+  const editing=Boolean(idea.id);
+  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box large" id="ideaForm"><div class="modal-head"><div><p class="eyebrow">IDEIAS E EVOLUÇÃO</p><h2>${editing?'Editar ideia':'Registrar nova ideia'}</h2></div><button type="button" data-intel-close>×</button></div><div class="form idea-form"><label class="wide">Título da ideia<input name="title" maxlength="120" value="${esc(idea.title||'')}" placeholder="Ex.: Mostrar foto na separação do material" required></label><label>Área<select name="area">${Object.entries(ideaAreaLabels).map(([value,label])=>`<option value="${value}" ${(idea.area||'geral')===value?'selected':''}>${label}</option>`).join('')}</select></label><label>Prioridade<select name="priority">${Object.entries(ideaPriorityLabels).map(([value,label])=>`<option value="${value}" ${(idea.priority||'medium')===value?'selected':''}>${label}</option>`).join('')}</select></label>${editing?`<label>Status<select name="status">${Object.entries(ideaStatusLabels).map(([value,label])=>`<option value="${value}" ${idea.status===value?'selected':''}>${label}</option>`).join('')}</select></label>`:''}<label class="wide">Descrição<textarea name="description" maxlength="5000" placeholder="Explique como a melhoria deve funcionar e para quem ela será útil." required>${esc(idea.description||'')}</textarea></label><label class="wide">Problema que pretende resolver<textarea name="problem" maxlength="3000" placeholder="O que acontece hoje e por que precisa melhorar?">${esc(idea.problem||'')}</textarea></label><label class="wide">Observações da análise<textarea name="review_notes" maxlength="3000" placeholder="Decisões, cuidados, dependências ou motivo da aprovação.">${esc(idea.review_notes||'')}</textarea></label><label class="wide idea-file">Imagem ou print<input name="attachment" type="file" accept="image/jpeg,image/png,image/webp"><small>Opcional · JPG, PNG ou WEBP · máximo de 3 MB</small></label>${idea.attachment_path?`<div class="wide current-idea-attachment"><span>📎 Esta ideia já possui uma imagem.</span><div class="actions"><button type="button" class="ghost" id="viewCurrentIdeaAttachment">Visualizar</button><label class="check"><input name="remove_attachment" type="checkbox">Remover ao salvar</label></div></div>`:''}<div class="form-actions"><button type="button" class="outline" data-intel-close>Cancelar</button><button class="primary">Salvar ideia</button></div></div></form></div>`;
+  modalClose();
+  const view=document.querySelector('#viewCurrentIdeaAttachment');if(view)view.onclick=()=>openIdeaAttachment(idea.attachment_path,idea.title);
+  document.querySelector('#ideaForm').onsubmit=async event=>{
+    event.preventDefault();const button=event.submitter,f=new FormData(event.target),file=event.target.attachment.files[0],remove=f.get('remove_attachment')==='on';let uploaded='';
+    const data={title:String(f.get('title')||'').trim(),description:String(f.get('description')||'').trim(),problem:String(f.get('problem')||'').trim()||null,area:f.get('area'),priority:f.get('priority'),status:editing?f.get('status'):'new',review_notes:String(f.get('review_notes')||'').trim()||null,attachment_path:remove?null:idea.attachment_path||null};
+    if(data.title.length<3||data.description.length<10)return alert('Informe um título e descreva a ideia com pelo menos 10 caracteres.');
+    button.disabled=true;
+    try{
+      if(file){uploaded=await uploadIdeaAttachment(file);data.attachment_path=uploaded}
+      if(!editing)data.created_by=S.profile.id;
+      await rest(editing?'improvement_ideas?id=eq.'+idea.id:'improvement_ideas',{method:editing?'PATCH':'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(data)});
+      if(idea.attachment_path&&(remove||uploaded))await deleteIdeaAttachment(idea.attachment_path).catch(()=>{});
+      await refreshIntelligence(editing?'Ideia atualizada.':'Ideia registrada.');
+    }catch(error){if(uploaded)await deleteIdeaAttachment(uploaded).catch(()=>{});alert(error.message);button.disabled=false}
+  };
+}
+
+function ideaDetailModal(idea){
+  const events=BI.ideaEvents.filter(event=>event.idea_id===idea.id);
+  document.querySelector('#modal').innerHTML=`<div class="modal"><div class="modal-box large"><div class="modal-head"><div><p class="eyebrow">IDEIA #${String(idea.protocol).padStart(4,'0')}</p><h2>${esc(idea.title)}</h2></div><button type="button" data-intel-close>×</button></div><div class="idea-detail"><section><div class="idea-detail-badges"><span class="badge idea-status-${idea.status}">${ideaStatusLabels[idea.status]}</span><span class="badge idea-priority-${idea.priority}">Prioridade ${ideaPriorityLabels[idea.priority]}</span><span>${esc(ideaAreaLabels[idea.area])}</span></div><h3>Como deve funcionar</h3><p>${esc(idea.description)}</p><h3>Problema que pretende resolver</h3><p>${esc(idea.problem||'Não informado.')}</p><h3>Observações da análise</h3><p>${esc(idea.review_notes||'Nenhuma observação registrada.')}</p>${idea.attachment_path?'<button class="outline" id="viewIdeaAttachment">📎 Visualizar imagem anexada</button>':''}<div class="actions idea-detail-actions"><button class="outline" id="editIdeaFromDetail">Editar ideia</button><button class="primary" id="prepareIdeaFromDetail">Preparar para o Codex</button></div></section><aside class="idea-history"><p class="eyebrow">HISTÓRICO</p>${events.map(event=>`<article><i></i><div><b>${esc(ideaEventText(event))}</b><small>${esc(S.team.find(person=>person.id===event.actor_id)?.full_name||'Sistema')} · ${fmt(event.created_at)}</small>${event.note?`<p>${esc(event.note)}</p>`:''}</div></article>`).join('')||'<div class="empty">Nenhum evento registrado.</div>'}</aside></div></div></div>`;
+  modalClose();
+  const attachment=document.querySelector('#viewIdeaAttachment');if(attachment)attachment.onclick=()=>openIdeaAttachment(idea.attachment_path,idea.title);
+  document.querySelector('#editIdeaFromDetail').onclick=()=>ideaModal(idea);
+  document.querySelector('#prepareIdeaFromDetail').onclick=()=>prepareIdeaModal(idea);
+}
+
+async function copyIdeaPrompt(text){
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return}
+  const area=document.querySelector('#codexIdeaPrompt');area.focus();area.select();document.execCommand('copy');
+}
+
+function prepareIdeaModal(idea){
+  const prompt=buildIdeaPrompt(idea);
+  document.querySelector('#modal').innerHTML=`<div class="modal"><div class="modal-box codex-preparation"><div class="modal-head"><div><p class="eyebrow">PRONTO PARA ANÁLISE</p><h2>Ideia preparada para o Codex</h2></div><button type="button" data-intel-close>×</button></div><p>O texto abaixo reúne a ideia, os cuidados do projeto e o pedido de planejamento antes da implementação.</p><textarea id="codexIdeaPrompt" readonly>${esc(prompt)}</textarea><div class="info" id="codexCopyStatus">Copiando o texto para você…</div><div class="form-actions"><button type="button" class="outline" id="copyIdeaPrompt">Copiar novamente</button><button type="button" class="primary" id="openCodex">Abrir o Codex</button></div></div></div>`;
+  modalClose();
+  const copy=async()=>{try{await copyIdeaPrompt(prompt);document.querySelector('#codexCopyStatus').textContent='✓ Texto copiado. Agora é só colar na conversa do Codex.'}catch{document.querySelector('#codexCopyStatus').textContent='Selecione o texto e use a opção Copiar.'}};
+  document.querySelector('#copyIdeaPrompt').onclick=copy;
+  document.querySelector('#openCodex').onclick=()=>window.open('https://chatgpt.com/codex','_blank','noopener,noreferrer');
+  copy();
+}
+
 async function renderIntelligence(){
   const page=document.querySelector('#page');if(!page||S.view!=='intelligence')return;
   page.dataset.intelligence='true';
@@ -157,7 +284,8 @@ async function renderIntelligence(){
   await loadIntelligence();
   if(S.view!=='intelligence')return;
   if(BI.error){page.innerHTML=`<div class="page">${head('INTELIGÊNCIA','Relatórios e planejamento','A nova área está isolada das funções atuais.')}<section class="card intelligence-error"><h2>Atualização do banco necessária</h2><p>Execute primeiro o arquivo <b>008_consumption_intelligence.sql</b> no SQL Editor do Supabase. O restante do aplicativo continua funcionando normalmente.</p><small>${esc(BI.error)}</small></section></div>`;return}
-  page.innerHTML=`<div class="page intelligence-page">${head('INTELIGÊNCIA DE CONSUMO','Dados para decisões melhores','Relatórios de uso, previsão de demanda e planejamento de fornecedores.')} ${tabBar()} ${filterBar()} <div id="intelContent">${BI.tab==='people'?peopleView():BI.tab==='materials'?materialsView():BI.tab==='suppliers'?suppliersView():BI.tab==='purchases'?purchasesView():overviewView()}</div></div>`;
+  const ideas=BI.tab==='ideas';
+  page.innerHTML=`<div class="page intelligence-page">${head(ideas?'INTELIGÊNCIA E EVOLUÇÃO':'INTELIGÊNCIA DE CONSUMO',ideas?'Um espaço para construir o futuro':'Dados para decisões melhores',ideas?'Registre, analise e acompanhe melhorias sem perder nenhuma decisão.':'Relatórios de uso, previsão de demanda e planejamento de fornecedores.')} ${tabBar()} ${ideas?'':filterBar()} <div id="intelContent">${BI.tab==='people'?peopleView():BI.tab==='materials'?materialsView():BI.tab==='suppliers'?suppliersView():BI.tab==='purchases'?purchasesView():ideas?ideasView():overviewView()}</div></div>`;
   bindIntelligence();
 }
 
@@ -165,6 +293,12 @@ function rerender(){const page=document.querySelector('#page');if(page)delete pa
 
 function bindIntelligence(){
   document.querySelectorAll('[data-intel-tab]').forEach(button=>button.onclick=()=>{BI.tab=button.dataset.intelTab;rerender()});
+  const newIdea=document.querySelector('#newIdea');if(newIdea)newIdea.onclick=()=>ideaModal();
+  document.querySelectorAll('[data-view-idea]').forEach(button=>button.onclick=()=>ideaDetailModal(BI.ideas.find(idea=>idea.id===button.dataset.viewIdea)));
+  document.querySelectorAll('[data-edit-idea]').forEach(button=>button.onclick=()=>ideaModal(BI.ideas.find(idea=>idea.id===button.dataset.editIdea)));
+  document.querySelectorAll('[data-prepare-idea]').forEach(button=>button.onclick=()=>prepareIdeaModal(BI.ideas.find(idea=>idea.id===button.dataset.prepareIdea)));
+  const ideaSearch=document.querySelector('#ideaSearch'),ideaStatus=document.querySelector('#ideaStatus');
+  if(ideaSearch){ideaSearch.oninput=filterIdeaCards;ideaStatus.onchange=filterIdeaCards;filterIdeaCards()}
   const apply=document.querySelector('#applyIntel');if(apply)apply.onclick=()=>{const period=document.querySelector('#intelPeriod').value;if(period!=='custom')setDefaultPeriod(period);else{BI.period='custom';BI.from=document.querySelector('#intelFrom').value;BI.to=document.querySelector('#intelTo').value}BI.profileId=document.querySelector('#intelPerson').value;BI.productId=document.querySelector('#intelProduct').value;rerender()};
   document.querySelectorAll('[data-person-detail]').forEach(button=>button.onclick=()=>{BI.profileId=button.dataset.personDetail;BI.tab='overview';rerender()});
   document.querySelectorAll('[data-plan-product]').forEach(button=>button.onclick=()=>productPlanningModal(S.products.find(product=>product.id===button.dataset.planProduct)));
@@ -234,5 +368,5 @@ function ensureIntelligenceNav(){
 
 new MutationObserver(ensureIntelligenceNav).observe(document.body,{childList:true,subtree:true});
 ensureIntelligenceNav();
-window.HarmonyIntelligence=Object.freeze({state:BI,materialReport,collaboratorReport,filteredRows,setDefaultPeriod,productSupplyContext,savePreferredSupplier,linksForSupplier});
+window.HarmonyIntelligence=Object.freeze({state:BI,materialReport,collaboratorReport,filteredRows,setDefaultPeriod,productSupplyContext,savePreferredSupplier,linksForSupplier,buildIdeaPrompt});
 })();
