@@ -75,3 +75,9 @@ Estado atual:
 - Edge Function `manage-user` v10 publicada com JWT obrigatório e erros sanitizados.
 - Build aprovado e suíte ampliada para 51 testes aprovados.
 - Plano, riscos, evidências e rollback documentados em `PLANO-FASE-2B.md`.
+- App v24 publicado no commit `fee27b9` e validado no domínio oficial.
+- Endurecimento final aplicado após a propagação do site, sem janela de quebra.
+- Escrita direta de produtos, estoque e auditoria confirmada como revogada.
+- Fotos de perfil confirmadas como privadas e carregáveis por ADM autenticado.
+- Advisors finais executados; alertas antigos de buckets públicos e índice de
+  auditoria foram eliminados.

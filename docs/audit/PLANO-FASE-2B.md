@@ -48,6 +48,16 @@ um rollback operacional compatível com as versões v23 e v24.
 - Segredo `CPF_HMAC_SECRET` criado no Supabase sem exposição no repositório.
 - Edge Function `manage-user` v10 publicada com verificação JWT e resposta `401`
   confirmada para chamada sem sessão.
+- App v24 publicado pelo GitHub Pages no commit `fee27b9` e confirmado no domínio
+  oficial com RPC transacional, auditoria no servidor e fotos autenticadas.
+- Estágio final aplicado: escrita direta de auditoria/produto/estoque revogada,
+  bucket de perfil privado e políticas públicas de listagem removidas.
+- Smoke test final aprovado após os bloqueios; acesso administrativo às fotos e
+  bloqueio anônimo do endpoint público confirmados.
+- Advisors finais não apontam mais buckets públicos listáveis nem chave estrangeira
+  de auditoria sem índice. Permanecem 34 avisos intencionais de RPCs
+  `SECURITY DEFINER`, cada uma protegida internamente por papel/propriedade, e o
+  aviso de proteção de senhas vazadas dependente de plano do Supabase.
 
 ## Impacto, risco e benefício
 
@@ -66,4 +76,3 @@ O rollback em
 temporariamente os acessos do app v23 e a leitura pública de avatares. As colunas
 e RPCs aditivas são preservadas para que o app v24 continue funcionando durante
 uma recuperação.
-
