@@ -55,7 +55,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v25/);
+  assert.match(worker, /harmony-store-v25-1/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);

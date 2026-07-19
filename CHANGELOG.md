@@ -5,6 +5,20 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.1] — 19/07/2026
+
+### Melhorado
+
+- Busca e filtro por categoria adicionados ao catálogo de produtos da Nova solicitação no celular e no computador.
+- Controles de busca padronizados nas listas de categorias, campos, produção, pagamentos, fornecedores e compras.
+- Layout móvel ajustado para manter busca, filtro e contagem visíveis, sem rolagem horizontal e com alvos de toque de 44 px.
+- Cache do aplicativo instalado atualizado para distribuir a correção automaticamente.
+
+### Validação
+
+- Fluxos de busca por texto e filtro por categoria validados em larguras de 390 px e 360 px.
+- Suíte completa aprovada com 66 testes automatizados.
+
 ## [v25] — 19/07/2026
 
 ### Adicionado

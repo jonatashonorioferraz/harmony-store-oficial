@@ -2,6 +2,8 @@ function normalizeSearch(value){
   return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
 
+const listControlState={};
+
 function addRefreshControl(){
   if(!S?.profile||document.querySelector('#refreshData'))return;
   const actions=document.querySelector('.page-head .head-actions');
@@ -19,15 +21,20 @@ function addRefreshControl(){
   actions.prepend(button);
 }
 
-function createListToolbar({container,items,placeholder,statuses,getStatus}){
-  if(!container||container.previousElementSibling?.classList.contains('list-toolbar'))return;
+function createListToolbar({container,items,placeholder,statuses,getStatus,key=S.view,mountBefore=container,toolbarClass=''}){
+  if(!container||!mountBefore||document.querySelector(`.list-toolbar[data-list-toolbar="${key}"]`))return;
+  const saved=listControlState[key]||{term:'',status:''};
   const toolbar=document.createElement('div');
-  toolbar.className='list-toolbar';
+  toolbar.className=`list-toolbar ${toolbarClass}`.trim();
+  toolbar.dataset.listToolbar=key;
   toolbar.innerHTML=`<label class="list-search"><span>Buscar</span><input type="search" placeholder="${placeholder}" autocomplete="off"></label>${statuses?`<label class="list-status"><span>Filtrar</span><select><option value="">Todos</option>${statuses.map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label>`:''}<small class="result-count" aria-live="polite"></small>`;
-  container.parentNode.insertBefore(toolbar,container);
+  mountBefore.parentNode.insertBefore(toolbar,mountBefore);
   const input=toolbar.querySelector('input'),select=toolbar.querySelector('select'),count=toolbar.querySelector('.result-count');
+  input.value=saved.term||'';
+  if(select)select.value=saved.status||'';
   const filter=()=>{
     const term=normalizeSearch(input.value),status=select?.value||'';
+    listControlState[key]={term:input.value,status};
     let visible=0;
     items.forEach(item=>{
       const matchesText=!term||normalizeSearch(item.textContent).includes(term);
@@ -45,6 +52,14 @@ function createListToolbar({container,items,placeholder,statuses,getStatus}){
 
 function addListControls(){
   if(!S?.profile)return;
+  if(S.view==='new'){
+    const container=document.querySelector('.catalog-layout > .products-grid'),mountBefore=document.querySelector('.catalog-layout');
+    const products=S.products.filter(product=>product.active),items=[...container?.querySelectorAll('.product')||[]];
+    items.forEach((item,index)=>item.dataset.filterCategory=products[index]?.category_id||'uncategorized');
+    const statuses=S.categories.filter(category=>category.active&&products.some(product=>product.category_id===category.id)).map(category=>[category.id,category.name]);
+    if(products.some(product=>!product.category_id))statuses.push(['uncategorized','Sem categoria']);
+    createListToolbar({container,items,placeholder:'Nome, cor, unidade ou descrição',statuses,getStatus:item=>item.dataset.filterCategory,key:'new-products',mountBefore,toolbarClass:'catalog-search-toolbar card'});
+  }
   if(S.view==='requests'){
     const container=document.querySelector('.requests');
     createListToolbar({
@@ -52,7 +67,8 @@ function addListControls(){
       items:[...document.querySelectorAll('.requests article')],
       placeholder:'Protocolo, solicitante ou observação',
       statuses:[['pending','Pendentes'],['separating','Em separação'],['scheduled','Agendadas'],['delivered','Entregues'],['cancelled','Canceladas']],
-      getStatus:item=>[...item.querySelector('.badge')?.classList||[]].find(value=>labels[value])||''
+      getStatus:item=>[...item.querySelector('.badge')?.classList||[]].find(value=>labels[value])||'',
+      key:'requests'
     });
   }
   if(S.view==='products'){
@@ -62,7 +78,8 @@ function addListControls(){
       items:[...document.querySelectorAll('.table article')],
       placeholder:'Nome, unidade ou estoque',
       statuses:[['normal','Estoque normal'],['low','Estoque baixo']],
-      getStatus:item=>item.querySelector('.badge')?.classList.contains('low')?'low':'normal'
+      getStatus:item=>item.querySelector('.badge')?.classList.contains('low')?'low':'normal',
+      key:'products'
     });
   }
   if(S.view==='team'){
@@ -72,8 +89,33 @@ function addListControls(){
       items:[...document.querySelectorAll('.team .person')],
       placeholder:'Nome, login, setor ou Harmony ID',
       statuses:[['active','Ativos'],['inactive','Inativos']],
-      getStatus:item=>item.querySelector('.badge')?.classList.contains('inactive')?'inactive':'active'
+      getStatus:item=>item.querySelector('.badge')?.classList.contains('inactive')?'inactive':'active',
+      key:'team'
     });
+  }
+  if(S.view==='categories'){
+    const container=document.querySelector('.categories'),items=[...container?.querySelectorAll('.tile')||[]];
+    items.forEach((item,index)=>item.dataset.filterStatus=S.categories[index]?.active?'active':'inactive');
+    createListToolbar({container,items,placeholder:'Nome da categoria',statuses:[['active','Ativas'],['inactive','Inativas']],getStatus:item=>item.dataset.filterStatus,key:'categories'});
+  }
+  if(S.view==='fields'){
+    const container=document.querySelector('.fields'),items=[...container?.querySelectorAll('.tile')||[]];
+    items.forEach((item,index)=>item.dataset.filterScope=S.fields[index]?.scope||'product');
+    createListToolbar({container,items,placeholder:'Nome ou tipo do campo',statuses:[['product','Produtos'],['profile','Colaboradoras']],getStatus:item=>item.dataset.filterScope,key:'fields'});
+  }
+  if(S.view==='production'){
+    const receipts=document.querySelector('.receipt-collections');
+    if(receipts)createListToolbar({container:receipts,items:[...receipts.querySelectorAll('.collection-card')],placeholder:'Colaboradora, caixa, modelo ou cor',statuses:[['open','Em aberto'],['closed','Semana fechada']],getStatus:item=>item.querySelector('.production-closed')?'closed':'open',key:'production-receipts'});
+    const models=document.querySelector('.finished-model-grid');
+    if(models)createListToolbar({container:models,items:[...models.querySelectorAll('.finished-model')],placeholder:'Nome, cor ou valor',statuses:[['active','Ativos'],['inactive','Inativos']],getStatus:item=>item.querySelector('.badge')?.classList.contains('inactive')?'inactive':'active',key:'production-models'});
+    const closings=document.querySelector('.closing-list');
+    if(closings)createListToolbar({container:closings,items:[...closings.querySelectorAll('article')],placeholder:'Colaboradora, produção ou pagamento',statuses:[['open','Em aberto'],['closed','Fechados'],['paid','Pagos']],getStatus:item=>item.querySelector('.production-paid')?'paid':item.querySelector('.production-closed')?'closed':'open',key:'production-weeks'});
+  }
+  if(S.view==='intelligence'){
+    const suppliers=document.querySelector('.supplier-grid');
+    if(suppliers)createListToolbar({container:suppliers,items:[...suppliers.querySelectorAll('.supplier-card')],placeholder:'Fornecedor, contato ou material',statuses:[['active','Ativos'],['inactive','Inativos']],getStatus:item=>item.querySelector('.badge')?.classList.contains('inactive')?'inactive':'active',key:'intelligence-suppliers'});
+    const purchases=document.querySelector('.purchase-list');
+    if(purchases)createListToolbar({container:purchases,items:[...purchases.querySelectorAll('article')],placeholder:'Pedido, fornecedor ou previsão',statuses:[['draft','Rascunhos'],['ordered','Enviados'],['received','Recebidos'],['cancelled','Cancelados']],getStatus:item=>[...item.querySelector('.badge')?.classList||[]].find(value=>value.startsWith('purchase-'))?.replace('purchase-','')||'',key:'intelligence-purchases'});
   }
 }
 
