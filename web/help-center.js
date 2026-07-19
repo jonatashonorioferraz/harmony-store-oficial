@@ -32,7 +32,7 @@ function helpNav(){
 }
 function quickHelp(){
   if(!S?.profile||S.view==='help'||document.querySelector('#quickHelp'))return;const actions=document.querySelector('.page-head .head-actions');if(!actions)return;
-  const button=document.createElement('button');button.id='quickHelp';button.className='outline compact-action';button.type='button';button.textContent='? Ajuda';button.onclick=()=>openQuickHelp();actions.appendChild(button);
+  const button=document.createElement('button');button.id='quickHelp';button.className='outline compact-action quick-help-button';button.type='button';button.title='Abrir ajuda desta tela';button.setAttribute('aria-label','Abrir ajuda desta tela');button.innerHTML='<span class="quick-help-icon" aria-hidden="true">💡</span><span>Ajuda</span>';button.onclick=()=>openQuickHelp();actions.appendChild(button);
 }
 function openQuickHelp(){
   const lines=QUICK[S.view]||QUICK.home;
@@ -53,4 +53,3 @@ function technicalModal(){document.querySelector('#modal').innerHTML=`<div class
 const previousRenderPage=renderPage;renderPage=async function(){if(S.view==='help')return renderHelp(document.querySelector('#page'));return previousRenderPage()};
 new MutationObserver(()=>{helpNav();quickHelp()}).observe(document.body,{childList:true,subtree:true});helpNav();quickHelp();
 })();
-
