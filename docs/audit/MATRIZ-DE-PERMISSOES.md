@@ -16,7 +16,9 @@ Legenda: **Sim** = permitido pela regra atual; **Próprio** = somente registros 
 | Ver custos e inteligência de compras | Não | Não | Não | Sim | Sim |
 | Ver modelos acabados | Não | Sim, sem tarifa | Sim, sem tarifa | Sim | Sim |
 | Registrar recebimento de produção | Não | Não | Sim | Sim | Sim |
-| Editar/excluir recebimento aberto | Não | Não | Próprio lançamento | Todos | Todos |
+| Editar recebimento aberto | Não | Não | Todos | Todos | Todos |
+| Reabrir/corrigir recebimento fechado não pago | Não | Não | Todos, sem valores | Todos | Todos |
+| Excluir recebimento aberto | Não | Não | Próprio lançamento | Todos | Todos |
 | Ver produções recebidas | Não | Próprio | Todas, sem valores | Todas | Todas |
 | Ver valor de recebimento ainda aberto | Não | Não | Não | Sim | Sim |
 | Ver pagamentos semanais | Não | Próprio | Valores ocultos | Todos | Todos |

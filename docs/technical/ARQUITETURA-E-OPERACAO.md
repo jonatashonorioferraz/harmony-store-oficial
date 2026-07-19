@@ -92,6 +92,8 @@ sequenceDiagram
 
 O campo `products.hidden_from_collaborators` controla apenas a composição de novas solicitações para o perfil `collaborator`. Os perfis `admin` e `receiver` continuam recebendo o catálogo ativo completo. A gravação passa por `admin_save_product_v2`, que reutiliza a operação transacional de produto/fornecedor e registra separadamente qualquer mudança de visibilidade. Itens já vinculados a solicitações não são apagados.
 
+Coletas de produção são corrigidas pela operação transacional `update_finished_production_collection`. Os perfis `admin` e `receiver` podem corrigir qualquer coleta ainda não paga. Se a coleta pertence a um fechamento com status `closed`, a função mantém `worker_id`, `received_on` e `closing_id`, substitui atomicamente os itens, recalcula `total_quantity` e `total_amount` de toda a semana e grava `production.collection_reopened_updated` na auditoria. Fechamentos `paid` são imutáveis para impedir alteração retroativa de pagamentos.
+
 ## Componentes versionados
 
 - `web/`: fonte estática publicada.

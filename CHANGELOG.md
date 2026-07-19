@@ -5,6 +5,24 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.5] — 19/07/2026
+
+### Adicionado
+
+- Ação **Reabrir e editar** nas coletas de produção já fechadas, disponível para ADM principal, ADM normal e perfil de Recebimento.
+- Inclusão de caixas encontradas posteriormente dentro do recebimento original, mantendo colaboradora e data da coleta.
+- Recálculo automático da contagem oficial e do total semanal quando uma coleta fechada é corrigida.
+
+### Segurança e rastreabilidade
+
+- Pagamentos já marcados como realizados continuam bloqueados contra alterações retroativas.
+- Toda correção registra responsável, quantidade anterior e nova quantidade de itens no histórico de auditoria.
+- O perfil de Recebimento continua sem acesso a valores, mesmo ao reabrir e corrigir a coleta.
+
+### Validação
+
+- Permissões dos quatro perfis, recálculo financeiro, bloqueio após pagamento, responsividade e cache offline cobertos por testes.
+
 ## [v25.4] — 19/07/2026
 
 ### Adicionado
