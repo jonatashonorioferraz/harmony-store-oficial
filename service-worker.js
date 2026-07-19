@@ -1,5 +1,5 @@
-const CACHE='harmony-store-v25-2';
-const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./app.js','./pwa.js','./daily-messages.js','./enhancements.js','./intelligence.js','./production-receipts.js','./help-center.js','./system-health.js','./CHANGELOG.md','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png','./notification-badge.svg'];
+const CACHE='harmony-store-v25-3';
+const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./notifications.css','./app.js','./pwa.js','./daily-messages.js','./enhancements.js','./intelligence.js','./production-receipts.js','./notifications.js','./help-center.js','./system-health.js','./CHANGELOG.md','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png','./notification-badge.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
@@ -30,7 +30,8 @@ self.addEventListener('push',event=>{
     badge:asset(data.badge||'./notification-badge.svg'),
     tag:data.tag||'harmony-notification',
     renotify:true,
-    vibrate:[90,45,90],
+    requireInteraction:data.priority==='urgent',
+    vibrate:data.priority==='urgent'?[180,70,180,70,260]:[90,45,90],
     timestamp:Date.now(),
     actions:[{action:'open',title:'Abrir aplicativo'}],
     data:{url:data.url||'./',event:data.event||'update'}

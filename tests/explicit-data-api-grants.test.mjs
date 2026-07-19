@@ -20,6 +20,10 @@ const systemHealth = await readFile(
   new URL('../supabase/migrations/20260719071000_system_health_and_backup_status.sql', import.meta.url),
   'utf8',
 );
+const adminNotifications = await readFile(
+  new URL('../supabase/migrations/20260719193000_admin_notifications.sql', import.meta.url),
+  'utf8',
+);
 const webDir = new URL('../web/', import.meta.url);
 const webFiles = (await readdir(webDir)).filter(file => file.endsWith('.js'));
 const webSources = await Promise.all(webFiles.map(file => readFile(new URL(file, webDir), 'utf8')));
@@ -45,7 +49,7 @@ test('every statically named RPC used by the web app remains granted', () => {
   for (const match of webSource.matchAll(/\bchangePurchase\('([^']+)'/g)) rpcNames.add(match[1]);
 
   assert.ok(rpcNames.size >= 20, `RPC inventory unexpectedly small: ${rpcNames.size}`);
-  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}`;
+  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}`;
   for (const rpcName of rpcNames) {
     assert.match(
       effectiveGrants,

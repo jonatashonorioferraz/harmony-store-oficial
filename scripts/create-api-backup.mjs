@@ -12,6 +12,7 @@ const tables = [
   'purchase_orders', 'purchase_order_items', 'finished_product_models',
   'production_weekly_closings', 'finished_production_receipts',
   'improvement_ideas', 'improvement_idea_events',
+  'app_notifications', 'app_notification_recipients',
 ];
 
 if (!API || !SECRET) throw new Error('SUPABASE_URL e SUPABASE_SECRET_KEY são obrigatórios.');

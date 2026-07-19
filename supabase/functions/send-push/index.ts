@@ -27,12 +27,61 @@ Deno.serve(async request => {
     const { data: authData, error: authError } = await admin.auth.getUser(token);
     if (authError || !authData.user) return reply({ error: "Sessão inválida." }, 401);
 
-    const { data: caller } = await admin.from("profiles").select("id,role,status,full_name").eq("id", authData.user.id).single();
+    const { data: caller } = await admin.from("profiles").select("id,role,status,full_name,is_primary_admin").eq("id", authData.user.id).single();
     if (!caller || caller.status !== "active") return reply({ error: "Acesso negado." }, 403);
 
     const body = await request.json();
-    const requestId = String(body.request_id || "");
     const event = String(body.event || "");
+    if (event === "admin_message") {
+      if (caller.role !== "admin" || !caller.is_primary_admin) return reply({ error: "Somente o ADM principal pode enviar notificações." }, 403);
+      const notificationId = String(body.notification_id || "");
+      const { data: notification } = await admin.from("app_notifications")
+        .select("id,title,body,priority,due_at")
+        .eq("id", notificationId).single();
+      if (!notification) return reply({ error: "Notificação não localizada." }, 404);
+      const { data: recipientRows } = await admin.from("app_notification_recipients")
+        .select("recipient_id").eq("notification_id", notificationId);
+      const recipients = (recipientRows || []).map(row => row.recipient_id);
+      if (!recipients.length) return reply({ sent: 0, recipients: 0 });
+      const { data: subscriptions } = await admin.from("push_subscriptions")
+        .select("id,endpoint,p256dh,auth").in("user_id", recipients);
+      webpush.setVapidDetails(subject, publicKey, privateKey);
+      const due = notification.due_at
+        ? ` Prazo: ${new Date(notification.due_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}.`
+        : "";
+      const payload = JSON.stringify({
+        title: `${notification.priority === "urgent" ? "🚨 " : "🔔 "}${notification.title}`,
+        body: `${notification.body}${due}`,
+        tag: `admin-message-${notification.id}`,
+        url: "./?view=notifications",
+        icon: "./icon-192-v2.png",
+        badge: "./notification-badge.svg",
+        event,
+        priority: notification.priority,
+      });
+      let sent = 0, failed = 0;
+      await Promise.all((subscriptions || []).map(async subscription => {
+        try {
+          await webpush.sendNotification({
+            endpoint: subscription.endpoint,
+            keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+          }, payload, { TTL: notification.priority === "urgent" ? 172800 : 86400, urgency: notification.priority === "urgent" ? "high" : "normal" });
+          sent++;
+        } catch (error) {
+          failed++;
+          const status = Number((error as { statusCode?: number }).statusCode || 0);
+          if (status === 404 || status === 410) await admin.from("push_subscriptions").delete().eq("id", subscription.id);
+        }
+      }));
+      await admin.from("system_events").insert({
+        source: "notification", level: failed ? "warning" : "info",
+        code: failed ? "admin_push_partial" : "admin_push_sent", actor_id: caller.id,
+        details: { event, notification_id: notification.id, sent, failed, recipients: recipients.length },
+      });
+      return reply({ sent, failed, recipients: recipients.length });
+    }
+
+    const requestId = String(body.request_id || "");
     const { data: materialRequest } = await admin.from("requests")
       .select("id,protocol,status,requested_by,scheduled_for")
       .eq("id", requestId).single();

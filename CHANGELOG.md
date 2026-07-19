@@ -5,6 +5,26 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.3] — 19/07/2026
+
+### Adicionado
+
+- Central de Notificações interna para todas as usuárias, com contador de não lidas, histórico, confirmação de leitura e destaque na tela inicial.
+- Envio individual diretamente no cadastro da colaboradora e envio global para toda a equipe ativa, exclusivos do ADM principal.
+- Modelos rápidos para lembrete de solicitação, aviso de coleta e comunicado geral, com prioridade e prazo opcional.
+- Push personalizado da Harmony Store para avisos administrativos; mensagens urgentes usam destaque, vibração reforçada e permanecem visíveis em aparelhos compatíveis.
+
+### Segurança e continuidade
+
+- Destinatárias são definidas no banco no momento do envio; RLS e RPCs impedem leitura por outras colaboradoras e envio por ADMs sem permissão principal.
+- Envio, público, prioridade e quantidade de destinatárias ficam registrados na auditoria.
+- Tabelas da Central de Notificações incluídas no backup criptografado e no plano de recuperação.
+
+### Validação
+
+- Fluxos global, individual, leitura, contador, responsividade e integração push cobertos pela suíte automatizada.
+- Banco validado com teste transacional e verificações dos consultores de segurança e desempenho.
+
 ## [v25.2] — 19/07/2026
 
 ### Adicionado
