@@ -90,6 +90,8 @@ sequenceDiagram
 
 `app_notifications` guarda o conteúdo imutável do comunicado e `app_notification_recipients` registra a lista de destinatárias e a leitura individual. O envio é exclusivo de `private.is_primary_admin()`. Colaboradoras não recebem privilégios de escrita direta; a confirmação de leitura passa por RPC que atualiza somente a linha de `auth.uid()`. O push complementa, mas não substitui, a mensagem persistente: falhas de permissão, aparelho offline ou assinatura ausente não apagam o aviso interno.
 
+O campo `products.hidden_from_collaborators` controla apenas a composição de novas solicitações para o perfil `collaborator`. Os perfis `admin` e `receiver` continuam recebendo o catálogo ativo completo. A gravação passa por `admin_save_product_v2`, que reutiliza a operação transacional de produto/fornecedor e registra separadamente qualquer mudança de visibilidade. Itens já vinculados a solicitações não são apagados.
+
 ## Componentes versionados
 
 - `web/`: fonte estática publicada.

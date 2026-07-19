@@ -5,6 +5,24 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.4] — 19/07/2026
+
+### Adicionado
+
+- Opção **Ocultar para colaboradoras de produção** dentro do cadastro e da edição de cada produto.
+- Produtos marcados continuam ativos para estoque, fornecedores, relatórios, ADM principal, demais ADMs e colaboradoras de recebimento.
+- O catálogo de novas solicitações da colaboradora comum mostra somente as matérias-primas liberadas pelo ADM.
+
+### Compatibilidade e segurança
+
+- Produtos ocultos não são excluídos e permanecem vinculados ao histórico de solicitações, estoque e compras.
+- Uma solicitação pendente antiga conserva itens que tenham sido ocultados depois do envio, evitando perda involuntária ao editar.
+- A alteração de visibilidade é validada por RPC administrativa, salva junto com o produto e registrada na auditoria.
+
+### Validação
+
+- Regras dos quatro perfis, cadastro, edição de solicitação antiga, responsividade e cache do aplicativo cobertos pela suíte automatizada.
+
 ## [v25.3] — 19/07/2026
 
 ### Adicionado

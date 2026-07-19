@@ -23,6 +23,8 @@ A colaboradora acessa somente as próprias solicitações. O ADM pode excluir de
 
 O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personalizados. Campos podem ser adicionados, removidos ou adaptados ao tipo de produto. Cada matéria-prima pode ser vinculada ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
 
+Produtos usados apenas na embalagem do e-commerce podem continuar ativos sem poluir o catálogo das artesãs. No cadastro ou na edição, marque **Ocultar para colaboradoras de produção**. O item continuará visível e administrável pelo ADM principal, demais ADMs e colaboradoras de recebimento, mas deixará de aparecer em novas solicitações do perfil comum de colaboradora. A opção não apaga estoque, fornecedor, relatórios nem solicitações antigas.
+
 ## Recebimento de produção
 
 Uma coleta reúne vários itens da mesma colaboradora. Em cada item informe modelo, cor, quantidade declarada na folha e quantidade oficial conferida. A diferença fica visível e o cálculo usa sempre a quantidade oficial.

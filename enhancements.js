@@ -54,7 +54,7 @@ function addListControls(){
   if(!S?.profile)return;
   if(S.view==='new'){
     const container=document.querySelector('.catalog-layout > .products-grid'),mountBefore=document.querySelector('.catalog-layout');
-    const products=S.products.filter(product=>product.active),items=[...container?.querySelectorAll('.product')||[]];
+    const products=S.products.filter(product=>product.active&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true)),items=[...container?.querySelectorAll('.product')||[]];
     items.forEach((item,index)=>item.dataset.filterCategory=products[index]?.category_id||'uncategorized');
     const statuses=S.categories.filter(category=>category.active&&products.some(product=>product.category_id===category.id)).map(category=>[category.id,category.name]);
     if(products.some(product=>!product.category_id))statuses.push(['uncategorized','Sem categoria']);

@@ -18,7 +18,7 @@ const QUICK={
   new:['Informe qualquer quantidade necessária e revise antes de enviar.','A data e a forma de entrega ou coleta serão definidas pela empresa.'],
   requests:['Abra um cartão para consultar detalhes e ações disponíveis.','Colaboradoras veem apenas os próprios pedidos; ADM vê a operação completa.'],
   notifications:['O contador mostra os avisos ainda não abertos.','Toque em uma notificação para confirmar a leitura e consultar o prazo.','Somente o ADM principal pode enviar avisos individuais ou globais.'],
-  products:['Cadastros, estoque e fornecedor são salvos em uma única operação segura.','Use uma foto leve para facilitar a identificação no celular.'],
+  products:['Cadastros, estoque e fornecedor são salvos em uma única operação segura.','Use uma foto leve para facilitar a identificação no celular.','Marque Ocultar para colaboradoras de produção nos produtos exclusivos do e-commerce; ADMs e recebimento continuarão vendo o item.'],
   categories:['Categorias organizam o catálogo e podem ser desativadas sem apagar produtos.'],
   team:['Somente ADM administra acessos.','Cadastros com histórico são desativados para preservar solicitações e pagamentos.'],
   fields:['Crie somente os campos realmente necessários.','Campos inativos deixam de aparecer nos novos cadastros.'],
