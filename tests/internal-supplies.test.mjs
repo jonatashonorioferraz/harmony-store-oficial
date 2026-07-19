@@ -8,6 +8,7 @@ const [ui, css, migration, edge] = await Promise.all([
   readFile(new URL('../supabase/migrations/20260719230000_internal_supplies_and_receipt_ai.sql', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/analyze-internal-receipt/index.ts', import.meta.url), 'utf8'),
 ]);
+const deletionMigration = await readFile(new URL('../supabase/migrations/20260719235500_delete_internal_test_receipts.sql', import.meta.url), 'utf8');
 
 test('internal supply module is restricted to admin and receiver profiles', () => {
   assert.match(ui, /\['admin','receiver'\]\.includes\(S\.profile\?\.role\)/);
@@ -58,4 +59,18 @@ test('database change is additive, transactional, audited and uses private recei
   assert.match(migration, /public\.audit_logs/);
   assert.match(migration, /values\('internal-receipts','internal-receipts',false/);
   assert.match(migration, /enable row level security/g);
+});
+
+test('primary admin can permanently delete a test receipt with stock rollback and audit', () => {
+  assert.match(ui, /Excluir definitivamente/);
+  assert.match(ui, /confirmation!=='EXCLUIR'/);
+  assert.match(ui, /admin_delete_internal_purchase_receipt/);
+  assert.match(ui, /p_delete_orphan_products:deleteProducts/);
+  assert.match(deletionMigration, /private\.is_primary_admin\(\)/);
+  assert.match(deletionMigration, /physical_stock=physical_stock-v_item\.quantity/);
+  assert.match(deletionMigration, /delete from public\.stock_movements where internal_receipt_id=p_receipt_id/);
+  assert.match(deletionMigration, /internal_supply\.purchase_deleted/);
+  assert.match(deletionMigration, /Criado automaticamente a partir de cupom fiscal/);
+  assert.match(deletionMigration, /^begin;/m);
+  assert.match(deletionMigration, /^commit;/m);
 });
