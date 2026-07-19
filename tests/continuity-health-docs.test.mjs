@@ -14,6 +14,8 @@ const health = await readFile(new URL('../system-health.js', import.meta.url), '
 const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const performanceMigration = await readFile(new URL('../supabase/migrations/20260719073500_performance_policy_cleanup.sql', import.meta.url), 'utf8');
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
+const monitorWorkflow = await readFile(new URL('../.github/workflows/monitor.yml', import.meta.url), 'utf8');
+const monitorScript = await readFile(new URL('../scripts/monitor-production.mjs', import.meta.url), 'utf8');
 
 test('CI validates the complete build, test suite and synchronized official files', () => {
   assert.match(quality, /actions\/checkout@v7/);
@@ -58,6 +60,18 @@ test('health data is private, summarized and role protected', () => {
   assert.match(healthEdge, /Aguardando primeiro backup/);
   assert.doesNotMatch(healthEdge, /error instanceof Error \? error\.message/);
   assert.match(health, /S\?\.profile\?\.role!=='admin'/);
+});
+
+test('external monitor checks the complete service chain and records sanitized status', () => {
+  assert.match(monitorWorkflow, /cron: '27 \*\/6 \* \* \*'/);
+  assert.match(monitorWorkflow, /SUPABASE_BACKUP_SECRET_KEY/);
+  assert.match(monitorScript, /rest\/v1\/profiles\?select=id&limit=1/);
+  assert.match(monitorScript, /auth\/v1\/health/);
+  assert.match(monitorScript, /storage\/v1\/bucket/);
+  assert.match(monitorScript, /availability_failed/);
+  assert.doesNotMatch(monitorScript, /console\.log\([^\n]*(secretKey|SUPABASE_SECRET_KEY)/);
+  assert.match(healthEdge, /external_monitor/);
+  assert.match(healthEdge, /monitorAge > 12/);
 });
 
 test('help center offers contextual, module and technical documentation', () => {

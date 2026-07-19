@@ -59,6 +59,11 @@ Deno.serve(async request => {
     const { count: subscriptionCount } = await admin.from("push_subscriptions").select("id", { count: "exact", head: true });
     items.push({ key: "notifications", label: "Notificações", status: push?.level === "error" ? "yellow" : (subscriptionCount || 0) > 0 ? "green" : "yellow", value: `${subscriptionCount || 0} dispositivo(s)`, detail: push ? `Último envio registrado: ${push.code}.` : "Ainda não há envio registrado no novo monitor.", checked_at: push?.created_at || null });
 
+    const { data: monitor } = await admin.from("system_events").select("level,code,created_at,details").eq("source", "system").in("code", ["availability_ok", "availability_failed"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const monitorAge = ageHours(monitor?.created_at);
+    const monitorStatus = !monitor || monitorAge > 12 || monitor.level === "error" ? "red" : monitorAge > 8 ? "yellow" : "green";
+    items.push({ key: "external_monitor", label: "Monitor externo", status: monitorStatus, value: !monitor ? "Aguardando primeira verificação" : monitor.level === "error" ? "Falha detectada" : "Disponível", detail: "Verifica automaticamente aplicativo, banco, autenticação e arquivos a cada 6 horas.", checked_at: monitor?.created_at || null });
+
     items.push({ key: "version", label: "Versão publicada", status: "green", value: "v25", detail: "Ajuda, continuidade e Saúde do Sistema.", checked_at: checkedAt });
     const overall = worst(items);
     return reply({ checked_at: checkedAt, overall, message: overall === "green" ? "Todos os componentes monitorados estão normais." : overall === "yellow" ? "Há itens que precisam de acompanhamento." : "Existe pelo menos um item que exige ação administrativa.", items });
@@ -68,4 +73,3 @@ Deno.serve(async request => {
     return reply({ error: "Não foi possível concluir o diagnóstico.", error_id: errorId }, 500);
   }
 });
-

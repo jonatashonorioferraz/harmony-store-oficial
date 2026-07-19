@@ -27,6 +27,7 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 - GitHub Actions atualizado para os runtimes atuais, removendo dependências de execução obsoletas.
 - Integridade offline do PWA, manifesto, orientação e dimensões dos ícones passam a ser verificadas automaticamente.
 - Dependências de produção recebem auditoria de vulnerabilidades em toda publicação e revisão mensal agrupada.
+- Monitor externo verifica aplicativo, banco, autenticação e Storage a cada seis horas e registra alertas saneados na Saúde do Sistema.
 
 ## [v24] — 19/07/2026
 

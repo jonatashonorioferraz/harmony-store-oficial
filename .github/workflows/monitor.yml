@@ -1,0 +1,29 @@
+name: Monitor externo de disponibilidade
+
+on:
+  schedule:
+    - cron: '27 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harmony-production-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP_URL: https://app.harmonylembrancinhas.com.br/
+      SUPABASE_URL: https://tyzfznwvjzmudxtcbbaf.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_BACKUP_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verificar aplicativo, banco, Auth e Storage
+        run: node scripts/monitor-production.mjs
