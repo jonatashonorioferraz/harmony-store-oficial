@@ -57,7 +57,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v25-9/);
+  assert.match(worker, /harmony-store-v25-10/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);
@@ -75,6 +75,9 @@ test("build contains the official complete app", async () => {
   assert.match(enhancements, /harmonyRoleThemes/);
   assert.match(enhancements, /soap-bubbles/);
   assert.match(css, /prefers-reduced-motion:reduce/);
+  assert.match(js, /class="login-copy"/);
+  assert.match(css, /\.login-copy\{display:grid;justify-items:center\}/);
+  assert.match(css, /\.login-box\{width:min\(430px,100%\)/);
   assert.match(pwa, /showHarmonyTestNotification/);
   await access(new URL("../dist/client/brand-mark.png", import.meta.url));
   await access(new URL("../dist/client/mascote-artesa.png", import.meta.url));
