@@ -44,6 +44,12 @@ test('product form, catalogue and offline cache include the visibility control',
   assert.match(feature, /request\.status!=='pending'/);
   assert.match(html, /product-visibility\.js/);
   assert.match(html, /product-visibility\.css/);
-  assert.match(worker, /harmony-store-v25-6/);
+  assert.match(worker, /harmony-store-v25-7/);
   assert.match(css, /product-visibility-check/);
+});
+
+test('internal supplies stay out of the production request and product catalogues', async () => {
+  const feature = await read('product-visibility.js');
+  assert.match(feature, /product\.usage_scope!=='internal'/);
+  assert.match(feature, /fullProducts\.filter\(isProductionCatalog\)/);
 });

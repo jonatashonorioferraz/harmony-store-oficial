@@ -21,5 +21,5 @@ test('install action is visible on tablets and handles modern iPad identificatio
   assert.match(pwa,/Safari do iPhone ou iPad/);
   assert.match(pwa,/Chrome do celular ou tablet/);
   assert.match(pwa,/aria-label','Instalar Harmony Store neste aparelho'/);
-  assert.match(worker,/harmony-store-v25-6/);
+  assert.match(worker,/harmony-store-v25-7/);
 });

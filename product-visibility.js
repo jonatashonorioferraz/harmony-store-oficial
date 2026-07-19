@@ -1,5 +1,6 @@
 (()=>{
-  const visibleForRequests=product=>product.active&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
+  const isProductionCatalog=product=>product.usage_scope!=='internal';
+  const visibleForRequests=product=>product.active&&isProductionCatalog(product)&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
 
   const originalRpc=rpc;
   rpc=async function(name,body){
@@ -24,7 +25,6 @@
 
   const originalRenderNew=renderNew;
   renderNew=function(page){
-    if(S.profile?.role!=='collaborator')return originalRenderNew(page);
     const fullProducts=S.products;
     const allowed=new Set(fullProducts.filter(visibleForRequests).map(product=>product.id));
     Object.keys(S.cart).forEach(id=>{if(!allowed.has(id))delete S.cart[id]});
@@ -44,9 +44,12 @@
 
   const originalRenderProducts=renderProducts;
   renderProducts=function(page){
-    originalRenderProducts(page);
+    const fullProducts=S.products;
+    S.products=fullProducts.filter(isProductionCatalog);
+    try{originalRenderProducts(page)}finally{S.products=fullProducts}
+    const displayed=fullProducts.filter(isProductionCatalog);
     document.querySelectorAll('.table article').forEach((row,index)=>{
-      const product=S.products[index],copy=row.querySelector('.table-product b');
+      const product=displayed[index],copy=row.querySelector('.table-product b');
       if(!product||!copy||copy.querySelector('.product-visibility-state'))return;
       const state=document.createElement('small');
       state.className=`product-visibility-state ${product.hidden_from_collaborators?'hidden-for-collaborators':'shown-for-collaborators'}`;

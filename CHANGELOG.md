@@ -5,6 +5,28 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.7] — 19/07/2026
+
+### Suprimentos e compras internas
+
+- Novo módulo exclusivo para ADM e Recebimento, separado da matéria-prima de produção.
+- Solicitação simples por lista de itens, sem exigir quantidade ou valor do perfil de Recebimento.
+- Compra vinculada à solicitação e compra direta sem criação de registros fictícios.
+- Catálogo interno com estoque mínimo, fornecedor preferencial e criação de novos itens durante a conferência do cupom.
+
+### Cupom fiscal e inteligência
+
+- Foto privada do cupom com leitura estruturada por IA e revisão obrigatória pelo ADM antes de salvar.
+- Registro de estabelecimento, documento, data, chave fiscal, itens, quantidades, valores e forma de pagamento.
+- Limite de uso, medição de tokens e estimativa de custo da leitura sem expor a chave da API no aplicativo.
+
+### Relatórios e segurança
+
+- Relatório mensal de compras, consumo solicitado, estoque e gastos.
+- Evolução por produto com preço anterior e atual, diferença em reais e percentual, preço médio, menor e maior valor.
+- Exportação dos indicadores para Excel e impressão em PDF.
+- RLS, RPCs transacionais, Storage privado, trilha de auditoria e separação de valores: Recebimento não acessa informações financeiras.
+
 ## [v25.6] — 19/07/2026
 
 ### Tablets e instalação
