@@ -24,6 +24,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Auditar vulnerabilidades de produção
+        run: npm audit --omit=dev --audit-level=high
       - run: npm test
       - name: Confirmar cópias oficiais sincronizadas
         run: |

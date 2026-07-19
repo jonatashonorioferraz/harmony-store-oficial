@@ -25,6 +25,8 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 - Primeiro backup criptografado validado de ponta a ponta, com hash registrado e retenção de 30 dias.
 - Cada novo backup passa por descriptografia temporária e ensaio automático de recuperação somente leitura antes de ser aceito.
 - GitHub Actions atualizado para os runtimes atuais, removendo dependências de execução obsoletas.
+- Integridade offline do PWA, manifesto, orientação e dimensões dos ícones passam a ser verificadas automaticamente.
+- Dependências de produção recebem auditoria de vulnerabilidades em toda publicação e revisão mensal agrupada.
 
 ## [v24] — 19/07/2026
 
