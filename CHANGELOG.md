@@ -1,6 +1,7 @@
 # Changelog
 
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
+> Validação final: 63 testes aprovados, fluxo de solicitação/entrega validado com rollback e monitoramento externo confirmado em produção.
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
