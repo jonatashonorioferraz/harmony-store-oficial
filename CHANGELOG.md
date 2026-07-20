@@ -5,6 +5,17 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.17] — 20/07/2026
+
+### Ordens semanais de produção
+
+- ADMs podem criar uma lista individual para cada colaboradora reutilizando modelos, fotos e o catálogo global de cores.
+- Cada ordem aceita vários modelos, cores, quantidades e orientações, com rascunho, envio, visualização, confirmação e cancelamento auditado.
+- A colaboradora recebe uma notificação urgente e visualiza somente as próprias ordens, com interface responsiva no celular e tablet.
+- A ordem pode ser editada, duplicada para a semana seguinte e gerada em PDF com identidade visual da Harmony Store.
+- O planejamento permanece totalmente separado da conferência: não calcula valores e não altera pagamentos, estoque ou contagens oficiais.
+- RLS, funções autenticadas e índices específicos protegem os dados e mantêm o histórico operacional.
+
 ## [v25.16] — 20/07/2026
 
 ### Catálogos separados e fotos em suprimentos

@@ -1,5 +1,5 @@
-const CACHE='harmony-store-v25-16';
-const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./notifications.css','./product-visibility.css','./internal-supplies.css','./app.js','./product-visibility.js','./pwa.js','./daily-messages.js','./enhancements.js','./intelligence.js','./production-receipts.js','./notifications.js','./internal-supplies.js','./help-center.js','./system-health.js','./CHANGELOG.md','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png','./notification-badge.svg'];
+const CACHE='harmony-store-v25-17';
+const SHELL=['./','./index.html','./styles.css','./intelligence.css','./production-receipts.css','./production-orders.css','./notifications.css','./product-visibility.css','./internal-supplies.css','./app.js','./product-visibility.js','./pwa.js','./daily-messages.js','./enhancements.js','./intelligence.js','./production-receipts.js','./production-orders.js','./notifications.js','./internal-supplies.js','./help-center.js','./system-health.js','./CHANGELOG.md','./manifest.webmanifest','./logo.jpg','./brand-mark.png','./mascote-artesa.png','./icon-192-v2.png','./icon-512-v2.png','./apple-touch-icon-v2.png','./notification-badge.svg'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));

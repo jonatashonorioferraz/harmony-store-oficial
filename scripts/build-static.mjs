@@ -7,6 +7,8 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(resolve(dist, "client"), { recursive: true });
 await mkdir(resolve(dist, "server"), { recursive: true });
 await cp(resolve(root, "web"), resolve(dist, "client"), { recursive: true });
+await cp(resolve(root, "production-orders.js"), resolve(dist, "client", "production-orders.js"));
+await cp(resolve(root, "production-orders.css"), resolve(dist, "client", "production-orders.css"));
 await cp(resolve(root, "help-center.js"), resolve(dist, "client", "help-center.js"));
 await cp(resolve(root, "system-health.js"), resolve(dist, "client", "system-health.js"));
 await cp(resolve(root, "CHANGELOG.md"), resolve(dist, "client", "CHANGELOG.md"));
