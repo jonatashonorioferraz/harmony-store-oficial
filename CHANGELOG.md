@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.14] — 20/07/2026
+
+### Conclusão imediata de solicitações já entregues
+
+- Solicitações em separação agora oferecem o botão verde **Concluir entrega agora**.
+- O ADM informa quem entregou e quem recebeu sem precisar criar um agendamento retroativo.
+- A separação visível é salva antes da conclusão, evitando perder ajustes de quantidades ou itens.
+- Estoque, movimentação, responsáveis, auditoria e status Entregue são atualizados com as mesmas regras seguras do fluxo agendado.
+- O agendamento continua disponível normalmente para entregas futuras.
+
 ## [v25.13] — 20/07/2026
 
 ### Login sem mascote duplicada no computador e tablet
