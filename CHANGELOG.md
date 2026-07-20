@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.12] — 20/07/2026
+
+### Catálogo global e visual de cores da produção
+
+- O ADM cadastra cada cor uma única vez, com nome, tonalidade visual, ordem e situação ativa/inativa.
+- Toda cor ativa fica disponível automaticamente em todos os modelos atuais e futuros, sem repetição de cadastro por produto.
+- No recebimento, a cor agora é selecionada em uma lista padronizada com amostra visual, eliminando variações de digitação.
+- Cores já registradas em modelos e recebimentos são migradas para o catálogo, preservando o histórico.
+- Cores utilizadas não podem ser apagadas definitivamente; podem ser desativadas para manter relatórios e pagamentos íntegros.
+
 ## [v25.11] — 19/07/2026
 
 ### Exclusão no catálogo interno e login reforçado
