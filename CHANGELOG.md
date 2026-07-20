@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.11] — 19/07/2026
+
+### Exclusão no catálogo interno e login reforçado
+
+- O catálogo de Suprimentos e Compras agora apresenta os botões Editar e Excluir em cada item cadastrado.
+- A exclusão utiliza a rotina administrativa auditada e é bloqueada quando o item possui histórico, preservando compras, solicitações, estoque e relatórios.
+- O alinhamento central do logotipo, da saudação e da orientação do login foi reforçado inclusive para estruturas antigas temporariamente mantidas no cache do PWA.
+
 ## [v25.10] — 19/07/2026
 
 ### Tela de login centralizada

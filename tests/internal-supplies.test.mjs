@@ -74,3 +74,11 @@ test('primary admin can permanently delete a test receipt with stock rollback an
   assert.match(deletionMigration, /^begin;/m);
   assert.match(deletionMigration, /^commit;/m);
 });
+
+test('admin can delete an unused item directly from the internal catalog', () => {
+  assert.match(ui, /data-delete-supply-product/);
+  assert.match(ui, /deleteSupplyProduct/);
+  assert.match(ui, /rpc\('admin_delete_product'/);
+  assert.match(ui, /possui histórico de compras, solicitações ou estoque/);
+  assert.match(css, /supply-catalog-actions/);
+});
