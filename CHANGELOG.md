@@ -5,6 +5,24 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.10] — 19/07/2026
+
+### Tela de login centralizada
+
+- Logotipo, acesso restrito, boas-vindas e mensagem de orientação agora ficam centralizados em uma composição única.
+- Formulário ganhou um cartão mais sofisticado e equilibrado, mantendo os rótulos dos campos alinhados para facilitar a leitura.
+- Espaçamentos foram adaptados para celular, tablet, computador e aparelhos com pouca altura de tela.
+- Identidade visual, mascote, frase institucional e funcionamento do login foram preservados.
+
+## [v25.9] — 19/07/2026
+
+### Menu móvel para perfis administrativos
+
+- Ícones e nomes das muitas abas do ADM agora ocupam cartões de largura fixa e não se sobrepõem.
+- Navegação inferior ganhou rolagem horizontal suave, encaixe por item e posicionamento automático da aba ativa.
+- Espaçamento respeita a área segura de Android e iPhone sem cobrir conteúdo, alertas ou o botão de instalação.
+- Cores, emojis e identidade visual já aprovados foram preservados.
+
 ## [v25.8] — 19/07/2026
 
 ### Exclusão segura de cupons de teste
