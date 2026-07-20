@@ -119,7 +119,7 @@ function reports(){
 }
 
 function catalog(){
-  return `<section class="supply-receipt-head"><div><p class="eyebrow">CATÁLOGO INTERNO</p><h2>Produtos de consumo e operação</h2><span>Estes produtos não aparecem para as colaboradoras de produção.</span></div><button class="primary" id="newSupplyProduct">＋ Cadastrar suprimento</button></section><div class="supply-catalog">${IS.products.map(item=>`<article class="card"><div class="supply-product-icon">🧴</div><div><span class="badge ${item.active?'active':'inactive'}">${item.active?'Ativo':'Inativo'}</span><h3>${esc(item.name)}</h3><p>${esc(item.description||item.unit)}</p></div><dl><div><dt>Estoque</dt><dd>${quantity(item.physical_stock,item.unit)}</dd></div><div><dt>Mínimo</dt><dd>${quantity(item.minimum_stock,item.unit)}</dd></div></dl><button class="ghost" data-edit-supply-product="${item.id}">Editar</button></article>`).join('')||'<div class="empty">Nenhum suprimento interno cadastrado.</div>'}</div>`;
+  return `<section class="supply-receipt-head"><div><p class="eyebrow">CATÁLOGO INTERNO</p><h2>Produtos de consumo e operação</h2><span>Estes produtos não aparecem para as colaboradoras de produção.</span></div><button class="primary" id="newSupplyProduct">＋ Cadastrar suprimento</button></section><div class="supply-catalog">${IS.products.map(item=>`<article class="card"><div class="supply-product-icon">🧴</div><div><span class="badge ${item.active?'active':'inactive'}">${item.active?'Ativo':'Inativo'}</span><h3>${esc(item.name)}</h3><p>${esc(item.description||item.unit)}</p></div><dl><div><dt>Estoque</dt><dd>${quantity(item.physical_stock,item.unit)}</dd></div><div><dt>Mínimo</dt><dd>${quantity(item.minimum_stock,item.unit)}</dd></div></dl><div class="supply-catalog-actions"><button class="ghost" data-edit-supply-product="${item.id}">Editar</button><button class="danger" data-delete-supply-product="${item.id}">Excluir</button></div></article>`).join('')||'<div class="empty">Nenhum suprimento interno cadastrado.</div>'}</div>`;
 }
 
 async function renderInternal(page){
@@ -143,9 +143,24 @@ function bind(page){
   page.querySelectorAll('[data-internal-receipt]').forEach(card=>card.onclick=()=>receiptDetail(IS.receipts.find(item=>item.id===card.dataset.internalReceipt)));
   page.querySelector('#newSupplyProduct')?.addEventListener('click',()=>productModal());
   page.querySelectorAll('[data-edit-supply-product]').forEach(button=>button.onclick=()=>productModal(productBy(button.dataset.editSupplyProduct)));
+  page.querySelectorAll('[data-delete-supply-product]').forEach(button=>button.onclick=()=>deleteSupplyProduct(productBy(button.dataset.deleteSupplyProduct),button));
   page.querySelector('#applySupplyPeriod')?.addEventListener('click',()=>{IS.from=page.querySelector('#supplyFrom').value;IS.to=page.querySelector('#supplyTo').value;renderInternal(page)});
   page.querySelector('#exportSupplyCsv')?.addEventListener('click',exportCsv);
   page.querySelector('#printSupplyReport')?.addEventListener('click',printReport);
+}
+
+async function deleteSupplyProduct(product,button){
+  if(!product)return;
+  if(!confirm(`Excluir definitivamente o item “${product.name}”?\n\nSe ele já possuir compras, solicitações ou movimentações, o sistema bloqueará a exclusão para preservar o histórico.`))return;
+  button.disabled=true;
+  try{
+    const imagePath=await rpc('admin_delete_product',{p_product_id:product.id});
+    if(imagePath)await storageFetch('/storage/v1/object/product-images/'+encodedStoragePath(imagePath),{method:'DELETE'}).catch(()=>{});
+    IS.loaded=false;await loadData();await loadInternal(true);renderInternal(document.querySelector('#page'));toast('Item excluído do catálogo interno.');
+  }catch(error){
+    alert(`Não foi possível excluir “${product.name}” porque ele possui histórico de compras, solicitações ou estoque. Para mantê-lo fora de uso sem perder os dados, clique em Editar e desmarque “Produto ativo”.\n\n${error.message}`);
+    button.disabled=false;
+  }
 }
 
 async function saveRequest(button){
