@@ -235,13 +235,15 @@ function enhanceBrandPresentation(){
 
 function enhanceLoginMessage(){
   const story=document.querySelector('.login .story'),box=document.querySelector('.login-box');
+  const mobile=matchMedia('(max-width:720px)').matches;
   if(story&&!story.querySelector('.brand-message')){
     const message=document.createElement('blockquote');
     message.className='brand-message brand-message-desktop';
     message.textContent='“Um Sonho que virou realidade. Deus é bom o tempo todo”';
     story.insertBefore(message,story.querySelector('.artisan'));
   }
-  if(box&&!box.querySelector('.brand-message')){
+  if(!mobile){box?.querySelector('.brand-message-mobile')?.remove();return}
+  if(box&&!box.querySelector('.brand-message-mobile')){
     const message=document.createElement('blockquote');
     message.className='brand-message brand-message-mobile';
     message.textContent='“Um Sonho que virou realidade. Deus é bom o tempo todo”';
@@ -251,6 +253,7 @@ function enhanceLoginMessage(){
 
 function enhanceLoginMascot(){
   const story=document.querySelector('.login .story'),box=document.querySelector('.login-box');
+  const mobile=matchMedia('(max-width:720px)').matches;
   if(story&&!story.querySelector('.login-mascot-desktop')){
     const mascot=document.createElement('img');
     mascot.src='mascote-artesa.png';
@@ -258,6 +261,7 @@ function enhanceLoginMascot(){
     mascot.className='login-mascot login-mascot-desktop';
     story.appendChild(mascot);
   }
+  if(!mobile){box?.querySelector('.login-mascot-mobile')?.remove();return}
   if(box&&!box.querySelector('.login-mascot-mobile')){
     const mascot=document.createElement('img');
     mascot.src='mascote-artesa.png';
@@ -288,5 +292,6 @@ function enhanceDailyWelcome(){
 function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();enhanceLoginAtmosphere();enhanceDailyWelcome();animateFreshElements();addButtonFeedback();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
+matchMedia('(max-width:720px)').addEventListener('change',()=>{enhanceLoginMessage();enhanceLoginMascot()});
 new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});
 improveApp();

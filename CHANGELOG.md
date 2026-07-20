@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.13] — 20/07/2026
+
+### Login sem mascote duplicada no computador e tablet
+
+- A mascote interna do cartão de acesso agora é criada exclusivamente na versão celular.
+- Computadores e tablets mantêm somente a mascote principal no painel artesanal, eliminando a área branca duplicada.
+- A troca de orientação e o redimensionamento da tela atualizam a composição automaticamente.
+- Uma proteção adicional impede que estilos antigos do PWA exibam a mascote móvel em telas maiores.
+
 ## [v25.12] — 20/07/2026
 
 ### Catálogo global e visual de cores da produção
