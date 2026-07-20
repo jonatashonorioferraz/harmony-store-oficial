@@ -5,6 +5,27 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.16] — 20/07/2026
+
+### Catálogos separados e fotos em suprimentos
+
+- Solicitações de matéria-prima agora aceitam exclusivamente itens classificados como produção, inclusive para o perfil Recebimento.
+- O Supabase bloqueia vínculos cruzados entre matérias-primas, suprimentos internos e itens lidos em cupons fiscais.
+- A edição de solicitações pendentes utiliza o mesmo catálogo filtrado da criação, evitando que café, limpeza e outros insumos apareçam nessa lista.
+- O cadastro de suprimentos internos ganhou foto com prévia, substituição e remoção segura em JPG, PNG ou WebP.
+- Fotos aparecem no catálogo, na solicitação interna e nos detalhes das solicitações de matéria-prima, com ajuste para celular e tablet.
+- A migração preserva produtos, solicitações, compras, estoque e relatórios históricos existentes.
+
+## [v25.15] — 20/07/2026
+
+### Edição completa de solicitações pelo ADM principal
+
+- O ADM principal pode adicionar, restaurar ou remover produtos e corrigir quantidades solicitadas e enviadas em pedidos pendentes, separados, agendados ou entregues.
+- Solicitações entregues geram ajustes proporcionais no estoque físico e atualizam automaticamente os relatórios de consumo.
+- Solicitações separadas ou agendadas recalculam as reservas sem alterar o status, a data ou os responsáveis.
+- Toda correção exige motivo e registra estado anterior, estado posterior e responsável no histórico imutável.
+- ADM normal, colaboradora e Recebimento mantêm exatamente as permissões anteriores.
+
 ## [v25.14] — 20/07/2026
 
 ### Conclusão imediata de solicitações já entregues

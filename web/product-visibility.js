@@ -1,5 +1,5 @@
 (()=>{
-  const isProductionCatalog=product=>product.usage_scope!=='internal';
+  const isProductionCatalog=product=>product.usage_scope==='production';
   const visibleForRequests=product=>product.active&&isProductionCatalog(product)&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
 
   const originalRpc=rpc;
@@ -34,11 +34,14 @@
 
   const originalRequestModal=requestModalV2;
   requestModalV2=async function(request){
-    await originalRequestModal(request);
-    if(S.profile?.role!=='collaborator'||request.status!=='pending')return;
+    const fullProducts=S.products;
+    const editingOwnRequest=S.profile?.role!=='admin'&&request.status==='pending'&&request.requested_by===S.profile?.id;
+    if(editingOwnRequest)S.products=fullProducts.filter(visibleForRequests);
+    try{await originalRequestModal(request)}finally{S.products=fullProducts}
+    if(!editingOwnRequest)return;
     document.querySelectorAll('[data-own-product]').forEach(input=>{
       const product=S.products.find(item=>item.id===input.dataset.ownProduct);
-      if(product?.hidden_from_collaborators===true&&Number(input.value||0)<=0)input.closest('.product')?.remove();
+      if((!isProductionCatalog(product)||(S.profile?.role==='collaborator'&&product?.hidden_from_collaborators===true))&&Number(input.value||0)<=0)input.closest('.product')?.remove();
     });
   };
 
@@ -58,5 +61,5 @@
     });
   };
 
-  window.HarmonyProductVisibility=Object.freeze({visibleForRequests});
+  window.HarmonyProductVisibility=Object.freeze({isProductionCatalog,visibleForRequests});
 })();
