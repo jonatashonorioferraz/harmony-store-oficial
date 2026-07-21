@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.18] — 20/07/2026
+
+### Correção do PDF das ordens de produção
+
+- A prévia de impressão deixa de ser ocultada pelas regras antigas do relatório de recebimentos.
+- Rascunhos, ordens enviadas e ordens confirmadas geram o mesmo documento completo em A4.
+- A impressão remove a rolagem e os limites da janela, preservando cabeçalho, itens, fotos, cores, totais e assinaturas.
+- Um teste de regressão protege a compatibilidade entre os PDFs de recebimentos e ordens de produção.
+
 ## [v25.17] — 20/07/2026
 
 ### Ordens semanais de produção

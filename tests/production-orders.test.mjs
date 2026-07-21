@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,js,css,html,worker]=await Promise.all([
+const [sql,js,css,html,worker,receiptCss]=await Promise.all([
   readFile(new URL('supabase/migrations/20260720170000_production_orders.sql',root),'utf8'),
   readFile(new URL('production-orders.js',root),'utf8'),
   readFile(new URL('production-orders.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),
   readFile(new URL('service-worker.js',root),'utf8'),
+  readFile(new URL('production-receipts.css',root),'utf8'),
 ]);
 
 test('production orders are isolated from receiving and payments',()=>{
@@ -48,6 +49,9 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/@media\(max-width:900px\)/);
   assert.match(css,/@media\(max-width:700px\)/);
   assert.match(css,/@media print/);
+  assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
+  assert.match(css,/max-height:none!important/);
+  assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
   assert.match(html,/production-orders\.js/);
   assert.match(html,/production-orders\.css/);
   assert.match(worker,/production-orders\.js/);
