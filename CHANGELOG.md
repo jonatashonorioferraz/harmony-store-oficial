@@ -5,6 +5,25 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.21] — 20/07/2026
+
+### Saúde do Sistema em português e backup corrigido
+
+- Todos os textos do diagnóstico foram normalizados para português do Brasil com codificação UTF-8 explícita.
+- A falha do backup ganhou mensagem própria e deixou de aparecer novamente como erro genérico do aplicativo.
+- O painel explica quando nenhum aparelho mantém notificações push ativas, preservando a central interna de avisos.
+- O backup recebeu acesso de leitura exclusivo às novas tabelas e passou a incluir ideias, notificações, suprimentos internos, cores e ordens de produção.
+- A correção mantém RLS e não amplia permissões de colaboradoras ou usuários comuns.
+
+## [v25.20] — 20/07/2026
+
+### PDF em janela própria e atualização forçada
+
+- A ordem de produção passa a ser impressa em uma janela exclusiva, evitando a prévia branca causada pelo contexto de impressão do Chrome.
+- A versão dos arquivos de ordens foi fixada na URL para impedir que o PWA reutilize o gerador antigo armazenado em cache.
+- O A4 compacto mantém fotos, cores, quantidades, totais e assinaturas, distribuindo listas maiores em duas colunas e novas páginas.
+- Nenhum dado, status ou regra de negócio da ordem foi alterado.
+
 ## [v25.19] — 20/07/2026
 
 ### Impressão isolada e resistente a conflitos

@@ -11,7 +11,7 @@ const packageJson = JSON.parse(await readFile(new URL('package.json', root), 'ut
 
 const shellSource = worker.match(/const SHELL=\[([\s\S]*?)\];/)?.[1] || '';
 const shell = [...shellSource.matchAll(/'([^']+)'/g)].map(match => match[1]);
-const pathOf = value => value.replace(/^\.\//, '');
+const pathOf = value => value.replace(/^\.\//, '').split('?')[0];
 
 function pngDimensions(bytes) {
   assert.equal(bytes.subarray(1, 4).toString('ascii'), 'PNG');

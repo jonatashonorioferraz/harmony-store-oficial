@@ -5,9 +5,16 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json; charset=utf-8" } });
 const ageHours = (value?: string | null) => value ? (Date.now() - new Date(value).getTime()) / 3600000 : Infinity;
 const worst = (items: Array<{ status: string }>) => items.some(item => item.status === "red") ? "red" : items.some(item => item.status === "yellow") ? "yellow" : "green";
+const quantityLabel = (quantity: number, singular: string, plural: string) => quantity === 1 ? `1 ${singular}` : `${quantity} ${plural}`;
+const elapsedLabel = (hours: number) => hours < 1 ? "há menos de 1 hora" : `há ${Math.floor(hours)} ${Math.floor(hours) === 1 ? "hora" : "horas"}`;
+const notificationCodeLabel = (code?: string | null) => ({
+  push_sent: "envio concluído",
+  push_partial: "envio parcialmente concluído",
+  push_failed: "falha no envio",
+}[String(code || "")] || "atividade registrada");
 
 Deno.serve(async request => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -43,28 +50,41 @@ Deno.serve(async request => {
     } catch { /* resposta saneada abaixo */ } finally { clearTimeout(timeout); }
     items.push({ key: "application", label: "Aplicativo oficial", status: appStatus, value: appValue, detail: appDetail, checked_at: checkedAt });
 
-    items.push({ key: "edge", label: "Edge Functions", status: "green", value: "Operacional", detail: "O coletor seguro respondeu e validou o ADM.", checked_at: checkedAt });
+    items.push({ key: "edge", label: "Funções do servidor", status: "green", value: "Operacional", detail: "O diagnóstico seguro respondeu e validou o acesso do ADM.", checked_at: checkedAt });
     const { data: buckets, error: storageError } = await admin.storage.listBuckets();
-    items.push({ key: "storage", label: "Arquivos e fotos", status: storageError ? "red" : "green", value: storageError ? "Sem resposta" : `${buckets?.length || 0} buckets`, detail: storageError ? "O Storage não respondeu ao coletor." : "O serviço de arquivos está acessível.", checked_at: checkedAt });
+    const bucketCount = buckets?.length || 0;
+    items.push({ key: "storage", label: "Arquivos e fotos", status: storageError ? "red" : "green", value: storageError ? "Sem resposta" : quantityLabel(bucketCount, "área de arquivos", "áreas de arquivos"), detail: storageError ? "O serviço de arquivos não respondeu ao diagnóstico." : "Fotos e documentos estão acessíveis.", checked_at: checkedAt });
 
-    const { data: backup } = await admin.from("system_backup_runs").select("status,completed_at,byte_size,stats").eq("status", "success").order("completed_at", { ascending: false }).limit(1).maybeSingle();
+    const [{ data: backup }, { data: backupAttempt }] = await Promise.all([
+      admin.from("system_backup_runs").select("status,completed_at,byte_size,stats").eq("status", "success").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
+      admin.from("system_backup_runs").select("status,completed_at,error_code").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
+    ]);
     const backupAge = ageHours(backup?.completed_at);
-    items.push({ key: "backup", label: "Backup externo", status: !backup ? "red" : backupAge > 48 ? "red" : backupAge > 30 ? "yellow" : "green", value: backup ? backupAge < 1 ? "Há menos de 1 hora" : `${Math.floor(backupAge)} h atrás` : "Aguardando primeiro backup", detail: backup ? "Última cópia criptografada e validada por hash." : "Configure os segredos protegidos no GitHub para ativar a rotina diária.", checked_at: backup?.completed_at || null });
+    const latestBackupFailed = backupAttempt?.status === "failed";
+    const backupStatus = !backup ? "red" : latestBackupFailed ? "yellow" : backupAge > 48 ? "red" : backupAge > 30 ? "yellow" : "green";
+    const backupValue = !backup ? "Aguardando primeiro backup" : latestBackupFailed ? "Falha na última tentativa" : `Concluído ${elapsedLabel(backupAge)}`;
+    const backupDetail = !backup ? "A rotina de backup ainda não produziu uma cópia válida." : latestBackupFailed ? `O último backup válido foi concluído ${elapsedLabel(backupAge)}. A rotina automática precisa ser executada novamente.` : "Cópia criptografada, verificada por hash e pronta para recuperação.";
+    items.push({ key: "backup", label: "Backup externo", status: backupStatus, value: backupValue, detail: backupDetail, checked_at: backupAttempt?.completed_at || backup?.completed_at || null });
 
     const since = new Date(Date.now() - 86400000).toISOString();
-    const { count: errorCount } = await admin.from("system_events").select("id", { count: "exact", head: true }).eq("level", "error").gte("created_at", since);
-    items.push({ key: "errors", label: "Erros nas últimas 24 h", status: (errorCount || 0) > 10 ? "red" : (errorCount || 0) > 0 ? "yellow" : "green", value: String(errorCount || 0), detail: "Somente contagem e códigos saneados; nenhum dado pessoal é exibido.", checked_at: checkedAt });
+    const { count: errorCount } = await admin.from("system_events").select("id", { count: "exact", head: true }).eq("level", "error").neq("source", "backup").gte("created_at", since);
+    const operationalErrors = errorCount || 0;
+    items.push({ key: "errors", label: "Erros do aplicativo nas últimas 24 horas", status: operationalErrors > 10 ? "red" : operationalErrors > 0 ? "yellow" : "green", value: operationalErrors === 0 ? "Nenhum erro" : quantityLabel(operationalErrors, "erro", "erros"), detail: "Falhas de backup são mostradas separadamente. Nenhum dado pessoal é exibido.", checked_at: checkedAt });
 
     const { data: push } = await admin.from("system_events").select("level,code,created_at,details").eq("source", "notification").order("created_at", { ascending: false }).limit(1).maybeSingle();
     const { count: subscriptionCount } = await admin.from("push_subscriptions").select("id", { count: "exact", head: true });
-    items.push({ key: "notifications", label: "Notificações", status: push?.level === "error" ? "yellow" : (subscriptionCount || 0) > 0 ? "green" : "yellow", value: `${subscriptionCount || 0} dispositivo(s)`, detail: push ? `Último envio registrado: ${push.code}.` : "Ainda não há envio registrado no novo monitor.", checked_at: push?.created_at || null });
+    const activeSubscriptions = subscriptionCount || 0;
+    const notificationStatus = push?.level === "error" || push?.level === "warning" || activeSubscriptions === 0 ? "yellow" : "green";
+    const notificationValue = activeSubscriptions === 0 ? "Nenhum aparelho ativo" : quantityLabel(activeSubscriptions, "aparelho ativo", "aparelhos ativos");
+    const notificationDetail = activeSubscriptions === 0 ? "Nenhum aparelho está inscrito para receber avisos push. As mensagens internas continuam funcionando." : `Última atividade: ${notificationCodeLabel(push?.code)}.`;
+    items.push({ key: "notifications", label: "Notificações", status: notificationStatus, value: notificationValue, detail: notificationDetail, checked_at: push?.created_at || null });
 
     const { data: monitor } = await admin.from("system_events").select("level,code,created_at,details").eq("source", "system").in("code", ["availability_ok", "availability_failed"]).order("created_at", { ascending: false }).limit(1).maybeSingle();
     const monitorAge = ageHours(monitor?.created_at);
     const monitorStatus = !monitor || monitorAge > 12 || monitor.level === "error" ? "red" : monitorAge > 8 ? "yellow" : "green";
     items.push({ key: "external_monitor", label: "Monitor externo", status: monitorStatus, value: !monitor ? "Aguardando primeira verificação" : monitor.level === "error" ? "Falha detectada" : "Disponível", detail: "Verifica automaticamente aplicativo, banco, autenticação e arquivos a cada 6 horas.", checked_at: monitor?.created_at || null });
 
-    items.push({ key: "version", label: "Versão publicada", status: "green", value: "v25", detail: "Ajuda, continuidade e Saúde do Sistema.", checked_at: checkedAt });
+    items.push({ key: "version", label: "Versão publicada", status: "green", value: "v25.21", detail: "Ajuda, continuidade e Saúde do Sistema em português do Brasil.", checked_at: checkedAt });
     const overall = worst(items);
     return reply({ checked_at: checkedAt, overall, message: overall === "green" ? "Todos os componentes monitorados estão normais." : overall === "yellow" ? "Há itens que precisam de acompanhamento." : "Existe pelo menos um item que exige ação administrativa.", items });
   } catch (error) {

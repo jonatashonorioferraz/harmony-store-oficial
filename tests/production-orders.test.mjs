@@ -46,9 +46,11 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(js,/list_finished_production_colors/);
   assert.match(js,/product-images/);
   assert.match(js,/async function printProductionOrder/);
-  assert.match(js,/document\.createElement\('iframe'\)/);
+  assert.match(js,/window\.open\('about:blank','_blank'\)/);
   assert.match(js,/copy\.querySelectorAll\('\.no-print'\)/);
-  assert.match(js,/frame\.contentWindow\.print\(\)/);
+  assert.match(js,/printWindow\.document/);
+  assert.match(js,/printWindow\.print\(\)/);
+  assert.match(js,/O navegador bloqueou a janela do PDF/);
   assert.match(js,/doc\.fonts\?\.ready/);
   assert.match(js,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(js,/@page\{size:A4 portrait;margin:9mm\}/);
@@ -59,7 +61,7 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js/);
-  assert.match(html,/production-orders\.css/);
+  assert.match(html,/production-orders\.js\?v=25\.20/);
+  assert.match(html,/production-orders\.css\?v=25\.20/);
   assert.match(worker,/production-orders\.js/);
 });

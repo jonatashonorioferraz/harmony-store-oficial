@@ -12,9 +12,12 @@ const tables = [
   'profiles', 'categories', 'products', 'custom_field_definitions',
   'custom_field_values', 'requests', 'request_items', 'stock_movements',
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
-  'purchase_orders', 'purchase_order_items', 'finished_product_models',
-  'production_weekly_closings', 'finished_production_receipts',
+  'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
+  'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
   'improvement_ideas', 'improvement_idea_events',
+  'app_notifications', 'app_notification_recipients',
+  'internal_supply_requests', 'internal_supply_request_items',
+  'internal_purchase_receipts', 'internal_purchase_receipt_items', 'internal_receipt_ai_runs',
 ];
 const generatedColumns = {
   requests: ['protocol'],
@@ -22,7 +25,11 @@ const generatedColumns = {
   purchase_orders: ['protocol'],
   production_weekly_closings: ['protocol', 'week_end'],
   finished_production_receipts: ['protocol', 'quantity_difference'],
+  production_orders: ['protocol'],
   improvement_ideas: ['protocol'],
+  internal_supply_requests: ['protocol'],
+  internal_purchase_receipts: ['protocol'],
+  internal_receipt_ai_runs: ['id'],
 };
 
 if (!process.argv[2] && !process.env.BACKUP_DIR) throw new Error('Informe a pasta descriptografada do backup.');

@@ -11,6 +11,7 @@ const migration = await readFile(new URL('../supabase/migrations/20260719071000_
 const healthEdge = await readFile(new URL('../supabase/functions/system-health/index.ts', import.meta.url), 'utf8');
 const help = await readFile(new URL('../help-center.js', import.meta.url), 'utf8');
 const health = await readFile(new URL('../system-health.js', import.meta.url), 'utf8');
+const backupGrantMigration = await readFile(new URL('../supabase/migrations/20260720221500_backup_read_grants.sql', import.meta.url), 'utf8');
 const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const performanceMigration = await readFile(new URL('../supabase/migrations/20260719073500_performance_policy_cleanup.sql', import.meta.url), 'utf8');
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8');
@@ -44,7 +45,12 @@ test('daily backup exports data, Auth and Storage before encryption', () => {
   assert.match(createBackup, /auth\/v1\/admin\/users/);
   assert.match(createBackup, /storage\/v1\/object\/list/);
   assert.match(createBackup, /'improvement_ideas', 'improvement_idea_events'/);
+  assert.match(createBackup, /'production_orders', 'production_order_items'/);
+  assert.match(createBackup, /'internal_supply_requests', 'internal_supply_request_items'/);
+  assert.match(createBackup, /'internal_purchase_receipts', 'internal_purchase_receipt_items'/);
   assert.match(recoveryScript, /'improvement_ideas', 'improvement_idea_events'/);
+  assert.match(recoveryScript, /'production_orders', 'production_order_items'/);
+  assert.match(backupGrantMigration, /grant select on table[\s\S]*public\.improvement_ideas[\s\S]*to service_role/i);
   assert.match(verifyBackup, /Falha de integridade/);
 });
 
@@ -62,8 +68,13 @@ test('health data is private, summarized and role protected', () => {
   assert.match(migration, /grant execute on function public\.service_record_backup_result[\s\S]*to service_role/i);
   assert.match(healthEdge, /caller\.role !== "admin"/);
   assert.match(healthEdge, /Aguardando primeiro backup/);
+  assert.match(healthEdge, /Falha na última tentativa/);
+  assert.match(healthEdge, /\.neq\("source", "backup"\)/);
+  assert.match(healthEdge, /Nenhum aparelho ativo/);
+  assert.match(healthEdge, /application\/json; charset=utf-8/);
   assert.doesNotMatch(healthEdge, /error instanceof Error \? error\.message/);
   assert.match(health, /S\?\.profile\?\.role!=='admin'/);
+  assert.match(index, /system-health\.js\?v=25\.21/);
 });
 
 test('external monitor checks the complete service chain and records sanitized status', () => {
