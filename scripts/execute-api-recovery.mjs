@@ -13,7 +13,7 @@ const tables = [
   'custom_field_values', 'requests', 'request_items', 'stock_movements',
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
   'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
-  'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
+  'production_payment_schedules', 'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
   'improvement_ideas', 'improvement_idea_events',
   'app_notifications', 'app_notification_recipients',
   'internal_supply_requests', 'internal_supply_request_items',

@@ -57,7 +57,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v25-22/);
+  assert.match(worker, /harmony-store-v25-23/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);
@@ -101,8 +101,8 @@ test("build contains the official complete app", async () => {
   const productionCss = await readFile(new URL("../dist/client/production-receipts.css", import.meta.url), "utf8");
   assert.match(production, /create_finished_production_collection/);
   assert.match(production, /Adicionar outro produto/);
-  assert.match(production, /admin_close_production_week/);
-  assert.match(production, /admin_production_statement/);
+  assert.match(production, /admin_close_production_payment/);
+  assert.match(production, /admin_production_payment_statement/);
   assert.match(production, /VALOR TOTAL PELA CONTAGEM OFICIAL/);
   assert.match(production, /Colaboradora de recebimento/);
   assert.match(production, /canSeeReceiptValues=\(\)=>isAdmin\(\)/);

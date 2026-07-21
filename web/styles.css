@@ -86,3 +86,6 @@ body{background:linear-gradient(145deg,var(--theme-soft) 0,#fffafc 38%,var(--the
 .skip-link{position:fixed;left:12px;top:-60px;z-index:100;padding:11px 15px;border-radius:8px;background:#fff;color:var(--rose2);font-weight:900;box-shadow:var(--shadow)}
 .skip-link:focus{top:12px}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #467bd0;outline-offset:3px}
+.profile-payment-schedule{grid-column:1/-1;margin:2px 0;padding:15px;border:1px solid #ead8e1;border-radius:14px;background:linear-gradient(135deg,#fff8fc,#f4f7ff)}
+.profile-payment-schedule[hidden]{display:none}.profile-payment-schedule legend{padding:0 8px;color:#a43c73;font:700 15px Georgia,serif}.profile-payment-schedule>p{margin:0 0 12px;color:#786873;font-size:10px;line-height:1.5}.profile-payment-schedule>small{display:block;margin-top:10px;color:#8a7782;font-size:9px}.payment-schedule-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:11px}
+@media(max-width:720px){.payment-schedule-fields{grid-template-columns:1fr}.profile-payment-schedule{grid-column:1;padding:13px}}
