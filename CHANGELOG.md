@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.19] — 20/07/2026
+
+### Impressão isolada e resistente a conflitos
+
+- O PDF da ordem passa a ser montado em um documento A4 isolado do restante do aplicativo.
+- A geração aguarda o carregamento das fotos e das fontes antes de abrir a prévia de impressão.
+- Menus, modais e regras de relatórios antigos não conseguem mais ocultar o conteúdo da ordem.
+- O documento temporário é removido automaticamente após a impressão, sem alterar ou duplicar dados da ordem.
+
 ## [v25.18] — 20/07/2026
 
 ### Correção do PDF das ordens de produção
