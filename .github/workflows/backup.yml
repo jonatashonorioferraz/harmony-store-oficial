@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/backup.yml'
+      - 'scripts/create-api-backup.mjs'
+      - 'scripts/verify-api-backup.mjs'
+      - 'scripts/restore-api-backup.mjs'
+      - 'scripts/record-backup-result.mjs'
+      - 'scripts/record-backup-failure.mjs'
+      - 'supabase/migrations/**'
 
 permissions:
   contents: read

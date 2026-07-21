@@ -32,6 +32,7 @@ test('CI validates the complete build, test suite and synchronized official file
 
 test('daily backup exports data, Auth and Storage before encryption', () => {
   assert.match(backup, /cron: '17 3 \* \* \*'/);
+  assert.match(backup, /push:[\s\S]*branches: \[main\][\s\S]*supabase\/migrations\/\*\*/);
   assert.match(backup, /actions\/checkout@v7/);
   assert.match(backup, /actions\/setup-node@v7/);
   assert.match(backup, /actions\/upload-artifact@v7/);
