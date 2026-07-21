@@ -84,7 +84,7 @@ Deno.serve(async request => {
     const monitorStatus = !monitor || monitorAge > 12 || monitor.level === "error" ? "red" : monitorAge > 8 ? "yellow" : "green";
     items.push({ key: "external_monitor", label: "Monitor externo", status: monitorStatus, value: !monitor ? "Aguardando primeira verificação" : monitor.level === "error" ? "Falha detectada" : "Disponível", detail: "Verifica automaticamente aplicativo, banco, autenticação e arquivos a cada 6 horas.", checked_at: monitor?.created_at || null });
 
-    items.push({ key: "version", label: "Versão publicada", status: "green", value: "v25.21", detail: "Ajuda, continuidade e Saúde do Sistema em português do Brasil.", checked_at: checkedAt });
+    items.push({ key: "version", label: "Versão publicada", status: "green", value: "v25.22", detail: "Conferência segura das datas dos cupons e painel financeiro atualizado.", checked_at: checkedAt });
     const overall = worst(items);
     return reply({ checked_at: checkedAt, overall, message: overall === "green" ? "Todos os componentes monitorados estão normais." : overall === "yellow" ? "Há itens que precisam de acompanhamento." : "Existe pelo menos um item que exige ação administrativa.", items });
   } catch (error) {

@@ -32,6 +32,15 @@ test('receipt workflow supports linked and direct purchases with mandatory revie
   assert.match(migration, /case when v_request is null then 'direct' else 'requested' end/);
 });
 
+test('receipt review warns and asks confirmation for dates far from today', () => {
+  assert.match(ui, /unusualReceiptDate/);
+  assert.match(ui, /receipt-date-alert/);
+  assert.match(ui, /Confira a data do cupom antes de salvar/);
+  assert.match(ui, /Deseja confirmar e salvar essa data mesmo assim/);
+  assert.match(ui, /localDateTimeValue/);
+  assert.match(css, /\.receipt-date-alert\[hidden\]/);
+});
+
 test('price report tracks increases and reductions without exposing values to receiver', () => {
   assert.match(ui, /previousPrice/);
   assert.match(ui, /currentPrice/);

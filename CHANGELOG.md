@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.22] — 21/07/2026
+
+### Conferência segura da data dos cupons
+
+- A compra direta #0004 foi corrigida para a data em que foi registrada, restaurando sua soma no painel de julho.
+- A conferência do cupom agora destaca datas mais de sete dias distantes de hoje.
+- Antes de salvar uma data incomum, o ADM precisa confirmá-la explicitamente.
+- O campo de data e hora passou a respeitar corretamente o horário local do aparelho.
+
 ## [v25.21] — 20/07/2026
 
 ### Saúde do Sistema em português e backup corrigido

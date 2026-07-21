@@ -75,7 +75,7 @@ test('health data is private, summarized and role protected', () => {
   assert.match(healthEdge, /application\/json; charset=utf-8/);
   assert.doesNotMatch(healthEdge, /error instanceof Error \? error\.message/);
   assert.match(health, /S\?\.profile\?\.role!=='admin'/);
-  assert.match(index, /system-health\.js\?v=25\.21/);
+  assert.match(index, /system-health\.js\?v=25\.22/);
 });
 
 test('external monitor checks the complete service chain and records sanitized status', () => {
