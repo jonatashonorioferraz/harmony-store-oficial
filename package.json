@@ -6,9 +6,9 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "node scripts/serve-static.mjs",
-    "build": "node scripts/build-static.mjs",
-    "start": "node scripts/serve-static.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "vite preview",
     "test": "npm run build && node --test tests/*.test.mjs",
     "backup:verify": "node scripts/verify-api-backup.mjs",
     "backup:restore:check": "node scripts/restore-api-backup.mjs",

@@ -1,11 +1,4 @@
 import type { Metadata } from "next";
 import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "Harmony Store Oficial — Gestão de Produção",
-  description: "Sistema oficial de solicitações, estoque e entrega de matérias-primas da Harmony Store.",
-};
-
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR"><body>{children}</body></html>;
-}
+export const metadata: Metadata={title:"Fluxo — Assistente Financeiro Inteligente",description:"Envie documentos. A IA organiza seu financeiro."};
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body>{children}</body></html>}
