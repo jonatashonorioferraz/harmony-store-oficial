@@ -46,6 +46,22 @@ test("multiple products remain grouped in one receipt collection", async () => {
   assert.equal(collections.find(item => item.id === "c1").items.length, 2);
 });
 
+test("each received collection starts collapsed and can be expanded without changing its data", async () => {
+  const [api,source,css] = await Promise.all([
+    productionContext(),
+    readFile(new URL("../web/production-receipts.js", import.meta.url), "utf8"),
+    readFile(new URL("../web/production-receipts.css", import.meta.url), "utf8"),
+  ]);
+  assert.ok(api.state.expandedCollections instanceof Set);
+  assert.match(source, /collapsed=!PR\.expandedCollections\.has\(collection\.id\)/);
+  assert.match(source, /data-toggle-collection/);
+  assert.match(source, /aria-expanded/);
+  assert.match(source, /Recolher lista/);
+  assert.match(source, /Ver itens/);
+  assert.match(css, /\.collection-card\.is-collapsed>\.table-wrap/);
+  assert.match(css, /\.collection-card\.is-collapsed>footer/);
+});
+
 test("week always runs from Monday through Sunday", async () => {
   const api = await productionContext();
   assert.deepEqual({ ...api.weekBounds("2026-07-17") }, { start: "2026-07-13", end: "2026-07-19" });

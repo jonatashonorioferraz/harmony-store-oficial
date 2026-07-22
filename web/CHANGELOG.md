@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.26] — 21/07/2026
+
+### Listas de produção recolhíveis
+
+- Cada coleta recebida começa recolhida e pode ser aberta individualmente para facilitar a navegação entre muitas listas.
+- O resumo, a situação e as ações permanecem visíveis enquanto os produtos ficam ocultos.
+- A opção está disponível para todos os perfis autorizados a visualizar recebimentos e não altera dados ou pagamentos.
+
 ## [v25.25] — 21/07/2026
 
 ### Classificação das solicitações pelo perfil
