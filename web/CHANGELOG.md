@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.28] - 22/07/2026
+
+### Correção do PDF no celular
+
+- A ordem de produção usa o fluxo nativo da própria página em celulares e tablets, evitando o travamento do Android em "Preparando visualização".
+- O layout A4 compacto, com fotos, cores e vários produtos por página, foi preservado também no fluxo móvel.
+- O fluxo em janela exclusiva continua ativo no computador, mantendo a compatibilidade já validada.
+
 ## [v25.27] — 22/07/2026
 
 ### Diagnóstico de notificações no Android
