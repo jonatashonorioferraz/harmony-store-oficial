@@ -21,7 +21,7 @@ test('install action is visible on tablets and handles modern iPad identificatio
   assert.match(pwa,/Safari do iPhone ou iPad/);
   assert.match(pwa,/Chrome do celular ou tablet/);
   assert.match(pwa,/aria-label','Instalar Harmony Store neste aparelho'/);
-  assert.match(worker,/harmony-store-v25-28/);
+  assert.match(worker,/harmony-store-v25-29/);
 });
 
 test('mobile admin menu scrolls without overlapping its many tabs',async()=>{

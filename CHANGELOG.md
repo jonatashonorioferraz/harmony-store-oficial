@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.29] - 22/07/2026
+
+### Lista visual das solicitações
+
+- Toda solicitação de matéria-prima ganhou uma visualização simplificada com fotos maiores, nomes e quantidades solicitadas.
+- A lista visual está disponível para administradores e para a própria pessoa solicitante, inclusive no histórico.
+- O PDF A4 contém somente os produtos pedidos e preserva uma apresentação compacta para listas extensas.
+- A visualização abre sobre a separação sem alterar ou descartar dados ainda não salvos.
+- Os estilos de impressão foram isolados para não interferirem nas ordens de produção nem nos relatórios de recebimento.
+
 ## [v25.28] - 22/07/2026
 
 ### Correção do PDF no celular

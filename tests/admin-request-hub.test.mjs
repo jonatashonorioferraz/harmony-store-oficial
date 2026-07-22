@@ -44,5 +44,5 @@ test('hub assets are versioned, cached and responsive',async()=>{
   assert.match(worker,/request-hub\.js\?v=25\.25/);
   assert.match(worker,/request-hub\.css\?v=25\.25/);
   assert.match(css,/@media\(max-width:720px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.28.0');
+  assert.equal(JSON.parse(pkg).version,'25.29.0');
 });
