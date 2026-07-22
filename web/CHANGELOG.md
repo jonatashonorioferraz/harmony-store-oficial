@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.25] — 21/07/2026
+
+### Classificação das solicitações pelo perfil
+
+- Toda solicitação criada pelo perfil de recebimento aparece em “Material do e-commerce”, independentemente dos produtos escolhidos.
+- Solicitações das colaboradoras de produção continuam em “Matéria-prima”.
+- Suprimentos internos permanecem separados e a nova regra reduz uma consulta desnecessária ao banco.
+
 ## [v25.24] — 21/07/2026
 
 ### Central administrativa de solicitações

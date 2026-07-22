@@ -11,28 +11,17 @@ const ageText=value=>{
   return days===0?'Recebida hoje':days===1?'Há 1 dia':`Há ${days} dias`;
 };
 
-async function standardItems(requests){
-  if(!requests.length)return [];
-  const ids=requests.map(item=>item.id).join(',');
-  return rest(`request_items?request_id=in.(${ids})&select=request_id,product_id`);
-}
-
-function classifyRequest(request,items){
-  const rows=items.filter(item=>item.request_id===request.id);
-  const hasEcommerce=rows.some(item=>S.products.find(product=>product.id===item.product_id)?.hidden_from_collaborators===true);
-  const hasProduction=rows.some(item=>S.products.find(product=>product.id===item.product_id)?.hidden_from_collaborators!==true);
-  return hasEcommerce&&!hasProduction?'ecommerce':hasEcommerce?'ecommerce':'production';
+function classifyRequest(request){
+  const requester=S.team.find(person=>person.id===request.requested_by);
+  return requester?.role==='receiver'?'ecommerce':'production';
 }
 
 async function loadHub(){
   const requests=S.requests.filter(item=>openStatuses.has(item.status));
-  const [items]=await Promise.all([
-    standardItems(requests),
-    window.HarmonyInternalSupplies?.load?.()
-  ]);
+  await window.HarmonyInternalSupplies?.load?.();
   const standard=requests.map(item=>{
     const requester=S.team.find(person=>person.id===item.requested_by);
-    return {...item,kind:classifyRequest(item,items),requester_name:requester?.full_name||'Solicitante',priority:'normal'};
+    return {...item,kind:classifyRequest(item),requester_name:requester?.full_name||'Solicitante',priority:'normal'};
   });
   const internal=(window.HarmonyInternalSupplies?.state?.requests||[])
     .filter(item=>openStatuses.has(item.status))

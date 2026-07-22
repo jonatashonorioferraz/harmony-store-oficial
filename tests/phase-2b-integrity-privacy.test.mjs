@@ -63,5 +63,5 @@ test('Edge errors are sanitized and the rollback preserves app compatibility', (
   assert.doesNotMatch(edge, /return reply\(\{ error: error instanceof Error \? error\.message/);
   assert.match(rollback, /grant select, insert on table public\.audit_logs to authenticated/i);
   assert.match(rollback, /update storage\.buckets set public = true where id = 'profile-images'/i);
-  assert.match(worker, /harmony-store-v25-24/);
+  assert.match(worker, /harmony-store-v25-25/);
 });
