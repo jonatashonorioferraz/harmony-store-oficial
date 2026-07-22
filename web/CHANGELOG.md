@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.27] — 22/07/2026
+
+### Diagnóstico de notificações no Android
+
+- A ativação atualiza o service worker antes de solicitar a inscrição no serviço push.
+- Erros genéricos do Android passam a ser explicados em português com um roteiro seguro de correção no aparelho.
+- Falhas de conexão, permissão, serviço Android e gravação no banco são diferenciadas.
+- A Central de Notificações interna permanece disponível mesmo quando o push do aparelho não pode ser ativado.
+
 ## [v25.26] — 21/07/2026
 
 ### Listas de produção recolhíveis

@@ -49,21 +49,47 @@ async function currentPushSubscription(){
   return (await navigator.serviceWorker.ready).pushManager.getSubscription();
 }
 
+function pushFailureKind(error){
+  const message=String(error?.message||error||'').toLowerCase();
+  if(!navigator.onLine)return'offline';
+  if(Notification.permission==='denied')return'permission';
+  if(/registration failed|push service|service error|service unavailable|aborterror/.test(message))return'android-service';
+  if(error?.pushStage==='database')return'database';
+  return'unknown';
+}
+
+function pushFailureMessage(kind){
+  if(kind==='offline')return'Sem conexão com a internet. Conecte o aparelho e tente novamente.';
+  if(kind==='permission')return'As notificações estão bloqueadas neste aparelho. Libere a permissão do Harmony Store nas configurações.';
+  if(kind==='database')return'O aparelho foi registrado, mas não foi possível salvar a ativação. Entre novamente no aplicativo e tente outra vez.';
+  if(kind==='android-service')return'O Android não conseguiu registrar este aparelho no serviço de notificações. Isso não é um bloqueio do seu cadastro no Harmony Store.';
+  return'Este aparelho não conseguiu concluir a ativação das notificações.';
+}
+
+function showPushHelp(error){
+  const kind=pushFailureKind(error),android=kind==='android-service';
+  $('#modal').innerHTML=`<div class="modal"><section class="modal-box push-help"><div class="modal-head"><div><p class="eyebrow">🔔 NOTIFICAÇÕES DO APARELHO</p><h2>Não foi possível ativar</h2></div><button type="button" data-close aria-label="Fechar">×</button></div><div class="push-help-summary"><i>⚠️</i><p>${esc(pushFailureMessage(kind))}</p></div>${android?`<div class="push-help-steps"><h3>Faça estas verificações neste celular:</h3><ol><li>Abra o endereço do aplicativo diretamente no <b>Google Chrome</b>, evitando navegadores internos do WhatsApp, Instagram ou outros aplicativos.</li><li>No Chrome, acesse <b>Configurações → Configurações do site → Notificações</b> e permita <b>app.harmonylembrancinhas.com.br</b>.</li><li>No Android, acesse <b>Configurações → Aplicativos → Chrome → Notificações</b> e deixe as notificações permitidas.</li><li>Atualize o <b>Google Chrome</b> e o <b>Google Play Services</b> pela Play Store, reinicie o celular e tente novamente.</li></ol></div>`:''}<div class="push-help-fallback"><i>💡</i><p>Os avisos continuam disponíveis normalmente na <b>Central de Notificações</b> dentro do Harmony Store.</p></div><button class="primary full" data-close>Entendi, vou verificar</button></section></div>`;
+  document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>$('#modal').innerHTML='');
+}
+
 async function enablePushNotifications(){
   if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))throw Error('Este aparelho não oferece suporte a notificações.');
   if(appleTouchDevice&&!installed)throw Error('No iPhone ou iPad, adicione primeiro o aplicativo à Tela de Início e abra pelo ícone.');
   const permission=await Notification.requestPermission();
   if(permission!=='granted')throw Error('Permissão não concedida. Ative as notificações nas configurações do aparelho.');
   const registration=await navigator.serviceWorker.ready;
+  await registration.update().catch(()=>{});
   let subscription=await registration.pushManager.getSubscription();
-  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:applicationServerKey(VAPID_PUBLIC_KEY)});
+  if(!subscription){try{subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:applicationServerKey(VAPID_PUBLIC_KEY)})}catch(error){error.pushStage='subscription';throw error}}
   const saved=subscription.toJSON();
-  await rpc('save_own_push_subscription',{
-    p_endpoint:subscription.endpoint,
-    p_p256dh:saved.keys?.p256dh,
-    p_auth:saved.keys?.auth,
-    p_user_agent:navigator.userAgent
-  });
+  try{
+    await rpc('save_own_push_subscription',{
+      p_endpoint:subscription.endpoint,
+      p_p256dh:saved.keys?.p256dh,
+      p_auth:saved.keys?.auth,
+      p_user_agent:navigator.userAgent
+    });
+  }catch(error){error.pushStage='database';throw error}
   return subscription;
 }
 
@@ -131,7 +157,7 @@ function addNotificationControl(){
         if(confirm('Desativar as notificações neste aparelho?')){await disablePushNotifications();toast('Notificações desativadas neste aparelho.')}
       }else{await enablePushNotifications();toast('Notificações ativadas neste aparelho.')}
       await updateNotificationButton(button);
-    }catch(error){alert(error.message)}finally{button.disabled=false}
+    }catch(error){showPushHelp(error)}finally{button.disabled=false}
   };
 }
 
