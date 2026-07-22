@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.24] — 21/07/2026
+
+### Central administrativa de solicitações
+
+- A tela inicial dos ADMs reúne as solicitações abertas de matéria-prima, materiais do e-commerce e suprimentos internos.
+- Os indicadores funcionam como filtros e cada pendência abre diretamente o registro no módulo de origem.
+- Prioridade, situação, solicitante e tempo de espera ficam visíveis sem navegar por diversos menus.
+- A consulta reaproveita as regras de acesso existentes e possui falha isolada, sem bloquear a tela inicial.
+- O painel foi adaptado para celular, tablet e computador.
+
 ## [v25.23] — 21/07/2026
 
 ### Pagamentos da produção com agenda individual

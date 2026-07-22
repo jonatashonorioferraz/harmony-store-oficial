@@ -293,5 +293,12 @@ function printReport(){window.print()}
 
 const before=renderPage;renderPage=async function(){if(S.view==='internal-supplies'&&allowed())return renderInternal(document.querySelector('#page'));return before()};
 new MutationObserver(nav).observe(document.body,{childList:true,subtree:true});nav();
-window.HarmonyInternalSupplies={load:loadInternal,report:productReport};
+async function openRequestFromHub(id){
+  IS.tab='requests';S.view='internal-supplies';renderApp();
+  await loadInternal();
+  const page=document.querySelector('#page');
+  if(page)await renderInternal(page);
+  requestModal(IS.requests.find(item=>item.id===id));
+}
+window.HarmonyInternalSupplies=Object.freeze({state:IS,load:loadInternal,report:productReport,openRequest:openRequestFromHub});
 })();
