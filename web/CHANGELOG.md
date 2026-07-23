@@ -5,6 +5,17 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.30] - 22/07/2026
+
+### Indisponibilidade temporária de matérias-primas
+
+- Produtos sem estoque no fornecedor continuam visíveis para colaboradoras e colaboradoras de recebimento, evitando que sejam esquecidos.
+- Uma sinalização profissional informa o motivo e, quando cadastrada, a previsão de retorno.
+- Os controles de quantidade ficam bloqueados para novas solicitações enquanto o produto estiver indisponível.
+- Solicitações pendentes antigas permitem remover o item indisponível, mas impedem seu aumento pela solicitante.
+- ADM principal e demais ADMs mantêm permissão integral para editar solicitações, produtos e disponibilidade.
+- O Supabase valida a regra mesmo quando a chamada não parte da interface, com registro de auditoria das mudanças.
+
 ## [v25.29] - 22/07/2026
 
 ### Lista visual das solicitações

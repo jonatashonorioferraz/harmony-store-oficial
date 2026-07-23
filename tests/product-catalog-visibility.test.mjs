@@ -40,11 +40,11 @@ test('product form, catalogue and offline cache include the visibility control',
   ]);
   assert.match(feature, /Ocultar para colaboradoras de produção/);
   assert.match(feature, /ADM principal, outros ADMs e colaboradoras de recebimento/);
-  assert.match(feature, /name='admin_save_product_v2'|name='admin_save_product'/);
+  assert.match(feature, /name='admin_save_product_v3'|name='admin_save_product'/);
   assert.match(feature, /editingOwnRequest[\s\S]*request\.status==='pending'/);
   assert.match(html, /product-visibility\.js/);
   assert.match(html, /product-visibility\.css/);
-  assert.match(worker, /harmony-store-v25-29/);
+  assert.match(worker, /harmony-store-v25-30/);
   assert.match(css, /product-visibility-check/);
 });
 
