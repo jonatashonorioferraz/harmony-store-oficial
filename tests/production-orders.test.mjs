@@ -46,7 +46,19 @@ test('new production items move to the top and receive immediate focus',()=>{
   assert.match(js,/addProductionOrderItem/);
   assert.match(js,/const existing=new Set\(root\.children\)/);
   assert.match(js,/root\.prepend\(added\)/);
-  assert.match(js,/added\.querySelector\('\[name="model_id"\]'\)\?\.focus\(\)/);
+  assert.match(js,/added\.querySelector\('\.production-order-model-trigger'\)\?\.focus\(\)/);
+});
+
+test('model picker provides photos, scrolling and accent-insensitive autocomplete',()=>{
+  assert.match(js,/enhanceProductionOrderModelPickers/);
+  assert.match(js,/production-order-model-option-photo/);
+  assert.match(js,/Digite algumas letras do modelo/);
+  assert.match(js,/normalize\('NFD'\)/);
+  assert.match(js,/dataset\.modelSearch\.includes\(term\)/);
+  assert.match(js,/modelo.*encontrado/);
+  assert.match(pickerCss,/\.production-order-model-options/);
+  assert.match(pickerCss,/max-height:340px/);
+  assert.match(pickerCss,/overflow-y:auto/);
 });
 
 test('every color option has its registered visual swatch',()=>{
@@ -60,6 +72,9 @@ test('every color option has its registered visual swatch',()=>{
   assert.match(js,/Escape/);
   assert.match(pickerCss,/\.production-order-color-options/);
   assert.match(pickerCss,/grid-template-columns:repeat\(2/);
+  assert.match(pickerCss,/overflow-y:auto/);
+  assert.match(pickerCss,/-webkit-overflow-scrolling:touch/);
+  assert.match(pickerCss,/touch-action:pan-y/);
   assert.match(pickerCss,/@media\(max-width:700px\)/);
   assert.match(html,/production-order-color-picker\.css/);
   assert.match(worker,/production-order-color-picker\.css/);
@@ -90,8 +105,8 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.32/);
+  assert.match(html,/production-orders\.js\?v=25\.33/);
   assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-32/);
+  assert.match(worker,/harmony-store-v25-33/);
 });

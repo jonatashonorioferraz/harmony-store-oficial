@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.33] - 24/07/2026
+
+### Busca visual de modelos nas ordens de produção
+
+- Cada opção de modelo agora exibe a miniatura do produto junto ao nome.
+- A busca sugere modelos enquanto o ADM digita e ignora diferenças entre acentos e letras maiúsculas.
+- As listas de modelos e cores permanecem roláveis por mouse e toque em computador, tablet e celular.
+- A seleção também oferece navegação acessível por teclado.
+
 ## [v25.32] - 24/07/2026
 
 ### Paleta visual completa nas ordens de produção
