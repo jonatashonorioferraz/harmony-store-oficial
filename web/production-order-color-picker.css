@@ -1,0 +1,17 @@
+.production-order-items-editor{overflow:visible}
+.production-order-color-picker{position:relative;display:block}
+.production-order-color-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+.production-order-color-trigger{width:100%;min-height:42px;display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);text-align:left;font-weight:800}
+.production-order-color-trigger:hover,.production-order-color-picker.is-open .production-order-color-trigger{border-color:#e587b4;box-shadow:0 0 0 3px #fce7f1}
+.production-order-color-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.production-order-color-trigger b{color:var(--rose);font-size:15px;transition:transform .18s ease}
+.production-order-color-picker.is-open .production-order-color-trigger b{transform:rotate(180deg)}
+.production-order-color-picker .production-order-color-swatch{position:static;transform:none;width:20px;height:20px;display:block;border:1px solid #bdaeb5;border-radius:50%;background:var(--order-color);box-shadow:inset 0 0 0 2px #ffffff70,0 2px 6px #67405320}
+.production-order-color-options{position:absolute;z-index:80;top:calc(100% + 7px);left:0;width:min(330px,calc(100vw - 48px));max-height:330px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:5px;padding:8px;border:1px solid #ead8e1;border-radius:14px;background:#fff;box-shadow:0 18px 42px #5f34492b}
+.production-order-color-options[hidden]{display:none}
+.production-order-color-option{min-width:0;display:grid;grid-template-columns:22px minmax(0,1fr);gap:9px;align-items:center;padding:9px;border:0;border-radius:9px;background:#fff;color:var(--ink);text-align:left;font-size:11px;font-weight:800}
+.production-order-color-option span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.production-order-color-option:hover,.production-order-color-option:focus-visible{outline:none;background:#fff0f6;color:var(--rose2)}
+.production-order-color-option[aria-selected="true"]{background:linear-gradient(135deg,#fff0f6,#f2f6ff);color:var(--rose2);box-shadow:inset 0 0 0 1px #edc8d9}
+@media(max-width:700px){.production-order-color-options{right:0;left:auto;width:min(280px,calc(100vw - 72px));grid-template-columns:1fr;max-height:300px}.production-order-color-option{min-height:42px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){.production-order-color-trigger b{transition:none}}

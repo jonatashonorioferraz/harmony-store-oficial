@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.32] - 24/07/2026
+
+### Paleta visual completa nas ordens de produção
+
+- Ao abrir o campo Cor, todas as opções exibem o nome e a amostra exata da tonalidade cadastrada.
+- A paleta usa duas colunas no computador e uma coluna adaptada no celular e tablet.
+- A seleção continua integrada ao cadastro oficial de cores, ao salvamento da ordem e ao PDF.
+- Navegação por teclado, foco visível e fechamento pela tecla Escape foram preservados para acessibilidade.
+
 ## [v25.31] - 24/07/2026
 
 ### Inclusão rápida na ordem de produção

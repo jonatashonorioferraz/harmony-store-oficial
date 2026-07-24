@@ -3,13 +3,14 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,js,css,html,worker,receiptCss]=await Promise.all([
+const [sql,js,css,html,worker,receiptCss,pickerCss]=await Promise.all([
   readFile(new URL('supabase/migrations/20260720170000_production_orders.sql',root),'utf8'),
   readFile(new URL('production-orders.js',root),'utf8'),
   readFile(new URL('production-orders.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),
   readFile(new URL('service-worker.js',root),'utf8'),
   readFile(new URL('production-receipts.css',root),'utf8'),
+  readFile(new URL('production-order-color-picker.css',root),'utf8'),
 ]);
 
 test('production orders are isolated from receiving and payments',()=>{
@@ -48,6 +49,22 @@ test('new production items move to the top and receive immediate focus',()=>{
   assert.match(js,/added\.querySelector\('\[name="model_id"\]'\)\?\.focus\(\)/);
 });
 
+test('every color option has its registered visual swatch',()=>{
+  assert.match(js,/enhanceProductionOrderColorPickers/);
+  assert.match(js,/\[\.\.\.select\.options\]\.forEach/);
+  assert.match(js,/color\?\.hex_code/);
+  assert.match(js,/role','listbox/);
+  assert.match(js,/aria-selected/);
+  assert.match(js,/ArrowDown/);
+  assert.match(js,/ArrowUp/);
+  assert.match(js,/Escape/);
+  assert.match(pickerCss,/\.production-order-color-options/);
+  assert.match(pickerCss,/grid-template-columns:repeat\(2/);
+  assert.match(pickerCss,/@media\(max-width:700px\)/);
+  assert.match(html,/production-order-color-picker\.css/);
+  assert.match(worker,/production-order-color-picker\.css/);
+});
+
 test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(js,/list_finished_product_models/);
   assert.match(js,/list_finished_production_colors/);
@@ -73,8 +90,8 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.31/);
+  assert.match(html,/production-orders\.js\?v=25\.32/);
   assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-31/);
+  assert.match(worker,/harmony-store-v25-32/);
 });
