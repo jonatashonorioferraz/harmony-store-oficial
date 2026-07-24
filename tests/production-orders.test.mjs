@@ -41,6 +41,13 @@ test('workflow supports drafts, notifications, acknowledgement and audit',()=>{
   assert.match(js,/Duplicar/);
 });
 
+test('new production items move to the top and receive immediate focus',()=>{
+  assert.match(js,/addProductionOrderItem/);
+  assert.match(js,/const existing=new Set\(root\.children\)/);
+  assert.match(js,/root\.prepend\(added\)/);
+  assert.match(js,/added\.querySelector\('\[name="model_id"\]'\)\?\.focus\(\)/);
+});
+
 test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(js,/list_finished_product_models/);
   assert.match(js,/list_finished_production_colors/);
@@ -66,8 +73,8 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.28/);
-  assert.match(html,/production-orders\.css\?v=25\.28/);
+  assert.match(html,/production-orders\.js\?v=25\.31/);
+  assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-30/);
+  assert.match(worker,/harmony-store-v25-31/);
 });

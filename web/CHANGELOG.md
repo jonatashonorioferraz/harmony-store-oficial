@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.31] - 24/07/2026
+
+### Inclusão rápida na ordem de produção
+
+- Cada produto adicionado entra no topo da lista de produção, mantendo os controles recém-criados imediatamente visíveis.
+- O campo de modelo recebe foco automaticamente para agilizar o preenchimento de listas extensas.
+- A ordem dos itens já existentes, o salvamento, a edição, o PDF e as regras de pagamento permanecem inalterados.
+
 ## [v25.30] - 22/07/2026
 
 ### Indisponibilidade temporária de matérias-primas

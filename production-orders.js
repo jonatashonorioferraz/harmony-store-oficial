@@ -28,4 +28,16 @@ async function openDetail(order){if(!order)return;if(!isAdmin()&&order.status===
 async function refresh(message){PO.loaded=false;document.querySelector('#modal').innerHTML='';await load(true);render();if(message)toast(message);if(window.HarmonyNotifications?.load)window.HarmonyNotifications.load(true).catch(()=>{})}
 const previousRenderPage=renderPage;renderPage=async function(){if(S.view==='production-orders')return render();return previousRenderPage()};
 new MutationObserver(injectNav).observe(document.body,{childList:true,subtree:true});injectNav();
+document.addEventListener?.('click',event=>{
+  if(!event.target.closest?.('#addProductionOrderItem'))return;
+  const root=document.querySelector('#productionOrderItems');
+  if(!root)return;
+  const existing=new Set(root.children);
+  setTimeout(()=>{
+    const added=[...root.children].find(row=>!existing.has(row));
+    if(!added)return;
+    root.prepend(added);
+    added.querySelector('[name="model_id"]')?.focus();
+  },0);
+},true);
 })();
