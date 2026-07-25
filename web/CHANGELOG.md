@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.34] - 25/07/2026
+
+### Acompanhamento acolhedor de uso
+
+- A tela de Colaboradoras ganhou um painel compacto de acessos para todos os ADMs.
+- O painel mostra último acesso, tempo aproximado de hoje e dos últimos 7 dias e dias ativos no período de 30 dias.
+- A coleta considera somente o aplicativo visível e com interação recente; não registra telas, conteúdo, IP ou localização.
+- A tabela de telemetria não possui acesso direto pelo aplicativo: colaboradoras registram apenas o próprio heartbeat e somente ADMs ativos consultam o resumo.
+- Os dados começam nesta versão, têm retenção de 180 dias e foram incluídos nos fluxos de backup e recuperação isolada.
+
 ## [v25.33] - 24/07/2026
 
 ### Busca visual de modelos nas ordens de produção

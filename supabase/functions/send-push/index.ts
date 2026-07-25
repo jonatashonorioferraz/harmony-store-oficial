@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
-// @ts-ignore CommonJS package supported by the Supabase Edge Runtime.
+// @ts-expect-error CommonJS package supported by the Supabase Edge Runtime.
 import webpush from "npm:web-push@3.6.7";
 
 const cors = {

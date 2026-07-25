@@ -1,6 +1,6 @@
 {
   "name": "harmony-store-oficial",
-  "version": "25.33.0",
+  "version": "25.34.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -8,8 +8,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:official": "node scripts/build-static.mjs",
     "start": "vite preview",
-    "test": "npm run build && node --test tests/*.test.mjs",
+    "test": "node scripts/build-static.mjs && node --test tests/*.test.mjs",
     "backup:verify": "node scripts/verify-api-backup.mjs",
     "backup:restore:check": "node scripts/restore-api-backup.mjs",
     "backup:restore:isolated": "node scripts/execute-api-recovery.mjs",

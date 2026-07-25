@@ -6,7 +6,7 @@ const API = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET = String(process.env.SUPABASE_SECRET_KEY || '');
 const output = resolve(process.env.BACKUP_DIR || join('backups', `harmony-${new Date().toISOString().replace(/[:.]/g, '-')}`));
 const tables = [
-  'profiles', 'categories', 'products', 'custom_field_definitions',
+  'profiles', 'app_usage_sessions', 'categories', 'products', 'custom_field_definitions',
   'custom_field_values', 'requests', 'request_items', 'stock_movements',
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
   'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
