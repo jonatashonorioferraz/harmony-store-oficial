@@ -22,6 +22,11 @@ test('usage UI records only workers and explains approximate data',async()=>{
   assert.match(source,/Date\.now\(\)-lastActivity>120000/);
   assert.match(source,/admin_list_app_usage_summary/);
   assert.match(source,/tempo é aproximado/i);
+  assert.match(source,/document\.createElement\('details'\)/);
+  assert.match(source,/<summary class="app-usage-head">/);
+  assert.match(source,/data-usage-profile/);
+  assert.match(source,/S\.team\?\.find/);
+  assert.match(source,/replaceAvatar\(element,profile\)/);
 });
 
 test('usage assets are mirrored, versioned, cached and responsive',async()=>{
@@ -31,8 +36,10 @@ test('usage assets are mirrored, versioned, cached and responsive',async()=>{
   ]);
   assert.equal(rootJs,webJs);
   assert.equal(rootCss,webCss);
-  assert.match(html,/app-usage\.css\?v=25\.34/);
-  assert.match(html,/app-usage\.js\?v=25\.34/);
-  assert.match(worker,/app-usage\.js\?v=25\.34/);
+  assert.match(html,/app-usage\.css\?v=25\.35/);
+  assert.match(html,/app-usage\.js\?v=25\.35/);
+  assert.match(worker,/app-usage\.js\?v=25\.35/);
+  assert.match(rootCss,/linear-gradient/);
+  assert.match(rootCss,/\.app-usage-panel\[open\]/);
   assert.match(rootCss,/@media\(max-width:720px\)/);
 });

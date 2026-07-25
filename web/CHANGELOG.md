@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.35] - 25/07/2026
+
+### Painel de uso mais vivo, compacto e pessoal
+
+- O acompanhamento de uso agora permanece minimizado e pode ser ampliado pelos ADMs para consultar todos os detalhes.
+- O resumo compacto destaca quantidade de colaboradoras, uso recente e pessoas que podem precisar de apoio.
+- As fotos privadas já cadastradas nos perfis aparecem no resumo e na lista detalhada, mantendo as iniciais como alternativa.
+- O visual recebeu cores, profundidade, estados de interação e tratamento responsivo sem alterar coleta, autenticação ou permissões.
+
 ## [v25.34] - 25/07/2026
 
 ### Acompanhamento acolhedor de uso
