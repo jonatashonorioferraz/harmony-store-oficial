@@ -5,6 +5,9 @@ const openRequestStatuses=new Set(['pending','separating','scheduled']);
 const activeOrderStatuses=new Set(['sent','viewed']);
 const role=()=>S?.profile?.role;
 const firstName=()=>String(S?.profile?.full_name||'').split(' ')[0];
+const preferenceKey=()=>`harmony-my-day-expanded:${S?.profile?.id||'anonymous'}`;
+const isExpanded=()=>{try{return localStorage.getItem(preferenceKey())==='true'}catch{return false}};
+const setExpanded=value=>{try{localStorage.setItem(preferenceKey(),String(value))}catch{}};
 const isOverdue=value=>Boolean(value&&new Date(value).getTime()<Date.now());
 const orderDue=order=>Boolean(order.due_date&&order.due_date<new Date().toISOString().slice(0,10));
 const plural=(count,singular,pluralForm)=>`${count} ${count===1?singular:pluralForm}`;
@@ -56,6 +59,10 @@ function taskCard(item){
   </article>`;
 }
 
+function summaryItem(item){
+  return `<span class="my-day-summary-item ${item.tone}"><i aria-hidden="true">${item.icon}</i><b>${esc(item.title)}</b></span>`;
+}
+
 function openAction(action){
   if(action.startsWith('request:')){
     const request=S.requests.find(item=>item.id===action.slice(8));
@@ -71,22 +78,29 @@ function render(){
   if(!page||S.view!=='home')return;
   document.querySelector('.my-day-panel')?.remove();
   const tasks=role()==='admin'?adminTasks():workerTasks();
+  const details=role()==='admin'?tasks.filter(item=>item.action!=='requests'):tasks;
   const urgent=tasks.filter(item=>item.tone==='urgent').length;
+  const expanded=isExpanded();
   const section=document.createElement('section');
-  section.className='my-day-panel';
-  section.innerHTML=`<header class="my-day-hero">
-    <div><span class="my-day-kicker">✦ MEU DIA NA HARMONY</span><h2>${tasks.length?`Bom trabalho, ${esc(firstName())}.`:`Tudo em ordem, ${esc(firstName())}!`}</h2><p>${tasks.length?'Organizamos o que merece sua atenção agora.':'Você não possui nenhuma ação pendente neste momento.'}</p></div>
-    <div class="my-day-score ${urgent?'attention':'clear'}"><i>${urgent?'!':'✓'}</i><span><b>${tasks.length}</b><small>${tasks.length===1?'ação para hoje':'ações para hoje'}</small></span></div>
+  section.className=`my-day-panel${expanded?' is-expanded':''}`;
+  section.innerHTML=`<header class="my-day-compact">
+    <div class="my-day-identity"><span class="my-day-kicker">✦ MEU DIA NA HARMONY</span><strong>${tasks.length?`${tasks.length} ${tasks.length===1?'ação':'ações'} hoje`:`Tudo em ordem, ${esc(firstName())}!`}</strong></div>
+    ${tasks.length?`<div class="my-day-summary" aria-label="Resumo do seu dia">${tasks.slice(0,6).map(summaryItem).join('')}</div>`:'<span class="my-day-clear">✓ Nenhuma pendência agora</span>'}
+    <button class="my-day-toggle" type="button" data-toggle-my-day aria-expanded="${expanded}">${expanded?'Recolher':'Ver meu dia'} <i aria-hidden="true">⌄</i></button>
   </header>
-  ${tasks.length?`<div class="my-day-list">${tasks.slice(0,6).map(taskCard).join('')}</div>`:'<div class="my-day-empty"><i>🌷</i><span><b>Seu dia está organizado</b><small>Novas tarefas aparecerão aqui automaticamente.</small></span></div>'}
-  <footer><span>Atualizado agora com os dados permitidos para o seu perfil.</span><button type="button" data-refresh-my-day>↻ Atualizar</button></footer>`;
+  <div class="my-day-details" ${expanded?'':'hidden'}>
+    <div class="my-day-details-head"><div><h2>Prioridades além das solicitações</h2><p>A Central de Pendências abaixo continua reunindo os pedidos em aberto.</p></div><span class="my-day-score ${urgent?'attention':'clear'}">${urgent?'!':'✓'} ${tasks.length}</span></div>
+    ${details.length?`<div class="my-day-list">${details.slice(0,6).map(taskCard).join('')}</div>`:'<div class="my-day-empty"><i>🌷</i><span><b>Seu dia está organizado</b><small>As solicitações continuam disponíveis na Central de Pendências.</small></span></div>'}
+    <footer><span>Atualizado agora com os dados permitidos para o seu perfil.</span><button type="button" data-refresh-my-day>↻ Atualizar</button></footer>
+  </div>`;
   const anchor=page.querySelector('#adminRequestHub,.home-notifications,.metrics');
   page.insertBefore(section,anchor||page.firstChild);
   section.querySelectorAll('[data-my-day-action]').forEach(button=>button.onclick=()=>openAction(button.dataset.myDayAction));
-  section.querySelector('[data-refresh-my-day]').onclick=async event=>{
+  section.querySelector('[data-toggle-my-day]').onclick=()=>{setExpanded(!expanded);render()};
+  section.querySelector('[data-refresh-my-day]')?.addEventListener('click',async event=>{
     const button=event.currentTarget;button.disabled=true;
     try{await load(true);render()}catch(error){alert(error.message);button.disabled=false}
-  };
+  });
 }
 
 async function mount(force=false){
