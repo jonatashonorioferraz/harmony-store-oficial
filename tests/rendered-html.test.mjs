@@ -57,7 +57,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v25-36/);
+  assert.match(worker, /harmony-store-v25-37/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);
@@ -122,6 +122,12 @@ test("build contains the official complete app", async () => {
   assert.match(pushFunction, /Harmony Store • Nova solicitação/);
   assert.match(pushFunction, /notification-badge\.svg/);
   assert.match(pushFunction, /\["collaborator", "receiver"\]\.includes\(caller\.role\)/);
+});
+
+test("browser tab uses the versioned colored Harmony logo",async()=>{
+  const html=await readFile(new URL("../dist/client/index.html",import.meta.url),"utf8");
+  assert.match(html,/rel="icon" type="image\/png" sizes="192x192" href="icon-192-v2\.png\?v=25\.37"/);
+  assert.match(html,/rel="shortcut icon" type="image\/png" href="icon-192-v2\.png\?v=25\.37"/);
 });
 
 test("server falls back to the app shell", async () => {

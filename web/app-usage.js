@@ -1,5 +1,5 @@
 const HarmonyAppUsage=(()=>{
-  const VERSION='v25.36',state={items:[],loadedAt:0,loading:null};
+  const VERSION='v25.37',state={items:[],loadedAt:0,loading:null};
   let lastActivity=Date.now(),heartbeat=null;
   const isAdmin=()=>S?.profile?.role==='admin';
   const isWorker=()=>['collaborator','receiver'].includes(S?.profile?.role);
@@ -76,14 +76,14 @@ const HarmonyAppUsage=(()=>{
     hydratePhotos(section);
     section.addEventListener('toggle',()=>{section.querySelector('.usage-expand-label').textContent=section.open?'Recolher':'Ver detalhes'});
     section.querySelector('[data-refresh-usage]').onclick=async event=>{
-      event.currentTarget.disabled=true;
+      const button=event.currentTarget;button.disabled=true;
       try{
         await load(true);
         section.querySelector('.usage-list').innerHTML=rows();
         section.querySelector('[data-usage-summary]').innerHTML=summary();
         hydratePhotos(section);
       }catch(error){alert(error.message)}
-      finally{event.currentTarget.disabled=false}
+      finally{button.disabled=false}
     };
   }
   async function enhance(){
