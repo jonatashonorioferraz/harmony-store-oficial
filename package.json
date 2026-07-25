@@ -1,6 +1,6 @@
 {
   "name": "harmony-store-oficial",
-  "version": "25.33.0",
+  "version": "25.34.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -8,8 +8,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:official": "node scripts/build-static.mjs",
     "start": "vite preview",
-    "test": "npm run build && node --test tests/*.test.mjs",
+    "test": "node scripts/build-static.mjs && node --test tests/*.test.mjs",
     "backup:verify": "node scripts/verify-api-backup.mjs",
     "backup:restore:check": "node scripts/restore-api-backup.mjs",
     "backup:restore:isolated": "node scripts/execute-api-recovery.mjs",
@@ -18,10 +19,14 @@
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "next": "16.2.12",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-loading-skeleton": "3.5.0"
+  },
+  "overrides": {
+    "postcss": "8.5.23",
+    "sharp": "0.35.3"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

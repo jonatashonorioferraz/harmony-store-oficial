@@ -9,7 +9,7 @@ const PROJECT_REF = String(process.env.RECOVERY_PROJECT_REF || '');
 const CONFIRM = String(process.env.RECOVERY_CONFIRM || '');
 const PRODUCTION_REF = 'tyzfznwvjzmudxtcbbaf';
 const tables = [
-  'profiles', 'categories', 'products', 'custom_field_definitions',
+  'profiles', 'app_usage_sessions', 'categories', 'products', 'custom_field_definitions',
   'custom_field_values', 'requests', 'request_items', 'stock_movements',
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
   'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
