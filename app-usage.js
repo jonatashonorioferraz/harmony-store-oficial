@@ -1,5 +1,5 @@
 const HarmonyAppUsage=(()=>{
-  const VERSION='v25.35',state={items:[],loadedAt:0,loading:null};
+  const VERSION='v25.36',state={items:[],loadedAt:0,loading:null};
   let lastActivity=Date.now(),heartbeat=null;
   const isAdmin=()=>S?.profile?.role==='admin';
   const isWorker=()=>['collaborator','receiver'].includes(S?.profile?.role);

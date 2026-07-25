@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.36] - 25/07/2026
+
+### Meu dia na Harmony
+
+- A página inicial agora organiza automaticamente as ações mais importantes de cada perfil.
+- Colaboradoras veem avisos não lidos, ordens de produção que precisam de confirmação e suas solicitações em andamento.
+- ADMs veem solicitações abertas ou atrasadas, ordens sem confirmação, estoque baixo e compras internas pendentes.
+- Cada cartão abre diretamente o fluxo oficial correspondente, sem duplicar regras nem ampliar permissões.
+- A central usa somente os dados que o perfil já podia consultar e não altera Auth, pagamentos, banco ou RLS.
+
 ## [v25.35] - 25/07/2026
 
 ### Painel de uso mais vivo, compacto e pessoal
