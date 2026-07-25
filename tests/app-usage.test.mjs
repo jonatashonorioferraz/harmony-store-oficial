@@ -36,9 +36,9 @@ test('usage assets are mirrored, versioned, cached and responsive',async()=>{
   ]);
   assert.equal(rootJs,webJs);
   assert.equal(rootCss,webCss);
-  assert.match(html,/app-usage\.css\?v=25\.35/);
-  assert.match(html,/app-usage\.js\?v=25\.35/);
-  assert.match(worker,/app-usage\.js\?v=25\.35/);
+  assert.match(html,/app-usage\.css\?v=25\.36/);
+  assert.match(html,/app-usage\.js\?v=25\.36/);
+  assert.match(worker,/app-usage\.js\?v=25\.36/);
   assert.match(rootCss,/linear-gradient/);
   assert.match(rootCss,/\.app-usage-panel\[open\]/);
   assert.match(rootCss,/@media\(max-width:720px\)/);

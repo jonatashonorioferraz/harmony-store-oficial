@@ -105,8 +105,8 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.33/);
+  assert.match(html,/production-orders\.js\?v=25\.36/);
   assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-35/);
+  assert.match(worker,/harmony-store-v25-36/);
 });
