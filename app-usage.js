@@ -1,5 +1,5 @@
 const HarmonyAppUsage=(()=>{
-  const VERSION='v25.34',state={items:[],loadedAt:0,loading:null};
+  const VERSION='v25.35',state={items:[],loadedAt:0,loading:null};
   let lastActivity=Date.now(),heartbeat=null;
   const isAdmin=()=>S?.profile?.role==='admin';
   const isWorker=()=>['collaborator','receiver'].includes(S?.profile?.role);
@@ -44,7 +44,7 @@ const HarmonyAppUsage=(()=>{
     return state.items.map(item=>{
       const [tone,label]=status(item);
       return `<article class="usage-row">
-        <div><i class="avatar">${initials(item.full_name)}</i><span><b>${esc(item.full_name)}</b><small>${item.role==='receiver'?'Recebimento':'Produção'} · ${item.profile_status==='active'?'Ativa':'Inativa'}</small></span></div>
+        <div><i class="avatar usage-avatar" data-usage-profile="${esc(item.profile_id)}">${initials(item.full_name)}</i><span><b>${esc(item.full_name)}</b><small>${item.role==='receiver'?'Recebimento':'Produção'} · ${item.profile_status==='active'?'Ativa':'Inativa'}</small></span></div>
         <span><small>ÚLTIMO ACESSO</small><b>${date(item.last_seen_at)}</b></span>
         <span><small>HOJE</small><b>${duration(item.active_seconds_today)}</b></span>
         <span><small>7 DIAS</small><b>${duration(item.active_seconds_7d)}</b></span>
@@ -53,17 +53,36 @@ const HarmonyAppUsage=(()=>{
       </article>`;
     }).join('')||'<div class="empty">Nenhuma colaboradora cadastrada.</div>';
   }
+  function summary(){
+    const recent=state.items.filter(item=>status(item)[0]==='recent').length;
+    const support=state.items.length-recent;
+    const avatars=state.items.slice(0,4).map(item=>`<i class="avatar usage-avatar" data-usage-profile="${esc(item.profile_id)}">${initials(item.full_name)}</i>`).join('');
+    return `<span class="usage-summary-stats"><span><b>${state.items.length}</b> colaboradoras</span><span class="recent"><b>${recent}</b> uso recente</span>${support?`<span class="support"><b>${support}</b> para observar</span>`:''}</span><span class="usage-summary-side"><span class="usage-avatar-stack">${avatars}</span><span class="usage-expand-label">Ver detalhes</span><i class="usage-chevron" aria-hidden="true"></i></span>`;
+  }
+  function hydratePhotos(root){
+    root.querySelectorAll('[data-usage-profile]').forEach(element=>{
+      const profile=S.team?.find(item=>item.id===element.dataset.usageProfile);
+      if(profile?.avatar_path)replaceAvatar(element,profile);
+    });
+  }
   function renderPanel(){
     if(!isAdmin()||S.view!=='team'||document.querySelector('.app-usage-panel'))return;
     const page=document.querySelector('#page .page'),team=page?.querySelector('.team');
     if(!page||!team)return;
-    const section=document.createElement('section');
+    const section=document.createElement('details');
     section.className='card app-usage-panel';
-    section.innerHTML=`<header class="app-usage-head"><div><p class="eyebrow">ACOMPANHAMENTO ACOLHEDOR</p><h2>Uso do aplicativo</h2><span>Ajuda a perceber quem pode precisar de apoio, sem registrar telas, conteúdo ou localização.</span></div><button class="outline" type="button" data-refresh-usage>Atualizar</button></header><div class="usage-list">${rows()}</div><p class="usage-note">O tempo é aproximado e considera somente períodos com o aplicativo visível e em uso. Os dados começam a contar após esta versão.</p>`;
+    section.innerHTML=`<summary class="app-usage-head"><span class="usage-hero" aria-hidden="true">↗</span><span class="usage-title"><span class="eyebrow">ACOMPANHAMENTO ACOLHEDOR</span><strong>Uso do aplicativo</strong><small>Veja quem está usando e quem pode precisar de apoio.</small></span><span class="usage-summary" data-usage-summary>${summary()}</span></summary><div class="usage-body"><div class="usage-toolbar"><p>Dados aproximados, sem registrar telas, conteúdo ou localização.</p><button class="outline" type="button" data-refresh-usage>Atualizar</button></div><div class="usage-list">${rows()}</div><p class="usage-note">O tempo é aproximado e considera somente períodos com o aplicativo visível e em uso. Os dados começam a contar após esta versão.</p></div>`;
     page.insertBefore(section,team);
+    hydratePhotos(section);
+    section.addEventListener('toggle',()=>{section.querySelector('.usage-expand-label').textContent=section.open?'Recolher':'Ver detalhes'});
     section.querySelector('[data-refresh-usage]').onclick=async event=>{
       event.currentTarget.disabled=true;
-      try{await load(true);section.querySelector('.usage-list').innerHTML=rows()}catch(error){alert(error.message)}
+      try{
+        await load(true);
+        section.querySelector('.usage-list').innerHTML=rows();
+        section.querySelector('[data-usage-summary]').innerHTML=summary();
+        hydratePhotos(section);
+      }catch(error){alert(error.message)}
       finally{event.currentTarget.disabled=false}
     };
   }
