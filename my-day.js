@@ -84,8 +84,8 @@ function render(){
   page.insertBefore(section,anchor||page.firstChild);
   section.querySelectorAll('[data-my-day-action]').forEach(button=>button.onclick=()=>openAction(button.dataset.myDayAction));
   section.querySelector('[data-refresh-my-day]').onclick=async event=>{
-    event.currentTarget.disabled=true;
-    try{await load(true);render()}catch(error){alert(error.message);event.currentTarget.disabled=false}
+    const button=event.currentTarget;button.disabled=true;
+    try{await load(true);render()}catch(error){alert(error.message);button.disabled=false}
   };
 }
 

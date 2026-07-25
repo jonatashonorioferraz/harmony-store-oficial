@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.37] - 25/07/2026
+
+### Correção preventiva dos botões de atualização
+
+- A validação em produção identificou e corrigiu a perda da referência do botão após operações assíncronas.
+- Os botões de atualização do painel de uso e de “Meu dia na Harmony” agora preservam seu estado com segurança até o fim da consulta.
+- O navegador passou a receber explicitamente a logotipo colorida oficial como favicon, com versão própria para eliminar o ícone genérico em cache.
+- Nenhum dado, permissão ou regra de negócio foi alterado.
+
 ## [v25.36] - 25/07/2026
 
 ### Meu dia na Harmony

@@ -27,6 +27,8 @@ test('usage UI records only workers and explains approximate data',async()=>{
   assert.match(source,/data-usage-profile/);
   assert.match(source,/S\.team\?\.find/);
   assert.match(source,/replaceAvatar\(element,profile\)/);
+  assert.match(source,/const button=event\.currentTarget;button\.disabled=true/);
+  assert.doesNotMatch(source,/finally\{event\.currentTarget\.disabled=false\}/);
 });
 
 test('usage assets are mirrored, versioned, cached and responsive',async()=>{
@@ -37,8 +39,8 @@ test('usage assets are mirrored, versioned, cached and responsive',async()=>{
   assert.equal(rootJs,webJs);
   assert.equal(rootCss,webCss);
   assert.match(html,/app-usage\.css\?v=25\.36/);
-  assert.match(html,/app-usage\.js\?v=25\.36/);
-  assert.match(worker,/app-usage\.js\?v=25\.36/);
+  assert.match(html,/app-usage\.js\?v=25\.37/);
+  assert.match(worker,/app-usage\.js\?v=25\.37/);
   assert.match(rootCss,/linear-gradient/);
   assert.match(rootCss,/\.app-usage-panel\[open\]/);
   assert.match(rootCss,/@media\(max-width:720px\)/);
