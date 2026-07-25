@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.38] - 25/07/2026
+
+### Meu dia mais compacto
+
+- “Meu dia na Harmony” agora inicia como uma faixa resumida, reduzindo a repetição visual com a Central de Pendências.
+- O ADM pode ampliar ou recolher os detalhes, e essa preferência fica salva somente no navegador para o seu usuário.
+- Ao ampliar, as solicitações não são repetidas em cartões; elas continuam detalhadas na Central de Pendências logo abaixo.
+- Produção, estoque e compras permanecem disponíveis no resumo e nos detalhes, sem alterar dados, permissões ou regras de negócio.
+
 ## [v25.37] - 25/07/2026
 
 ### Correção preventiva dos botões de atualização

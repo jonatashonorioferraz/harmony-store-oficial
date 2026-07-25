@@ -13,6 +13,11 @@ test('Meu dia personalizes existing tasks without changing authorization',async(
   assert.match(source,/openRequestStatuses/);
   assert.match(source,/activeOrderStatuses/);
   assert.match(source,/const button=event\.currentTarget;button\.disabled=true/);
+  assert.match(source,/harmony-my-day-expanded/);
+  assert.match(source,/localStorage\.setItem/);
+  assert.match(source,/aria-expanded/);
+  assert.match(source,/tasks\.filter\(item=>item\.action!=='requests'\)/);
+  assert.match(source,/data-toggle-my-day/);
   assert.doesNotMatch(source,/service_role|auth\/v1|storage\/v1|rest\(|rpc\(/i);
 });
 
@@ -31,10 +36,10 @@ test('Meu dia assets are mirrored, versioned, cached and responsive',async()=>{
   ]);
   assert.equal(rootJs,webJs);
   assert.equal(rootCss,webCss);
-  assert.match(html,/my-day\.css\?v=25\.36/);
-  assert.match(html,/my-day\.js\?v=25\.37/);
-  assert.match(worker,/my-day\.js\?v=25\.37/);
-  assert.match(worker,/harmony-store-v25-37/);
+  assert.match(html,/my-day\.css\?v=25\.38/);
+  assert.match(html,/my-day\.js\?v=25\.38/);
+  assert.match(worker,/my-day\.js\?v=25\.38/);
+  assert.match(worker,/harmony-store-v25-38/);
   assert.match(rootCss,/@media\(max-width:720px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.37.0');
+  assert.equal(JSON.parse(pkg).version,'25.38.0');
 });
