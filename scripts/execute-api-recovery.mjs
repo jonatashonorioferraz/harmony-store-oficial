@@ -18,6 +18,7 @@ const tables = [
   'app_notifications', 'app_notification_recipients',
   'internal_supply_requests', 'internal_supply_request_items',
   'internal_purchase_receipts', 'internal_purchase_receipt_items', 'internal_receipt_ai_runs',
+  'bills', 'bill_ai_runs',
 ];
 const generatedColumns = {
   requests: ['protocol'],
@@ -30,6 +31,8 @@ const generatedColumns = {
   internal_supply_requests: ['protocol'],
   internal_purchase_receipts: ['protocol'],
   internal_receipt_ai_runs: ['id'],
+  bills: ['protocol'],
+  bill_ai_runs: ['id'],
 };
 
 if (!process.argv[2] && !process.env.BACKUP_DIR) throw new Error('Informe a pasta descriptografada do backup.');

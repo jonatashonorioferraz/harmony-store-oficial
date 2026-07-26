@@ -43,6 +43,16 @@ O ADM filtra dados por colaboradora, produto/modelo, cor, semana, mês ou ano. R
 
 O menu **Suprimentos e Compras** é exclusivo dos perfis ADM e Recebimento. Ele controla itens usados pela operação do e-commerce, como café, papel higiênico e produtos de limpeza, sem misturá-los com a matéria-prima das artesãs.
 
+## Boletos
+
+O menu **Boletos** é exclusivo dos ADMs. Um boleto pode ser cadastrado manualmente ou enviado como foto/PDF para leitura inteligente.
+
+Antes de salvar, confira obrigatoriamente beneficiário, valor, vencimento e todos os números da linha digitável. A automação apenas preenche uma sugestão e não realiza pagamentos.
+
+Use **Copiar código para pagar** e, no aplicativo do banco, confira novamente beneficiário e valor antes de confirmar. Depois do pagamento, use **Marcar como pago** e anexe o comprovante se desejar.
+
+Boletos que vencem amanhã, vencem hoje ou estão atrasados aparecem no “Meu dia na Harmony”. Boletos pagos deixam de gerar alerta automaticamente.
+
 1. O perfil de Recebimento abre **Solicitar** e marca somente quais itens estão faltando. Não informa quantidade nem valor.
 2. O ADM abre a solicitação depois da compra e seleciona **Anexar cupom da compra**.
 3. A foto é armazenada de forma privada. A leitura inteligente preenche estabelecimento, data, itens, quantidades e valores para conferência administrativa.

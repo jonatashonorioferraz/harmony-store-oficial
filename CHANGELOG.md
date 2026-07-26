@@ -5,6 +5,17 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.39] - 25/07/2026
+
+### Boletos a pagar
+
+- ADMs agora podem cadastrar boletos por foto, PDF ou preenchimento manual em uma área financeira separada.
+- A leitura inteligente sugere beneficiário, valor, vencimento e linha digitável, mas exige revisão humana antes de salvar.
+- A linha digitável passa por validação independente da IA e pode ser copiada rapidamente para pagamento.
+- Boletos vencendo amanhã, hoje ou atrasados aparecem no “Meu dia na Harmony”.
+- Pagamentos podem ser confirmados com comprovante opcional; cadastro, correção, pagamento e cancelamento são auditados.
+- Documentos ficam em bucket privado e nenhuma funcionalidade realiza pagamentos ou acessa contas bancárias.
+
 ## [v25.38] - 25/07/2026
 
 ### Meu dia mais compacto

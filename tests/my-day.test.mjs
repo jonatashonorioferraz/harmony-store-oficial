@@ -10,6 +10,7 @@ test('Meu dia personalizes existing tasks without changing authorization',async(
   assert.match(source,/HarmonyNotifications\?\.load/);
   assert.match(source,/HarmonyProductionOrders\?\.load/);
   assert.match(source,/HarmonyInternalSupplies\?\.load/);
+  assert.match(source,/HarmonyBills\?\.load/);
   assert.match(source,/openRequestStatuses/);
   assert.match(source,/activeOrderStatuses/);
   assert.match(source,/const button=event\.currentTarget;button\.disabled=true/);
@@ -36,10 +37,10 @@ test('Meu dia assets are mirrored, versioned, cached and responsive',async()=>{
   ]);
   assert.equal(rootJs,webJs);
   assert.equal(rootCss,webCss);
-  assert.match(html,/my-day\.css\?v=25\.38/);
-  assert.match(html,/my-day\.js\?v=25\.38/);
-  assert.match(worker,/my-day\.js\?v=25\.38/);
-  assert.match(worker,/harmony-store-v25-38/);
+  assert.match(html,/my-day\.css\?v=25\.39/);
+  assert.match(html,/my-day\.js\?v=25\.39/);
+  assert.match(worker,/my-day\.js\?v=25\.39/);
+  assert.match(worker,/harmony-store-v25-39/);
   assert.match(rootCss,/@media\(max-width:720px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.38.0');
+  assert.equal(JSON.parse(pkg).version,'25.39.0');
 });

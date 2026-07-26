@@ -23,6 +23,15 @@ O documento é a entrada principal. O usuário envia uma foto ou PDF e só parti
 - Adaptadores para OCR, modelo de IA e provedor de armazenamento, evitando dependência rígida.
 - Eventos de domínio para permitir auditoria, multiempresa e aprovações no futuro sem adicioná-los agora.
 
-## Protótipo atual
+## Implementação de boletos
 
-O protótipo simula extração, classificação, confiança e revisão no navegador. Não envia documentos a serviços externos e não grava dados financeiros reais. A troca para produção deve conectar o fluxo a armazenamento privado, fila de processamento, OCR/LLM e políticas de acesso por usuário.
+O primeiro fluxo real do assistente financeiro é o controle de boletos exclusivo dos ADMs:
+
+- `public.bills` armazena metadados, vencimento, situação e trilha de pagamento;
+- `public.bill_ai_runs` registra uso, custo estimado e falhas da extração;
+- o bucket privado `bill-documents` guarda boleto e comprovante;
+- a Edge Function `analyze-bill` valida o JWT, o perfil ativo, limites, MIME e tamanho antes de chamar a OpenAI;
+- a resposta usa JSON Schema estrito e `store:false`;
+- linha digitável e código de barras são validados fora do modelo;
+- nenhuma ação paga o boleto ou acessa conta bancária;
+- toda gravação passa por RPC administrativa e gera auditoria imutável.

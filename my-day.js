@@ -18,6 +18,7 @@ async function load(force=false){
   MD.loading=Promise.allSettled([
     window.HarmonyNotifications?.load?.(force),
     window.HarmonyProductionOrders?.load?.(force),
+    role()==='admin'?window.HarmonyBills?.load?.(force):Promise.resolve(),
     role()==='admin'?window.HarmonyInternalSupplies?.load?.():Promise.resolve()
   ]).finally(()=>{MD.loadedAt=Date.now();MD.loading=null});
   return MD.loading;
@@ -30,7 +31,12 @@ function adminTasks(){
   const orders=(window.HarmonyProductionOrders?.state?.orders||[]).filter(item=>activeOrderStatuses.has(item.status));
   const lateOrders=orders.filter(orderDue);
   const internal=(window.HarmonyInternalSupplies?.state?.requests||[]).filter(item=>openRequestStatuses.has(item.status));
+  const bills=(window.HarmonyBills?.state?.items||[]).filter(item=>item.status==='pending'&&window.HarmonyBills.dueState(item)!=='pending');
   const tasks=[];
+  if(bills.length){
+    const overdue=bills.filter(item=>window.HarmonyBills.dueState(item)==='overdue').length;
+    tasks.push({tone:overdue?'urgent':'gold',icon:'💳',label:overdue?'BOLETO ATRASADO':'CONTAS A PAGAR',title:overdue?plural(overdue,'boleto atrasado','boletos atrasados'):plural(bills.length,'boleto próximo do vencimento','boletos próximos do vencimento'),text:overdue?'Regularize ou registre o pagamento.':'Há boleto vencendo hoje ou amanhã.',action:'bills',button:'Ver boletos'});
+  }
   if(overdue.length)tasks.push({tone:'urgent',icon:'⏰',label:'ATRASADAS',title:plural(overdue.length,'solicitação atrasada','solicitações atrasadas'),text:'Precisam de uma decisão ou conclusão.',action:'requests',button:'Resolver agora'});
   if(requests.length)tasks.push({tone:'rose',icon:'📋',label:'SOLICITAÇÕES',title:plural(requests.length,'solicitação aberta','solicitações abertas'),text:'Separar, programar ou concluir materiais.',action:'requests',button:'Ver pendências'});
   if(lateOrders.length)tasks.push({tone:'urgent',icon:'⚠️',label:'PRODUÇÃO',title:plural(lateOrders.length,'ordem fora do prazo','ordens fora do prazo'),text:'Acompanhe as colaboradoras e reorganize os prazos.',action:'production-orders',button:'Ver ordens'});
