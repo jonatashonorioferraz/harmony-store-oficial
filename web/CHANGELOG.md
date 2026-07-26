@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.41] - 25/07/2026
+
+### Produtos compartilhados
+
+- O cadastro de produtos agora oferece a finalidade “Produção e e-commerce”.
+- Um produto compartilhado usa um único cadastro, estoque, custo e fornecedor, mas aparece para colaboradoras de produção e de recebimento.
+- A Inteligência mostra o produto nas duas áreas e atribui o consumo ao setor de quem realizou a solicitação, sem duplicar o consumo consolidado.
+- ADMs podem reclassificar produtos existentes manualmente; nenhum item é alterado automaticamente.
+- O banco valida os dois catálogos e impede que produtos internos sejam incluídos nessas solicitações.
+
 ## [v25.40] - 25/07/2026
 
 ### Produção e e-commerce separados

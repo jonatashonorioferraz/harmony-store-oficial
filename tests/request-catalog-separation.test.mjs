@@ -17,7 +17,7 @@ test('database blocks products from crossing the production and internal catalog
   assert.match(sql, /security definer[\s\S]*set search_path = ''/i);
 });
 
-test('production request catalogue uses an exact production scope for every requester role', async () => {
+test('request catalogues share only products explicitly available to both sectors', async () => {
   const source = await read('product-visibility.js');
   const context = {
     S:{profile:{id:'receiver-1',role:'receiver'},products:[],cart:{}},
@@ -26,19 +26,24 @@ test('production request catalogue uses an exact production scope for every requ
     window:{},console,
   };
   vm.createContext(context);vm.runInContext(source,context);
-  const {isProductionCatalog,isEcommerceCatalog,visibleForRequests,requestScope}=context.window.HarmonyProductVisibility;
+  const {isProductionCatalog,isEcommerceCatalog,isSharedCatalog,visibleForRequests,requestScopes}=context.window.HarmonyProductVisibility;
   assert.equal(isProductionCatalog({usage_scope:'production'}),true);
   assert.equal(isProductionCatalog({usage_scope:'internal'}),false);
   assert.equal(isProductionCatalog({usage_scope:'ecommerce'}),false);
+  assert.equal(isProductionCatalog({usage_scope:'shared'}),true);
   assert.equal(isEcommerceCatalog({usage_scope:'ecommerce'}),true);
-  assert.equal(requestScope(),'ecommerce');
+  assert.equal(isEcommerceCatalog({usage_scope:'shared'}),true);
+  assert.equal(isSharedCatalog({usage_scope:'shared'}),true);
+  assert.deepEqual([...requestScopes()],['ecommerce','shared']);
   assert.equal(visibleForRequests({active:true,usage_scope:'internal'}),false);
   assert.equal(visibleForRequests({active:true,usage_scope:'production',hidden_from_collaborators:true}),false);
   assert.equal(visibleForRequests({active:true,usage_scope:'ecommerce'}),true);
+  assert.equal(visibleForRequests({active:true,usage_scope:'shared'}),true);
   context.S.profile.role='collaborator';
-  assert.equal(requestScope(),'production');
+  assert.deepEqual([...requestScopes()],['production','shared']);
   assert.equal(visibleForRequests({active:true,usage_scope:'production'}),true);
   assert.equal(visibleForRequests({active:true,usage_scope:'ecommerce'}),false);
+  assert.equal(visibleForRequests({active:true,usage_scope:'shared'}),true);
 });
 
 test('internal supplies support secure photos and keep them visible in catalogue and details', async () => {
@@ -65,7 +70,7 @@ test('raw-material request details retain product thumbnails and mobile layout',
   const [app,styles] = await Promise.all([read('app.js'),read('styles.css')]);
   assert.match(app, /function requestItemVisual/);
   assert.match(app, /data-request-product-photo/);
-  assert.match(app, /p\.active&&p\.usage_scope===requestProductScope\(\)/);
+  assert.match(app, /p\.active&&requestProductScopes\(\)\.includes\(p\.usage_scope\)/);
   assert.match(styles, /\.request-item-photo/);
   assert.match(styles, /@media\(max-width:720px\)[^{]*\{\.item-editor/);
 });

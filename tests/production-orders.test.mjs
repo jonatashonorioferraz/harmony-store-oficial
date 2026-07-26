@@ -108,5 +108,5 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(html,/production-orders\.js\?v=25\.36/);
   assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-40/);
+  assert.match(worker,/harmony-store-v25-41/);
 });

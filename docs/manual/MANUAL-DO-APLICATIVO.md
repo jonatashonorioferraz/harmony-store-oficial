@@ -21,9 +21,9 @@ A colaboradora acessa somente as próprias solicitações. O ADM pode excluir de
 
 ## Produtos e fornecedores
 
-O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personalizados. Também define a **finalidade operacional**: matéria-prima de produção ou suprimento do e-commerce. Cada material pode ser vinculado ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
+O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personalizados. Também define a **finalidade operacional**: matéria-prima de produção, suprimento do e-commerce ou produção e e-commerce. Cada material pode ser vinculado ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
 
-Produtos usados na embalagem devem ser classificados como **Suprimento do e-commerce**. Eles aparecem apenas no catálogo de solicitação do perfil Recebimento e na aba E-commerce da Inteligência. Matérias-primas aparecem apenas para colaboradoras de produção. Reclassificar não apaga estoque, fornecedor, custo, movimentações ou solicitações antigas.
+Produtos exclusivos da embalagem devem ser classificados como **Suprimento do e-commerce**. Matérias-primas exclusivas aparecem apenas para colaboradoras de produção. Quando o mesmo produto é usado pelos dois setores, classifique como **Produção e e-commerce**: ele aparecerá nos dois catálogos usando o mesmo estoque, custo e fornecedor. Na Inteligência, o consumo compartilhado é atribuído ao setor de quem solicitou. Reclassificar não apaga estoque, fornecedor, custo, movimentações ou solicitações antigas.
 
 ## Recebimento de produção
 
