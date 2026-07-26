@@ -76,16 +76,21 @@ function linksForSupplier(supplierId){
   return BI.supplierProducts.filter(link=>link.supplier_id===supplierId);
 }
 
+const managedProductScopes=['production','ecommerce','shared'];
+const productMatchesScope=(productScope,scope)=>managedProductScopes.includes(productScope)&&(!scope||productScope===scope||productScope==='shared');
+const requestScopeForReport=(person,productScope)=>productScope==='shared'?(person?.role==='receiver'?'ecommerce':'production'):productScope;
+
 function materialReport(rows=filteredRows(),scope=null){
   const days=Math.max(1,Math.floor((startOfDay(BI.to)-startOfDay(BI.from))/86400000)+1),months=Math.max(days/30,1/30);
   const grouped=new Map();
   S.products.forEach(product=>{
-    const productScope=product.usage_scope||'production';if(!['production','ecommerce'].includes(productScope)||scope&&productScope!==scope)return;
+    const productScope=product.usage_scope||'production';if(!productMatchesScope(productScope,scope))return;
     if(BI.productId&&product.id!==BI.productId)return;
     grouped.set(product.id,{product,requested:0,delivered:0,entries:0,adjustments:0});
   });
-  rows.forEach(({item,request,product})=>{
-    const productScope=product.usage_scope||'production';if(scope&&productScope!==scope||!['production','ecommerce'].includes(productScope))return;
+  rows.forEach(({item,request,product,person})=>{
+    const productScope=product.usage_scope||'production';
+    if(!productMatchesScope(productScope,scope)||scope&&requestScopeForReport(person,productScope)!==scope)return;
     const entry=grouped.get(product.id)||{product,requested:0,delivered:0,entries:0,adjustments:0};
     entry.requested+=n(item.requested_quantity);entry.entries++;
     if(request.status==='delivered'&&!item.removed_by_admin)entry.delivered+=n(item.approved_quantity);
@@ -123,7 +128,7 @@ function collaboratorReport(rows=filteredRows()){
 }
 
 function filterBar(){
-  const scope=BI.tab==='ecommerce'?'ecommerce':BI.tab==='materials'?'production':null,products=S.products.filter(product=>['production','ecommerce'].includes(product.usage_scope)&&(!scope||product.usage_scope===scope));
+  const scope=BI.tab==='ecommerce'?'ecommerce':BI.tab==='materials'?'production':null,products=S.products.filter(product=>productMatchesScope(product.usage_scope,scope));
   return `<section class="intel-filters card"><label>Período<select id="intelPeriod"><option value="week" ${BI.period==='week'?'selected':''}>Últimos 7 dias</option><option value="month" ${BI.period==='month'?'selected':''}>Mês atual</option><option value="year" ${BI.period==='year'?'selected':''}>Ano atual</option><option value="custom" ${BI.period==='custom'?'selected':''}>Personalizado</option></select></label><label>De<input id="intelFrom" type="date" value="${BI.from}"></label><label>Até<input id="intelTo" type="date" value="${BI.to}"></label><label>Colaboradora<select id="intelPerson"><option value="">Todas</option>${S.team.filter(person=>person.role!=='admin').map(person=>`<option value="${person.id}" ${BI.profileId===person.id?'selected':''}>${esc(person.full_name)}</option>`).join('')}</select></label><label>${scope==='ecommerce'?'Suprimento do e-commerce':'Material'}<select id="intelProduct"><option value="">Todos</option>${products.map(product=>`<option value="${product.id}" ${BI.productId===product.id?'selected':''}>${esc(product.name)}</option>`).join('')}</select></label><button class="outline compact-action" id="applyIntel">Aplicar filtros</button></section>`;
 }
 
@@ -132,14 +137,14 @@ function tabBar(){return `<div class="intel-tabs"><button data-intel-tab="overvi
 function overviewView(){
   const rows=filteredRows(),materials=materialReport(rows),requestCount=new Set(rows.map(row=>row.request.id)).size,deliveredCount=new Set(rows.filter(row=>row.request.status==='delivered').map(row=>row.request.id)).size;
   const adjustments=rows.filter(row=>row.item.removed_by_admin||n(row.item.approved_quantity)&&n(row.item.approved_quantity)!==n(row.item.requested_quantity)).length;
-  const low=materials.filter(item=>item.available<=n(item.product.minimum_stock)).length,suggestions=materials.filter(item=>item.product.usage_scope==='production'&&item.suggested>0),max=Math.max(...materials.map(item=>item.delivered),1);
+  const low=materials.filter(item=>item.available<=n(item.product.minimum_stock)).length,suggestions=materials.filter(item=>item.product.usage_scope!=='ecommerce'&&item.suggested>0),max=Math.max(...materials.map(item=>item.delivered),1);
   const alerts=[];
   materials.forEach(item=>{if(item.available<=n(item.product.minimum_stock))alerts.push(`<li class="critical"><b>${esc(item.product.name)}</b><span>Estoque disponível em ${qty(item.available,item.product.unit)}.</span></li>`);else if(item.coverageDays!==null&&item.coverageDays<30)alerts.push(`<li class="warning"><b>${esc(item.product.name)}</b><span>Cobertura estimada de ${item.coverageDays} dias.</span></li>`)});
   return `<div class="intel-kpis"><article><small>SOLICITAÇÕES</small><b>${requestCount}</b><span>No período selecionado</span></article><article><small>ENTREGAS</small><b>${deliveredCount}</b><span>Concluídas no período</span></article><article><small>AJUSTES</small><b>${adjustments}</b><span>Itens alterados ou removidos</span></article><article><small>ALERTAS</small><b>${low}</b><span>Materiais no estoque mínimo</span></article></div><div class="intel-grid"><section class="card intel-section"><div class="card-head"><div><p class="eyebrow">CONSUMO REAL</p><h2>Matérias-primas mais enviadas</h2></div></div><div class="consumption-chart">${materials.filter(item=>item.delivered>0).slice(0,8).map(item=>`<div class="chart-row"><div><b>${esc(item.product.name)}</b><small>${qty(item.delivered,item.product.unit)}</small></div><i><span style="width:${Math.max(3,item.delivered/max*100)}%"></span></i></div>`).join('')||'<div class="empty">Ainda não há entregas concluídas no período.</div>'}</div></section><section class="card intel-section"><div class="card-head"><div><p class="eyebrow">ATENÇÃO</p><h2>Alertas de estoque</h2></div></div><ul class="intel-alerts">${alerts.slice(0,8).join('')||'<li class="ok"><b>Estoque equilibrado</b><span>Nenhum alerta para o período atual.</span></li>'}</ul></section></div><section class="card intel-section purchase-suggestion"><div class="card-head"><div><p class="eyebrow">PLANEJAMENTO</p><h2>Sugestões para próxima compra</h2></div><div class="actions"><button class="outline compact-action" id="exportIntel">Exportar Excel</button><button class="outline compact-action" id="printIntel">Salvar em PDF</button><button class="primary compact-action" id="newSuggestedPurchase">Criar pedido</button></div></div>${materialTable(suggestions,true)}</section>`;
 }
 
 function materialTable(materials=materialReport(),compact=false){
-  return `<div class="table-wrap"><table class="intel-table"><thead><tr><th>Matéria-prima</th><th>Solicitado</th><th>Enviado</th><th>Disponível</th><th>Média mensal</th><th>Previsão 30 dias</th><th>Compra sugerida</th><th>Custo estimado</th>${compact?'':'<th>Ação</th>'}</tr></thead><tbody>${materials.map(item=>`<tr><td><b>${esc(item.product.name)}</b><small>${esc(item.product.unit)} · prazo ${item.leadDays} dias</small></td><td>${qty(item.requested,item.product.unit)}</td><td>${qty(item.delivered,item.product.unit)}</td><td>${qty(item.available,item.product.unit)}</td><td>${qty(item.monthly,item.product.unit)}</td><td>${qty(item.forecast30,item.product.unit)}</td><td><strong class="${item.suggested>0?'need-buy':''}">${qty(item.suggested,item.product.unit)}</strong></td><td>${currency(item.estimatedCost)}</td>${compact?'':`<td><button class="ghost compact-action" data-plan-product="${item.product.id}">Configurar</button></td>`}</tr>`).join('')||'<tr><td colspan="9" class="empty">Nenhum material encontrado.</td></tr>'}</tbody></table></div>`;
+  return `<div class="table-wrap"><table class="intel-table"><thead><tr><th>Matéria-prima</th><th>Solicitado</th><th>Enviado</th><th>Disponível</th><th>Média mensal</th><th>Previsão 30 dias</th><th>Compra sugerida</th><th>Custo estimado</th>${compact?'':'<th>Ação</th>'}</tr></thead><tbody>${materials.map(item=>`<tr><td><b>${esc(item.product.name)}</b><small>${esc(item.product.unit)} · prazo ${item.leadDays} dias${item.product.usage_scope==='shared'?' · Uso compartilhado':''}</small></td><td>${qty(item.requested,item.product.unit)}</td><td>${qty(item.delivered,item.product.unit)}</td><td>${qty(item.available,item.product.unit)}</td><td>${qty(item.monthly,item.product.unit)}</td><td>${qty(item.forecast30,item.product.unit)}</td><td><strong class="${item.suggested>0?'need-buy':''}">${qty(item.suggested,item.product.unit)}</strong></td><td>${currency(item.estimatedCost)}</td>${compact?'':`<td><button class="ghost compact-action" data-plan-product="${item.product.id}">Configurar</button></td>`}</tr>`).join('')||'<tr><td colspan="9" class="empty">Nenhum material encontrado.</td></tr>'}</tbody></table></div>`;
 }
 
 function peopleView(){
@@ -315,7 +320,7 @@ function bindIntelligence(){
   const newSupplier=document.querySelector('#newSupplier');if(newSupplier)newSupplier.onclick=()=>supplierModal();
   const newSupplierProduct=document.querySelector('#newSupplierProduct');if(newSupplierProduct)newSupplierProduct.onclick=()=>supplierProductModal();
   const newPurchase=document.querySelector('#newPurchase');if(newPurchase)newPurchase.onclick=()=>purchaseModal();
-  const suggested=document.querySelector('#newSuggestedPurchase');if(suggested)suggested.onclick=()=>purchaseModal(materialReport(filteredRows(),'production').filter(item=>item.suggested>0));
+  const suggested=document.querySelector('#newSuggestedPurchase');if(suggested)suggested.onclick=()=>purchaseModal(materialReport(filteredRows()).filter(item=>item.product.usage_scope!=='ecommerce'&&item.suggested>0));
   ['exportIntel','exportMaterials'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>exportMaterials()});
   const exportPeople=document.querySelector('#exportPeople');if(exportPeople)exportPeople.onclick=()=>exportCollaborators();
   ['printIntel','printMaterials','printPeople'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>window.print()});

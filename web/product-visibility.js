@@ -1,9 +1,11 @@
 (()=>{
-  const isProductionCatalog=product=>product.usage_scope==='production';
-  const isEcommerceCatalog=product=>product.usage_scope==='ecommerce';
+  const isProductionCatalog=product=>['production','shared'].includes(product?.usage_scope);
+  const isEcommerceCatalog=product=>['ecommerce','shared'].includes(product?.usage_scope);
+  const isSharedCatalog=product=>product?.usage_scope==='shared';
   const isManagedCatalog=product=>isProductionCatalog(product)||isEcommerceCatalog(product);
-  const requestScope=()=>S.profile?.role==='receiver'?'ecommerce':'production';
-  const visibleForRequests=product=>product.active&&product.usage_scope===requestScope()&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
+  const requestScopes=()=>S.profile?.role==='receiver'?['ecommerce','shared']:['production','shared'];
+  const isInRequestCatalog=product=>requestScopes().includes(product?.usage_scope);
+  const visibleForRequests=product=>product.active&&isInRequestCatalog(product)&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
   const isRequestAvailable=product=>!product?.availability_status||product.availability_status==='available';
   const availabilityLabels={
     available:'Disponível para solicitar',
@@ -23,7 +25,7 @@
     if(name==='admin_save_product'){
       const form=document.querySelector('#productForm');
       const status=form?.querySelector('[name="availability_status"]')?.value||'available';
-      name='admin_save_product_v4';
+      name='admin_save_product_v5';
       body={
         ...body,
         p_hidden_from_collaborators:Boolean(form?.querySelector('[name="hidden_from_collaborators"]')?.checked),
@@ -43,13 +45,29 @@
     if(!form||form.querySelector('[name="hidden_from_collaborators"]'))return;
     const description=form.querySelector('label.wide');
     const purpose=document.createElement('label');
-    purpose.innerHTML=`Finalidade operacional<select name="usage_scope" required><option value="production">Matéria-prima de produção</option><option value="ecommerce">Suprimento do e-commerce</option></select><small class="field-help">Produção aparece para colaboradoras; e-commerce aparece para recebimento.</small>`;
-    purpose.querySelector('select').value=product.usage_scope==='ecommerce'?'ecommerce':'production';
+    purpose.innerHTML=`Finalidade operacional<select name="usage_scope" required><option value="production">Matéria-prima de produção</option><option value="ecommerce">Suprimento do e-commerce</option><option value="shared">Produção e e-commerce</option></select><small class="field-help">Itens compartilhados aparecem para produção e recebimento usando o mesmo estoque.</small>`;
+    purpose.querySelector('select').value=['production','ecommerce','shared'].includes(product.usage_scope)?product.usage_scope:'production';
     form.insertBefore(purpose,description||form.querySelector('.form-actions'));
     const visibility=document.createElement('label');
     visibility.className='check product-visibility-check wide';
     visibility.innerHTML=`<input name="hidden_from_collaborators" type="checkbox" ${product.hidden_from_collaborators?'checked':''}><span><b>Ocultar para colaboradoras de produção</b><small>O produto continuará visível para os ADMs. O perfil de recebimento possui o catálogo separado de e-commerce.</small></span>`;
     form.insertBefore(visibility,description||form.querySelector('.form-actions'));
+    const purposeSelect=purpose.querySelector('select'),visibilityInput=visibility.querySelector('input'),visibilityHelp=visibility.querySelector('small');
+    visibilityInput.dataset.productionHidden=String(Boolean(product.hidden_from_collaborators));
+    visibilityInput.onchange=()=>visibilityInput.dataset.productionHidden=String(visibilityInput.checked);
+    const syncPurpose=()=>{
+      if(purposeSelect.value==='ecommerce'){
+        visibilityInput.checked=true;visibilityInput.disabled=true;
+        visibilityHelp.textContent='Exclusivo do recebimento e oculto para colaboradoras de produção.';
+      }else if(purposeSelect.value==='shared'){
+        visibilityInput.checked=false;visibilityInput.disabled=true;
+        visibilityHelp.textContent='Compartilhado: visível para produção e recebimento usando o mesmo estoque.';
+      }else{
+        visibilityInput.disabled=false;visibilityInput.checked=visibilityInput.dataset.productionHidden==='true';
+        visibilityHelp.textContent='Opcionalmente, o ADM pode ocultar esta matéria-prima das colaboradoras.';
+      }
+    };
+    purposeSelect.addEventListener('change',syncPurpose);syncPurpose();
 
     const availability=document.createElement('fieldset');
     availability.className='product-availability-fields wide';
@@ -113,7 +131,7 @@
     if(!editingOwnRequest)return;
     document.querySelectorAll('[data-own-product]').forEach(input=>{
       const product=fullProducts.find(item=>item.id===input.dataset.ownProduct);
-      if((!isProductionCatalog(product)||(S.profile?.role==='collaborator'&&product?.hidden_from_collaborators===true))&&Number(input.value||0)<=0){input.closest('.product')?.remove();return}
+      if((!isInRequestCatalog(product)||(S.profile?.role==='collaborator'&&product?.hidden_from_collaborators===true))&&Number(input.value||0)<=0){input.closest('.product')?.remove();return}
       decorateUnavailableCard(input.closest('.product'),product,{editableExisting:true});
     });
     const save=document.querySelector('#saveOwnRequest'),originalSave=save?.onclick;
@@ -138,7 +156,7 @@
       if(!product||!copy)return;
       const purpose=document.createElement('small');
       purpose.className=`product-visibility-state product-scope-${product.usage_scope}`;
-      purpose.textContent=isEcommerceCatalog(product)?'E-commerce':'Matéria-prima';
+      purpose.textContent=isSharedCatalog(product)?'Uso compartilhado':product.usage_scope==='ecommerce'?'E-commerce':'Matéria-prima';
       copy.appendChild(purpose);
       if(!copy.querySelector('.product-visibility-state')){
         const state=document.createElement('small');
@@ -156,5 +174,5 @@
     });
   };
 
-  window.HarmonyProductVisibility=Object.freeze({isProductionCatalog,isEcommerceCatalog,isManagedCatalog,requestScope,visibleForRequests,isRequestAvailable,availabilityMessage});
+  window.HarmonyProductVisibility=Object.freeze({isProductionCatalog,isEcommerceCatalog,isSharedCatalog,isManagedCatalog,requestScopes,isInRequestCatalog,visibleForRequests,isRequestAvailable,availabilityMessage});
 })();

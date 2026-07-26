@@ -40,16 +40,17 @@ test('product form, catalogue and offline cache include the visibility control',
   ]);
   assert.match(feature, /Ocultar para colaboradoras de produção/);
   assert.match(feature, /perfil de recebimento possui o catálogo separado de e-commerce/);
-  assert.match(feature, /name='admin_save_product_v4'|name='admin_save_product'/);
+  assert.match(feature, /name='admin_save_product_v5'|name='admin_save_product'/);
   assert.match(feature, /editingOwnRequest[\s\S]*request\.status==='pending'/);
   assert.match(html, /product-visibility\.js/);
   assert.match(html, /product-visibility\.css/);
-  assert.match(worker, /harmony-store-v25-40/);
+  assert.match(worker, /harmony-store-v25-41/);
   assert.match(css, /product-visibility-check/);
 });
 
 test('internal supplies stay out of the production request and product catalogues', async () => {
   const feature = await read('product-visibility.js');
-  assert.match(feature, /product\.usage_scope==='production'/);
+  assert.match(feature, /\['production','shared'\]\.includes\(product\?\.usage_scope\)/);
+  assert.match(feature, /\['ecommerce','shared'\]\.includes\(product\?\.usage_scope\)/);
   assert.match(feature, /fullProducts\.filter\(isManagedCatalog\)/);
 });
