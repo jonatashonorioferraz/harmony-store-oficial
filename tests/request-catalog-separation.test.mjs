@@ -26,12 +26,19 @@ test('production request catalogue uses an exact production scope for every requ
     window:{},console,
   };
   vm.createContext(context);vm.runInContext(source,context);
-  const {isProductionCatalog,visibleForRequests}=context.window.HarmonyProductVisibility;
+  const {isProductionCatalog,isEcommerceCatalog,visibleForRequests,requestScope}=context.window.HarmonyProductVisibility;
   assert.equal(isProductionCatalog({usage_scope:'production'}),true);
   assert.equal(isProductionCatalog({usage_scope:'internal'}),false);
   assert.equal(isProductionCatalog({usage_scope:'ecommerce'}),false);
+  assert.equal(isEcommerceCatalog({usage_scope:'ecommerce'}),true);
+  assert.equal(requestScope(),'ecommerce');
   assert.equal(visibleForRequests({active:true,usage_scope:'internal'}),false);
-  assert.equal(visibleForRequests({active:true,usage_scope:'production',hidden_from_collaborators:true}),true);
+  assert.equal(visibleForRequests({active:true,usage_scope:'production',hidden_from_collaborators:true}),false);
+  assert.equal(visibleForRequests({active:true,usage_scope:'ecommerce'}),true);
+  context.S.profile.role='collaborator';
+  assert.equal(requestScope(),'production');
+  assert.equal(visibleForRequests({active:true,usage_scope:'production'}),true);
+  assert.equal(visibleForRequests({active:true,usage_scope:'ecommerce'}),false);
 });
 
 test('internal supplies support secure photos and keep them visible in catalogue and details', async () => {
@@ -58,7 +65,7 @@ test('raw-material request details retain product thumbnails and mobile layout',
   const [app,styles] = await Promise.all([read('app.js'),read('styles.css')]);
   assert.match(app, /function requestItemVisual/);
   assert.match(app, /data-request-product-photo/);
-  assert.match(app, /filter\(p=>p\.active&&p\.usage_scope==='production'\)/);
+  assert.match(app, /p\.active&&p\.usage_scope===requestProductScope\(\)/);
   assert.match(styles, /\.request-item-photo/);
   assert.match(styles, /@media\(max-width:720px\)[^{]*\{\.item-editor/);
 });

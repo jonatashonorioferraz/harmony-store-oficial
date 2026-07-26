@@ -3,7 +3,7 @@
 ## Acesso e perfis
 
 - **Colaboradora:** solicita matéria-prima, edita pedidos pendentes, acompanha sua produção conferida e vê pagamentos semanais já consolidados.
-- **Recebimento:** possui as funções da colaboradora e registra conferências de produção, sem acesso aos valores.
+- **Recebimento:** solicita suprimentos do e-commerce e registra conferências de produção, sem acesso aos valores.
 - **ADM:** administra produtos, solicitações, colaboradores, recebimentos, pagamentos, fornecedores, relatórios e Saúde do Sistema.
 - **ADM principal:** além das funções de ADM, protege as operações sensíveis envolvendo outros administradores.
 
@@ -21,9 +21,9 @@ A colaboradora acessa somente as próprias solicitações. O ADM pode excluir de
 
 ## Produtos e fornecedores
 
-O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personalizados. Campos podem ser adicionados, removidos ou adaptados ao tipo de produto. Cada matéria-prima pode ser vinculada ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
+O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personalizados. Também define a **finalidade operacional**: matéria-prima de produção ou suprimento do e-commerce. Cada material pode ser vinculado ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
 
-Produtos usados apenas na embalagem do e-commerce podem continuar ativos sem poluir o catálogo das artesãs. No cadastro ou na edição, marque **Ocultar para colaboradoras de produção**. O item continuará visível e administrável pelo ADM principal, demais ADMs e colaboradoras de recebimento, mas deixará de aparecer em novas solicitações do perfil comum de colaboradora. A opção não apaga estoque, fornecedor, relatórios nem solicitações antigas.
+Produtos usados na embalagem devem ser classificados como **Suprimento do e-commerce**. Eles aparecem apenas no catálogo de solicitação do perfil Recebimento e na aba E-commerce da Inteligência. Matérias-primas aparecem apenas para colaboradoras de produção. Reclassificar não apaga estoque, fornecedor, custo, movimentações ou solicitações antigas.
 
 ## Recebimento de produção
 
