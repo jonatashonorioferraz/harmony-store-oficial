@@ -36,7 +36,7 @@ test('ADM product form controls reason, return forecast and reactivation', async
   assert.match(source,/name=\"availability_status\"/);
   assert.match(source,/name=\"availability_reason\"/);
   assert.match(source,/name=\"availability_expected_on\"/);
-  assert.match(source,/name='admin_save_product_v3'/);
+  assert.match(source,/name='admin_save_product_v4'/);
   assert.match(source,/p_availability_status/);
   assert.match(css,/product-temporarily-unavailable/);
   assert.match(css,/product-availability-notice/);

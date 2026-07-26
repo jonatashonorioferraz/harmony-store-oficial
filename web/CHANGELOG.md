@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.40] - 25/07/2026
+
+### Produção e e-commerce separados
+
+- O cadastro de produtos agora permite definir “Matéria-prima de produção” ou “Suprimento do e-commerce”.
+- Colaboradoras de produção veem apenas matérias-primas; o perfil de recebimento solicita apenas suprimentos do e-commerce.
+- A Inteligência ganhou uma aba exclusiva para e-commerce, com consumo, estoque, previsão, custo e exportação separados.
+- ADMs continuam administrando os dois catálogos, enquanto suprimentos internos permanecem isolados.
+- Estoques, fornecedores, custos e históricos existentes são preservados ao reclassificar um produto.
+
 ## [v25.39] - 25/07/2026
 
 ### Boletos a pagar

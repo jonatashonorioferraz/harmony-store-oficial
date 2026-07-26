@@ -30,7 +30,7 @@ test('only the regular collaborator loses hidden products from new requests', as
   const normal={active:true,usage_scope:'production',hidden_from_collaborators:false};
   assert.equal(visible(hidden),false);
   assert.equal(visible(normal),true);
-  context.S.profile.role='receiver';assert.equal(visible(hidden),true);
+  context.S.profile.role='receiver';assert.equal(visible(hidden),false);assert.equal(visible({active:true,usage_scope:'ecommerce'}),true);
   context.S.profile.role='admin';assert.equal(visible(hidden),true);
 });
 
@@ -39,17 +39,17 @@ test('product form, catalogue and offline cache include the visibility control',
     read('product-visibility.js'),read('index.html'),read('service-worker.js'),read('product-visibility.css'),
   ]);
   assert.match(feature, /Ocultar para colaboradoras de produção/);
-  assert.match(feature, /ADM principal, outros ADMs e colaboradoras de recebimento/);
-  assert.match(feature, /name='admin_save_product_v3'|name='admin_save_product'/);
+  assert.match(feature, /perfil de recebimento possui o catálogo separado de e-commerce/);
+  assert.match(feature, /name='admin_save_product_v4'|name='admin_save_product'/);
   assert.match(feature, /editingOwnRequest[\s\S]*request\.status==='pending'/);
   assert.match(html, /product-visibility\.js/);
   assert.match(html, /product-visibility\.css/);
-  assert.match(worker, /harmony-store-v25-39/);
+  assert.match(worker, /harmony-store-v25-40/);
   assert.match(css, /product-visibility-check/);
 });
 
 test('internal supplies stay out of the production request and product catalogues', async () => {
   const feature = await read('product-visibility.js');
   assert.match(feature, /product\.usage_scope==='production'/);
-  assert.match(feature, /fullProducts\.filter\(isProductionCatalog\)/);
+  assert.match(feature, /fullProducts\.filter\(isManagedCatalog\)/);
 });

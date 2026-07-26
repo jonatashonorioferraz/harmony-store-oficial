@@ -1,6 +1,9 @@
 (()=>{
   const isProductionCatalog=product=>product.usage_scope==='production';
-  const visibleForRequests=product=>product.active&&isProductionCatalog(product)&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
+  const isEcommerceCatalog=product=>product.usage_scope==='ecommerce';
+  const isManagedCatalog=product=>isProductionCatalog(product)||isEcommerceCatalog(product);
+  const requestScope=()=>S.profile?.role==='receiver'?'ecommerce':'production';
+  const visibleForRequests=product=>product.active&&product.usage_scope===requestScope()&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
   const isRequestAvailable=product=>!product?.availability_status||product.availability_status==='available';
   const availabilityLabels={
     available:'Disponível para solicitar',
@@ -20,13 +23,14 @@
     if(name==='admin_save_product'){
       const form=document.querySelector('#productForm');
       const status=form?.querySelector('[name="availability_status"]')?.value||'available';
-      name='admin_save_product_v3';
+      name='admin_save_product_v4';
       body={
         ...body,
         p_hidden_from_collaborators:Boolean(form?.querySelector('[name="hidden_from_collaborators"]')?.checked),
         p_availability_status:status,
         p_availability_reason:status==='available'?null:(form?.querySelector('[name="availability_reason"]')?.value.trim()||null),
-        p_availability_expected_on:status==='available'?null:(form?.querySelector('[name="availability_expected_on"]')?.value||null)
+        p_availability_expected_on:status==='available'?null:(form?.querySelector('[name="availability_expected_on"]')?.value||null),
+        p_usage_scope:form?.querySelector('[name="usage_scope"]')?.value||'production'
       };
     }
     return originalRpc(name,body);
@@ -38,9 +42,13 @@
     const form=document.querySelector('#productForm .form');
     if(!form||form.querySelector('[name="hidden_from_collaborators"]'))return;
     const description=form.querySelector('label.wide');
+    const purpose=document.createElement('label');
+    purpose.innerHTML=`Finalidade operacional<select name="usage_scope" required><option value="production">Matéria-prima de produção</option><option value="ecommerce">Suprimento do e-commerce</option></select><small class="field-help">Produção aparece para colaboradoras; e-commerce aparece para recebimento.</small>`;
+    purpose.querySelector('select').value=product.usage_scope==='ecommerce'?'ecommerce':'production';
+    form.insertBefore(purpose,description||form.querySelector('.form-actions'));
     const visibility=document.createElement('label');
     visibility.className='check product-visibility-check wide';
-    visibility.innerHTML=`<input name="hidden_from_collaborators" type="checkbox" ${product.hidden_from_collaborators?'checked':''}><span><b>Ocultar para colaboradoras de produção</b><small>O produto continuará visível para ADM principal, outros ADMs e colaboradoras de recebimento.</small></span>`;
+    visibility.innerHTML=`<input name="hidden_from_collaborators" type="checkbox" ${product.hidden_from_collaborators?'checked':''}><span><b>Ocultar para colaboradoras de produção</b><small>O produto continuará visível para os ADMs. O perfil de recebimento possui o catálogo separado de e-commerce.</small></span>`;
     form.insertBefore(visibility,description||form.querySelector('.form-actions'));
 
     const availability=document.createElement('fieldset');
@@ -122,12 +130,16 @@
   const originalRenderProducts=renderProducts;
   renderProducts=function(page){
     const fullProducts=S.products;
-    S.products=fullProducts.filter(isProductionCatalog);
+    S.products=fullProducts.filter(isManagedCatalog);
     try{originalRenderProducts(page)}finally{S.products=fullProducts}
-    const displayed=fullProducts.filter(isProductionCatalog);
+    const displayed=fullProducts.filter(isManagedCatalog);
     document.querySelectorAll('.table article').forEach((row,index)=>{
       const product=displayed[index],copy=row.querySelector('.table-product b');
       if(!product||!copy)return;
+      const purpose=document.createElement('small');
+      purpose.className=`product-visibility-state product-scope-${product.usage_scope}`;
+      purpose.textContent=isEcommerceCatalog(product)?'E-commerce':'Matéria-prima';
+      copy.appendChild(purpose);
       if(!copy.querySelector('.product-visibility-state')){
         const state=document.createElement('small');
         state.className=`product-visibility-state ${product.hidden_from_collaborators?'hidden-for-collaborators':'shown-for-collaborators'}`;
@@ -144,5 +156,5 @@
     });
   };
 
-  window.HarmonyProductVisibility=Object.freeze({isProductionCatalog,visibleForRequests,isRequestAvailable,availabilityMessage});
+  window.HarmonyProductVisibility=Object.freeze({isProductionCatalog,isEcommerceCatalog,isManagedCatalog,requestScope,visibleForRequests,isRequestAvailable,availabilityMessage});
 })();
