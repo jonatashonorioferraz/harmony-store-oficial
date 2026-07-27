@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.45] - 27/07/2026
+
+### Resumo completo dos boletos
+
+- A página de boletos agora mostra quantidade e valor acumulado para todos os registros, pendentes, pagos, cancelados, atrasados, vencendo hoje e vencendo amanhã.
+- Cada total funciona como atalho de filtro e abre imediatamente os boletos daquela situação.
+- O seletor da lista também ganhou os filtros de atrasados, vencendo hoje e vencendo amanhã.
+- O resumo foi organizado para desktop, tablet e celular sem alterar banco, pagamentos ou permissões.
+
 ## [v25.44] - 27/07/2026
 
 ### Reativação segura de boletos cancelados
