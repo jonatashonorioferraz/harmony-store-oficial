@@ -62,9 +62,9 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(ui,/dueState/);
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
-  assert.match(html,/bills\.css\?v=25\.39/);
-  assert.match(html,/bills\.js\?v=25\.44/);
-  assert.match(worker,/bills\.js\?v=25\.44/);
+  assert.match(html,/bills\.css\?v=25\.45/);
+  assert.match(html,/bills\.js\?v=25\.45/);
+  assert.match(worker,/bills\.js\?v=25\.45/);
 });
 
 test('cancelled bills can be safely reactivated without bypassing duplicate protection',()=>{
@@ -83,6 +83,19 @@ test('cancelled bills can be safely reactivated without bypassing duplicate prot
   assert.match(reactivation,/revoke all on function public\.admin_reactivate_bill\(uuid\) from public, anon, authenticated/);
   assert.match(reactivation,/grant execute on function public\.admin_reactivate_bill\(uuid\) to authenticated, service_role/);
   assert.doesNotMatch(reactivation,/delete from public\.bills/i);
+});
+
+test('bill dashboard summarizes counts and amounts and uses every total as a filter',()=>{
+  for(const group of ['all','pending','paid','cancelled','overdue','today','tomorrow']){
+    assert.match(ui,new RegExp(`card\\('${group}'`));
+  }
+  assert.match(ui,/items\.length\.toLocaleString\('pt-BR'\)/);
+  assert.match(ui,/items\.reduce\(\(sum,item\)=>sum\+Number\(item\.amount\),0\)/);
+  assert.match(ui,/data-bill-metric-filter/);
+  assert.match(ui,/matchesBillFilter/);
+  assert.match(ui,/button\.dataset\.billMetricFilter/);
+  assert.match(css,/\.bill-metric\.active/);
+  assert.match(css,/\.bill-metric\.total\{grid-column:1\/-1\}/);
 });
 
 test('bill assets are mirrored and included in backup and recovery',async()=>{
