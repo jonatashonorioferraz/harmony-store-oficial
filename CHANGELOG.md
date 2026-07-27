@@ -5,6 +5,35 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.44] - 27/07/2026
+
+### Reativação segura de boletos cancelados
+
+- Boletos cancelados agora podem ser reativados pelo próprio registro, preservando protocolo, linha digitável, documento e histórico.
+- A reativação é exclusiva para ADMs, aceita somente boletos cancelados, usa bloqueio transacional e registra o evento `bill.reactivated` na auditoria.
+- O boleto reativado volta ao estado pendente e reaparece automaticamente nos totais e alertas de vencimento do “Meu dia na Harmony”.
+- A proteção contra duplicidade permanece ativa; ao tentar cadastrar uma linha já existente, o aplicativo abre o boleto correto e orienta a reativação.
+- Um novo documento enviado por engano durante a tentativa duplicada é descartado, evitando arquivos órfãos no armazenamento privado.
+
+## [v25.43] - 27/07/2026
+
+### Filtros escritos e sugestões de busca
+
+- Os filtros escritos agora executam a pesquisa ao pressionar Enter no computador ou o botão de pesquisa do teclado do celular.
+- Campos de produto exibem sugestões com os nomes reais cadastrados, e os demais módulos sugerem os principais nomes disponíveis em cada lista.
+- A comparação passou a ignorar diferenças entre letras maiúsculas, minúsculas e acentos, evitando falhas ao pesquisar nomes.
+- O comportamento foi padronizado no catálogo, solicitações, produtos, equipe, cadastros, produção, inteligência, ajuda e ideias.
+- Nenhuma mudança de banco, autenticação, pagamentos ou permissões foi necessária.
+
+## [v25.42] - 27/07/2026
+
+### Privacidade das ordens ao trocar de conta
+
+- O cache das ordens semanais agora pertence explicitamente à sessão que realizou a consulta e é apagado no logout.
+- Ao entrar com outra colaboradora no mesmo navegador ou PWA, o aplicativo descarta imediatamente os dados da sessão anterior e consulta somente as ordens da nova conta.
+- Uma segunda validação no cliente impede listar ou abrir uma ordem cujo `worker_id` não corresponda à colaboradora conectada; ADMs preservam a visão administrativa completa.
+- As políticas RLS e a RPC de produção foram auditadas em produção e já bloqueavam corretamente leituras de outras colaboradoras, portanto nenhuma mudança de banco ou permissão foi necessária.
+
 ## [v25.41] - 25/07/2026
 
 ### Produtos compartilhados

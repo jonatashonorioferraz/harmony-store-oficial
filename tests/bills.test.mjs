@@ -4,8 +4,9 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
-const [ui,css,migration,edge,html,worker,backup,recovery]=await Promise.all([
+const [ui,css,migration,reactivation,edge,html,worker,backup,recovery]=await Promise.all([
   read('bills.js'),read('bills.css'),read('supabase/migrations/20260725212141_admin_bills.sql'),
+  read('supabase/migrations/20260727160000_bill_reactivation.sql'),
   read('supabase/functions/analyze-bill/index.ts'),read('index.html'),read('service-worker.js'),
   read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs')
 ]);
@@ -62,8 +63,26 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(html,/bills\.css\?v=25\.39/);
-  assert.match(html,/bills\.js\?v=25\.39/);
-  assert.match(worker,/bills\.js\?v=25\.39/);
+  assert.match(html,/bills\.js\?v=25\.44/);
+  assert.match(worker,/bills\.js\?v=25\.44/);
+});
+
+test('cancelled bills can be safely reactivated without bypassing duplicate protection',()=>{
+  assert.match(ui,/admin_reactivate_bill/);
+  assert.match(ui,/Reativar boleto/);
+  assert.match(ui,/existing\.status==='cancelled'/);
+  assert.match(ui,/return detail\(existing\)/);
+  assert.match(reactivation,/^begin;/m);
+  assert.match(reactivation,/^commit;/m);
+  assert.match(reactivation,/private\.is_admin\(\)/);
+  assert.match(reactivation,/for update/);
+  assert.match(reactivation,/v_bill\.status <> 'cancelled'/);
+  assert.match(reactivation,/set status = 'pending'/);
+  assert.match(reactivation,/cancelled_at = null/);
+  assert.match(reactivation,/bill\.reactivated/);
+  assert.match(reactivation,/revoke all on function public\.admin_reactivate_bill\(uuid\) from public, anon, authenticated/);
+  assert.match(reactivation,/grant execute on function public\.admin_reactivate_bill\(uuid\) to authenticated, service_role/);
+  assert.doesNotMatch(reactivation,/delete from public\.bills/i);
 });
 
 test('bill assets are mirrored and included in backup and recovery',async()=>{
