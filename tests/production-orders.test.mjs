@@ -32,6 +32,15 @@ test('database authorization protects own orders and admin mutations',()=>{
   assert.match(sql,/role in \('collaborator','receiver'\)/);
 });
 
+test('production order cache is isolated when another collaborator signs in on the same device',()=>{
+  assert.match(js,/ownerId:null/);
+  assert.match(js,/if\(PO\.ownerId!==ownerId\)\{reset\(\);PO\.ownerId=ownerId\}/);
+  assert.match(js,/groupRows\(orders\)\.filter\(canAccessOrder\)/);
+  assert.match(js,/order\.worker_id===S\?\.profile\?\.id/);
+  assert.match(js,/if\(!canAccessOrder\(order\)\)return/);
+  assert.match(js,/Object\.freeze\(\{state:PO,load,reset,open:/);
+});
+
 test('workflow supports drafts, notifications, acknowledgement and audit',()=>{
   for(const status of ['draft','sent','viewed','acknowledged','cancelled'])assert.match(sql,new RegExp(`'${status}'`));
   assert.match(sql,/app_notification_recipients/);
@@ -105,8 +114,8 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.36/);
+  assert.match(html,/production-orders\.js\?v=25\.43/);
   assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-41/);
+  assert.match(worker,/harmony-store-v25-44/);
 });

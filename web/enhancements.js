@@ -4,6 +4,38 @@ function normalizeSearch(value){
 
 const listControlState={};
 
+function searchSuggestionValues(items,explicit=[]){
+  const values=[...explicit];
+  items.forEach(item=>item.querySelectorAll('h2,h3,h4,strong,b').forEach(node=>{
+    const direct=[...node.childNodes].filter(child=>child.nodeType===Node.TEXT_NODE).map(child=>child.textContent.trim()).join(' ').trim();
+    if(direct)values.push(direct);
+  }));
+  return [...new Map(values.map(value=>[normalizeSearch(value).trim(),String(value||'').trim()]).filter(([key,value])=>key&&value.length>=2&&value.length<=120)).values()].slice(0,250);
+}
+
+function attachSearchSuggestions(input,values,key){
+  if(!input||!values?.length)return;
+  const id=`harmony-search-${String(key).replace(/[^a-z0-9_-]/gi,'-')}`;
+  let list=document.getElementById(id);
+  if(!list){list=document.createElement('datalist');list.id=id;document.body.appendChild(list)}
+  list.innerHTML=values.map(value=>`<option value="${esc(value)}"></option>`).join('');
+  input.setAttribute('list',id);
+}
+
+function enhanceSearchInputs(){
+  document.querySelectorAll('input[type="search"]').forEach(input=>{
+    if(input.dataset.harmonySearchReady)return;
+    input.dataset.harmonySearchReady='true';
+    input.setAttribute('enterkeyhint','search');
+    input.addEventListener('keydown',event=>{
+      if(event.key!=='Enter')return;
+      event.preventDefault();
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    input.addEventListener('search',()=>input.dispatchEvent(new Event('input',{bubbles:true})));
+  });
+}
+
 function addRefreshControl(){
   if(!S?.profile||document.querySelector('#refreshData'))return;
   const actions=document.querySelector('.page-head .head-actions');
@@ -21,7 +53,7 @@ function addRefreshControl(){
   actions.prepend(button);
 }
 
-function createListToolbar({container,items,placeholder,statuses,getStatus,key=S.view,mountBefore=container,toolbarClass=''}){
+function createListToolbar({container,items,placeholder,statuses,getStatus,key=S.view,mountBefore=container,toolbarClass='',suggestions=[]}){
   if(!container||!mountBefore||document.querySelector(`.list-toolbar[data-list-toolbar="${key}"]`))return;
   const saved=listControlState[key]||{term:'',status:''};
   const toolbar=document.createElement('div');
@@ -30,6 +62,7 @@ function createListToolbar({container,items,placeholder,statuses,getStatus,key=S
   toolbar.innerHTML=`<label class="list-search"><span>Buscar</span><input type="search" placeholder="${placeholder}" autocomplete="off"></label>${statuses?`<label class="list-status"><span>Filtrar</span><select><option value="">Todos</option>${statuses.map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</select></label>`:''}<small class="result-count" aria-live="polite"></small>`;
   mountBefore.parentNode.insertBefore(toolbar,mountBefore);
   const input=toolbar.querySelector('input'),select=toolbar.querySelector('select'),count=toolbar.querySelector('.result-count');
+  attachSearchSuggestions(input,searchSuggestionValues(items,suggestions),key);
   input.value=saved.term||'';
   if(select)select.value=saved.status||'';
   const filter=()=>{
@@ -46,6 +79,8 @@ function createListToolbar({container,items,placeholder,statuses,getStatus,key=S
     container.classList.toggle('filtered-empty',visible===0);
   };
   input.addEventListener('input',filter);
+  input.addEventListener('search',filter);
+  input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();filter()}});
   select?.addEventListener('change',filter);
   filter();
 }
@@ -58,7 +93,7 @@ function addListControls(){
     items.forEach((item,index)=>item.dataset.filterCategory=products[index]?.category_id||'uncategorized');
     const statuses=S.categories.filter(category=>category.active&&products.some(product=>product.category_id===category.id)).map(category=>[category.id,category.name]);
     if(products.some(product=>!product.category_id))statuses.push(['uncategorized','Sem categoria']);
-    createListToolbar({container,items,placeholder:'Nome, cor, unidade ou descrição',statuses,getStatus:item=>item.dataset.filterCategory,key:'new-products',mountBefore,toolbarClass:'catalog-search-toolbar card'});
+    createListToolbar({container,items,placeholder:'Nome, cor, unidade ou descrição',statuses,getStatus:item=>item.dataset.filterCategory,key:'new-products',mountBefore,toolbarClass:'catalog-search-toolbar card',suggestions:products.map(product=>product.name)});
   }
   if(S.view==='requests'){
     const container=document.querySelector('.requests');
@@ -79,7 +114,8 @@ function addListControls(){
       placeholder:'Nome, unidade ou estoque',
       statuses:[['normal','Estoque normal'],['low','Estoque baixo']],
       getStatus:item=>item.querySelector('.badge')?.classList.contains('low')?'low':'normal',
-      key:'products'
+      key:'products',
+      suggestions:S.products.map(product=>product.name)
     });
   }
   if(S.view==='team'){
@@ -90,7 +126,8 @@ function addListControls(){
       placeholder:'Nome, login, setor ou Harmony ID',
       statuses:[['active','Ativos'],['inactive','Inativos']],
       getStatus:item=>item.querySelector('.badge')?.classList.contains('inactive')?'inactive':'active',
-      key:'team'
+      key:'team',
+      suggestions:S.team.map(profile=>profile.full_name)
     });
   }
   if(S.view==='categories'){
@@ -289,7 +326,7 @@ function enhanceDailyWelcome(){
   pageHead.insertAdjacentElement('afterend',card);
 }
 
-function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControls();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();enhanceLoginAtmosphere();enhanceDailyWelcome();animateFreshElements();addButtonFeedback();updateConnectionBanner()}
+function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControls();enhanceSearchInputs();addAdminCancelControl();enhanceMobileMenu();enhanceBrandPresentation();enhanceLoginMessage();enhanceLoginMascot();enhanceLoginAtmosphere();enhanceDailyWelcome();animateFreshElements();addButtonFeedback();updateConnectionBanner()}
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 matchMedia('(max-width:720px)').addEventListener('change',()=>{enhanceLoginMessage();enhanceLoginMascot()});

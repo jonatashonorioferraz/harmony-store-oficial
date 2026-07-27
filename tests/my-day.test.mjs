@@ -27,7 +27,7 @@ test('Meu dia routes every action to an existing official flow',async()=>{
   assert.match(source,/requestModalV2\(request\)/);
   assert.match(source,/HarmonyProductionOrders\?\.open/);
   assert.match(source,/S\.view=action/);
-  assert.match(orders,/window\.HarmonyProductionOrders=Object\.freeze\(\{state:PO,load,open:/);
+  assert.match(orders,/window\.HarmonyProductionOrders=Object\.freeze\(\{state:PO,load,reset,open:/);
 });
 
 test('Meu dia assets are mirrored, versioned, cached and responsive',async()=>{
@@ -40,7 +40,7 @@ test('Meu dia assets are mirrored, versioned, cached and responsive',async()=>{
   assert.match(html,/my-day\.css\?v=25\.39/);
   assert.match(html,/my-day\.js\?v=25\.39/);
   assert.match(worker,/my-day\.js\?v=25\.39/);
-  assert.match(worker,/harmony-store-v25-41/);
+  assert.match(worker,/harmony-store-v25-44/);
   assert.match(rootCss,/@media\(max-width:720px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.41.0');
+  assert.equal(JSON.parse(pkg).version,'25.44.0');
 });
