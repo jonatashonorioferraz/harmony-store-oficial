@@ -12,5 +12,5 @@ export class D1WorkflowRunRepository implements WorkflowRunRepository {
     await this.db.prepare(`INSERT INTO studio_workflow_runs (id, project_id, status, configuration_json, started_at, completed_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET status=excluded.status, configuration_json=excluded.configuration_json, started_at=excluded.started_at, completed_at=excluded.completed_at, updated_at=excluded.updated_at`).bind(run.id, run.projectId, run.status, JSON.stringify(run.configuration), run.startedAt, run.completedAt, run.createdAt, run.updatedAt).run();
   }
   async findById(id: string) { const row = await this.db.prepare("SELECT * FROM studio_workflow_runs WHERE id = ?").bind(id).first<Row>(); return row ? map(row) : null; }
-  async findLatestRecoverable(projectId: string) { const row = await this.db.prepare("SELECT * FROM studio_workflow_runs WHERE project_id = ? AND status IN ('queued', 'running', 'failed') ORDER BY updated_at DESC LIMIT 1").bind(projectId).first<Row>(); return row ? map(row) : null; }
+  async findLatestRecoverable(projectId: string) { const row = await this.db.prepare("SELECT * FROM studio_workflow_runs WHERE project_id = ? AND status IN ('pending', 'running', 'review_required', 'failed') ORDER BY updated_at DESC LIMIT 1").bind(projectId).first<Row>(); return row ? map(row) : null; }
 }

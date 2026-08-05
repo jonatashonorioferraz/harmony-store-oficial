@@ -1,4 +1,4 @@
-export type WorkflowRunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+export type WorkflowRunStatus = "pending" | "running" | "review_required" | "succeeded" | "failed" | "cancelled";
 
 export type WorkflowRun = {
   id: string;
@@ -21,7 +21,7 @@ export function createWorkflowRun(input: {
   return {
     id: input.id,
     projectId: input.projectId,
-    status: "queued",
+    status: "pending",
     configuration: input.configuration ?? {},
     startedAt: null,
     completedAt: null,
