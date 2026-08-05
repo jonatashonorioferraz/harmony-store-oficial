@@ -4,8 +4,9 @@ import type { D1DatabasePort } from "./d1-types.ts";
 type Row = { id: string; title: string; shot_type: VisualShotType; transfer_mode: VisualReference["transferMode"]; guidance: string; never_do_json: string };
 export class D1VisualReferenceRepository implements VisualReferenceRepository {
   constructor(private readonly db: D1DatabasePort) {}
-  async search(input: { category: string; modelName: string; shotType: VisualShotType; limit?: number }) {
+  async search(input: { category: string; modelName: string; shotType: VisualShotType; limit?: number; preferredId?: string }) {
     const limit = Math.min(Math.max(input.limit ?? 2, 1), 3);
+    if (input.preferredId) { const preferred = await this.db.prepare("SELECT id, title, shot_type, transfer_mode, guidance, never_do_json FROM studio_visual_references WHERE id = ? AND shot_type = ? AND status = 'active'").bind(input.preferredId, input.shotType).first<Row>(); return preferred ? [{ id: preferred.id, title: preferred.title, shotType: preferred.shot_type, transferMode: preferred.transfer_mode, guidance: preferred.guidance, neverDo: JSON.parse(preferred.never_do_json) }] : []; }
     const result = await this.db.prepare(`SELECT id, title, shot_type, transfer_mode, guidance, never_do_json
       FROM studio_visual_references
       WHERE status = 'active' AND shot_type = ? AND (

@@ -118,3 +118,18 @@ test("visual learning stores curated references and keeps product identity separ
   assert.match(adminPage, /Treinamento visual/);
   assert.match(adminPage, /Padrão geral da Harmony/);
 });
+
+test("the ad review visibly connects visual references to the photographer before paid generation", async () => {
+  const page = await read("app/page.tsx");
+  const route = await read("app/api/studio/visual-directions/route.ts");
+  const orchestrator = await read("src/harmony-studio/application/orchestration/workflow-orchestrator.ts");
+  assert.match(page, /DIREÇÃO VISUAL ANTES DO CRÉDITO/);
+  assert.match(page, /Escolha automática/);
+  assert.match(page, /Criar sem referência visual/);
+  assert.match(page, /Ver regras entregues ao agente/);
+  assert.match(page, /confirmVisualDirection\(workflowId\)/);
+  assert.match(route, /visual_selection\.confirmed/);
+  assert.match(route, /visualReferenceSelections/);
+  assert.match(orchestrator, /preferredId !== null/);
+  assert.match(orchestrator, /preferredId: preferredId \?\? undefined/);
+});

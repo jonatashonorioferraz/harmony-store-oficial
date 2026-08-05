@@ -7,6 +7,7 @@ import "./product-form.css";
 import "./palette.css";
 import "./palette-quickbar.css";
 import "./visual-learning.css";
+import "./direction-review.css";
 
 export const metadata: Metadata = {
   title: "Harmony Studio — Anúncios com IA",

@@ -40,7 +40,8 @@ export class WorkflowOrchestrator {
     const excellence = next.usesExcellence ? await this.excellence.searchActive({ agentRole: next.agentRole, marketplace: String(initial?.marketplace ?? ""), productCategory: String(initial?.productCategory ?? ""), limit: 3 }) : [];
     const shotTypes: VisualShotType[] = ["catalog-cover", "product-detail", "variations", "use-occasion", "versatile-composition"];
     const visualIndex = next.key.startsWith("visual-production-") ? Number(next.key.split("-").at(-1)) - 1 : -1;
-    const visualReferences = visualIndex >= 0 && this.visualReferences ? await this.visualReferences.search({ category: String(initial?.productCategory ?? ""), modelName: String((initial?.product as any)?.declaredFacts?.product ?? ""), shotType: shotTypes[visualIndex], limit: 2 }) : [];
+    const selections = (initial?.visualReferenceSelections ?? {}) as Record<string,string|null>; const hasSelection = Object.prototype.hasOwnProperty.call(selections, next.key); const preferredId = hasSelection ? selections[next.key] : undefined;
+    const visualReferences = visualIndex >= 0 && this.visualReferences && preferredId !== null ? await this.visualReferences.search({ category: String(initial?.productCategory ?? ""), modelName: String((initial?.product as any)?.declaredFacts?.product ?? ""), shotType: shotTypes[visualIndex], limit: preferredId ? 1 : 2, preferredId: preferredId ?? undefined }) : [];
     const context = buildContextBundle({ stageKey: next.key, agentRole: next.agentRole, allowedInputs: next.allowedInputs, availableData, knowledge, excellence, visualReferences });
     const startedAt = now(); const running: StageRun = { ...stage, status: "running", knowledgeVersionId: knowledge.id, inputHash: await hash(context), startedAt, updatedAt: startedAt };
     const activeRun: WorkflowRun = { ...run, status: "running", startedAt: run.startedAt ?? startedAt, updatedAt: startedAt };
