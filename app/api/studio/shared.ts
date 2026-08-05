@@ -4,7 +4,7 @@ import type { R2BucketPort } from "../../../src/harmony-studio/infrastructure/st
 import { createStudioRuntime } from "../../../src/harmony-studio/infrastructure/runtime/create-studio-runtime.ts";
 
 export function bindings() { const value = getStudioBindings(); return { db: value.DB, bucket: value.STUDIO_ASSETS as R2BucketPort }; }
-export function runtime() { const value = bindings(); const apiKey = process.env.OPENAI_API_KEY; if (!apiKey) throw new Error("OPENAI_API_KEY não configurada"); return { ...value, ...createStudioRuntime({ ...value, apiKey }) }; }
+export function createRequestStudioRuntime() { const value = bindings(); const apiKey = process.env.OPENAI_API_KEY; if (!apiKey) throw new Error("OPENAI_API_KEY não configurada"); return { ...value, ...createStudioRuntime({ ...value, apiKey }) }; }
 export async function assertWorkflowOwner(db: D1DatabasePort, workflowId: string, ownerId: string) { const row = await db.prepare("SELECT w.id FROM studio_workflow_runs w JOIN studio_ad_projects p ON p.id = w.project_id WHERE w.id = ? AND p.owner_id = ?").bind(workflowId, ownerId).first(); if (!row) throw new Error("Trabalho não encontrado"); }
 export async function workflowStatus(db: D1DatabasePort, workflowId: string) {
   const run = await db.prepare("SELECT status FROM studio_workflow_runs WHERE id = ?").bind(workflowId).first<{ status: string }>();

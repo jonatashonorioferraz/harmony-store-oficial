@@ -74,3 +74,16 @@ test("opening administration bootstraps the eight official agent versions", asyn
   assert.match(overview, /ensureDefaultAgentKnowledge/);
   assert.match(overview, /D1AgentKnowledgeRepository/);
 });
+
+test("studio routes keep the edge runtime declaration separate from the runtime factory", async () => {
+  const shared = await read("app/api/studio/shared.ts");
+  const start = await read("app/api/studio/start/route.ts");
+  const advance = await read("app/api/studio/advance/route.ts");
+  assert.match(shared, /export function createRequestStudioRuntime/);
+  assert.doesNotMatch(shared, /export function runtime\(/);
+  for (const route of [start, advance]) {
+    assert.match(route, /export const runtime = "edge"/);
+    assert.match(route, /createRequestStudioRuntime\(\)/);
+    assert.doesNotMatch(route, /import \{[^}]*\bruntime\b[^}]*\} from "\.\.\/shared\.ts"/);
+  }
+});
