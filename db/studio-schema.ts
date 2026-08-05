@@ -88,3 +88,14 @@ export const studioCategoryPaletteVersions = sqliteTable("studio_category_palett
   optionsJson: text("options_json").notNull(), status: text("status", { enum: ["active", "superseded", "retired"] }).notNull(),
   changeReason: text("change_reason").notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(),
 }, (table) => [uniqueIndex("studio_palette_category_name_version_unique").on(table.category, table.paletteName, table.version), index("studio_palette_category_status_idx").on(table.category, table.status)]);
+
+export const studioVisualReferences = sqliteTable("studio_visual_references", {
+  id: text("id").primaryKey(), title: text("title").notNull(), scope: text("scope", { enum: ["global", "category", "model"] }).notNull(),
+  category: text("category"), modelName: text("model_name"), shotType: text("shot_type").notNull(), transferMode: text("transfer_mode").notNull(),
+  guidance: text("guidance").notNull(), neverDoJson: text("never_do_json").notNull(), storageKey: text("storage_key").notNull(), contentType: text("content_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(), sha256: text("sha256").notNull(), status: text("status", { enum: ["active", "retired"] }).notNull(),
+  createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(), retiredAt: text("retired_at"),
+}, (table) => [
+  uniqueIndex("studio_visual_reference_storage_unique").on(table.storageKey),
+  index("studio_visual_reference_lookup_idx").on(table.status, table.shotType, table.scope, table.category, table.modelName),
+]);

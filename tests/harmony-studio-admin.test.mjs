@@ -100,3 +100,21 @@ test("visual production shows incremental results and can resume interrupted wor
   assert.match(advance, /INTERRUPTED_REQUEST/);
   assert.match(advance, /12 \* 60 \* 1000/);
 });
+
+test("visual learning stores curated references and keeps product identity separate from style", async () => {
+  const migration = await read("drizzle/0005_visual_learning.sql");
+  const adminRoute = await read("app/api/admin/visual-references/route.ts");
+  const repository = await read("src/harmony-studio/infrastructure/persistence/d1-visual-reference-repository.ts");
+  const executor = await read("src/harmony-studio/infrastructure/openai/openai-stage-executor.ts");
+  const adminPage = await read("app/admin/page.tsx");
+  assert.match(migration, /studio_visual_references/);
+  assert.match(migration, /studio_visual_reference_lookup_idx/);
+  assert.match(adminRoute, /requireStudioAdmin/);
+  assert.match(adminRoute, /visual-learning\//);
+  assert.match(adminRoute, /visual_reference\.created/);
+  assert.match(repository, /WHEN 'model' THEN 1 WHEN 'category' THEN 2 ELSE 3/);
+  assert.match(executor, /IDENTIDADE DO PRODUTO/);
+  assert.match(executor, /REFERÊNCIAS DE ESTILO/);
+  assert.match(adminPage, /Treinamento visual/);
+  assert.match(adminPage, /Padrão geral da Harmony/);
+});

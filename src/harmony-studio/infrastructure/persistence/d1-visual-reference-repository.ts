@@ -1,0 +1,19 @@
+import type { VisualReference, VisualReferenceRepository, VisualShotType } from "../../application/ports/visual-reference-repository.ts";
+import type { D1DatabasePort } from "./d1-types.ts";
+
+type Row = { id: string; title: string; shot_type: VisualShotType; transfer_mode: VisualReference["transferMode"]; guidance: string; never_do_json: string };
+export class D1VisualReferenceRepository implements VisualReferenceRepository {
+  constructor(private readonly db: D1DatabasePort) {}
+  async search(input: { category: string; modelName: string; shotType: VisualShotType; limit?: number }) {
+    const limit = Math.min(Math.max(input.limit ?? 2, 1), 3);
+    const result = await this.db.prepare(`SELECT id, title, shot_type, transfer_mode, guidance, never_do_json
+      FROM studio_visual_references
+      WHERE status = 'active' AND shot_type = ? AND (
+        (scope = 'model' AND category = ? AND lower(model_name) = lower(?)) OR
+        (scope = 'category' AND category = ?) OR scope = 'global'
+      )
+      ORDER BY CASE scope WHEN 'model' THEN 1 WHEN 'category' THEN 2 ELSE 3 END, created_at DESC LIMIT ?`)
+      .bind(input.shotType, input.category, input.modelName, input.category, limit).all<Row>();
+    return (result.results ?? []).map((row) => ({ id: row.id, title: row.title, shotType: row.shot_type, transferMode: row.transfer_mode, guidance: row.guidance, neverDo: JSON.parse(row.never_do_json) }));
+  }
+}
