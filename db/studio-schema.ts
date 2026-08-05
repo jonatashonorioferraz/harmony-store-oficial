@@ -76,3 +76,9 @@ export const studioUsageLedger = sqliteTable("studio_usage_ledger", {
   reservedUsdMicros: integer("reserved_usd_micros").notNull(), actualUsdMicros: integer("actual_usd_micros"), usageJson: text("usage_json"),
   status: text("status", { enum: ["reserved", "recorded", "released"] }).notNull(), ...timestamps,
 }, (table) => [uniqueIndex("studio_usage_idempotency_unique").on(table.idempotencyKey), index("studio_usage_project_status_idx").on(table.projectId, table.status)]);
+
+export const studioConfigurationVersions = sqliteTable("studio_configuration_versions", {
+  id: text("id").primaryKey(), key: text("key").notNull(), version: integer("version").notNull(),
+  valueJson: text("value_json").notNull(), status: text("status", { enum: ["active", "superseded"] }).notNull(),
+  changeReason: text("change_reason").notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("studio_configuration_key_version_unique").on(table.key, table.version), index("studio_configuration_key_status_idx").on(table.key, table.status)]);

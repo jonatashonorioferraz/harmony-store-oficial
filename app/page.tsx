@@ -133,7 +133,7 @@ export default function Page() {
     arts.forEach((art, index) => art.image && setTimeout(() => save(`${index + 1}-${art.label.toLowerCase().replaceAll(" ", "-")}.png`, art.image!), index * 180));
   };
 
-  return <main className="studio">
+  return <main className="studio"><a className="admin-shortcut" href="/admin">Administração</a>
     <aside className="studio-side"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store Oficial"/><h2>Harmony Studio</h2><p>Anúncios com IA</p><div className="team"><b>✦ Equipe sênior ativa</b><span>Estratégia • SEO • Copy • Fotografia • Revisão</span></div><ol><li className={step === "upload" ? "active" : "done"}>1. Fotos reais</li><li className={step === "review" ? "active" : step === "result" ? "done" : ""}>2. Conferência</li><li className={step === "result" ? "active" : ""}>3. Material profissional</li></ol><small>As fotos são a fonte da verdade. Nenhuma promessa ou característica importante é inventada.</small></aside>
     <section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>Mini Sabonetes Rosinhas</b></div><button onClick={() => { clearDraft().catch(() => {}); setStep("upload"); setPhotos([]); setArts(artBriefs); setWorkflowId(null); }}>Novo anúncio</button></header>
 
