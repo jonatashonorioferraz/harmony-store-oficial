@@ -56,3 +56,16 @@ export const studioAuditEvents = sqliteTable("studio_audit_events", {
   id: text("id").primaryKey(), projectId: text("project_id").references(() => studioAdProjects.id, { onDelete: "cascade" }), actorId: text("actor_id").notNull(),
   eventType: text("event_type").notNull(), entityType: text("entity_type").notNull(), entityId: text("entity_id").notNull(), beforeJson: text("before_json"), afterJson: text("after_json"), metadataJson: text("metadata_json"), createdAt: text("created_at").notNull(),
 }, (table) => [index("studio_audit_project_created_idx").on(table.projectId, table.createdAt), index("studio_audit_entity_idx").on(table.entityType, table.entityId)]);
+
+export const studioExcellenceItems = sqliteTable("studio_excellence_items", {
+  id: text("id").primaryKey(), projectId: text("project_id").notNull().references(() => studioAdProjects.id, { onDelete: "cascade" }),
+  candidateId: text("candidate_id").notNull().references(() => studioArtifactCandidates.id), reviewDecisionId: text("review_decision_id").notNull().references(() => studioReviewDecisions.id),
+  artifactType: text("artifact_type", { enum: ["title", "description", "image", "package"] }).notNull(), marketplace: text("marketplace").notNull(),
+  productCategory: text("product_category").notNull(), agentRole: text("agent_role").notNull(), contextJson: text("context_json").notNull(),
+  decisionsJson: text("decisions_json").notNull(), approvalReason: text("approval_reason").notNull(), tagsJson: text("tags_json").notNull(),
+  status: text("status", { enum: ["active", "retired"] }).notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(), retiredAt: text("retired_at"),
+}, (table) => [
+  uniqueIndex("studio_excellence_candidate_unique").on(table.candidateId),
+  index("studio_excellence_type_marketplace_idx").on(table.artifactType, table.marketplace, table.status),
+  index("studio_excellence_category_status_idx").on(table.productCategory, table.status),
+]);
