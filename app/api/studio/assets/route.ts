@@ -1,0 +1,6 @@
+import { NextResponse } from "next/server";
+import { getChatGPTUser } from "../../../chatgpt-auth.ts";
+import { bindings } from "../shared.ts";
+import { R2AssetStorage } from "../../../../src/harmony-studio/infrastructure/storage/r2-asset-storage.ts";
+export const runtime = "edge";
+export async function GET(request: Request) { const user = await getChatGPTUser(); if (!user) return NextResponse.json({ error: "Faça login" }, { status: 401 }); const id = new URL(request.url).searchParams.get("id"); if (!id) return NextResponse.json({ error: "Arquivo inválido" }, { status: 400 }); const { db, bucket } = bindings(); const row = await db.prepare("SELECT a.storage_key, a.content_type FROM studio_source_assets a JOIN studio_ad_projects p ON p.id = a.project_id WHERE a.id = ? AND p.owner_id = ? AND a.kind IN ('approved','candidate')").bind(id, user.id).first<{ storage_key: string; content_type: string }>(); if (!row) return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 }); const stored = await new R2AssetStorage(bucket).get(row.storage_key); if (!stored) return NextResponse.json({ error: "Arquivo indisponível" }, { status: 404 }); return new Response(stored.body, { headers: { "Content-Type": row.content_type, "Cache-Control": "private, max-age=300" } }); }

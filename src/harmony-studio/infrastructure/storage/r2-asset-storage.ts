@@ -1,7 +1,7 @@
 import type { AssetStorage, StoredAsset } from "../../application/ports/asset-storage.ts";
 
 interface R2ObjectLike { body: ReadableStream; httpMetadata?: { contentType?: string }; }
-interface R2BucketPort { put(key: string, body: ArrayBuffer | ReadableStream, options: { httpMetadata: { contentType: string }; customMetadata?: Record<string, string> }): Promise<{ size: number }>; get(key: string): Promise<R2ObjectLike | null>; delete(key: string): Promise<void>; }
+export interface R2BucketPort { put(key: string, body: ArrayBuffer | ReadableStream, options: { httpMetadata: { contentType: string }; customMetadata?: Record<string, string> }): Promise<{ size: number }>; get(key: string): Promise<R2ObjectLike | null>; delete(key: string): Promise<void>; }
 
 export class R2AssetStorage implements AssetStorage {
   private readonly bucket: R2BucketPort;

@@ -1,0 +1,3 @@
+import type { ProductSnapshot, ProductSnapshotRepository } from "../../application/ports/product-snapshot-repository.ts";
+import type { D1DatabasePort } from "./d1-types.ts";
+export class D1ProductSnapshotRepository implements ProductSnapshotRepository { private readonly db: D1DatabasePort; constructor(db: D1DatabasePort) { this.db = db; } async save(item: ProductSnapshot) { await this.db.prepare("INSERT INTO studio_product_snapshots (id, project_id, version, facts_json, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)").bind(item.id, item.projectId, item.version, JSON.stringify(item.facts), item.createdBy, item.createdAt).run(); } }

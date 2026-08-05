@@ -1,6 +1,6 @@
 import type { AgentRole } from "../intelligence/agent-knowledge.ts";
 
-export const STAGE_KEYS = ["triage", "visual-analysis", "strategy", "copy", "art-direction", "visual-production", "compliance-review", "quality-gate"] as const;
+export const STAGE_KEYS = ["triage", "visual-analysis", "strategy", "copy", "art-direction", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5", "compliance-review", "quality-gate"] as const;
 export type StageKey = (typeof STAGE_KEYS)[number];
 export type StageStatus = "pending" | "running" | "succeeded" | "failed" | "blocked" | "cancelled";
 
@@ -18,8 +18,12 @@ export const STANDARD_WORKFLOW: readonly StageDefinition[] = [
   { key: "strategy", agentRole: "marketplace-strategist", dependencies: ["visual-analysis"], allowedInputs: ["product.approvedFacts", "marketplacePolicy", "visual-analysis.observations"], usesExcellence: true },
   { key: "copy", agentRole: "copywriter", dependencies: ["strategy"], allowedInputs: ["product.approvedFacts", "brandRules", "strategy"], usesExcellence: true },
   { key: "art-direction", agentRole: "art-director", dependencies: ["strategy", "visual-analysis"], allowedInputs: ["brandRules", "strategy", "visual-analysis.observations"], usesExcellence: true },
-  { key: "visual-production", agentRole: "virtual-photographer", dependencies: ["art-direction"], allowedInputs: ["art-direction.brief", "assets"], usesExcellence: true },
-  { key: "compliance-review", agentRole: "compliance-reviewer", dependencies: ["copy", "visual-production"], allowedInputs: ["product", "marketplacePolicy", "copy", "visual-production"], usesExcellence: false },
+  { key: "visual-production-1", agentRole: "virtual-photographer", dependencies: ["art-direction"], allowedInputs: ["art-direction.briefs.0", "assets"], usesExcellence: true },
+  { key: "visual-production-2", agentRole: "virtual-photographer", dependencies: ["visual-production-1"], allowedInputs: ["art-direction.briefs.1", "assets"], usesExcellence: true },
+  { key: "visual-production-3", agentRole: "virtual-photographer", dependencies: ["visual-production-2"], allowedInputs: ["art-direction.briefs.2", "assets"], usesExcellence: true },
+  { key: "visual-production-4", agentRole: "virtual-photographer", dependencies: ["visual-production-3"], allowedInputs: ["art-direction.briefs.3", "assets"], usesExcellence: true },
+  { key: "visual-production-5", agentRole: "virtual-photographer", dependencies: ["visual-production-4"], allowedInputs: ["art-direction.briefs.4", "assets"], usesExcellence: true },
+  { key: "compliance-review", agentRole: "compliance-reviewer", dependencies: ["copy", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5"], allowedInputs: ["product", "marketplacePolicy", "copy", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5"], usesExcellence: false },
   { key: "quality-gate", agentRole: "quality-director", dependencies: ["compliance-review"], allowedInputs: ["compliance-review", "artifactMetadata"], usesExcellence: false },
 ] as const;
 

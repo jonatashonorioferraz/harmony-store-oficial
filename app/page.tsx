@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 type Photo = { file: File; url: string };
 type CopyResult = { title: string; description: string; confidence: number; summary: string };
 type Art = { label: string; brief: string; image?: string; score?: number; error?: string };
+type WorkflowStatus = { status: string; approved: boolean; progress: number; total: number; copy?: { title: string; description: string } | null; visual?: { summary?: string; confidence?: number } | null; images: Array<{ id: string; url: string }>; stages: Array<{ key: string; status: string; error?: { message?: string } | null }> };
 
 const colors = [
   ["Rosa BB", "Mamãe e Bebê"], ["Azul BB", "Mamãe e Bebê"], ["Lilás", "Lavanda"],
@@ -70,6 +71,7 @@ export default function Page() {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
 
   useEffect(() => {
     loadDraft().then((draft) => {
@@ -78,15 +80,16 @@ export default function Page() {
       if (draft.copy) setCopy(draft.copy);
       if (draft.arts) setArts(draft.arts);
       if (draft.step) setStep(draft.step);
+      if (draft.workflowId) { setWorkflowId(draft.workflowId); fetch(`/api/studio/status?id=${encodeURIComponent(draft.workflowId)}`).then((response) => response.ok ? response.json() : null).then((status) => status && applyStatus(status)).catch(() => {}); }
       setMessage("Trabalho anterior recuperado automaticamente.");
     }).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!photos.length) return;
-    const timer = window.setTimeout(() => saveDraft({ photos: photos.map((photo) => photo.file), copy, arts, step }).catch(() => {}), 400);
+    const timer = window.setTimeout(() => saveDraft({ photos: photos.map((photo) => photo.file), copy, arts, step, workflowId }).catch(() => {}), 400);
     return () => window.clearTimeout(timer);
-  }, [photos, copy, arts, step]);
+  }, [photos, copy, arts, step, workflowId]);
 
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => { if (busy) { event.preventDefault(); event.returnValue = ""; } };
@@ -102,51 +105,28 @@ export default function Page() {
 
   const formWithImages = () => { const form = new FormData(); photos.forEach((photo) => form.append("images", photo.file)); return form; };
 
+  const applyStatus = (status: WorkflowStatus) => {
+    setProgress(status.progress);
+    if (status.copy) setCopy({ title: status.copy.title, description: status.copy.description, summary: status.visual?.summary || "Produto analisado com base nas quatro referências.", confidence: Number(status.visual?.confidence) || 90 });
+    if (status.approved && status.images.length === 5) setArts(artBriefs.map((art, index) => ({ ...art, image: status.images[index].url, score: 100 })));
+  };
+  const advance = async (id: string) => { const response = await fetch("/api/studio/advance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowId: id }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "A etapa não foi concluída"); applyStatus(data); return data as WorkflowStatus; };
+
   const analyze = async () => {
-    setBusy(true); setMessage("Os agentes estão analisando produto, intenção de busca e conformidade…");
+    setBusy(true); setMessage("Triagem, análise visual, estratégia e copy estão trabalhando…");
     try {
       const form = formWithImages();
-      form.append("product", JSON.stringify({ brand: "Harmony Store Oficial", product: "Mini Sabonetes Rosinhas ou Florzinhas", quantity: 100, size: "3 cm × 3 cm", weight: "2 g", stock: "pronta entrega", shelfLife: "12 meses", colors: colors.map(([color, aroma]) => ({ color, aroma })) }));
-      const response = await fetch("/api/agents/analyze", { method: "POST", body: form });
-      if (!response.ok) throw new Error("A análise não foi concluída");
-      setCopy(await response.json());
-    } catch { setCopy(fallback); setMessage("Usei a ficha confirmada como alternativa segura."); }
-    finally { setBusy(false); setStep("review"); }
+      form.append("product", JSON.stringify({ marketplace: "Shopee", productCategory: "mini-sabonetes", brand: "Harmony Store Oficial", product: "Mini Sabonetes Rosinhas ou Florzinhas", quantity: 100, size: "3 cm × 3 cm", weight: "2 g", stock: "pronta entrega", shelfLife: "12 meses", composition: "base glicerinada, essência, corante, conservantes e veículo", packaging: "soltas em embalagem segura; organza vendida separadamente", warnings: ["não ingerir", "evitar contato com os olhos", "manter longe de crianças e animais", "proteger de calor e sol"], colors: colors.map(([color, aroma]) => ({ color, aroma })) }));
+      const response = await fetch("/api/studio/start", { method: "POST", body: form }); const started = await response.json(); if (!response.ok) throw new Error(started.error || "O trabalho não pôde ser iniciado"); setWorkflowId(started.workflowId);
+      let status: WorkflowStatus | null = null; for (let i = 0; i < 4; i++) { status = await advance(started.workflowId); setMessage(`Equipe sênior: etapa ${status.progress} de ${status.total} concluída…`); }
+      if (!status?.copy) throw new Error("A copy ainda não foi concluída"); setStep("review"); setMessage("Estratégia e texto prontos para sua conferência.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "A análise não foi concluída"); }
+    finally { setBusy(false); }
   };
 
-  const createArt = async (index: number) => {
-    const item = artBriefs[index]; const form = formWithImages();
-    form.append("label", item.label); form.append("brief", item.brief); form.append("variation", String(index));
-    const response = await fetch("/api/agents/images", { method: "POST", body: form });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Imagem reprovada");
-    return { ...item, image: result.image, score: result.score };
-  };
+  const generate = async () => { if (!workflowId) return; setStep("result"); setBusy(true); setArts(artBriefs); try { let status: WorkflowStatus | null = null; for (let i = 0; i < 9; i++) { status = await advance(workflowId); setMessage(`Equipe sênior: etapa ${status.progress} de ${status.total} concluída…`); if (status.approved) break; } if (!status?.approved) throw new Error("O material não foi liberado pela revisão final."); setMessage("Pacote aprovado pelo diretor de qualidade: título, descrição e cinco imagens prontos."); } catch (error) { setMessage(error instanceof Error ? error.message : "A produção foi interrompida"); } finally { setBusy(false); } };
 
-  const generate = async () => {
-    setStep("result"); setBusy(true); setProgress(0); setArts(artBriefs);
-    for (let index = 0; index < artBriefs.length; index++) {
-      setProgress(index + 1); setMessage(`Fotógrafo e diretor de arte: imagem ${index + 1} de 5…`);
-      try { const art = await createArt(index); setArts((current) => current.map((old, i) => i === index ? art : old)); }
-      catch (error) {
-        const reason = error instanceof Error ? error.message : "Reprovada";
-        setArts((current) => current.map((old, i) => i === index ? { ...old, error: reason } : old));
-        if (reason.includes("créditos") || reason.includes("limite de uso")) {
-          setArts((current) => current.map((old, i) => i > index ? { ...old, error: "Aguardando ativação dos créditos da API" } : old));
-          setMessage("A produção foi pausada para evitar novas tentativas. Ative os créditos da API e use Refazer com revisão.");
-          break;
-        }
-      }
-    }
-    setBusy(false); setMessage("Criação concluída. Cada imagem gerada permanece disponível, mesmo se a auditoria ficar temporariamente limitada.");
-  };
-
-
-  const retry = async (index: number) => {
-    setArts((current) => current.map((old, i) => i === index ? { ...old, error: undefined } : old));
-    try { const art = await createArt(index); setArts((current) => current.map((old, i) => i === index ? art : old)); }
-    catch (error) { setArts((current) => current.map((old, i) => i === index ? { ...old, error: error instanceof Error ? error.message : "Reprovada" } : old)); }
-  };
+  const retry = async (_index?: number) => { if (!workflowId) return; setBusy(true); try { const status = await advance(workflowId); if (status.approved) setMessage("Material recuperado e aprovado."); } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível repetir a etapa"); } finally { setBusy(false); } };
 
   const kit = () => {
     saveText("titulo-seo.txt", copy.title); saveText("descricao-anuncio.txt", copy.description);
@@ -155,7 +135,7 @@ export default function Page() {
 
   return <main className="studio">
     <aside className="studio-side"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store Oficial"/><h2>Harmony Studio</h2><p>Anúncios com IA</p><div className="team"><b>✦ Equipe sênior ativa</b><span>Estratégia • SEO • Copy • Fotografia • Revisão</span></div><ol><li className={step === "upload" ? "active" : "done"}>1. Fotos reais</li><li className={step === "review" ? "active" : step === "result" ? "done" : ""}>2. Conferência</li><li className={step === "result" ? "active" : ""}>3. Material profissional</li></ol><small>As fotos são a fonte da verdade. Nenhuma promessa ou característica importante é inventada.</small></aside>
-    <section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>Mini Sabonetes Rosinhas</b></div><button onClick={() => { clearDraft().catch(() => {}); setStep("upload"); setPhotos([]); setArts(artBriefs); }}>Novo anúncio</button></header>
+    <section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>Mini Sabonetes Rosinhas</b></div><button onClick={() => { clearDraft().catch(() => {}); setStep("upload"); setPhotos([]); setArts(artBriefs); setWorkflowId(null); }}>Novo anúncio</button></header>
 
       {step === "upload" && <div className="studio-stage"><span className="eyebrow">ETAPA 1 DE 3</span><h1>Quatro referências.<br/><em>Uma produção de nível profissional.</em></h1><p>A equipe de IA compara ângulos, cores e acabamento antes de criar qualquer material.</p><div className="upload-grid">{Array.from({ length: 4 }).map((_, index) => photos[index] ? <figure key={index}><img src={photos[index].url} alt={`Referência ${index + 1}`}/><button onClick={() => setPhotos((all) => all.filter((_, i) => i !== index))}>×</button><figcaption>✓ Referência {index + 1}</figcaption></figure> : <label className="upload-slot" key={index}><input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addPhotos}/><i>＋</i><b>Adicionar foto {index + 1}</b><span>{["Vista principal", "Outro ângulo", "Detalhe", "Cenário diferente"][index]}</span></label>)}</div><div className="studio-note"><b>Direção de arte</b><span>Prefira luz natural, foco nítido e pelo menos uma foto mostrando a peça inteira.</span><strong>{photos.length}/4</strong></div><button className="studio-primary" disabled={photos.length !== 4 || busy} onClick={analyze}>{busy ? message : "Analisar com a equipe de IA →"}</button></div>}
 

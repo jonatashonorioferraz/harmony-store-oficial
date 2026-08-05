@@ -26,15 +26,15 @@ function outputFor(stage) {
   if (stage === "strategy") return { intent: "lembrancinhas" };
   if (stage === "copy") return { title: "Mini Sabonetes Rosinhas", description: "Descrição" };
   if (stage === "art-direction") return { brief: { style: "premium" } };
-  if (stage === "visual-production") return { candidateId: "image-1" };
+  if (stage.startsWith("visual-production-")) return { candidateId: `image-${stage.at(-1)}` };
   if (stage === "compliance-review") return { decision: "approved" };
   return { release: "approved" };
 }
 
 const initialData = { marketplace: "Shopee", productCategory: "mini-sabonetes", product: { declaredFacts: { quantity: 100 }, approvedFacts: { quantity: 100 } }, assetMetadata: [{ id: "a1" }], assets: [{ id: "a1" }], marketplacePolicy: { titleLimit: 120 }, brandRules: { name: "Harmony Store Oficial" }, artifactMetadata: {}, privateTranscript: "must never leak" };
 
-test("workflow plan assigns one isolated specialist to each stage", () => {
-  assert.equal(STANDARD_WORKFLOW.length, 8);
+test("workflow plan assigns twelve isolated stages across eight specialists", () => {
+  assert.equal(STANDARD_WORKFLOW.length, 12);
   assert.equal(new Set(STANDARD_WORKFLOW.map((stage) => stage.agentRole)).size, 8);
   assert.ok(STANDARD_WORKFLOW.every((stage) => !stage.allowedInputs.includes("privateTranscript")));
 });
@@ -72,9 +72,9 @@ test("failure retries only the failed stage with a new idempotency key", async (
 test("completed workflow can resume from persisted state without repeating successful stages", async () => {
   const { orchestrator, workflows, calls } = fixture();
   await orchestrator.start({ id: "workflow-3", projectId: "project-1", initialData, actorId: "owner", auditId: "audit-start" });
-  for (let i = 0; i < 9; i++) await orchestrator.runNext("workflow-3");
+  for (let i = 0; i < 13; i++) await orchestrator.runNext("workflow-3");
   assert.equal(workflows.get("workflow-3").status, "succeeded");
-  assert.equal(calls.length, 8);
+  assert.equal(calls.length, 12);
   await orchestrator.runNext("workflow-3");
-  assert.equal(calls.length, 8);
+  assert.equal(calls.length, 12);
 });

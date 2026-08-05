@@ -38,6 +38,6 @@ test("image executor requests one edit and persists paid output immediately", as
   const requests = []; const stored = [];
   const fetcher = async (url, init) => { requests.push({ url, init }); return new Response(JSON.stringify({ data: [{ b64_json: "aW1hZ2U=" }], usage: { output_tokens: 5 } }), { status: 200, headers: { "x-request-id": "req-image" } }); };
   const executor = new OpenAIStageExecutor({ client: new OpenAIHttpClient({ apiKey: "test", fetcher, maxRetries: 0 }), budget: { reserve: async () => {}, record: async () => {} }, assets: { store: async (item) => { stored.push(item); return { assetId: "asset-paid" }; } } });
-  const result = await executor.execute(context("visual-production"), "workflow:visual-production:1"); const form = requests[0].init.body;
+  const result = await executor.execute(context("visual-production-1"), "workflow:visual-production-1:1"); const form = requests[0].init.body;
   assert.match(requests[0].url, /images\/edits$/); assert.equal(form.get("model"), "gpt-image-2"); assert.equal(form.get("n"), "1"); assert.equal(form.getAll("image[]").length, 4); assert.equal(stored.length, 1); assert.equal(result.output.candidateAssetId, "asset-paid");
 });
