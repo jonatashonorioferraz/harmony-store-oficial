@@ -78,3 +78,17 @@ test("completed workflow can resume from persisted state without repeating succe
   await orchestrator.runNext("workflow-3");
   assert.equal(calls.length, 12);
 });
+
+test("quality rejection requires review and directed reprocessing repeats only the affected tail", async () => {
+  const { orchestrator, workflows, stages } = fixture();
+  await orchestrator.start({ id: "workflow-4", projectId: "project-1", initialData, actorId: "owner", auditId: "audit-start" });
+  for (let i = 0; i < 12; i++) await orchestrator.runNext("workflow-4");
+  const quality = stages.find((stage) => stage.workflowRunId === "workflow-4" && stage.stageKey === "quality-gate");
+  quality.output = { release: "reprocess", reprocessStage: "visual-production-3", reasons: ["corrigir cenário"] };
+  await orchestrator.runNext("workflow-4");
+  assert.equal(workflows.get("workflow-4").status, "review_required");
+  const scheduled = await orchestrator.reprocessFrom("workflow-4", "visual-production-3", "owner");
+  assert.deepEqual(scheduled.map((stage) => stage.stageKey), ["visual-production-3", "visual-production-4", "visual-production-5", "compliance-review", "quality-gate"]);
+  assert.equal(stages.filter((stage) => stage.stageKey === "copy").length, 1);
+  assert.equal(stages.filter((stage) => stage.stageKey === "visual-production-3").length, 2);
+});

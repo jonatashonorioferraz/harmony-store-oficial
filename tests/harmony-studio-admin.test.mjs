@@ -34,3 +34,12 @@ test("the main studio exposes the protected administration panel", async () => {
   assert.match(admin, /Biblioteca de Excelência/);
   assert.match(admin, /Histórico de alterações/);
 });
+
+test("published global parameters drive new workflows and budget enforcement", async () => {
+  const workflow = await read("src/harmony-studio/application/workflows/start-studio-workflow.ts");
+  const budget = await read("src/harmony-studio/infrastructure/persistence/d1-usage-budget.ts");
+  assert.match(workflow, /marketplaceTitleLimit/);
+  assert.match(workflow, /minimumQualityScore/);
+  assert.match(workflow, /brandName/);
+  assert.match(budget, /maxProjectBudgetUsd/);
+});

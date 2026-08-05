@@ -63,9 +63,18 @@ export class WorkflowOrchestrator {
     return retry;
   }
 
+  async reprocessFrom(workflowRunId: string, stageKey: string, actorId = "system") {
+    const run = await this.requiredRun(workflowRunId); const stages = await this.repository.listStages(workflowRunId); const latest = this.latestAttempts(stages); const start = STANDARD_WORKFLOW.findIndex((stage) => stage.key === stageKey);
+    if (start < 0 || run.status !== "review_required") throw new Error("Only a reviewed workflow can schedule directed reprocessing");
+    const scheduled = STANDARD_WORKFLOW.slice(start).map((item) => createStageRun(workflowRunId, item, (latest.get(item.key)?.attempt ?? 0) + 1));
+    await this.repository.saveStages(scheduled); await this.repository.saveWorkflow({ ...run, status: "running", completedAt: null, updatedAt: scheduled[0].createdAt });
+    await this.audit.append({ id: crypto.randomUUID(), projectId: run.projectId, actorId, eventType: "workflow.reprocess_scheduled", entityType: "workflow_run", entityId: workflowRunId, before: { status: run.status }, after: { fromStage: stageKey, stages: scheduled.map((stage) => stage.stageKey) }, metadata: null, createdAt: scheduled[0].createdAt });
+    return scheduled;
+  }
+
   private latestAttempts(stages: StageRun[]) { const map = new Map<string, StageRun>(); for (const stage of stages) if (!map.has(stage.stageKey) || map.get(stage.stageKey)!.attempt < stage.attempt) map.set(stage.stageKey, stage); return map; }
   private availableData(run: WorkflowRun, stages: Map<string, StageRun>) { const data = structuredClone((run.configuration.initialData ?? {}) as Record<string, unknown>); for (const [key, stage] of stages) if (stage.status === "succeeded" && stage.output) data[key] = structuredClone(stage.output); return data; }
   private async requiredRun(id: string) { const run = await this.repository.findWorkflow(id); if (!run) throw new Error("Workflow not found"); return run; }
-  private async finishIfComplete(run: WorkflowRun, latest: Map<string, StageRun>) { if (STANDARD_WORKFLOW.every((stage) => latest.get(stage.key)?.status === "succeeded")) { const completedAt = now(); const finished = { ...run, status: "succeeded" as const, completedAt, updatedAt: completedAt }; await this.repository.saveWorkflow(finished); return finished; } return null; }
+  private async finishIfComplete(run: WorkflowRun, latest: Map<string, StageRun>) { if (STANDARD_WORKFLOW.every((stage) => latest.get(stage.key)?.status === "succeeded")) { const completedAt = now(); const approved = latest.get("quality-gate")?.output?.release === "approved"; const finished: WorkflowRun = { ...run, status: approved ? "succeeded" : "review_required", completedAt: approved ? completedAt : null, updatedAt: completedAt }; await this.repository.saveWorkflow(finished); return finished; } return null; }
   private async block(stage: StageRun, run: WorkflowRun, code: string, message: string, actorId: string) { const timestamp = now(); const blocked = { ...stage, status: "blocked" as const, error: { code, message, retryable: false }, completedAt: timestamp, updatedAt: timestamp }; await this.repository.saveStages([blocked]); await this.repository.saveWorkflow({ ...run, status: "review_required", updatedAt: timestamp }); await this.audit.append({ id: crypto.randomUUID(), projectId: run.projectId, actorId, eventType: "stage.blocked", entityType: "stage_run", entityId: stage.id, before: { status: stage.status }, after: { status: "blocked", code }, metadata: { stageKey: stage.stageKey }, createdAt: timestamp }); return blocked; }
 }
