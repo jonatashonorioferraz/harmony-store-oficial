@@ -102,8 +102,9 @@ export default function Page() {
         }
       }
     }
-    setBusy(false); setMessage("Criação concluída. Cada imagem foi auditada antes de aparecer.");
+    setBusy(false); setMessage("Criação concluída. Cada imagem gerada permanece disponível, mesmo se a auditoria ficar temporariamente limitada.");
   };
+
 
   const retry = async (index: number) => {
     setArts((current) => current.map((old, i) => i === index ? { ...old, error: undefined } : old));
