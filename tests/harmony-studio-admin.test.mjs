@@ -54,3 +54,17 @@ test("new advertisements start product-neutral and restore drafts only by choice
   assert.match(page, /Ele não será aberto automaticamente/);
   assert.match(page, /productPayload/);
 });
+
+test("category palettes are durable, versioned and selectable in new ads", async () => {
+  const migration = await read("drizzle/0004_category_palettes.sql");
+  const admin = await read("app/api/admin/palettes/route.ts");
+  const selector = await read("app/api/studio/palettes/route.ts");
+  const page = await read("app/page.tsx");
+  assert.match(migration, /studio_category_palette_versions/);
+  assert.match(migration, /category_name_version_unique/);
+  assert.match(admin, /palette\.version_published/);
+  assert.match(admin, /requireStudioAdmin/);
+  assert.match(selector, /status = 'active'/);
+  assert.match(page, /choosePalette/);
+  assert.match(page, /Paleta salva para/);
+});

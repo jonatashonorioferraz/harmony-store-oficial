@@ -82,3 +82,9 @@ export const studioConfigurationVersions = sqliteTable("studio_configuration_ver
   valueJson: text("value_json").notNull(), status: text("status", { enum: ["active", "superseded"] }).notNull(),
   changeReason: text("change_reason").notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(),
 }, (table) => [uniqueIndex("studio_configuration_key_version_unique").on(table.key, table.version), index("studio_configuration_key_status_idx").on(table.key, table.status)]);
+
+export const studioCategoryPaletteVersions = sqliteTable("studio_category_palette_versions", {
+  id: text("id").primaryKey(), category: text("category").notNull(), paletteName: text("palette_name").notNull(), version: integer("version").notNull(),
+  optionsJson: text("options_json").notNull(), status: text("status", { enum: ["active", "superseded", "retired"] }).notNull(),
+  changeReason: text("change_reason").notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("studio_palette_category_name_version_unique").on(table.category, table.paletteName, table.version), index("studio_palette_category_status_idx").on(table.category, table.status)]);
