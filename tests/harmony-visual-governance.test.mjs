@@ -29,6 +29,14 @@ test("only approved analysis feeds a published visual manual into the photograph
   assert.match(standards, /status = 'published'/);
 });
 
+test("visual standard persistence uses the migrated column names", async () => {
+  const [overview, route, migration] = await Promise.all([read("app/api/admin/overview/route.ts"), read("app/api/admin/visual-standards/route.ts"), read("drizzle/0007_visual_standard_archival.sql")]);
+  assert.match(overview, /change_reason/);
+  assert.doesNotMatch(overview, /source_reference_ids_json, reason/);
+  assert.match(route, /source_reference_ids_json, change_reason/);
+  assert.match(migration, /ADD COLUMN `archived_at`/);
+});
+
 test("the sixth image receives exact deterministic measurements and every image is reviewed", async () => {
   const [optimizer, executor, schemas] = await Promise.all([read("app/image-upload.ts"), read("src/harmony-studio/infrastructure/openai/openai-stage-executor.ts"), read("src/harmony-studio/infrastructure/openai/stage-output-schemas.ts")]);
   assert.match(optimizer, /addMeasurementOverlay/);
