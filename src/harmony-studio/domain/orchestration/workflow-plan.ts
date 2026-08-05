@@ -23,8 +23,8 @@ export const STANDARD_WORKFLOW: readonly StageDefinition[] = [
   { key: "quality-gate", agentRole: "quality-director", dependencies: ["compliance-review"], allowedInputs: ["compliance-review", "artifactMetadata"], usesExcellence: false },
 ] as const;
 
-export type StageRun = { id: string; workflowRunId: string; stageKey: StageKey; attempt: number; status: StageStatus; idempotencyKey: string; agentRole: AgentRole; knowledgeVersionId: string | null; inputHash: string | null; output: Record<string, unknown> | null; error: { code: string; message: string; retryable: boolean } | null; startedAt: string | null; completedAt: string | null; createdAt: string; updatedAt: string };
+export type StageRun = { id: string; workflowRunId: string; stageKey: StageKey; attempt: number; status: StageStatus; idempotencyKey: string; agentRole: AgentRole; knowledgeVersionId: string | null; inputHash: string | null; output: Record<string, unknown> | null; error: { code: string; message: string; retryable: boolean } | null; usage: Record<string, unknown> | null; startedAt: string | null; completedAt: string | null; createdAt: string; updatedAt: string };
 
 export function createStageRun(workflowRunId: string, definition: StageDefinition, attempt: number, now = new Date().toISOString()): StageRun {
-  return { id: crypto.randomUUID(), workflowRunId, stageKey: definition.key, attempt, status: "pending", idempotencyKey: `${workflowRunId}:${definition.key}:${attempt}`, agentRole: definition.agentRole, knowledgeVersionId: null, inputHash: null, output: null, error: null, startedAt: null, completedAt: null, createdAt: now, updatedAt: now };
+  return { id: crypto.randomUUID(), workflowRunId, stageKey: definition.key, attempt, status: "pending", idempotencyKey: `${workflowRunId}:${definition.key}:${attempt}`, agentRole: definition.agentRole, knowledgeVersionId: null, inputHash: null, output: null, error: null, usage: null, startedAt: null, completedAt: null, createdAt: now, updatedAt: now };
 }

@@ -69,3 +69,10 @@ export const studioExcellenceItems = sqliteTable("studio_excellence_items", {
   index("studio_excellence_type_marketplace_idx").on(table.artifactType, table.marketplace, table.status),
   index("studio_excellence_category_status_idx").on(table.productCategory, table.status),
 ]);
+
+export const studioUsageLedger = sqliteTable("studio_usage_ledger", {
+  id: text("id").primaryKey(), projectId: text("project_id").notNull().references(() => studioAdProjects.id, { onDelete: "cascade" }),
+  workflowRunId: text("workflow_run_id").notNull().references(() => studioWorkflowRuns.id, { onDelete: "cascade" }), idempotencyKey: text("idempotency_key").notNull(),
+  reservedUsdMicros: integer("reserved_usd_micros").notNull(), actualUsdMicros: integer("actual_usd_micros"), usageJson: text("usage_json"),
+  status: text("status", { enum: ["reserved", "recorded", "released"] }).notNull(), ...timestamps,
+}, (table) => [uniqueIndex("studio_usage_idempotency_unique").on(table.idempotencyKey), index("studio_usage_project_status_idx").on(table.projectId, table.status)]);

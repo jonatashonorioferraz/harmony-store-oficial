@@ -42,7 +42,7 @@ export class WorkflowOrchestrator {
     await this.repository.saveWorkflow(activeRun); await this.repository.saveStages([running]);
     try {
       const result = await this.executor.execute(context, running.idempotencyKey); const completedAt = now();
-      const succeeded: StageRun = { ...running, status: "succeeded", output: structuredClone(result.output), completedAt, updatedAt: completedAt };
+      const succeeded: StageRun = { ...running, status: "succeeded", output: structuredClone(result.output), usage: structuredClone(result.usage ?? null), completedAt, updatedAt: completedAt };
       await this.repository.saveStages([succeeded]);
       await this.audit.append({ id: crypto.randomUUID(), projectId: run.projectId, actorId, eventType: "stage.succeeded", entityType: "stage_run", entityId: succeeded.id, before: { status: "running" }, after: { status: "succeeded", outputHash: await hash(result.output) }, metadata: { stageKey: succeeded.stageKey, attempt: succeeded.attempt }, createdAt: completedAt });
       return succeeded;
