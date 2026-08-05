@@ -40,6 +40,10 @@ const productionColors = await readFile(
   new URL('../supabase/migrations/20260720004500_production_color_catalog.sql', import.meta.url),
   'utf8',
 );
+const productionOrders = await readFile(
+  new URL('../supabase/migrations/20260804143000_admin_external_production_order_acknowledgement.sql', import.meta.url),
+  'utf8',
+);
 const directRequestCompletion = await readFile(
   new URL('../supabase/migrations/20260720113000_complete_separating_request.sql', import.meta.url),
   'utf8',
@@ -93,7 +97,7 @@ test('every statically named RPC used by the web app remains granted', () => {
   for (const match of webSource.matchAll(/\bchangePurchase\('([^']+)'/g)) rpcNames.add(match[1]);
 
   assert.ok(rpcNames.size >= 20, `RPC inventory unexpectedly small: ${rpcNames.size}`);
-  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}\n${productVisibility}\n${internalSupplies}\n${internalReceiptDeletion}\n${productionColors}\n${directRequestCompletion}\n${primaryRequestEdit}\n${separatedCatalogs}\n${individualPaymentCycles}\n${appUsage}\n${bills}\n${billReactivation}`;
+  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}\n${productVisibility}\n${internalSupplies}\n${internalReceiptDeletion}\n${productionColors}\n${productionOrders}\n${directRequestCompletion}\n${primaryRequestEdit}\n${separatedCatalogs}\n${individualPaymentCycles}\n${appUsage}\n${bills}\n${billReactivation}`;
   for (const rpcName of rpcNames) {
     assert.match(
       effectiveGrants,

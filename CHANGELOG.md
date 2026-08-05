@@ -5,6 +5,19 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.50] - 04/08/2026
+
+### Adicionado
+
+- Nova Linha do Tempo da Colaboradora, reunindo solicitações de materiais, entregas, ordens de produção, recebimentos e fechamentos de pagamento.
+- Filtros por colaboradora e período para administradores; colaboradoras e equipe de recebimento visualizam somente o próprio histórico.
+- Atalhos em cada evento para abrir diretamente o registro no módulo responsável.
+
+### Segurança e experiência
+
+- Consultas preservam as permissões do Supabase e não exibem valores financeiros na linha do tempo.
+- Cache isolado por conta, atualização manual dos dados e layout responsivo para celular, tablet e computador.
+
 ## [v25.49] - 04/08/2026
 
 ### Câmera e galeria para documentos

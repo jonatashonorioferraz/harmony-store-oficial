@@ -52,6 +52,6 @@ test('mobile PDF stays in the current page and desktop retains a separate print 
   assert.match(app,/HarmonyPrint\.printCurrentDocument\('request-list-printing'/);
   assert.match(app,/window\.open\('about:blank','_blank'\)/);
   assert.match(index,/app\.js\?v=25\.49/);
-  assert.match(worker,/harmony-store-v25-49/);
+  assert.match(worker,/harmony-store-v25-50/);
   assert.match(worker,/app\.js\?v=25\.49/);
 });

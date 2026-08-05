@@ -40,7 +40,7 @@ test('Meu dia assets are mirrored, versioned, cached and responsive',async()=>{
   assert.match(html,/my-day\.css\?v=25\.39/);
   assert.match(html,/my-day\.js\?v=25\.39/);
   assert.match(worker,/my-day\.js\?v=25\.39/);
-  assert.match(worker,/harmony-store-v25-49/);
+  assert.match(worker,/harmony-store-v25-50/);
   assert.match(rootCss,/@media\(max-width:720px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.49.0');
+  assert.equal(JSON.parse(pkg).version,'25.50.0');
 });
