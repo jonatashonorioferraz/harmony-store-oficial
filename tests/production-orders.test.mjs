@@ -123,7 +123,7 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(js,/Android\|iPhone\|iPad\|iPod/);
   assert.match(js,/waitForPrintAssets\(source\)/);
   assert.match(js,/if\(mobilePrint\(\)\)/);
-  assert.match(js,/window\.print\(\);return/);
+  assert.match(js,/HarmonyPrint\.printCurrentDocument\('production-order-printing'\)/);
   assert.match(js,/window\.open\('about:blank','_blank'\)/);
   assert.match(js,/copy\.querySelectorAll\('\.no-print'\)/);
   assert.match(js,/printWindow\.document/);
@@ -138,9 +138,9 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/@media print/);
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
-  assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.46/);
-  assert.match(html,/production-orders\.css\?v=25\.31/);
+  assert.match(receiptCss,/html\.production-receipt-printing body>\*:not\(#productionPrint\)/);
+  assert.match(html,/production-orders\.js\?v=25\.47/);
+  assert.match(html,/production-orders\.css\?v=25\.47/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-46/);
+  assert.match(worker,/harmony-store-v25-47/);
 });

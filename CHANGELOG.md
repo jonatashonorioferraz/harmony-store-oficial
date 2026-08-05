@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.47] - 04/08/2026
+
+### Correção geral dos PDFs
+
+- Os cinco fluxos de PDF agora usam modos de impressão independentes, impedindo que o estilo de um módulo esconda o conteúdo de outro.
+- Foram corrigidos a lista visual de materiais, as ordens de produção, os demonstrativos de pagamento, os relatórios de Inteligência e os relatórios de Suprimentos.
+- Computador, Android, iPhone/iPad e tablet preservam o conteúdo até o encerramento da visualização de impressão.
+- O cache do PWA foi renovado para distribuir os arquivos corrigidos sem reutilizar estilos antigos.
+- Testes de regressão verificam a visibilidade do documento, o isolamento entre módulos e a disponibilidade offline.
+
 ## [v25.46] - 04/08/2026
 
 ### Confirmação externa das ordens de produção

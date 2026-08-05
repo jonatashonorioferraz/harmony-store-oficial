@@ -12,6 +12,7 @@ test('Android prints the production order in the current page without a temporar
     querySelectorAll(selector){return selector==='img'?[]:[]},
   };
   let prints=0,temporaryWindows=0;
+  let printMode='';
   const context={
     S:{profile:{role:'collaborator'},view:'home'},
     API:'https://example.supabase.co',
@@ -28,6 +29,7 @@ test('Android prints the production order in the current page without a temporar
       matchMedia:()=>({matches:true}),
       print(){prints++},
       open(){temporaryWindows++;return null},
+      HarmonyPrint:{printCurrentDocument(mode){printMode=mode;prints++;return Promise.resolve()}},
     },
   };
   context.globalThis=context;
@@ -36,6 +38,7 @@ test('Android prints the production order in the current page without a temporar
   assert.equal(context.__productionOrderPdfTest.mobilePrint(),true);
   await context.__productionOrderPdfTest.printProductionOrder();
   assert.equal(prints,1);
+  assert.equal(printMode,'production-order-printing');
   assert.equal(temporaryWindows,0);
   assert.equal(button.disabled,false);
   assert.equal(button.innerHTML,'🖨️ Gerar PDF');

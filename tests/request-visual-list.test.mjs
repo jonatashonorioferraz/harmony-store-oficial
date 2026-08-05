@@ -37,7 +37,7 @@ test('viewer is responsive and its A4 print mode is isolated from existing repor
   assert.match(app,/iPad/);
   assert.match(styles,/html\.request-list-printing body \*\{visibility:visible!important\}/);
   assert.match(styles,/html\.request-list-printing body>#modal\{display:none!important/);
-  assert.match(receiptCss,/html:not\(\.request-list-printing\) body>\*:not\(#productionPrint\):not\(#modal\)/);
+  assert.match(receiptCss,/html\.production-receipt-printing body>\*:not\(#productionPrint\)/);
   assert.match(app,/@page\{size:A4 portrait;margin:9mm\}/);
   assert.match(app,/break-inside:avoid/);
 });
@@ -45,10 +45,9 @@ test('viewer is responsive and its A4 print mode is isolated from existing repor
 test('mobile PDF stays in the current page and desktop retains a separate print window',()=>{
   assert.match(app,/const requestListMobilePrint=/);
   assert.match(app,/if\(requestListMobilePrint\(\)\)/);
-  assert.match(app,/window\.addEventListener\('afterprint',cleanup/);
-  assert.match(app,/window\.print\(\);return/);
+  assert.match(app,/HarmonyPrint\.printCurrentDocument\('request-list-printing'\)/);
   assert.match(app,/window\.open\('about:blank','_blank'\)/);
-  assert.match(index,/app\.js\?v=25\.43/);
-  assert.match(worker,/harmony-store-v25-46/);
-  assert.match(worker,/app\.js\?v=25\.43/);
+  assert.match(index,/app\.js\?v=25\.47/);
+  assert.match(worker,/harmony-store-v25-47/);
+  assert.match(worker,/app\.js\?v=25\.47/);
 });

@@ -323,7 +323,7 @@ function bindIntelligence(){
   const suggested=document.querySelector('#newSuggestedPurchase');if(suggested)suggested.onclick=()=>purchaseModal(materialReport(filteredRows()).filter(item=>item.product.usage_scope!=='ecommerce'&&item.suggested>0));
   ['exportIntel','exportMaterials'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>exportMaterials()});
   const exportPeople=document.querySelector('#exportPeople');if(exportPeople)exportPeople.onclick=()=>exportCollaborators();
-  ['printIntel','printMaterials','printPeople'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>window.print()});
+  ['printIntel','printMaterials','printPeople'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>window.HarmonyPrint.printCurrentDocument('intelligence-printing')});
 }
 
 async function refreshIntelligence(message){BI.loaded=false;await loadIntelligence(true);document.querySelector('#modal').innerHTML='';rerender();if(message)toast(message)}
