@@ -3,6 +3,7 @@ import "./globals.css";
 import "./professional.css";
 import "./upload-fix.css";
 import "./admin.css";
+import "./product-form.css";
 
 export const metadata: Metadata = {
   title: "Harmony Studio — Anúncios com IA",

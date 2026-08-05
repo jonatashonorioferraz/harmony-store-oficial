@@ -43,3 +43,14 @@ test("published global parameters drive new workflows and budget enforcement", a
   assert.match(workflow, /brandName/);
   assert.match(budget, /maxProjectBudgetUsd/);
 });
+
+test("new advertisements start product-neutral and restore drafts only by choice", async () => {
+  const page = await read("app/page.tsx");
+  assert.doesNotMatch(page, /Mini Sabonetes Rosinhas/);
+  assert.doesNotMatch(page, /Rosinhas Perfumadas/);
+  assert.match(page, /Nome do produto \*/);
+  assert.match(page, /Principais características \*/);
+  assert.match(page, /Retomar trabalho/);
+  assert.match(page, /Ele não será aberto automaticamente/);
+  assert.match(page, /productPayload/);
+});

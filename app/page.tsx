@@ -6,142 +6,49 @@ type Photo = { file: File; url: string };
 type CopyResult = { title: string; description: string; confidence: number; summary: string };
 type Art = { label: string; brief: string; image?: string; score?: number; error?: string };
 type WorkflowStatus = { status: string; approved: boolean; progress: number; total: number; copy?: { title: string; description: string } | null; visual?: { summary?: string; confidence?: number } | null; images: Array<{ id: string; url: string }>; stages: Array<{ key: string; status: string; error?: { message?: string } | null }> };
+type ProductForm = { name: string; category: string; quantity: string; size: string; weight: string; colors: string; composition: string; packaging: string; personalization: string; minimumOrder: string; availability: string; shelfLife: string; occasions: string; warnings: string; details: string };
 
-const colors = [
-  ["Rosa BB", "Mamãe e Bebê"], ["Azul BB", "Mamãe e Bebê"], ["Lilás", "Lavanda"],
-  ["Branco", "Karité"], ["Amarelo", "Floral"], ["Vermelho", "Morango"],
-  ["Pink", "Tutti-frutti"], ["Verde BB", "Capim-limão"], ["Branco perolado", "Karité"],
-];
-
+const emptyProduct: ProductForm = { name: "", category: "", quantity: "", size: "", weight: "", colors: "", composition: "", packaging: "", personalization: "", minimumOrder: "", availability: "", shelfLife: "", occasions: "", warnings: "", details: "" };
+const emptyCopy: CopyResult = { title: "", description: "", confidence: 0, summary: "" };
 const artBriefs = [
-  { label: "Capa de catálogo", brief: "uma fotografia hero de catálogo, com várias mini rosas organizadas elegantemente sobre fundo neutro sofisticado" },
-  { label: "Detalhe artesanal", brief: "um close macro editorial que revele com fidelidade o relevo das pétalas e o acabamento artesanal" },
-  { label: "Paleta de cores", brief: "uma composição premium que apresente as cores reais disponíveis de forma organizada e sem texto" },
-  { label: "Ocasião especial", brief: "uma cena elegante de lembrancinha para celebração, sem embalagem ou acessórios que possam parecer inclusos" },
-  { label: "Composição versátil", brief: "uma fotografia comercial minimalista que sugira decoração e perfumação de ambiente sem fazer alegações cosméticas" },
+  { label: "Capa de catálogo", brief: "Foto principal profissional e fiel ao produto" },
+  { label: "Detalhe do produto", brief: "Close editorial mostrando acabamento e textura" },
+  { label: "Variações", brief: "Composição organizada das opções disponíveis" },
+  { label: "Ocasião de uso", brief: "Cena comercial coerente sem sugerir itens inclusos" },
+  { label: "Composição versátil", brief: "Fotografia minimalista para completar o anúncio" },
 ];
-
-const fallback: CopyResult = {
-  title: "100 Mini Sabonetes Rosinhas Perfumadas 3 cm para Lembrancinhas",
-  confidence: 94,
-  summary: "Mini sabonete artesanal em formato de rosa.",
-  description: `MINI SABONETES ROSINHAS PERFUMADAS — 100 UNIDADES
-
-Mini sabonetes artesanais em formato de rosa, ideais para decoração e montagem de lembrancinhas de casamento, maternidade, aniversário, chá de bebê e outras ocasiões especiais.
-
-INFORMAÇÕES DO PRODUTO
-• Quantidade: 100 unidades
-• Medidas aproximadas: 3 cm × 3 cm
-• Peso aproximado: 2 g por unidade
-• Base glicerinada, essência, corante, conservantes e veículo
-• Pronta entrega
-• Validade: 12 meses
-
-COR E AROMA
-Cada pacote é enviado na cor selecionada. Cada cor possui seu aroma padrão; não misturamos cores no mesmo pacote.
-
-EMBALAGEM
-As unidades são enviadas soltas em embalagem segura para transporte. Organza vendida separadamente.
-
-CUIDADOS
-Não ingerir. Evitar contato com os olhos. Manter fora do alcance de crianças e animais. Conservar longe do calor e da luz solar.`,
-};
 
 function save(name: string, href: string) { const a = document.createElement("a"); a.href = href; a.download = name; a.click(); }
 function saveText(name: string, text: string) { save(name, URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }))); }
-
 const DRAFT_KEY = "harmony-current-ad";
-function draftDb() {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open("harmony-studio", 1);
-    request.onupgradeneeded = () => request.result.createObjectStore("drafts");
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-async function saveDraft(value: unknown) { const db = await draftDb(); const tx = db.transaction("drafts", "readwrite"); tx.objectStore("drafts").put(value, DRAFT_KEY); }
+function draftDb() { return new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open("harmony-studio", 1); request.onupgradeneeded = () => request.result.createObjectStore("drafts"); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); }
+async function saveDraft(value: unknown) { const db = await draftDb(); db.transaction("drafts", "readwrite").objectStore("drafts").put(value, DRAFT_KEY); }
 async function loadDraft() { const db = await draftDb(); return new Promise<any>((resolve) => { const request = db.transaction("drafts").objectStore("drafts").get(DRAFT_KEY); request.onsuccess = () => resolve(request.result); request.onerror = () => resolve(null); }); }
 async function clearDraft() { const db = await draftDb(); db.transaction("drafts", "readwrite").objectStore("drafts").delete(DRAFT_KEY); }
 
 export default function Page() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [step, setStep] = useState<"upload" | "review" | "result">("upload");
-  const [copy, setCopy] = useState<CopyResult>(fallback);
-  const [arts, setArts] = useState<Art[]>(artBriefs);
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState("");
-  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [product, setProduct] = useState<ProductForm>(emptyProduct); const [photos, setPhotos] = useState<Photo[]>([]); const [step, setStep] = useState<"upload" | "review" | "result">("upload"); const [copy, setCopy] = useState<CopyResult>(emptyCopy); const [arts, setArts] = useState<Art[]>(artBriefs); const [busy, setBusy] = useState(false); const [progress, setProgress] = useState(0); const [message, setMessage] = useState(""); const [workflowId, setWorkflowId] = useState<string | null>(null); const [availableDraft, setAvailableDraft] = useState<any>(null);
+  const field = (key: keyof ProductForm, value: string) => setProduct((current) => ({ ...current, [key]: value }));
+  const requiredReady = Boolean(product.name.trim() && product.category.trim() && product.quantity.trim() && product.details.trim() && photos.length === 4);
 
-  useEffect(() => {
-    loadDraft().then((draft) => {
-      if (!draft?.photos?.length) return;
-      setPhotos(draft.photos.map((file: File) => ({ file, url: URL.createObjectURL(file) })));
-      if (draft.copy) setCopy(draft.copy);
-      if (draft.arts) setArts(draft.arts);
-      if (draft.step) setStep(draft.step);
-      if (draft.workflowId) { setWorkflowId(draft.workflowId); fetch(`/api/studio/status?id=${encodeURIComponent(draft.workflowId)}`).then((response) => response.ok ? response.json() : null).then((status) => status && applyStatus(status)).catch(() => {}); }
-      setMessage("Trabalho anterior recuperado automaticamente.");
-    }).catch(() => {});
-  }, []);
+  useEffect(() => { loadDraft().then((draft) => { if (draft?.product?.name || draft?.workflowId) setAvailableDraft(draft); }).catch(() => {}); }, []);
+  useEffect(() => { if (!product.name && !photos.length && !workflowId) return; const timer = window.setTimeout(() => saveDraft({ product, photos: photos.map((photo) => photo.file), copy, arts, step, workflowId }).catch(() => {}), 500); return () => window.clearTimeout(timer); }, [product, photos, copy, arts, step, workflowId]);
+  useEffect(() => { const protect = (event: BeforeUnloadEvent) => { if (busy) { event.preventDefault(); event.returnValue = ""; } }; window.addEventListener("beforeunload", protect); return () => window.removeEventListener("beforeunload", protect); }, [busy]);
 
-  useEffect(() => {
-    if (!photos.length) return;
-    const timer = window.setTimeout(() => saveDraft({ photos: photos.map((photo) => photo.file), copy, arts, step, workflowId }).catch(() => {}), 400);
-    return () => window.clearTimeout(timer);
-  }, [photos, copy, arts, step, workflowId]);
-
-  useEffect(() => {
-    const protect = (event: BeforeUnloadEvent) => { if (busy) { event.preventDefault(); event.returnValue = ""; } };
-    window.addEventListener("beforeunload", protect);
-    return () => window.removeEventListener("beforeunload", protect);
-  }, [busy]);
-
-  const addPhotos = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []).slice(0, 4 - photos.length);
-    setPhotos((current) => [...current, ...files.map((file) => ({ file, url: URL.createObjectURL(file) }))]);
-    event.target.value = "";
-  };
-
-  const formWithImages = () => { const form = new FormData(); photos.forEach((photo) => form.append("images", photo.file)); return form; };
-
-  const applyStatus = (status: WorkflowStatus) => {
-    setProgress(status.progress);
-    if (status.copy) setCopy({ title: status.copy.title, description: status.copy.description, summary: status.visual?.summary || "Produto analisado com base nas quatro referências.", confidence: Number(status.visual?.confidence) || 90 });
-    if (status.approved && status.images.length === 5) setArts(artBriefs.map((art, index) => ({ ...art, image: status.images[index].url, score: 100 })));
-  };
+  const resumeDraft = () => { const draft = availableDraft; if (!draft) return; setProduct({ ...emptyProduct, ...(draft.product ?? {}) }); setPhotos((draft.photos ?? []).map((file: File) => ({ file, url: URL.createObjectURL(file) }))); setCopy(draft.copy ?? emptyCopy); setArts(draft.arts ?? artBriefs); setStep(draft.step ?? "upload"); setWorkflowId(draft.workflowId ?? null); if (draft.workflowId) fetch(`/api/studio/status?id=${encodeURIComponent(draft.workflowId)}`).then((response) => response.ok ? response.json() : null).then((status) => status && applyStatus(status)).catch(() => {}); setAvailableDraft(null); setMessage("Trabalho anterior retomado por sua escolha."); };
+  const newAd = () => { clearDraft().catch(() => {}); setAvailableDraft(null); setProduct(emptyProduct); setPhotos([]); setCopy(emptyCopy); setArts(artBriefs); setWorkflowId(null); setProgress(0); setMessage(""); setStep("upload"); };
+  const addPhotos = (event: ChangeEvent<HTMLInputElement>) => { const files = Array.from(event.target.files || []).filter((file) => ["image/jpeg", "image/png", "image/webp"].includes(file.type) && file.size <= 10_000_000).slice(0, 4 - photos.length); setPhotos((current) => [...current, ...files.map((file) => ({ file, url: URL.createObjectURL(file) }))]); event.target.value = ""; };
+  const applyStatus = (status: WorkflowStatus) => { setProgress(status.progress); if (status.copy) setCopy({ title: status.copy.title, description: status.copy.description, summary: status.visual?.summary || "Produto analisado com base na ficha e nas quatro referências.", confidence: Number(status.visual?.confidence) || 90 }); if (status.approved && status.images.length === 5) setArts(artBriefs.map((art, index) => ({ ...art, image: status.images[index].url, score: 100 }))); };
   const advance = async (id: string) => { const response = await fetch("/api/studio/advance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workflowId: id }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || "A etapa não foi concluída"); applyStatus(data); return data as WorkflowStatus; };
+  const productPayload = () => ({ marketplace: "Shopee", productCategory: product.category, product: product.name, quantity: product.quantity, size: product.size || "não informado", weight: product.weight || "não informado", colorsAndVariants: product.colors || "não informado", composition: product.composition || "não informado", packaging: product.packaging || "não informado", personalization: product.personalization || "não informado", minimumOrder: product.minimumOrder || "não informado", availability: product.availability || "não informado", shelfLife: product.shelfLife || "não informado", occasions: product.occasions || "não informado", warnings: product.warnings ? product.warnings.split("\n").filter(Boolean) : [], mainDetails: product.details });
 
-  const analyze = async () => {
-    setBusy(true); setMessage("Triagem, análise visual, estratégia e copy estão trabalhando…");
-    try {
-      const form = formWithImages();
-      form.append("product", JSON.stringify({ marketplace: "Shopee", productCategory: "mini-sabonetes", brand: "Harmony Store Oficial", product: "Mini Sabonetes Rosinhas ou Florzinhas", quantity: 100, size: "3 cm × 3 cm", weight: "2 g", stock: "pronta entrega", shelfLife: "12 meses", composition: "base glicerinada, essência, corante, conservantes e veículo", packaging: "soltas em embalagem segura; organza vendida separadamente", warnings: ["não ingerir", "evitar contato com os olhos", "manter longe de crianças e animais", "proteger de calor e sol"], colors: colors.map(([color, aroma]) => ({ color, aroma })) }));
-      const response = await fetch("/api/studio/start", { method: "POST", body: form }); const started = await response.json(); if (!response.ok) throw new Error(started.error || "O trabalho não pôde ser iniciado"); setWorkflowId(started.workflowId);
-      let status: WorkflowStatus | null = null; for (let i = 0; i < 4; i++) { status = await advance(started.workflowId); setMessage(`Equipe sênior: etapa ${status.progress} de ${status.total} concluída…`); }
-      if (!status?.copy) throw new Error("A copy ainda não foi concluída"); setStep("review"); setMessage("Estratégia e texto prontos para sua conferência.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "A análise não foi concluída"); }
-    finally { setBusy(false); }
-  };
+  const analyze = async () => { if (!requiredReady) return; setBusy(true); setMessage("Triagem, análise visual, estratégia e copy estão trabalhando…"); try { const form = new FormData(); photos.forEach((photo) => form.append("images", photo.file)); form.append("product", JSON.stringify(productPayload())); const response = await fetch("/api/studio/start", { method: "POST", body: form }); const started = await response.json(); if (!response.ok) throw new Error(started.error || "O trabalho não pôde ser iniciado"); setWorkflowId(started.workflowId); let status: WorkflowStatus | null = null; for (let i = 0; i < 4; i++) { status = await advance(started.workflowId); setMessage(`Equipe sênior: etapa ${status.progress} de ${status.total} concluída…`); } if (!status?.copy) throw new Error("O texto ainda não foi concluído"); setStep("review"); setMessage("Estratégia e texto prontos para sua conferência."); } catch (error) { setMessage(error instanceof Error ? error.message : "A análise não foi concluída"); } finally { setBusy(false); } };
+  const generate = async () => { if (!workflowId) return; setStep("result"); setBusy(true); setArts(artBriefs); try { let status: WorkflowStatus | null = null; for (let i = 0; i < 9; i++) { status = await advance(workflowId); setMessage(`Equipe sênior: etapa ${status.progress} de ${status.total} concluída…`); if (status.approved) break; } if (!status?.approved) throw new Error("O material não foi liberado pela revisão final."); setMessage("Pacote aprovado: título, descrição e cinco imagens prontos."); } catch (error) { setMessage(error instanceof Error ? error.message : "A produção foi interrompida"); } finally { setBusy(false); } };
+  const retry = async () => { if (!workflowId) return; setBusy(true); try { let status: WorkflowStatus | null = null; for (let i = 0; i < 12; i++) { status = await advance(workflowId); if (status.approved) break; } if (!status?.approved) throw new Error("A correção ainda não foi aprovada."); setMessage("Material corrigido e aprovado."); } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível repetir a etapa"); } finally { setBusy(false); } };
+  const kit = () => { saveText("titulo-seo.txt", copy.title); saveText("descricao-anuncio.txt", copy.description); arts.forEach((art, index) => art.image && setTimeout(() => save(`${index + 1}-${art.label.toLowerCase().replaceAll(" ", "-")}.png`, art.image!), index * 180)); };
 
-  const generate = async () => { if (!workflowId) return; setStep("result"); setBusy(true); setArts(artBriefs); try { let status: WorkflowStatus | null = null; for (let i = 0; i < 9; i++) { status = await advance(workflowId); setMessage(`Equipe sênior: etapa ${status.progress} de ${status.total} concluída…`); if (status.approved) break; } if (!status?.approved) throw new Error("O material não foi liberado pela revisão final."); setMessage("Pacote aprovado pelo diretor de qualidade: título, descrição e cinco imagens prontos."); } catch (error) { setMessage(error instanceof Error ? error.message : "A produção foi interrompida"); } finally { setBusy(false); } };
-
-  const retry = async (_index?: number) => { if (!workflowId) return; setBusy(true); try { let status: WorkflowStatus | null = null; for (let i = 0; i < 12; i++) { status = await advance(workflowId); setMessage(`Revisão corretiva: etapa ${status.progress} de ${status.total} concluída…`); if (status.approved) break; } if (!status?.approved) throw new Error("A correção ainda não foi aprovada pela revisão final."); setMessage("Material recuperado, revisado e aprovado."); } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível repetir a etapa"); } finally { setBusy(false); } };
-
-  const kit = () => {
-    saveText("titulo-seo.txt", copy.title); saveText("descricao-anuncio.txt", copy.description);
-    arts.forEach((art, index) => art.image && setTimeout(() => save(`${index + 1}-${art.label.toLowerCase().replaceAll(" ", "-")}.png`, art.image!), index * 180));
-  };
-
-  return <main className="studio"><a className="admin-shortcut" href="/admin">Administração</a>
-    <aside className="studio-side"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store Oficial"/><h2>Harmony Studio</h2><p>Anúncios com IA</p><div className="team"><b>✦ Equipe sênior ativa</b><span>Estratégia • SEO • Copy • Fotografia • Revisão</span></div><ol><li className={step === "upload" ? "active" : "done"}>1. Fotos reais</li><li className={step === "review" ? "active" : step === "result" ? "done" : ""}>2. Conferência</li><li className={step === "result" ? "active" : ""}>3. Material profissional</li></ol><small>As fotos são a fonte da verdade. Nenhuma promessa ou característica importante é inventada.</small></aside>
-    <section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>Mini Sabonetes Rosinhas</b></div><button onClick={() => { clearDraft().catch(() => {}); setStep("upload"); setPhotos([]); setArts(artBriefs); setWorkflowId(null); }}>Novo anúncio</button></header>
-
-      {step === "upload" && <div className="studio-stage"><span className="eyebrow">ETAPA 1 DE 3</span><h1>Quatro referências.<br/><em>Uma produção de nível profissional.</em></h1><p>A equipe de IA compara ângulos, cores e acabamento antes de criar qualquer material.</p><div className="upload-grid">{Array.from({ length: 4 }).map((_, index) => photos[index] ? <figure key={index}><img src={photos[index].url} alt={`Referência ${index + 1}`}/><button onClick={() => setPhotos((all) => all.filter((_, i) => i !== index))}>×</button><figcaption>✓ Referência {index + 1}</figcaption></figure> : <label className="upload-slot" key={index}><input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addPhotos}/><i>＋</i><b>Adicionar foto {index + 1}</b><span>{["Vista principal", "Outro ângulo", "Detalhe", "Cenário diferente"][index]}</span></label>)}</div><div className="studio-note"><b>Direção de arte</b><span>Prefira luz natural, foco nítido e pelo menos uma foto mostrando a peça inteira.</span><strong>{photos.length}/4</strong></div><button className="studio-primary" disabled={photos.length !== 4 || busy} onClick={analyze}>{busy ? message : "Analisar com a equipe de IA →"}</button></div>}
-
-      {step === "review" && <div className="studio-stage"><span className="eyebrow">ETAPA 2 DE 3</span><h1>Estratégia pronta para aprovação.</h1><p>SEO, clareza comercial e conformidade foram revisados em conjunto.</p><div className="approval"><b>✓ Produto reconhecido</b><span>{copy.summary}</span><strong>{copy.confidence}% de confiança</strong></div><div className="review-panels"><article><small>TÍTULO SEO</small><h2>{copy.title}</h2><span>{copy.title.length} caracteres</span></article><article><small>FATOS CONFIRMADOS</small><ul><li>100 unidades</li><li>3 cm × 3 cm • 2 g</li><li>Uma cor por pacote</li><li>Organza não inclusa</li><li>Pronta entrega • validade 12 meses</li></ul></article></div><div className="review-actions"><button onClick={() => setStep("upload")}>← Rever fotos</button><button className="studio-primary" onClick={generate}>Aprovar e iniciar produção →</button></div></div>}
-
-      {step === "result" && <div className="studio-stage result"><div className="result-title"><div><span className="eyebrow">ETAPA 3 DE 3</span><h1>{busy ? "Produção em andamento…" : "Material profissional pronto."}</h1><p>{message}</p></div><button className="studio-primary" disabled={busy || !arts.some((art) => art.image)} onClick={kit}>Baixar kit completo ↓</button></div><div className="agent-line">{["SEO", "Copy", "Fotografia", "Fidelidade", "Conformidade"].map((name, index) => <span className={!busy || index < Math.min(progress, 5) ? "done" : ""} key={name}>✓ {name}</span>)}</div><section className="copy-output"><article><header><small>TÍTULO OTIMIZADO</small><button onClick={() => navigator.clipboard.writeText(copy.title)}>Copiar</button></header><h2>{copy.title}</h2></article><article><header><small>DESCRIÇÃO COMPLETA</small><button onClick={() => navigator.clipboard.writeText(copy.description)}>Copiar</button></header><pre>{copy.description}</pre></article></section><h2 className="gallery-title">Imagens publicitárias auditadas</h2><div className="professional-gallery">{arts.map((art, index) => <article key={art.label}>{art.image ? <img src={art.image} alt={art.label}/> : <div className={art.error ? "image-state error" : "image-state"}><i>{art.error ? "!" : busy && progress === index + 1 ? "✦" : "○"}</i><b>{art.error || (busy && progress === index + 1 ? "Criando e revisando…" : "Aguardando produção")}</b></div>}<div><span>{String(index + 1).padStart(2, "0")}</span><h3>{art.label}</h3>{art.score && <small>Aprovada pelo diretor de arte • {art.score}/100</small>}{art.image && <button onClick={() => save(`${index + 1}-${art.label}.png`, art.image!)}>Baixar PNG</button>}{art.error && <button onClick={() => retry(index)}>Refazer com revisão</button>}</div></article>)}</div></div>}
-    </section>
-  </main>;
+  return <main className="studio"><a className="admin-shortcut" href="/admin">Administração</a><aside className="studio-side"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store Oficial"/><h2>Harmony Studio</h2><p>Anúncios com IA</p><div className="team"><b>✦ Equipe sênior ativa</b><span>Ficha • Estratégia • SEO • Fotografia • Revisão</span></div><ol><li className={step === "upload" ? "active" : "done"}>1. Produto e fotos</li><li className={step === "review" ? "active" : step === "result" ? "done" : ""}>2. Conferência</li><li className={step === "result" ? "active" : ""}>3. Material profissional</li></ol><small>A ficha e as fotos formam a fonte da verdade. A IA não deve inventar informações ausentes.</small></aside><section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>{product.name || "Novo anúncio"}</b></div><button onClick={newAd}>＋ Novo anúncio</button></header>
+  {step === "upload" && <div className="studio-stage product-start"><span className="eyebrow">ETAPA 1 DE 3</span><h1>Conte sobre o produto.<br/><em>A equipe transforma em anúncio.</em></h1><p>Preencha as informações que você realmente conhece e envie quatro fotos do mesmo produto.</p>{availableDraft && <div className="resume-card"><div><b>Existe um trabalho anterior salvo</b><span>{availableDraft.product?.name || "Anúncio em andamento"}. Ele não será aberto automaticamente.</span></div><button onClick={resumeDraft}>Retomar trabalho</button><button onClick={() => { clearDraft().catch(() => {}); setAvailableDraft(null); }}>Descartar</button></div>}<section className="product-form"><header><div><small>FONTE DA VERDADE</small><h2>Informações principais</h2></div><span>* campos obrigatórios</span></header><div className="form-grid"><label className="wide">Nome do produto *<input value={product.name} onChange={(e) => field("name", e.target.value)} placeholder="Ex.: Mini sabonetes em formato de coração"/></label><label>Categoria *<select value={product.category} onChange={(e) => field("category", e.target.value)}><option value="">Selecione</option><option>Mini sabonetes</option><option>Organza</option><option>Caixinha personalizada</option><option>Sagu perfumado</option><option>Outro produto artesanal</option></select></label><label>Quantidade vendida *<input value={product.quantity} onChange={(e) => field("quantity", e.target.value)} placeholder="Ex.: 100 unidades"/></label><label>Medidas<input value={product.size} onChange={(e) => field("size", e.target.value)} placeholder="Ex.: 3 cm × 3 cm"/></label><label>Peso<input value={product.weight} onChange={(e) => field("weight", e.target.value)} placeholder="Ex.: 2 g por unidade"/></label><label className="wide">Cores, aromas ou variações<input value={product.colors} onChange={(e) => field("colors", e.target.value)} placeholder="Informe as combinações e como o cliente escolhe"/></label><label className="wide">Principais características *<textarea value={product.details} onChange={(e) => field("details", e.target.value)} placeholder="Explique o que é o produto, seus diferenciais e usos permitidos"/></label></div><details><summary>Mais informações importantes</summary><div className="form-grid extra"><label>Composição ou material<textarea value={product.composition} onChange={(e) => field("composition", e.target.value)}/></label><label>Como é enviado<textarea value={product.packaging} onChange={(e) => field("packaging", e.target.value)}/></label><label>Personalização<textarea value={product.personalization} onChange={(e) => field("personalization", e.target.value)}/></label><label>Pedido mínimo<input value={product.minimumOrder} onChange={(e) => field("minimumOrder", e.target.value)}/></label><label>Estoque ou prazo<input value={product.availability} onChange={(e) => field("availability", e.target.value)}/></label><label>Validade e conservação<input value={product.shelfLife} onChange={(e) => field("shelfLife", e.target.value)}/></label><label className="wide">Ocasiões de uso<input value={product.occasions} onChange={(e) => field("occasions", e.target.value)}/></label><label className="wide">Cuidados e avisos<textarea value={product.warnings} onChange={(e) => field("warnings", e.target.value)} placeholder="Um aviso por linha"/></label></div></details></section><h2 className="photos-title">Quatro fotos do mesmo produto</h2><div className="upload-grid">{Array.from({ length: 4 }).map((_, index) => photos[index] ? <figure key={index}><img src={photos[index].url} alt={`Referência ${index + 1}`}/><button onClick={() => setPhotos((all) => all.filter((_, i) => i !== index))}>×</button><figcaption>✓ Referência {index + 1}</figcaption></figure> : <label className="upload-slot" key={index}><input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addPhotos}/><i>＋</i><b>Adicionar foto {index + 1}</b><span>{["Vista principal", "Outro ângulo", "Detalhe", "Cenário diferente"][index]}</span></label>)}</div><div className="studio-note"><b>Pronto para análise</b><span>{requiredReady ? "Ficha mínima preenchida e quatro fotos adicionadas." : "Preencha os quatro campos obrigatórios e adicione quatro fotos."}</span><strong>{photos.length}/4 fotos</strong></div>{message && <p className="process-message">{message}</p>}<button className="studio-primary" disabled={!requiredReady || busy} onClick={analyze}>{busy ? "Equipe trabalhando…" : "Criar estratégia e texto →"}</button></div>}
+  {step === "review" && <div className="studio-stage"><span className="eyebrow">ETAPA 2 DE 3</span><h1>Confira antes de produzir.</h1><p>A IA trabalhou com a ficha de <b>{product.name}</b> e suas quatro fotos.</p><div className="approval"><b>✓ Produto analisado</b><span>{copy.summary}</span><strong>{copy.confidence}% de confiança</strong></div><div className="review-panels"><article><small>TÍTULO SEO</small><h2>{copy.title}</h2><span>{copy.title.length} caracteres</span></article><article><small>FATOS ENVIADOS</small><ul><li>{product.quantity}</li>{product.size && <li>{product.size}{product.weight ? ` • ${product.weight}` : ""}</li>}<li>{product.category}</li>{product.availability && <li>{product.availability}</li>}{product.packaging && <li>{product.packaging}</li>}</ul></article></div><div className="review-actions"><button onClick={() => setStep("upload")}>← Corrigir ficha ou fotos</button><button className="studio-primary" onClick={generate}>Aprovar e criar cinco imagens →</button></div></div>}
+  {step === "result" && <div className="studio-stage result"><div className="result-title"><div><span className="eyebrow">ETAPA 3 DE 3</span><h1>{busy ? "Produção em andamento…" : arts.every((art) => art.image) ? "Material profissional aprovado." : "Produção aguardando revisão."}</h1><p>{message}</p></div><button className="studio-primary" disabled={busy || !arts.every((art) => art.image)} onClick={kit}>Baixar kit completo ↓</button></div><div className="agent-line">{["Triagem", "Análise", "Estratégia", "Copy", "Direção de arte", "Fotografia", "Conformidade", "Qualidade"].map((name, index) => <span className={arts.every((art) => art.image) || index < Math.floor(progress * 8 / 12) ? "done" : ""} key={name}>✓ {name}</span>)}</div><section className="copy-output"><article><header><small>TÍTULO OTIMIZADO</small><button onClick={() => navigator.clipboard.writeText(copy.title)}>Copiar</button></header><h2>{copy.title}</h2></article><article><header><small>DESCRIÇÃO COMPLETA</small><button onClick={() => navigator.clipboard.writeText(copy.description)}>Copiar</button></header><pre>{copy.description}</pre></article></section><h2 className="gallery-title">Imagens publicitárias auditadas</h2><div className="professional-gallery">{arts.map((art, index) => <article key={art.label}>{art.image ? <img src={art.image} alt={art.label}/> : <div className={art.error ? "image-state error" : "image-state"}><i>{art.error ? "!" : "○"}</i><b>{art.error || (busy ? "Criando e revisando…" : "Aguardando produção")}</b></div>}<div><span>{String(index + 1).padStart(2, "0")}</span><h3>{art.label}</h3>{art.score && <small>Aprovada • {art.score}/100</small>}{art.image && <button onClick={() => save(`${index + 1}-${art.label}.png`, art.image!)}>Baixar PNG</button>}{art.error && <button onClick={retry}>Refazer</button>}</div></article>)}</div></div>}</section></main>;
 }
