@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 type Photo = { file: File; url: string };
 type CopyResult = { title: string; description: string; confidence: number; summary: string };
@@ -49,6 +49,19 @@ Não ingerir. Evitar contato com os olhos. Manter fora do alcance de crianças e
 function save(name: string, href: string) { const a = document.createElement("a"); a.href = href; a.download = name; a.click(); }
 function saveText(name: string, text: string) { save(name, URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }))); }
 
+const DRAFT_KEY = "harmony-current-ad";
+function draftDb() {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open("harmony-studio", 1);
+    request.onupgradeneeded = () => request.result.createObjectStore("drafts");
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+async function saveDraft(value: unknown) { const db = await draftDb(); const tx = db.transaction("drafts", "readwrite"); tx.objectStore("drafts").put(value, DRAFT_KEY); }
+async function loadDraft() { const db = await draftDb(); return new Promise<any>((resolve) => { const request = db.transaction("drafts").objectStore("drafts").get(DRAFT_KEY); request.onsuccess = () => resolve(request.result); request.onerror = () => resolve(null); }); }
+async function clearDraft() { const db = await draftDb(); db.transaction("drafts", "readwrite").objectStore("drafts").delete(DRAFT_KEY); }
+
 export default function Page() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [step, setStep] = useState<"upload" | "review" | "result">("upload");
@@ -57,6 +70,29 @@ export default function Page() {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    loadDraft().then((draft) => {
+      if (!draft?.photos?.length) return;
+      setPhotos(draft.photos.map((file: File) => ({ file, url: URL.createObjectURL(file) })));
+      if (draft.copy) setCopy(draft.copy);
+      if (draft.arts) setArts(draft.arts);
+      if (draft.step) setStep(draft.step);
+      setMessage("Trabalho anterior recuperado automaticamente.");
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!photos.length) return;
+    const timer = window.setTimeout(() => saveDraft({ photos: photos.map((photo) => photo.file), copy, arts, step }).catch(() => {}), 400);
+    return () => window.clearTimeout(timer);
+  }, [photos, copy, arts, step]);
+
+  useEffect(() => {
+    const protect = (event: BeforeUnloadEvent) => { if (busy) { event.preventDefault(); event.returnValue = ""; } };
+    window.addEventListener("beforeunload", protect);
+    return () => window.removeEventListener("beforeunload", protect);
+  }, [busy]);
 
   const addPhotos = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []).slice(0, 4 - photos.length);
@@ -119,7 +155,7 @@ export default function Page() {
 
   return <main className="studio">
     <aside className="studio-side"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store Oficial"/><h2>Harmony Studio</h2><p>Anúncios com IA</p><div className="team"><b>✦ Equipe sênior ativa</b><span>Estratégia • SEO • Copy • Fotografia • Revisão</span></div><ol><li className={step === "upload" ? "active" : "done"}>1. Fotos reais</li><li className={step === "review" ? "active" : step === "result" ? "done" : ""}>2. Conferência</li><li className={step === "result" ? "active" : ""}>3. Material profissional</li></ol><small>As fotos são a fonte da verdade. Nenhuma promessa ou característica importante é inventada.</small></aside>
-    <section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>Mini Sabonetes Rosinhas</b></div><button onClick={() => { setStep("upload"); setPhotos([]); setArts(artBriefs); }}>Novo anúncio</button></header>
+    <section className="studio-work"><header><div><small>HARMONY STORE OFICIAL</small><b>Mini Sabonetes Rosinhas</b></div><button onClick={() => { clearDraft().catch(() => {}); setStep("upload"); setPhotos([]); setArts(artBriefs); }}>Novo anúncio</button></header>
 
       {step === "upload" && <div className="studio-stage"><span className="eyebrow">ETAPA 1 DE 3</span><h1>Quatro referências.<br/><em>Uma produção de nível profissional.</em></h1><p>A equipe de IA compara ângulos, cores e acabamento antes de criar qualquer material.</p><div className="upload-grid">{Array.from({ length: 4 }).map((_, index) => photos[index] ? <figure key={index}><img src={photos[index].url} alt={`Referência ${index + 1}`}/><button onClick={() => setPhotos((all) => all.filter((_, i) => i !== index))}>×</button><figcaption>✓ Referência {index + 1}</figcaption></figure> : <label className="upload-slot" key={index}><input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={addPhotos}/><i>＋</i><b>Adicionar foto {index + 1}</b><span>{["Vista principal", "Outro ângulo", "Detalhe", "Cenário diferente"][index]}</span></label>)}</div><div className="studio-note"><b>Direção de arte</b><span>Prefira luz natural, foco nítido e pelo menos uma foto mostrando a peça inteira.</span><strong>{photos.length}/4</strong></div><button className="studio-primary" disabled={photos.length !== 4 || busy} onClick={analyze}>{busy ? message : "Analisar com a equipe de IA →"}</button></div>}
 
