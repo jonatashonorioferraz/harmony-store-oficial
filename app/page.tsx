@@ -1,38 +1,152 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useMemo, useRef, useState } from "react";
 
-type Doc = { id:number; name:string; kind:string; supplier:string; idNumber:string; date:string; due:string; value:number; category:string; payment:string; status:"Processado"|"Revisar"|"Vinculado"; confidence:number };
+type Step = "fotos" | "conferencia" | "resultado";
+type Photo = { file: File; url: string };
 
-const initialDocs: Doc[] = [
-  {id:1,name:"NF 1842 · Papelaria Criativa",kind:"Nota fiscal",supplier:"Papelaria Criativa",idNumber:"42.519.308/0001-17",date:"21 jul 2026",due:"28 jul 2026",value:1248.9,category:"Materiais e insumos",payment:"Boleto",status:"Processado",confidence:98},
-  {id:2,name:"Comprovante PIX · Studio Lima",kind:"Comprovante",supplier:"Studio Lima",idNumber:"***.804.219-**",date:"20 jul 2026",due:"Pago em 20 jul",value:690,category:"Serviços",payment:"Pix",status:"Vinculado",confidence:100},
-  {id:3,name:"Boleto · Energia Sul",kind:"Conta a pagar",supplier:"Energia Sul",idNumber:"08.914.017/0001-88",date:"18 jul 2026",due:"23 jul 2026",value:438.72,category:"Despesas fixas",payment:"Boleto",status:"Revisar",confidence:82},
+const colors = [
+  ["Rosa BB", "Mamãe e Bebê", "#f4b6c8"], ["Azul BB", "Mamãe e Bebê", "#a9d9f2"],
+  ["Lilás", "Lavanda", "#bca7de"], ["Branco", "Karité", "#f5f1e8"],
+  ["Amarelo", "Floral", "#f5dc69"], ["Vermelho", "Morango", "#c83e4d"],
+  ["Pink", "Tutti-frutti", "#ef4f91"], ["Verde BB", "Capim-limão", "#b9dec8"],
+  ["Branco perolado", "Karité", "#e9e7df"],
 ];
 
-const money = new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"});
-const nav = ["Início","Documentos","Contas a pagar","Movimentações","Relatórios"];
+const defaultTitle = "100 Mini Sabonetes Rosinhas Perfumadas 3cm para Lembrancinhas";
+const defaultDescription = `MINI SABONETES ROSINHAS PERFUMADAS — 100 UNIDADES
 
-export default function Page(){
-  const [docs,setDocs]=useState(initialDocs); const [active,setActive]=useState("Início"); const [query,setQuery]=useState(""); const [upload,setUpload]=useState(false); const [processing,setProcessing]=useState(false); const [review,setReview]=useState<Doc|null>(null); const [toast,setToast]=useState("");
-  const say=(v:string)=>{setToast(v);setTimeout(()=>setToast(""),2600)};
-  const filtered=useMemo(()=>docs.filter(d=>Object.values(d).join(" ").toLowerCase().includes(query.toLowerCase())),[docs,query]);
-  const onFile=(e:ChangeEvent<HTMLInputElement>)=>{if(!e.target.files?.[0])return;setProcessing(true);setTimeout(()=>{const d:Doc={id:Date.now(),name:`Cupom · Mercado do Centro`,kind:"Cupom fiscal",supplier:"Mercado do Centro",idNumber:"17.204.883/0001-04",date:"Hoje, 14:32",due:"Pago hoje",value:286.4,category:"Materiais e insumos",payment:"Pix",status:"Revisar",confidence:91};setDocs(x=>[d,...x]);setProcessing(false);setUpload(false);setReview(d)},1800)};
-  const confirm=()=>{if(!review)return;setDocs(x=>x.map(d=>d.id===review.id?{...d,status:"Processado",confidence:100}:d));setReview(null);say("Documento confirmado e lançado automaticamente")};
-  const total=docs.reduce((a,d)=>a+d.value,0); const due=docs.filter(d=>d.kind==="Conta a pagar").reduce((a,d)=>a+d.value,0);
-  return <div className="shell">
-    <aside className="sidebar"><div className="brand"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store"/><div><b>Harmony Store</b><small>assistente financeiro</small></div></div><nav>{nav.map((n,i)=><button key={n} onClick={()=>setActive(n)} className={active===n?"active":""}><i>{["⌂","▱","◷","↕","◫"][i]}</i>{n}{n==="Contas a pagar"&&<em>3</em>}</button>)}</nav><div className="ai-card"><span>✦</span><b>IA ativa</b><p>Todos os documentos são analisados automaticamente.</p><small><i/> Funcionando normalmente</small></div><div className="profile"><span>MC</span><div><b>Marina Costa</b><small>Harmony Store</small></div><button>•••</button></div></aside>
-    <main><header className="top"><button className="mobile-brand">H</button><label className="search"><span>⌕</span><input aria-label="Pesquisar" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar fornecedor, valor, CPF ou CNPJ..."/><kbd>⌘ K</kbd></label><div className="top-actions"><button className="icon">?</button><button className="icon">♢<i/></button><button className="user">MC</button></div></header>
-      <div className="content"><section className="welcome"><div><p>VISÃO GERAL</p><h1>Olá, Marina <span>👋</span></h1><h2>Seu financeiro, quase no piloto automático.</h2></div><button className="send" onClick={()=>setUpload(true)}><span>＋</span><div><b>Enviar documento</b><small>Foto, PDF, boleto ou comprovante</small></div></button></section>
-        <section className="ai-banner"><span>✦</span><div><b>A IA organizou 12 documentos esta semana</b><p>9 foram lançados automaticamente e apenas 3 precisam da sua confirmação.</p></div><button onClick={()=>{setActive("Documentos");setQuery("Revisar")}}>Revisar pendências <b>3</b> →</button></section>
-        <section className="stats"><article><header><span>Movimentado no mês</span><i>↗</i></header><b>{money.format(total+18475)}</b><p><strong>↑ 8,4%</strong> comparado a junho</p></article><article><header><span>Contas a pagar</span><i>◷</i></header><b>{money.format(due+7961.28)}</b><p><em>3 vencem nos próximos 7 dias</em></p></article><article><header><span>Economia de tempo</span><i>✦</i></header><b>6h 40min</b><p>estimadas pela automação este mês</p></article></section>
-        <section className="grid"><article className="panel"><header><div><h3>Documentos recentes</h3><p>A IA extrai, classifica e relaciona para você.</p></div><button onClick={()=>{setActive("Documentos");setQuery("")}}>Ver todos →</button></header><div className="doc-head"><span>DOCUMENTO</span><span>VALOR</span><span>STATUS</span><span/></div>{filtered.slice(0,4).map(d=><div className="doc" key={d.id}><div className="doc-name"><i>{d.kind==="Comprovante"?"✓":d.kind==="Conta a pagar"?"▤":"▱"}</i><div><b>{d.name}</b><span>{d.category} · {d.payment}</span></div></div><strong>{money.format(d.value)}</strong><span className={`status ${d.status.toLowerCase()}`}>{d.status==="Processado"?"✓ ":d.status==="Vinculado"?"↗ ":"! "}{d.status}</span><button onClick={()=>d.status==="Revisar"?setReview(d):say("Detalhes do documento abertos")}>•••</button></div>)}</article>
-          <article className="panel upcoming"><header><div><h3>Próximos vencimentos</h3><p>Contas que merecem atenção.</p></div><button onClick={()=>setActive("Contas a pagar")}>Ver contas →</button></header>{[["23","JUL","Energia Sul","Despesas fixas","438,72","Amanhã"],["25","JUL","Aluguel do estúdio","Estrutura","2.800,00","Em 3 dias"],["28","JUL","Papelaria Criativa","Materiais","1.248,90","Em 6 dias"]].map(x=><div className="bill" key={x[2]}><div className="date"><b>{x[0]}</b><span>{x[1]}</span></div><div><b>{x[2]}</b><span>{x[3]}</span></div><div><strong>R$ {x[4]}</strong><span>{x[5]}</span></div></div>)}</article></section>
-        <section className="bottom"><article className="categories panel"><header><div><h3>Gastos por categoria</h3><p>Julho de 2026</p></div><button>•••</button></header>{[["Materiais e insumos",42,"R$ 8.420"],["Serviços",27,"R$ 5.385"],["Despesas fixas",19,"R$ 3.810"],["Outros",12,"R$ 2.440"]].map((x,i)=><div className="bar" key={x[0]}><span>{x[0]}</span><div><i style={{width:`${x[1]}%`}} className={`c${i}`}/></div><b>{x[2]}</b><em>{x[1]}%</em></div>)}</article><article className="assistant"><span>✦</span><small>ASSISTENTE IA</small><h3>Pergunte sobre seu financeiro</h3><p>“Quanto gastei com fornecedores este mês?”</p><button onClick={()=>say("Assistente pronto para conversar")}>Conversar com a IA →</button></article></section>
-      </div>
-    </main>
-    {upload&&<div className="overlay" onMouseDown={()=>setUpload(false)}><section className="upload-modal" onMouseDown={e=>e.stopPropagation()}><button className="x" onClick={()=>setUpload(false)}>×</button><span className="upload-icon">✦</span><small>CAPTURA INTELIGENTE</small><h2>Envie. A IA faz o resto.</h2><p>Reconhecemos nota fiscal, cupom, boleto, Pix e comprovante.</p><label className="drop"><input type="file" accept="image/*,.pdf" onChange={onFile}/>{processing?<><i className="spinner"/><b>Analisando documento...</b><span>Extraindo dados e buscando relações</span></>:<><i>＋</i><b>Arraste ou selecione um arquivo</b><span>PDF, JPG ou PNG · até 20 MB</span></>}</label><div className="steps"><span>1 <b>Enviar</b></span><i>→</i><span>2 <b>IA analisa</b></span><i>→</i><span>3 <b>Você confirma se precisar</b></span></div></section></div>}
-    {review&&<div className="overlay"><section className="review"><header><div><span>✦</span><div><small>REVISÃO RÁPIDA</small><h2>Confirme só o que importa</h2></div></div><button onClick={()=>setReview(null)}>×</button></header><div className="confidence"><span>IA encontrou os dados</span><b>{review.confidence}% de confiança</b></div><div className="fields"><label>Fornecedor<input value={review.supplier} onChange={e=>setReview({...review,supplier:e.target.value})}/></label><label>CNPJ<input value={review.idNumber} onChange={e=>setReview({...review,idNumber:e.target.value})}/></label><label>Valor<input value={money.format(review.value)} readOnly/></label><label>Data<input value={review.date} readOnly/></label><label>Categoria sugerida<select value={review.category} onChange={e=>setReview({...review,category:e.target.value})}><option>Materiais e insumos</option><option>Serviços</option><option>Despesas fixas</option></select></label><label>Pagamento<input value={review.payment} readOnly/></label></div><div className="match">✓ Nenhuma cobrança pendente correspondente foi encontrada.</div><footer><button onClick={()=>setReview(null)}>Corrigir depois</button><button onClick={confirm}>Confirmar e lançar →</button></footer></section></div>}
-    {toast&&<div className="toast">✓ {toast}</div>}
-  </div>;
+Deixe suas lembrancinhas ainda mais delicadas com as Mini Rosinhas da Harmony Store Oficial.
+
+Produzidas artesanalmente em base glicerinada, possuem formato de rosa e são ideais para decoração e montagem de lembrancinhas para casamentos, maternidade, aniversários, chá de bebê e outras ocasiões especiais.
+
+INFORMAÇÕES DO PRODUTO
+• Quantidade: 100 unidades
+• Formato: rosa
+• Medidas aproximadas: 3 cm × 3 cm
+• Peso aproximado: 2 g por unidade
+• Produto disponível para pronta entrega
+• Validade: 12 meses
+
+ESCOLHA DA COR E DO AROMA
+Cada pacote é enviado em uma única opção, conforme a variação selecionada. Cada cor possui seu aroma padrão; não enviamos cores sortidas no mesmo pacote.
+
+EMBALAGEM
+As unidades são enviadas soltas em embalagem segura para transporte. Saquinhos de organza e demais itens decorativos não estão inclusos.
+
+COMPOSIÇÃO
+Base glicerinada, essência, corante, conservantes e veículo.
+
+CUIDADOS
+Não ingerir. Evitar contato com os olhos. Manter fora do alcance de crianças e animais. Conservar em local seco, fresco, protegido do calor e da luz solar. Produto artesanal: podem ocorrer pequenas variações de tonalidade e acabamento.`;
+
+const cards = [
+  { kicker: "HARMONY STORE OFICIAL", title: "100 Mini Rosinhas", sub: "Sabonetes perfumados para lembrancinhas", tag: "3 cm × 3 cm" },
+  { kicker: "ESCOLHA SUA COR", title: "9 opções delicadas", sub: "Cada cor possui seu aroma especial", tag: "Você escolhe" },
+  { kicker: "FEITO COM CUIDADO", title: "Produção artesanal", sub: "Base glicerinada • 2 g por unidade", tag: "100 unidades" },
+  { kicker: "PARA MOMENTOS ESPECIAIS", title: "Lembranças que encantam", sub: "Casamentos • Maternidade • Festas", tag: "Pronta entrega" },
+  { kicker: "INFORMAÇÃO IMPORTANTE", title: "Organza não inclusa", sub: "As unidades seguem soltas e protegidas", tag: "Envio seguro" },
+];
+
+function download(name: string, content: string) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], { type: "text/plain;charset=utf-8" }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
 }
+
+export default function Page() {
+  const [step, setStep] = useState<Step>("fotos");
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [selected, setSelected] = useState("Rosa BB");
+  const [toast, setToast] = useState("");
+  const [aiResult, setAiResult] = useState<{ title:string; description:string; confidence:number; summary:string }|null>(null);
+  const [aiMode, setAiMode] = useState<"real"|"demo">("demo");
+  const input = useRef<HTMLInputElement>(null);
+  const progress = step === "fotos" ? 1 : step === "conferencia" ? 2 : 3;
+  const selectedColor = useMemo(() => colors.find(c => c[0] === selected)!, [selected]);
+
+  const addPhotos = (e: ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(e.target.files || []).slice(0, 4 - photos.length);
+    setPhotos(p => [...p, ...incoming.map(file => ({ file, url: URL.createObjectURL(file) }))]);
+    e.target.value = "";
+  };
+  const analyze = async () => {
+    if (photos.length !== 4) return;
+    setProcessing(true);
+    try {
+      const body = new FormData();
+      photos.forEach(photo => body.append("images", photo.file));
+      body.append("product", JSON.stringify({name:"Mini Sabonetes Rosinhas",quantity:100,dimensions:"3 cm × 3 cm",unitWeight:"2 g",availability:"pronta entrega",shelfLife:"12 meses",colors:colors.map(c=>({color:c[0],fragrance:c[1]}))}));
+      const response = await fetch("/api/agents/analyze", {method:"POST",body});
+      if (!response.ok) throw new Error("IA indisponível");
+      setAiResult(await response.json()); setAiMode("real");
+    } catch {
+      setAiResult({title:defaultTitle,description:defaultDescription,confidence:94,summary:"Mini sabonete artesanal em formato de rosa."});
+      setAiMode("demo");
+    } finally { setProcessing(false); setStep("conferencia"); }
+  };
+  const generate = () => { setProcessing(true); setTimeout(() => { setProcessing(false); setStep("resultado"); }, 1300); };
+  const copy = async (text: string, message: string) => { await navigator.clipboard.writeText(text); setToast(message); setTimeout(() => setToast(""), 2400); };
+  const exportCard = (index: number) => {
+    const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1080;
+    const ctx = canvas.getContext("2d")!; const card = cards[index];
+    const render = (img?: HTMLImageElement) => {
+      ctx.fillStyle = index === 4 ? "#183f39" : "#f4eee7"; ctx.fillRect(0, 0, 1080, 1080);
+      if (img) { ctx.save(); ctx.globalAlpha = .92; ctx.drawImage(img, 0, 0, 1080, 700); ctx.restore(); const g=ctx.createLinearGradient(0,480,0,810);g.addColorStop(0,"rgba(244,238,231,0)");g.addColorStop(1,index===4?"#183f39":"#f4eee7");ctx.fillStyle=g;ctx.fillRect(0,430,1080,390); }
+      ctx.fillStyle = index === 4 ? "#c9a876" : "#926b3f"; ctx.font = "600 26px Arial"; ctx.fillText(card.kicker, 74, 790);
+      ctx.fillStyle = index === 4 ? "#fffaf2" : "#193f38"; ctx.font = "700 66px Georgia"; wrap(ctx, card.title, 74, 865, 900, 75);
+      ctx.font = "32px Arial"; ctx.fillStyle = index === 4 ? "#e6ddd1" : "#5d625e"; ctx.fillText(card.sub, 74, 994);
+      const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=`${String(index+1).padStart(2,"0")}-arte-rosinhas.png`;a.click();
+    };
+    if (photos.length) { const img=new Image();img.onload=()=>render(img);img.src=photos[index%photos.length].url; } else render();
+  };
+  const downloadKit = () => {
+    const finalTitle=aiResult?.title||defaultTitle, finalDescription=aiResult?.description||defaultDescription;
+    download("titulo.txt", finalTitle); download("descricao.txt", finalDescription + "\n\nVARIAÇÕES\n" + colors.map(c=>`${c[0]} — ${c[1]}`).join("\n"));
+    cards.forEach((_, i) => setTimeout(() => exportCard(i), 180 * i)); setToast("Kit preparado para download"); setTimeout(()=>setToast(""),2500);
+  };
+
+  return <main className="app-shell">
+    <aside className="side">
+      <div className="brand"><img src="/harmony-logo-oficial.jpg" alt="Harmony Store Oficial"/><div><b>Harmony Studio</b><small>Anúncios com IA</small></div></div>
+      <div className="agent-status"><span>✦</span><div><b>Equipe de IA ativa</b><small>5 agentes trabalhando juntos</small></div></div>
+      <nav className="steps" aria-label="Etapas do anúncio">
+        {["Fotos do produto", "Conferência", "Material pronto"].map((label,i)=><div className={progress===i+1?"active":progress>i+1?"done":""} key={label}><i>{progress>i+1?"✓":i+1}</i><span><b>{label}</b><small>{["4 imagens reais", "Dados e variações", "Textos e artes"][i]}</small></span></div>)}
+      </nav>
+      <div className="safety"><b>✓ Produto protegido</b><p>A IA usa suas fotos como fonte da verdade e sinaliza dados não confirmados.</p></div>
+    </aside>
+
+    <section className="workspace">
+      <header className="topbar"><div><small>NOVO ANÚNCIO</small><b>Mini Sabonetes Rosinhas</b></div><button className="ghost" onClick={()=>{setStep("fotos");setPhotos([])}}>Começar novamente</button></header>
+
+      {step === "fotos" && <div className="stage photo-stage"><div className="stage-heading"><span className="eyebrow">ETAPA 1 DE 3</span><h1>Mostre o produto.<br/><em>A IA cuida do resto.</em></h1><p>Envie quatro fotos reais, em ângulos ou cenários diferentes. Elas serão a referência visual de todo o anúncio.</p></div>
+        <div className="photo-grid">
+          {Array.from({length:4}).map((_,i)=>photos[i]?<figure key={i}><img src={photos[i].url} alt={`Foto ${i+1} do produto`}/><button aria-label={`Remover foto ${i+1}`} onClick={()=>setPhotos(p=>p.filter((_,x)=>x!==i))}>×</button><figcaption><span>✓</span> Foto {i+1}</figcaption></figure>:<button key={i} className="photo-slot" onClick={()=>input.current?.click()}><i>＋</i><b>Adicionar foto {i+1}</b><small>{["Vista principal","Outro ângulo","Detalhes","Cenário diferente"][i]}</small></button>)}
+        </div>
+        <input ref={input} hidden multiple type="file" accept="image/png,image/jpeg,image/webp" onChange={addPhotos}/>
+        <div className="tip"><span>✦</span><div><b>Dica da diretora de arte</b><p>Use boa iluminação e deixe o formato inteiro visível em pelo menos uma foto.</p></div><strong>{photos.length}/4 fotos</strong></div>
+        <button className="primary wide" disabled={photos.length!==4||processing} onClick={analyze}>{processing?<><i className="spinner"/> Analisando forma, cores e acabamento...</>:<>Analisar produto com IA <span>→</span></>}</button>
+      </div>}
+
+      {step === "conferencia" && <div className="stage review-stage"><div className="stage-heading"><span className="eyebrow">ETAPA 2 DE 3</span><h1>A IA analisou o produto.</h1><p>Confira os dados antes de gerar o material. Nada importante será inventado.</p></div>
+        <div className="confidence"><span>✦</span><div><b>Produto reconhecido com alta confiança</b><p>{aiResult?.summary||"Mini sabonete artesanal em formato de rosa."}</p></div><strong>{aiResult?.confidence||94}% · {aiMode==="real"?"IA real":"demonstração"}</strong></div>
+        <div className="review-grid"><section className="facts card"><header><div><small>DADOS CONFIRMADOS</small><h2>Ficha do produto</h2></div><span>8 de 8 ✓</span></header>
+          {[["Produto","Mini Sabonetes Rosinhas"],["Quantidade","100 unidades"],["Tamanho","3 cm × 3 cm"],["Peso","2 g por unidade"],["Disponibilidade","Pronta entrega"],["Validade","12 meses"],["Embalagem","Soltos, com proteção"],["Personalização","Não disponível"]].map(x=><label key={x[0]}><span>{x[0]}</span><input value={x[1]} readOnly/><i>✓</i></label>)}
+        </section><section className="variants card"><header><div><small>VARIAÇÃO DO ANÚNCIO</small><h2>Cores e aromas</h2></div><span>9 opções</span></header><p>O pacote recebe uma única cor, conforme a opção escolhida.</p><div className="color-list">{colors.map(c=><button className={selected===c[0]?"selected":""} key={c[0]} onClick={()=>setSelected(c[0])}><i style={{background:c[2]}}/><span><b>{c[0]}</b><small>{c[1]}</small></span><em>{selected===c[0]?"✓":""}</em></button>)}</div><div className="selection">Prévia selecionada: <b>{selectedColor[0]} · {selectedColor[1]}</b></div></section></div>
+        <div className="review-actions"><button className="ghost" onClick={()=>setStep("fotos")}>← Voltar às fotos</button><button className="primary" disabled={processing} onClick={generate}>{processing?"Agentes criando o anúncio...":"Aprovar e criar anúncio →"}</button></div>
+      </div>}
+
+      {step === "resultado" && <div className="stage result-stage"><div className="result-head"><div><span className="eyebrow">ETAPA 3 DE 3 · CONCLUÍDO</span><h1>Seu anúncio está pronto.</h1><p>Título, descrição e cinco artes revisados pela equipe de IA {aiMode==="real"?"conectada":"em modo demonstrativo"}.</p></div><button className="primary" onClick={downloadKit}>Baixar kit completo ↓</button></div>
+        <div className="quality"><span>✓</span><div><b>Revisão concluída sem pendências</b><p>Informações, imagens, variações e avisos estão consistentes.</p></div><strong>Pronto para enviar</strong></div>
+        <div className="output-grid"><section className="copy-column"><article className="card copy-card"><header><div><small>TÍTULO OTIMIZADO</small><span>{(aiResult?.title||defaultTitle).length} caracteres</span></div><button onClick={()=>copy(aiResult?.title||defaultTitle,"Título copiado")}>Copiar</button></header><h2>{aiResult?.title||defaultTitle}</h2></article>
+          <article className="card copy-card description"><header><div><small>DESCRIÇÃO COMPLETA</small><span>Revisada</span></div><button onClick={()=>copy(aiResult?.description||defaultDescription,"Descrição copiada")}>Copiar</button></header><pre>{aiResult?.description||defaultDescription}</pre></article></section>
+          <section className="art-column"><header><div><small>ARTES DO ANÚNCIO</small><h2>5 imagens preparadas</h2></div><span>1080 × 1080 px</span></header><div className="art-grid">{cards.map((c,i)=><article className={`art a${i}`} key={c.title}><div className="art-photo">{photos.length&&<img src={photos[i%photos.length].url} alt=""/>}<span>{i+1}</span></div><small>{c.kicker}</small><h3>{c.title}</h3><p>{c.sub}</p><button onClick={()=>exportCard(i)}>Baixar PNG ↓</button></article>)}</div></section>
+        </div>
+      </div>}
+    </section>
+    {toast&&<div className="toast">✓ {toast}</div>}
+  </main>;
+}
+
+function wrap(ctx: CanvasRenderingContext2D, text: string, x:number, y:number, max:number, line:number){const words=text.split(" ");let row="";for(const word of words){const test=row+word+" ";if(ctx.measureText(test).width>max&&row){ctx.fillText(row,x,y);row=word+" ";y+=line}else row=test}ctx.fillText(row,x,y)}
