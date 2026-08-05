@@ -92,7 +92,15 @@ export default function Page() {
     for (let index = 0; index < artBriefs.length; index++) {
       setProgress(index + 1); setMessage(`Fotógrafo e diretor de arte: imagem ${index + 1} de 5…`);
       try { const art = await createArt(index); setArts((current) => current.map((old, i) => i === index ? art : old)); }
-      catch (error) { setArts((current) => current.map((old, i) => i === index ? { ...old, error: error instanceof Error ? error.message : "Reprovada" } : old)); }
+      catch (error) {
+        const reason = error instanceof Error ? error.message : "Reprovada";
+        setArts((current) => current.map((old, i) => i === index ? { ...old, error: reason } : old));
+        if (reason.includes("créditos") || reason.includes("limite de uso")) {
+          setArts((current) => current.map((old, i) => i > index ? { ...old, error: "Aguardando ativação dos créditos da API" } : old));
+          setMessage("A produção foi pausada para evitar novas tentativas. Ative os créditos da API e use Refazer com revisão.");
+          break;
+        }
+      }
     }
     setBusy(false); setMessage("Criação concluída. Cada imagem foi auditada antes de aparecer.");
   };

@@ -48,7 +48,14 @@ export async function POST(request: Request) {
         tools: [{ type: "image_generation", action: "edit", quality: "high", size: "1024x1024" }],
       }),
     });
-    if (!generation.ok) throw new Error(`Falha na geração profissional (${generation.status})`);
+    if (!generation.ok) {
+      const details = await generation.json().catch(() => ({})) as any;
+      if (generation.status === 429) return NextResponse.json({
+        error: "A conta da API está sem créditos disponíveis ou atingiu o limite de uso. Ative o faturamento na plataforma OpenAI e tente novamente.",
+        code: details?.error?.code || "billing_or_rate_limit",
+      }, { status: 429 });
+      throw new Error(details?.error?.message || `Falha na geração profissional (${generation.status})`);
+    }
     const generated = await generation.json() as any;
     const image = generated.output?.find((item: any) => item.type === "image_generation_call")?.result;
     if (!image) throw new Error("A IA não entregou a imagem");
