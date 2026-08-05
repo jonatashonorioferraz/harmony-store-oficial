@@ -1,0 +1,58 @@
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+
+const timestamps = {
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+};
+
+export const studioAdProjects = sqliteTable("studio_ad_projects", {
+  id: text("id").primaryKey(), ownerId: text("owner_id").notNull(), name: text("name").notNull(),
+  marketplace: text("marketplace").notNull(), status: text("status", { enum: ["draft", "ready", "running", "review_required", "approved", "exported"] }).notNull(),
+  activeWorkflowRunId: text("active_workflow_run_id"), ...timestamps,
+}, (table) => [index("studio_projects_owner_status_idx").on(table.ownerId, table.status)]);
+
+export const studioProductSnapshots = sqliteTable("studio_product_snapshots", {
+  id: text("id").primaryKey(), projectId: text("project_id").notNull().references(() => studioAdProjects.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(), factsJson: text("facts_json").notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("studio_snapshots_project_version_unique").on(table.projectId, table.version)]);
+
+export const studioSourceAssets = sqliteTable("studio_source_assets", {
+  id: text("id").primaryKey(), projectId: text("project_id").notNull().references(() => studioAdProjects.id, { onDelete: "cascade" }),
+  kind: text("kind", { enum: ["source", "candidate", "approved", "export"] }).notNull(), storageKey: text("storage_key").notNull(),
+  contentType: text("content_type").notNull(), sizeBytes: integer("size_bytes").notNull(), sha256: text("sha256").notNull(), originalName: text("original_name"), createdAt: text("created_at").notNull(),
+}, (table) => [uniqueIndex("studio_assets_storage_key_unique").on(table.storageKey), index("studio_assets_project_kind_idx").on(table.projectId, table.kind)]);
+
+export const studioWorkflowRuns = sqliteTable("studio_workflow_runs", {
+  id: text("id").primaryKey(), projectId: text("project_id").notNull().references(() => studioAdProjects.id, { onDelete: "cascade" }),
+  status: text("status", { enum: ["pending", "running", "review_required", "succeeded", "failed", "cancelled"] }).notNull(),
+  configurationJson: text("configuration_json").notNull(), startedAt: text("started_at"), completedAt: text("completed_at"), ...timestamps,
+}, (table) => [index("studio_workflows_project_status_idx").on(table.projectId, table.status)]);
+
+export const studioStageRuns = sqliteTable("studio_stage_runs", {
+  id: text("id").primaryKey(), workflowRunId: text("workflow_run_id").notNull().references(() => studioWorkflowRuns.id, { onDelete: "cascade" }),
+  stageKey: text("stage_key").notNull(), attempt: integer("attempt").notNull(), status: text("status", { enum: ["pending", "running", "succeeded", "failed", "blocked", "cancelled"] }).notNull(),
+  idempotencyKey: text("idempotency_key").notNull(), agentRole: text("agent_role"), knowledgeVersionId: text("knowledge_version_id"),
+  inputHash: text("input_hash"), outputJson: text("output_json"), errorJson: text("error_json"), usageJson: text("usage_json"), startedAt: text("started_at"), completedAt: text("completed_at"), ...timestamps,
+}, (table) => [uniqueIndex("studio_stage_idempotency_unique").on(table.idempotencyKey), uniqueIndex("studio_stage_attempt_unique").on(table.workflowRunId, table.stageKey, table.attempt), index("studio_stage_workflow_status_idx").on(table.workflowRunId, table.status)]);
+
+export const studioAgentKnowledgeVersions = sqliteTable("studio_agent_knowledge_versions", {
+  id: text("id").primaryKey(), agentRole: text("agent_role").notNull(), version: integer("version").notNull(), status: text("status", { enum: ["draft", "published", "archived"] }).notNull(),
+  contentJson: text("content_json").notNull(), changeReason: text("change_reason").notNull(), createdBy: text("created_by").notNull(), createdAt: text("created_at").notNull(), publishedAt: text("published_at"), archivedAt: text("archived_at"),
+}, (table) => [uniqueIndex("studio_knowledge_role_version_unique").on(table.agentRole, table.version), index("studio_knowledge_role_status_idx").on(table.agentRole, table.status)]);
+
+export const studioArtifactCandidates = sqliteTable("studio_artifact_candidates", {
+  id: text("id").primaryKey(), projectId: text("project_id").notNull().references(() => studioAdProjects.id, { onDelete: "cascade" }), stageRunId: text("stage_run_id").notNull().references(() => studioStageRuns.id),
+  artifactType: text("artifact_type", { enum: ["title", "description", "image", "package"] }).notNull(), status: text("status", { enum: ["candidate", "pending_review", "approved", "rejected", "superseded"] }).notNull(),
+  textContent: text("text_content"), assetId: text("asset_id").references(() => studioSourceAssets.id), metadataJson: text("metadata_json").notNull(), ...timestamps,
+}, (table) => [index("studio_candidates_project_status_idx").on(table.projectId, table.status)]);
+
+export const studioReviewDecisions = sqliteTable("studio_review_decisions", {
+  id: text("id").primaryKey(), candidateId: text("candidate_id").notNull().references(() => studioArtifactCandidates.id, { onDelete: "cascade" }),
+  reviewerRole: text("reviewer_role").notNull(), decision: text("decision", { enum: ["approved", "rejected", "changes_requested"] }).notNull(), score: integer("score"), reasonsJson: text("reasons_json").notNull(),
+  knowledgeVersionId: text("knowledge_version_id"), decidedBy: text("decided_by").notNull(), createdAt: text("created_at").notNull(),
+}, (table) => [index("studio_reviews_candidate_idx").on(table.candidateId)]);
+
+export const studioAuditEvents = sqliteTable("studio_audit_events", {
+  id: text("id").primaryKey(), projectId: text("project_id").references(() => studioAdProjects.id, { onDelete: "cascade" }), actorId: text("actor_id").notNull(),
+  eventType: text("event_type").notNull(), entityType: text("entity_type").notNull(), entityId: text("entity_id").notNull(), beforeJson: text("before_json"), afterJson: text("after_json"), metadataJson: text("metadata_json"), createdAt: text("created_at").notNull(),
+}, (table) => [index("studio_audit_project_created_idx").on(table.projectId, table.createdAt), index("studio_audit_entity_idx").on(table.entityType, table.entityId)]);
