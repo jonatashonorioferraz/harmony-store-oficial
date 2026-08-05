@@ -74,8 +74,8 @@ test('module print styles cannot hide another PDF document',()=>{
 });
 
 test('the isolation stylesheet loads last and remains available offline',()=>{
-  assert.match(index,/pdf-print-isolation\.css\?v=25\.48/);
+  assert.match(index,/pdf-print-isolation\.css\?v=25\.49/);
   assert.ok(index.lastIndexOf('pdf-print-isolation.css')>index.lastIndexOf('internal-supplies.css'));
-  assert.match(worker,/pdf-print-isolation\.css\?v=25\.48/);
-  assert.match(worker,/harmony-store-v25-48/);
+  assert.match(worker,/pdf-print-isolation\.css\?v=25\.49/);
+  assert.match(worker,/harmony-store-v25-49/);
 });

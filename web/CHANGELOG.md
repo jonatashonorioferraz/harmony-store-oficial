@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.49] - 04/08/2026
+
+### Câmera e galeria para documentos
+
+- Cupons fiscais e boletos agora oferecem ações independentes para tirar uma foto ou escolher uma imagem da galeria.
+- O boleto também mantém a seleção de arquivos PDF já salvos.
+- O arquivo escolhido é identificado na tela antes do envio para a leitura inteligente.
+
 ## [v25.48] - 04/08/2026
 
 ### Correção do PDF de solicitações no celular
