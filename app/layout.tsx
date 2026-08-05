@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./professional.css";
 
 export const metadata: Metadata = {
   title: "Harmony Studio — Anúncios com IA",
