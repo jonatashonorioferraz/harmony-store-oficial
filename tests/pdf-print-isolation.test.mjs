@@ -23,7 +23,7 @@ test('every PDF flow activates an exclusive print mode',()=>{
   for(const mode of ['request-list-printing','production-order-printing','production-receipt-printing','intelligence-printing','internal-supplies-printing']){
     assert.match(app,new RegExp(`'${mode}'`));
   }
-  assert.match(app,/printCurrentDocument\('request-list-printing'\)/);
+  assert.match(app,/printCurrentDocument\('request-list-printing'/);
   assert.match(orders,/printCurrentDocument\('production-order-printing'\)/);
   assert.match(receipts,/printCurrentDocument\('production-receipt-printing'/);
   assert.match(intelligence,/printCurrentDocument\('intelligence-printing'\)/);
@@ -68,11 +68,14 @@ test('module print styles cannot hide another PDF document',()=>{
   assert.match(orderCss,/body \*\{visibility:hidden!important\}/);
   assert.match(isolationCss,/html:not\(\.production-order-printing\) body \*/);
   assert.match(isolationCss,/visibility: visible !important/);
+  assert.match(isolationCss,/body > \*:not\(#requestListPrintRoot\)/);
+  assert.match(isolationCss,/body > #requestListPrintRoot/);
+  assert.match(isolationCss,/display: block !important/);
 });
 
 test('the isolation stylesheet loads last and remains available offline',()=>{
-  assert.match(index,/pdf-print-isolation\.css\?v=25\.47/);
+  assert.match(index,/pdf-print-isolation\.css\?v=25\.48/);
   assert.ok(index.lastIndexOf('pdf-print-isolation.css')>index.lastIndexOf('internal-supplies.css'));
-  assert.match(worker,/pdf-print-isolation\.css\?v=25\.47/);
-  assert.match(worker,/harmony-store-v25-47/);
+  assert.match(worker,/pdf-print-isolation\.css\?v=25\.48/);
+  assert.match(worker,/harmony-store-v25-48/);
 });

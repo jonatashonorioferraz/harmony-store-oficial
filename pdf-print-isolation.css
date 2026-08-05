@@ -27,6 +27,26 @@
     display: none !important;
   }
 
+  html.request-list-printing body > *:not(#requestListPrintRoot) {
+    display: none !important;
+  }
+
+  html.request-list-printing body > #requestListPrintRoot {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  html.request-list-printing #requestListPrintRoot .request-list-sheet {
+    display: block !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
   html.production-receipt-printing #productionPrint,
   html.request-list-printing .request-list-sheet,
   html.production-order-printing #productionOrderPrint,

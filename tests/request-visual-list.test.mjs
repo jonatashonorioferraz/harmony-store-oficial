@@ -45,9 +45,13 @@ test('viewer is responsive and its A4 print mode is isolated from existing repor
 test('mobile PDF stays in the current page and desktop retains a separate print window',()=>{
   assert.match(app,/const requestListMobilePrint=/);
   assert.match(app,/if\(requestListMobilePrint\(\)\)/);
-  assert.match(app,/HarmonyPrint\.printCurrentDocument\('request-list-printing'\)/);
+  assert.match(app,/printRoot\.id='requestListPrintRoot'/);
+  assert.match(app,/printRoot\.innerHTML=sheet\.outerHTML/);
+  assert.match(app,/document\.body\.appendChild\(printRoot\)/);
+  assert.match(app,/printCurrentDocument\('request-list-printing',\(\)=>printRoot\.remove\(\)\)/);
+  assert.match(app,/HarmonyPrint\.printCurrentDocument\('request-list-printing'/);
   assert.match(app,/window\.open\('about:blank','_blank'\)/);
-  assert.match(index,/app\.js\?v=25\.47/);
-  assert.match(worker,/harmony-store-v25-47/);
-  assert.match(worker,/app\.js\?v=25\.47/);
+  assert.match(index,/app\.js\?v=25\.48/);
+  assert.match(worker,/harmony-store-v25-48/);
+  assert.match(worker,/app\.js\?v=25\.48/);
 });

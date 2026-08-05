@@ -5,6 +5,14 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.48] - 04/08/2026
+
+### Correção do PDF de solicitações no celular
+
+- O documento agora é montado em uma área temporária exclusiva, contendo somente a solicitação selecionada.
+- O menu, o painel e o modal posicionados atrás da lista não entram mais nas páginas geradas.
+- A área temporária é removida automaticamente depois que a impressão termina.
+
 ## [v25.47] - 04/08/2026
 
 ### Correção geral dos PDFs
