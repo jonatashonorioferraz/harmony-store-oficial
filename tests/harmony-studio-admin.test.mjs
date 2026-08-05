@@ -68,3 +68,9 @@ test("category palettes are durable, versioned and selectable in new ads", async
   assert.match(page, /choosePalette/);
   assert.match(page, /Paleta salva para/);
 });
+
+test("opening administration bootstraps the eight official agent versions", async () => {
+  const overview = await read("app/api/admin/overview/route.ts");
+  assert.match(overview, /ensureDefaultAgentKnowledge/);
+  assert.match(overview, /D1AgentKnowledgeRepository/);
+});

@@ -1,8 +1,10 @@
 import { requireStudioAdmin, adminDb, adminError } from "../shared.ts";
+import { ensureDefaultAgentKnowledge } from "../../../../src/harmony-studio/application/intelligence/bootstrap-agent-knowledge.ts";
+import { D1AgentKnowledgeRepository } from "../../../../src/harmony-studio/infrastructure/persistence/d1-agent-knowledge-repository.ts";
 
 export async function GET() {
   try {
-    const user = await requireStudioAdmin(); const db = adminDb();
+    const user = await requireStudioAdmin(); const db = adminDb(); await ensureDefaultAgentKnowledge(new D1AgentKnowledgeRepository(db), user.id);
     const [knowledge, excellence, settings, events, projects, palettes] = await Promise.all([
       db.prepare("SELECT id, agent_role, version, status, content_json, change_reason, created_by, created_at, published_at FROM studio_agent_knowledge_versions ORDER BY agent_role, version DESC").all(),
       db.prepare("SELECT id, artifact_type, marketplace, product_category, agent_role, approval_reason, tags_json, status, created_at FROM studio_excellence_items ORDER BY created_at DESC LIMIT 50").all(),
