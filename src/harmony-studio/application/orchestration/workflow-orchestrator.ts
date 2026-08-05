@@ -4,6 +4,7 @@ import type { ExcellenceLibraryRepository } from "../ports/excellence-library-re
 import type { OrchestrationRepository } from "../ports/orchestration-repository.ts";
 import type { StageExecutor } from "../ports/stage-executor.ts";
 import type { VisualReferenceRepository, VisualShotType } from "../ports/visual-reference-repository.ts";
+import type { VisualStandardRepository } from "../ports/visual-standard-repository.ts";
 import { buildContextBundle } from "../../domain/orchestration/context-bundle.ts";
 import { createStageRun, STANDARD_WORKFLOW, type StageDefinition, type StageRun } from "../../domain/orchestration/workflow-plan.ts";
 import { createWorkflowRun, type WorkflowRun } from "../../domain/workflows/workflow-run.ts";
@@ -19,7 +20,8 @@ export class WorkflowOrchestrator {
   private readonly executor: StageExecutor;
   private readonly audit: AuditEventRepository;
   private readonly visualReferences?: VisualReferenceRepository;
-  constructor(input: { repository: OrchestrationRepository; knowledge: AgentKnowledgeRepository; excellence: ExcellenceLibraryRepository; executor: StageExecutor; audit: AuditEventRepository; visualReferences?: VisualReferenceRepository }) { this.repository = input.repository; this.knowledge = input.knowledge; this.excellence = input.excellence; this.executor = input.executor; this.audit = input.audit; this.visualReferences = input.visualReferences; }
+  private readonly visualStandards?: VisualStandardRepository;
+  constructor(input: { repository: OrchestrationRepository; knowledge: AgentKnowledgeRepository; excellence: ExcellenceLibraryRepository; executor: StageExecutor; audit: AuditEventRepository; visualReferences?: VisualReferenceRepository; visualStandards?:VisualStandardRepository }) { this.repository = input.repository; this.knowledge = input.knowledge; this.excellence = input.excellence; this.executor = input.executor; this.audit = input.audit; this.visualReferences = input.visualReferences; this.visualStandards=input.visualStandards; }
 
   async start(input: { id: string; projectId: string; initialData: Record<string, unknown>; actorId: string; auditId: string; now?: string }) {
     const timestamp = input.now ?? now();
@@ -38,11 +40,12 @@ export class WorkflowOrchestrator {
     const knowledge = await this.knowledge.findPublished(next.agentRole); if (!knowledge) return this.block(stage, run, "KNOWLEDGE_UNAVAILABLE", `No published knowledge for ${next.agentRole}`, actorId);
     const initial = run.configuration.initialData as Record<string, unknown> | undefined;
     const excellence = next.usesExcellence ? await this.excellence.searchActive({ agentRole: next.agentRole, marketplace: String(initial?.marketplace ?? ""), productCategory: String(initial?.productCategory ?? ""), limit: 3 }) : [];
-    const shotTypes: VisualShotType[] = ["catalog-cover", "product-detail", "variations", "use-occasion", "versatile-composition"];
+    const shotTypes: VisualShotType[] = ["catalog-cover", "product-detail", "variations", "purchase-contents", "use-occasion", "product-size"];
     const visualIndex = next.key.startsWith("visual-production-") ? Number(next.key.split("-").at(-1)) - 1 : -1;
     const selections = (initial?.visualReferenceSelections ?? {}) as Record<string,string|null>; const hasSelection = Object.prototype.hasOwnProperty.call(selections, next.key); const preferredId = hasSelection ? selections[next.key] : undefined;
     const visualReferences = visualIndex >= 0 && this.visualReferences && preferredId !== null ? await this.visualReferences.search({ category: String(initial?.productCategory ?? ""), modelName: String((initial?.product as any)?.declaredFacts?.product ?? ""), shotType: shotTypes[visualIndex], limit: preferredId ? 1 : 2, preferredId: preferredId ?? undefined }) : [];
-    const context = buildContextBundle({ stageKey: next.key, agentRole: next.agentRole, allowedInputs: next.allowedInputs, availableData, knowledge, excellence, visualReferences });
+    const visualStandard=visualIndex>=0&&this.visualStandards?await this.visualStandards.findPublished(String(initial?.productCategory??""),shotTypes[visualIndex]):null;
+    const context = buildContextBundle({ stageKey: next.key, agentRole: next.agentRole, allowedInputs: next.allowedInputs, availableData, knowledge, excellence, visualReferences, visualStandard });
     const startedAt = now(); const running: StageRun = { ...stage, status: "running", knowledgeVersionId: knowledge.id, inputHash: await hash(context), startedAt, updatedAt: startedAt };
     const activeRun: WorkflowRun = { ...run, status: "running", startedAt: run.startedAt ?? startedAt, updatedAt: startedAt };
     await this.repository.saveWorkflow(activeRun); await this.repository.saveStages([running]);

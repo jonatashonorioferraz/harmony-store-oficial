@@ -1,6 +1,6 @@
 import type { AgentRole } from "../intelligence/agent-knowledge.ts";
 
-export const STAGE_KEYS = ["triage", "visual-analysis", "strategy", "copy", "art-direction", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5", "compliance-review", "quality-gate"] as const;
+export const STAGE_KEYS = ["triage", "visual-analysis", "strategy", "copy", "art-direction", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5", "visual-production-6", "compliance-review", "quality-gate"] as const;
 export type StageKey = (typeof STAGE_KEYS)[number];
 export type StageStatus = "pending" | "running" | "succeeded" | "failed" | "blocked" | "cancelled";
 
@@ -23,7 +23,8 @@ export const STANDARD_WORKFLOW: readonly StageDefinition[] = [
   { key: "visual-production-3", agentRole: "virtual-photographer", dependencies: ["visual-production-2"], allowedInputs: ["art-direction.briefs.2", "assets"], usesExcellence: true },
   { key: "visual-production-4", agentRole: "virtual-photographer", dependencies: ["visual-production-3"], allowedInputs: ["art-direction.briefs.3", "assets"], usesExcellence: true },
   { key: "visual-production-5", agentRole: "virtual-photographer", dependencies: ["visual-production-4"], allowedInputs: ["art-direction.briefs.4", "assets"], usesExcellence: true },
-  { key: "compliance-review", agentRole: "compliance-reviewer", dependencies: ["copy", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5"], allowedInputs: ["product", "marketplacePolicy", "copy", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5"], usesExcellence: false },
+  { key: "visual-production-6", agentRole: "virtual-photographer", dependencies: ["visual-production-5"], allowedInputs: ["art-direction.briefs.5", "product.approvedFacts", "assets"], usesExcellence: true },
+  { key: "compliance-review", agentRole: "compliance-reviewer", dependencies: ["copy", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5", "visual-production-6"], allowedInputs: ["product", "marketplacePolicy", "copy", "visual-production-1", "visual-production-2", "visual-production-3", "visual-production-4", "visual-production-5", "visual-production-6"], usesExcellence: false },
   { key: "quality-gate", agentRole: "quality-director", dependencies: ["compliance-review"], allowedInputs: ["compliance-review", "artifactMetadata"], usesExcellence: false },
 ] as const;
 

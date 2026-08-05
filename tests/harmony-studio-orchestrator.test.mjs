@@ -33,8 +33,8 @@ function outputFor(stage) {
 
 const initialData = { marketplace: "Shopee", productCategory: "mini-sabonetes", product: { declaredFacts: { quantity: 100 }, approvedFacts: { quantity: 100 } }, assetMetadata: [{ id: "a1" }], assets: [{ id: "a1" }], marketplacePolicy: { titleLimit: 120 }, brandRules: { name: "Harmony Store Oficial" }, artifactMetadata: {}, privateTranscript: "must never leak" };
 
-test("workflow plan assigns twelve isolated stages across eight specialists", () => {
-  assert.equal(STANDARD_WORKFLOW.length, 12);
+test("workflow plan assigns thirteen isolated stages across eight specialists", () => {
+  assert.equal(STANDARD_WORKFLOW.length, 13);
   assert.equal(new Set(STANDARD_WORKFLOW.map((stage) => stage.agentRole)).size, 8);
   assert.ok(STANDARD_WORKFLOW.every((stage) => !stage.allowedInputs.includes("privateTranscript")));
 });
@@ -72,23 +72,23 @@ test("failure retries only the failed stage with a new idempotency key", async (
 test("completed workflow can resume from persisted state without repeating successful stages", async () => {
   const { orchestrator, workflows, calls } = fixture();
   await orchestrator.start({ id: "workflow-3", projectId: "project-1", initialData, actorId: "owner", auditId: "audit-start" });
-  for (let i = 0; i < 13; i++) await orchestrator.runNext("workflow-3");
+  for (let i = 0; i < 14; i++) await orchestrator.runNext("workflow-3");
   assert.equal(workflows.get("workflow-3").status, "succeeded");
-  assert.equal(calls.length, 12);
+  assert.equal(calls.length, 13);
   await orchestrator.runNext("workflow-3");
-  assert.equal(calls.length, 12);
+  assert.equal(calls.length, 13);
 });
 
 test("quality rejection requires review and directed reprocessing repeats only the affected tail", async () => {
   const { orchestrator, workflows, stages } = fixture();
   await orchestrator.start({ id: "workflow-4", projectId: "project-1", initialData, actorId: "owner", auditId: "audit-start" });
-  for (let i = 0; i < 12; i++) await orchestrator.runNext("workflow-4");
+  for (let i = 0; i < 13; i++) await orchestrator.runNext("workflow-4");
   const quality = stages.find((stage) => stage.workflowRunId === "workflow-4" && stage.stageKey === "quality-gate");
   quality.output = { release: "reprocess", reprocessStage: "visual-production-3", reasons: ["corrigir cenário"] };
   await orchestrator.runNext("workflow-4");
   assert.equal(workflows.get("workflow-4").status, "review_required");
   const scheduled = await orchestrator.reprocessFrom("workflow-4", "visual-production-3", "owner");
-  assert.deepEqual(scheduled.map((stage) => stage.stageKey), ["visual-production-3", "visual-production-4", "visual-production-5", "compliance-review", "quality-gate"]);
+  assert.deepEqual(scheduled.map((stage) => stage.stageKey), ["visual-production-3", "visual-production-4", "visual-production-5", "visual-production-6", "compliance-review", "quality-gate"]);
   assert.equal(stages.filter((stage) => stage.stageKey === "copy").length, 1);
   assert.equal(stages.filter((stage) => stage.stageKey === "visual-production-3").length, 2);
 });
