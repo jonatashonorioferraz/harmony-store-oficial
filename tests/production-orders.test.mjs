@@ -3,14 +3,18 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,js,css,html,worker,receiptCss,pickerCss]=await Promise.all([
+const [sql,externalSql,js,css,confirmationCss,html,worker,receiptCss,pickerCss,help,manual]=await Promise.all([
   readFile(new URL('supabase/migrations/20260720170000_production_orders.sql',root),'utf8'),
+  readFile(new URL('supabase/migrations/20260804143000_admin_external_production_order_acknowledgement.sql',root),'utf8'),
   readFile(new URL('production-orders.js',root),'utf8'),
   readFile(new URL('production-orders.css',root),'utf8'),
+  readFile(new URL('production-order-confirmation.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),
   readFile(new URL('service-worker.js',root),'utf8'),
   readFile(new URL('production-receipts.css',root),'utf8'),
   readFile(new URL('production-order-color-picker.css',root),'utf8'),
+  readFile(new URL('help-center.js',root),'utf8'),
+  readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
 ]);
 
 test('production orders are isolated from receiving and payments',()=>{
@@ -49,6 +53,27 @@ test('workflow supports drafts, notifications, acknowledgement and audit',()=>{
   assert.match(js,/Salvar rascunho/);
   assert.match(js,/Confirmar que recebi a lista/);
   assert.match(js,/Duplicar/);
+});
+
+test('admins can register an external acknowledgement without touching receiving or payments',()=>{
+  assert.match(externalSql,/add column if not exists acknowledgement_source/);
+  assert.match(externalSql,/acknowledged_by uuid references public\.profiles/);
+  assert.match(externalSql,/create or replace function public\.admin_acknowledge_production_order/);
+  assert.match(externalSql,/if not \(select private\.is_admin\(\)\)/);
+  assert.match(externalSql,/status not in \('sent','viewed'\)/);
+  assert.match(externalSql,/production_order\.admin_acknowledged/);
+  assert.match(externalSql,/revoke all on function public\.admin_acknowledge_production_order/);
+  assert.match(externalSql,/grant execute on function public\.admin_acknowledge_production_order/);
+  assert.doesNotMatch(externalSql,/finished_production_receipts|payment_closings|rate_per_100/);
+  assert.match(js,/Registrar confirmação externa/);
+  assert.match(js,/admin_acknowledge_production_order/);
+  assert.match(js,/Este registro não confirma produção entregue e não calcula pagamentos/);
+  assert.match(js,/Confirmada pelo ADM/);
+  assert.match(confirmationCss,/\.production-order-confirm-modal/);
+  assert.match(confirmationCss,/@media \(max-width: 700px\)/);
+  assert.match(confirmationCss,/@media print/);
+  assert.match(help,/confirmação externa com data, meio e auditoria/);
+  assert.match(manual,/não registra produtos acabados, não altera a contagem oficial e não calcula pagamentos/);
 });
 
 test('new production items move to the top and receive immediate focus',()=>{
@@ -114,8 +139,8 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/body>\*:not\(#productionPrint\):not\(#modal\)/);
-  assert.match(html,/production-orders\.js\?v=25\.43/);
+  assert.match(html,/production-orders\.js\?v=25\.46/);
   assert.match(html,/production-orders\.css\?v=25\.31/);
   assert.match(worker,/production-orders\.js/);
-  assert.match(worker,/harmony-store-v25-45/);
+  assert.match(worker,/harmony-store-v25-46/);
 });

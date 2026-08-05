@@ -1,0 +1,96 @@
+.production-order-confirmation {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 11px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #cde9d8;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #f1fbf5, #fff);
+}
+
+.production-order-confirmation > i {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: #dff5e8;
+  font-style: normal;
+  font-size: 20px;
+}
+
+.production-order-confirmation small {
+  display: block;
+  color: #2f7a52;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.production-order-confirmation b {
+  display: block;
+  margin: 3px 0;
+  color: #325c45;
+}
+
+.production-order-confirmation p {
+  margin: 0;
+  color: #6d776f;
+  font-size: 11px;
+}
+
+.production-order-confirm-modal { max-width: 590px; }
+
+.production-order-confirm-guidance {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 8px 0 18px;
+  padding: 14px;
+  border: 1px solid #f0d8e4;
+  border-radius: 16px;
+  background: #fff7fb;
+}
+
+.production-order-confirm-guidance i {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #f9e2ed;
+  font-style: normal;
+  font-size: 21px;
+}
+
+.production-order-confirm-guidance p {
+  margin: 0;
+  color: #69535e;
+  line-height: 1.45;
+}
+
+.production-order-confirm-modal .form { display: grid; gap: 14px; }
+.production-order-confirm-modal .form label { display: grid; gap: 7px; font-size: 12px; font-weight: 800; color: #6c5360; }
+.production-order-confirm-modal textarea { min-height: 105px; resize: vertical; }
+.production-order-confirm-modal label small { color: #8c7680; font-size: 10px; font-weight: 500; }
+.production-order-confirm-modal .form-actions { margin-top: 20px; }
+
+@media (max-width: 700px) {
+  .production-order-confirmation { grid-template-columns: 36px minmax(0, 1fr); padding: 10px; }
+  .production-order-confirmation > i { width: 36px; height: 36px; }
+  .production-order-confirm-guidance { grid-template-columns: 38px minmax(0, 1fr); padding: 11px; }
+  .production-order-confirm-guidance i { width: 38px; height: 38px; }
+  .production-order-confirm-modal .form-actions { display: grid; grid-template-columns: 1fr; }
+  .production-order-confirm-modal .form-actions button { width: 100%; }
+}
+
+@media print {
+  .production-order-confirmation { break-inside: avoid; padding: 7px 9px; margin: 7px 0; }
+  .production-order-confirmation > i { width: 28px; height: 28px; font-size: 13px; }
+  .production-order-confirmation small { font-size: 6px; }
+  .production-order-confirmation b { font-size: 8px; }
+  .production-order-confirmation p { font-size: 7px; }
+}

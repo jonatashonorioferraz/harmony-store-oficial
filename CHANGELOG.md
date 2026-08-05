@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.46] - 04/08/2026
+
+### Confirmação externa das ordens de produção
+
+- ADMs podem registrar que a colaboradora confirmou a ordem por WhatsApp, telefone, pessoalmente ou por outro meio.
+- O registro guarda data, horário, meio, observação e ADM responsável, com o evento `production_order.admin_acknowledged` na auditoria.
+- Ordens confirmadas externamente ficam verdes como **Confirmada pelo ADM** e deixam de gerar pendência no **Meu Dia na Harmony**.
+- A confirmação trata somente da ciência da ordem e permanece totalmente separada do recebimento físico, da contagem oficial e dos pagamentos.
+- O formulário foi adaptado para computador, celular, tablet e impressão, mantendo as permissões existentes.
+
 ## [v25.45] - 27/07/2026
 
 ### Resumo completo dos boletos

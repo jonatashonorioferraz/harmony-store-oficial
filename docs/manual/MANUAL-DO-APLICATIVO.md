@@ -25,6 +25,14 @@ O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personal
 
 Produtos exclusivos da embalagem devem ser classificados como **Suprimento do e-commerce**. Matérias-primas exclusivas aparecem apenas para colaboradoras de produção. Quando o mesmo produto é usado pelos dois setores, classifique como **Produção e e-commerce**: ele aparecerá nos dois catálogos usando o mesmo estoque, custo e fornecedor. Na Inteligência, o consumo compartilhado é atribuído ao setor de quem solicitou. Reclassificar não apaga estoque, fornecedor, custo, movimentações ou solicitações antigas.
 
+## Ordens de produção
+
+O ADM cria a ordem semanal com colaboradora, prazo, modelos, cores, quantidades, fotos e orientações. A colaboradora recebe a ordem no próprio painel e usa **Confirmar que recebi a lista** para registrar sua ciência.
+
+Quando a confirmação ocorrer fora do aplicativo, o ADM pode abrir uma ordem enviada ou visualizada e usar **Registrar confirmação externa**. É obrigatório informar se a confirmação chegou por WhatsApp, telefone, pessoalmente ou por outro meio. O sistema registra data, horário, ADM responsável e observação, altera a ordem para **Confirmada pelo ADM** e remove a pendência do **Meu Dia na Harmony**.
+
+Essa ação confirma somente que a colaboradora recebeu as orientações. Ela não registra produtos acabados, não altera a contagem oficial e não calcula pagamentos. O recebimento físico continua exclusivamente no módulo **Recebimento de produção**.
+
 ## Recebimento de produção
 
 Uma coleta reúne vários itens da mesma colaboradora. Em cada item informe modelo, cor, quantidade declarada na folha e quantidade oficial conferida. A diferença fica visível e o cálculo usa sempre a quantidade oficial.
