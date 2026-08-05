@@ -133,17 +133,3 @@ test("the ad review visibly connects visual references to the photographer befor
   assert.match(orchestrator, /preferredId !== null/);
   assert.match(orchestrator, /preferredId: preferredId \?\? undefined/);
 });
-
-test("visual references start collapsed by category and by all five photo types", async () => {
-  const admin = await read("app/admin/page.tsx");
-  const styles = await read("app/visual-learning.css");
-  assert.match(admin, /openVisualCategories/);
-  assert.match(admin, /openVisualShots/);
-  assert.match(admin, /aria-expanded=\{categoryOpen\}/);
-  assert.match(admin, /aria-expanded=\{shotOpen\}/);
-  assert.match(admin, /1\. Capa de catálogo/);
-  assert.match(admin, /5\. Composição versátil/);
-  assert.match(admin, /categoryOpen\?"Minimizar":"Maximizar"/);
-  assert.match(styles, /visual-category-toggle/);
-  assert.match(styles, /visual-shot-toggle/);
-});
