@@ -54,3 +54,13 @@ test("approved references can be moved or retired without losing audit history",
   assert.match(route, /derivedManualsInvalidated/);
   assert.match(route, /instr\(source_reference_ids_json/);
 });
+
+test("human approval is required per image and rejection reprocesses only that slot", async () => {
+  const [page, route, orchestrator, migration] = await Promise.all([read("app/page.tsx"), read("app/api/studio/image-review/route.ts"), read("src/harmony-studio/application/orchestration/workflow-orchestrator.ts"), read("drizzle/0008_image_human_reviews.sql")]);
+  assert.match(page, /Aprovar imagem/);
+  assert.match(page, /Reprovar e refazer/);
+  assert.match(page, /humanDecision===\"approved\"/);
+  assert.match(route, /reprocessImage/);
+  assert.match(orchestrator, /imageRevisionFeedback/);
+  assert.match(migration, /studio_image_human_reviews/);
+});

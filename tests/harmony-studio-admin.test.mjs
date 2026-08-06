@@ -93,7 +93,7 @@ test("visual production shows incremental results and can resume interrupted wor
   const shared = await read("app/api/studio/shared.ts");
   const advance = await read("app/api/studio/advance/route.ts");
   assert.match(page, /Continuar criação das imagens/);
-  assert.match(page, /Criando imagem \$\{index \+ 1\} de 5/);
+  assert.match(page, /Criando imagem \$\{index\+1\} de 6/);
   assert.match(page, /Na fila de produção/);
   assert.match(page, /currentStatus\(workflowId\)/);
   assert.doesNotMatch(shared, /const images = approved \?/);

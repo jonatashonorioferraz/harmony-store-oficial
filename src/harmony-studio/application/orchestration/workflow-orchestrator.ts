@@ -81,6 +81,14 @@ export class WorkflowOrchestrator {
     return scheduled;
   }
 
+  async reprocessImage(workflowRunId: string, slot: number, feedback: string, actorId = "system") {
+    const stageKey = `visual-production-${slot}`; const item = definition(stageKey); if (!stageKey.startsWith("visual-production-") || slot < 1 || slot > 6) throw new Error("Invalid image slot");
+    const run = await this.requiredRun(workflowRunId); const stages = await this.repository.listStages(workflowRunId); const latest = this.latestAttempts(stages); const initialData = structuredClone((run.configuration.initialData ?? {}) as Record<string, any>); initialData.imageRevisionFeedback = { ...(initialData.imageRevisionFeedback ?? {}), [stageKey]: feedback };
+    const scheduled = [item, definition("compliance-review"), definition("quality-gate")].map((definitionItem) => createStageRun(workflowRunId, definitionItem, (latest.get(definitionItem.key)?.attempt ?? 0) + 1));
+    await this.repository.saveStages(scheduled); await this.repository.saveWorkflow({ ...run, configuration: { ...run.configuration, initialData }, status: "running", completedAt: null, updatedAt: scheduled[0].createdAt });
+    await this.audit.append({ id: crypto.randomUUID(), projectId: run.projectId, actorId, eventType: "image.human_reprocess_scheduled", entityType: "workflow_run", entityId: workflowRunId, before: null, after: { slot, stageKey, feedback, stages: scheduled.map((stage) => stage.stageKey) }, metadata: null, createdAt: scheduled[0].createdAt }); return scheduled;
+  }
+
   private latestAttempts(stages: StageRun[]) { const map = new Map<string, StageRun>(); for (const stage of stages) if (!map.has(stage.stageKey) || map.get(stage.stageKey)!.attempt < stage.attempt) map.set(stage.stageKey, stage); return map; }
   private availableData(run: WorkflowRun, stages: Map<string, StageRun>) { const data = structuredClone((run.configuration.initialData ?? {}) as Record<string, unknown>); for (const [key, stage] of stages) if (stage.status === "succeeded" && stage.output) data[key] = structuredClone(stage.output); return data; }
   private async requiredRun(id: string) { const run = await this.repository.findWorkflow(id); if (!run) throw new Error("Workflow not found"); return run; }
