@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.51] - 06/08/2026
+
+### Central de notificações mais pessoal e organizada
+
+- A página inicial não exibe mais o histórico de notificações enviadas pelo administrador principal para outras pessoas.
+- Colaboradoras e equipe de recebimento visualizam na página inicial somente avisos não lidos vinculados à própria conta.
+- Cada aviso recebeu a ação **Marcar como lida**; depois da confirmação ele sai imediatamente da página inicial, mas permanece no histórico da Central de Notificações.
+- O painel desaparece quando não há avisos pendentes, mantendo a tela inicial limpa no celular, tablet e computador.
+
 ## [v25.50] - 04/08/2026
 
 ### Corrigido em 06/08/2026

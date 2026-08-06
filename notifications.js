@@ -44,21 +44,43 @@ const HarmonyNotifications=(()=>{
     return `<article class="notification-card priority-${esc(item.priority)} ${isUnread?'is-unread':''} ${compact?'is-compact':''}" data-notification-id="${item.id}" tabindex="0" role="button">
       <i class="notification-symbol" aria-hidden="true">${priorityIcons[item.priority]||'🔔'}</i>
       <div class="notification-copy"><div class="notification-meta"><span>${priorityLabels[item.priority]||'Aviso'}</span><time>${date(item.created_at)}</time></div><h3>${esc(item.title)}</h3><p>${esc(item.body)}</p>${item.due_at?`<strong>⏰ Prazo: ${date(item.due_at)}</strong>`:''}${isPrimary()?`<small>${item.audience==='global'?`Envio global · ${item.read_count||0} de ${item.recipient_count||0} leram`:`Para ${esc(item.target_name||'colaboradora')} · ${item.read_count?'lida':'ainda não lida'}`}</small>`:`<small>Enviado por ${esc(item.sender_name||'Harmony Store')}</small>`}</div>
-      ${isUnread?'<span class="unread-dot" title="Não lida"></span>':''}
+      ${isUnread?`<div class="notification-card-actions"><span class="unread-dot" title="Não lida"></span><button type="button" class="notification-read-button" data-mark-notification-read="${item.id}">✓ Marcar como lida</button></div>`:''}
     </article>`;
+  }
+
+  function refreshHomePanel(){
+    document.querySelector('.home-notifications')?.remove();
+    if(S.view==='home')addHomePanel();
+  }
+
+  async function markRead(item,button){
+    if(!item||item.read_at||isPrimary())return;
+    if(button)button.disabled=true;
+    try{
+      item.read_at=await rpc('mark_app_notification_read',{p_notification_id:item.id});
+      updateBadge();
+      if(S.view==='notifications')renderCenter();else refreshHomePanel();
+      toast('Aviso marcado como lido. Ele continua disponível na Central de Notificações.');
+    }catch(error){
+      if(button)button.disabled=false;
+      alert(error.message);
+    }
   }
 
   function bindCards(root=document){
     root.querySelectorAll('[data-notification-id]').forEach(element=>{
-      const open=()=>openDetail(state.items.find(item=>item.id===element.dataset.notificationId));
-      element.onclick=open;element.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}};
+      const item=state.items.find(entry=>entry.id===element.dataset.notificationId);
+      const open=()=>openDetail(item);
+      element.onclick=event=>{if(!event.target.closest('[data-mark-notification-read]'))open()};
+      element.onkeydown=event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('[data-mark-notification-read]')){event.preventDefault();open()}};
+      element.querySelector('[data-mark-notification-read]')?.addEventListener('click',event=>{event.stopPropagation();markRead(item,event.currentTarget)});
     });
   }
 
   async function openDetail(item){
     if(!item)return;
     if(!isPrimary()&&!item.read_at){
-      try{item.read_at=await rpc('mark_app_notification_read',{p_notification_id:item.id});updateBadge()}catch{}
+      try{item.read_at=await rpc('mark_app_notification_read',{p_notification_id:item.id});updateBadge();refreshHomePanel()}catch{}
     }
     $('#modal').innerHTML=`<div class="modal"><div class="modal-box notification-detail priority-${esc(item.priority)}"><div class="modal-head"><div><p class="eyebrow">${priorityIcons[item.priority]||'🔔'} ${priorityLabels[item.priority]||'NOTIFICAÇÃO'}</p><h2>${esc(item.title)}</h2></div><button type="button" data-close aria-label="Fechar">×</button></div><p class="notification-detail-body">${esc(item.body)}</p>${item.due_at?`<div class="notification-deadline"><i>⏰</i><div><small>PRAZO INFORMADO</small><b>${date(item.due_at)}</b></div></div>`:''}<footer><span>Enviada em ${date(item.created_at)}</span><span>Por ${esc(item.sender_name||'Harmony Store')}</span></footer><button class="primary full" data-close>Entendi</button></div></div>`;
     document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{$('#modal').innerHTML='';if(S.view==='notifications')renderCenter()});
@@ -81,11 +103,12 @@ const HarmonyNotifications=(()=>{
   }
 
   function addHomePanel(){
-    if(!S?.profile||S.view!=='home'||document.querySelector('.home-notifications'))return;
+    if(!S?.profile||S.view!=='home'||isPrimary()||document.querySelector('.home-notifications'))return;
     const page=document.querySelector('#page .page'),anchor=page?.querySelector('.metrics');if(!page||!anchor)return;
-    const visible=isPrimary()?state.items.slice(0,2):state.items.filter(item=>!item.read_at).slice(0,3);
+    const visible=state.items.filter(item=>!item.read_at).slice(0,3);
+    if(!visible.length)return;
     const section=document.createElement('section');section.className='home-notifications';
-    section.innerHTML=`<header><div><span>${isPrimary()?'COMUNICAÇÃO DA EQUIPE':'AVISOS IMPORTANTES'}</span><h2>${isPrimary()?'Notificações enviadas':'Você tem '+unread()+' aviso'+(unread()===1?'':'s')+' para ler'}</h2></div><button class="outline" type="button">Ver central</button></header>${visible.length?`<div>${visible.map(item=>card(item,{compact:true})).join('')}</div>`:'<p class="home-notifications-empty">Tudo certo por aqui. Nenhum aviso novo no momento.</p>'}`;
+    section.innerHTML=`<header><div><span>AVISOS PARA VOCÊ</span><h2>Você tem ${unread()} aviso${unread()===1?'':'s'} para ler</h2></div><button class="outline" type="button">Ver central</button></header><div>${visible.map(item=>card(item,{compact:true})).join('')}</div>`;
     section.querySelector('header button').onclick=()=>{S.view='notifications';renderApp()};
     anchor.insertAdjacentElement('beforebegin',section);bindCards(section);
   }

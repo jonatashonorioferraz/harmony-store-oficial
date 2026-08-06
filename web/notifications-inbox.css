@@ -1,0 +1,59 @@
+.notification-card-actions {
+  display: flex;
+  min-width: 112px;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-read-button {
+  padding: 7px 10px;
+  border: 1px solid #e8b8cd;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--rose2);
+  font-size: 7px;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.notification-read-button:hover,
+.notification-read-button:focus-visible {
+  transform: translateY(-1px);
+  background: var(--rose2);
+  color: #fff;
+}
+
+.notification-read-button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+@media (max-width: 720px) {
+  .notification-card-actions {
+    min-width: 0;
+    align-items: center;
+  }
+
+  .notification-read-button {
+    padding: 7px 9px;
+    font-size: 7px;
+  }
+
+  .notification-card.is-compact {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .notification-card.is-compact .notification-card-actions {
+    grid-column: 1 / -1;
+    align-items: stretch;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+  }
+
+  .notification-card.is-compact .notification-read-button {
+    flex: 1;
+  }
+}

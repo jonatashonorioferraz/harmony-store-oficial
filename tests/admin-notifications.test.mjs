@@ -41,12 +41,16 @@ test('notification center provides global, individual, unread and responsive flo
   assert.match(js, /Aviso global/);
   assert.match(js, /data-notify-user/);
   assert.match(js, /mark_all_app_notifications_read/);
+  assert.match(js, /data-mark-notification-read/);
+  assert.match(js, /Aviso marcado como lido/);
+  assert.match(js, /S\.view!==['"]home['"]\|\|isPrimary\(\)/);
+  assert.match(js, /state\.items\.filter\(item=>!item\.read_at\)/);
   assert.match(js, /Lembrete de solicitação/);
   assert.match(css, /@media\(max-width:720px\)/);
   assert.match(css, /priority-urgent/);
   assert.match(html, /notifications\.css/);
   assert.match(html, /notifications\.js/);
-  assert.match(worker, /harmony-store-v25-50/);
+  assert.match(worker, /harmony-store-v25-51/);
   assert.match(worker, /requireInteraction:data\.priority==='urgent'/);
 });
 
