@@ -44,3 +44,13 @@ test("the sixth image receives exact deterministic measurements and every image 
   assert.match(schemas, /minItems: 6, maxItems: 6/);
   assert.match(schemas, /slot:/);
 });
+
+test("approved references can be moved or retired without losing audit history", async () => {
+  const [route, page] = await Promise.all([read("app/api/admin/visual-references/route.ts"), read("app/admin/visual-standards/page.tsx")]);
+  assert.match(route, /body\.action === "move"/);
+  assert.match(route, /visual_reference\.\$\{body\.action\}/);
+  assert.match(page, /Mover referência/);
+  assert.match(page, /Retirar/);
+  assert.match(route, /derivedManualsInvalidated/);
+  assert.match(route, /instr\(source_reference_ids_json/);
+});
