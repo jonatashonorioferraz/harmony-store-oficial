@@ -7,6 +7,11 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
 ## [v25.50] - 04/08/2026
 
+### Corrigido em 06/08/2026
+
+- A conclusão de uma entrega agora reconcilia automaticamente reservas históricas fora de sincronia.
+- O estoque comprometido com outras solicitações abertas continua protegido e uma falta real informa o produto e as quantidades envolvidas.
+
 ### Adicionado
 
 - Nova Linha do Tempo da Colaboradora, reunindo solicitações de materiais, entregas, ordens de produção, recebimentos e fechamentos de pagamento.

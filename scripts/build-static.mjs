@@ -1,9 +1,21 @@
-import { cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const dist = resolve(root, "dist");
-await rm(dist, { recursive: true, force: true });
+try {
+  await rm(dist, { recursive: true, force: true });
+} catch (error) {
+  // Windows pode manter a pasta aberta por alguns instantes (visualização ou
+  // antivírus). Nesse caso limpamos seu conteúdo e reutilizamos o diretório.
+  if (!['EBUSY', 'EPERM'].includes(error?.code)) throw error;
+  await mkdir(dist, { recursive: true });
+  for (const entry of await readdir(dist)) {
+    await rm(resolve(dist, entry), { recursive: true, force: true }).catch(inner => {
+      if (!['EBUSY', 'EPERM'].includes(inner?.code)) throw inner;
+    });
+  }
+}
 await mkdir(resolve(dist, "client"), { recursive: true });
 await mkdir(resolve(dist, "server"), { recursive: true });
 await cp(resolve(root, "web"), resolve(dist, "client"), { recursive: true });
