@@ -11,7 +11,7 @@ const labels:Record<string,string>={pending:"Pendente",separating:"Em separaçã
 export default function Home(){
   const [session,setSession]=useState<HarmonySession|null>(null),[profile,setProfile]=useState<Profile|null>(null),[view,setView]=useState<View>("home");
   const [products,setProducts]=useState<Product[]>([]),[requests,setRequests]=useState<RequestRow[]>([]),[team,setTeam]=useState<Profile[]>([]),[loading,setLoading]=useState(true),[notice,setNotice]=useState("");
-  useEffect(()=>{if(!isSupabaseConfigured){setLoading(false);return}getStoredSession().then(async s=>{if(s)try{await loadAccount(s)}catch{await signOut(s)}setLoading(false)})},[]);
+  useEffect(()=>{void Promise.resolve().then(async()=>{if(!isSupabaseConfigured){setLoading(false);return}const s=await getStoredSession();if(s)try{await loadAccount(s)}catch{await signOut(s)}setLoading(false)})},[]);
   async function loadAccount(s:HarmonySession){const rows=await dbRequest<Profile[]>(s,`profiles?id=eq.${s.user.id}&select=*`);if(!rows[0]||rows[0].status!=="active")throw new Error("Cadastro inativo ou não localizado.");setSession(s);setProfile(rows[0]);await loadData(s,rows[0])}
   async function loadData(s=session,p=profile){if(!s||!p)return;const [a,b]=await Promise.all([dbRequest<Product[]>(s,"products?select=*&order=name.asc"),dbRequest<RequestRow[]>(s,"requests?select=*&order=created_at.desc")]);setProducts(a);setRequests(b);if(p.role==="admin")setTeam(await dbRequest<Profile[]>(s,"profiles?select=*&order=full_name.asc"))}
   async function login(user:string,password:string){await loadAccount(await signIn(user,password))}

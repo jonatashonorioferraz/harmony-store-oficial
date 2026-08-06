@@ -11,6 +11,9 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
 - A conclusão de uma entrega agora reconcilia automaticamente reservas históricas fora de sincronia.
 - O estoque comprometido com outras solicitações abertas continua protegido e uma falta real informa o produto e as quantidades envolvidas.
+- O Harmony Studio passou a ter repositório e hospedagem independentes, sem rotas ou serviços ativos dentro do aplicativo de gestão.
+- Uma verificação automática protege a separação entre os dois produtos e impede a reintrodução acidental de código exclusivo do Studio.
+- A versão do pacote e do arquivo de dependências foi sincronizada para tornar instalações e auditorias reproduzíveis.
 
 ### Adicionado
 

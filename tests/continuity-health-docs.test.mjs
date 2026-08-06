@@ -26,6 +26,7 @@ test('CI validates the complete build, test suite and synchronized official file
   assert.match(quality, /npm ci --ignore-scripts/);
   assert.match(quality, /npm audit --omit=dev --audit-level=high/);
   assert.match(quality, /npm test/);
+  assert.match(quality, /npm run lint/);
   assert.match(quality, /cmp app\.js web\/app\.js/);
   assert.match(quality, /Bloquear segredos conhecidos/);
 });

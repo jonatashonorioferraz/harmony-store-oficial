@@ -27,6 +27,8 @@ jobs:
       - name: Auditar vulnerabilidades de produção
         run: npm audit --omit=dev --audit-level=high
       - run: npm test
+      - name: Verificar qualidade estática do código
+        run: npm run lint
       - name: Confirmar cópias oficiais sincronizadas
         run: |
           cmp app.js web/app.js
