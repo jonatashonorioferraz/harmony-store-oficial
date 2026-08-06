@@ -1,5 +1,0 @@
-import { requireStudioAdmin, adminDb, adminError } from "../../shared.ts";
-import { getStudioBindings } from "../../../../../src/harmony-studio/infrastructure/runtime/studio-bindings.ts";
-import { R2AssetStorage, type R2BucketPort } from "../../../../../src/harmony-studio/infrastructure/storage/r2-asset-storage.ts";
-export const runtime = "edge";
-export async function GET(request: Request) { try { await requireStudioAdmin(); const id = new URL(request.url).searchParams.get("id"); if (!id) throw new Error("Referência inválida"); const row = await adminDb().prepare("SELECT storage_key, content_type FROM studio_visual_references WHERE id = ?").bind(id).first<{ storage_key: string; content_type: string }>(); if (!row) return Response.json({ error: "Referência não encontrada" }, { status: 404 }); const stored = await new R2AssetStorage(getStudioBindings().STUDIO_ASSETS as R2BucketPort).get(row.storage_key); if (!stored) return Response.json({ error: "Imagem indisponível" }, { status: 404 }); return new Response(stored.body, { headers: { "Content-Type": row.content_type, "Cache-Control": "private, max-age=300" } }); } catch (error) { return adminError(error); } }

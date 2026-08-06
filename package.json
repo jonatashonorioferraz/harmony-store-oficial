@@ -6,11 +6,10 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:official": "node scripts/build-static.mjs",
-    "start": "vite preview",
-    "test": "node scripts/build-static.mjs && node --test tests/*.test.mjs",
+    "dev": "node scripts/serve-static.mjs",
+    "build": "node scripts/build-static.mjs",
+    "start": "node scripts/serve-static.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "backup:verify": "node scripts/verify-api-backup.mjs",
     "backup:restore:check": "node scripts/restore-api-backup.mjs",
     "backup:restore:isolated": "node scripts/execute-api-recovery.mjs",

@@ -1,26 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./professional.css";
-import "./upload-fix.css";
-import "./admin.css";
-import "./product-form.css";
-import "./palette.css";
-import "./palette-quickbar.css";
-import "./visual-learning.css";
-import "./direction-review.css";
-import "./visual-standard-manager.css";
 
 export const metadata: Metadata = {
-  title: "Harmony Studio — Anúncios com IA",
-  description: "Crie materiais profissionais para seus anúncios em poucos minutos, com revisão inteligente e fidelidade ao produto real.",
-  openGraph: {
-    title: "Harmony Studio — Anúncios com IA",
-    description: "Fotos reais. Material profissional.",
-    images: [{ url: "/og.png", width: 1536, height: 1024 }],
-  },
-  twitter: { card: "summary_large_image", images: ["/og.png"] },
+  title: "Harmony Store Oficial — Gestão de Produção",
+  description: "Sistema oficial de solicitações, estoque e entrega de matérias-primas da Harmony Store.",
 };
 
-export default function RootLayout({children}:{children:React.ReactNode}) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="pt-BR"><body>{children}</body></html>;
 }
