@@ -51,11 +51,11 @@ test('timeline assets are mirrored, versioned, cached and responsive',async()=>{
     assert.match(html,/collaborator-timeline\.js\?v=25\.50/);
   }
   for(const worker of [rootWorker,webWorker]){
-    assert.match(worker,/harmony-store-v25-51/);
+    assert.match(worker,/harmony-store-v25-52/);
     assert.match(worker,/collaborator-timeline\.css\?v=25\.50/);
     assert.match(worker,/collaborator-timeline\.js\?v=25\.50/);
   }
   assert.match(rootCss,/@media\(max-width:820px\)/);
   assert.match(rootCss,/@media\(max-width:620px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.51.0');
+  assert.equal(JSON.parse(pkg).version,'25.52.0');
 });

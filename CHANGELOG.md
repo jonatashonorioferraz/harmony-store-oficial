@@ -5,6 +5,18 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.52] - 07/08/2026
+
+### Check-up obrigatório de separação
+
+- Cada item das solicitações de produção e materiais do e-commerce pode ser confirmado como **Separado** ou **Sem estoque**.
+- A separação só pode ser finalizada depois que todos os itens forem conferidos, evitando produtos esquecidos.
+- Itens separados recebem destaque verde; faltas de estoque recebem destaque vermelho e identificação permanente do responsável e horário.
+- A ação **Sem estoque** zera o saldo físico de forma transacional, registra a divergência e cria ou atualiza automaticamente uma solicitação de reposição, sem duplicidades.
+- O cadastro do produto define se a reposição é uma compra de fornecedor ou uma produção interna.
+- O novo painel **Conferência de estoque** reúne divergências e reposições, permite concluir verificações e exportar relatórios em Excel ou PDF.
+- As novas tabelas participam do backup e da recuperação do sistema, com acesso administrativo e histórico de auditoria.
+
 ## [v25.51] - 06/08/2026
 
 ### Central de notificações mais pessoal e organizada

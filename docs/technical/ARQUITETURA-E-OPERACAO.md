@@ -43,6 +43,32 @@ sequenceDiagram
   D-->>A: Solicitação concluída
 ```
 
+### Check-up transacional de separação e reposição
+
+```mermaid
+sequenceDiagram
+  participant M as ADM
+  participant A as PWA
+  participant D as RPC transacional
+  participant E as Estoque
+  participant R as Fila de reposição
+  M->>A: Confere cada item
+  alt Item separado
+    A->>D: Marca separated
+    D-->>A: Destaque verde
+  else Sem estoque físico
+    A->>D: Marca out_of_stock com motivo
+    D->>E: Zera saldo físico e reservado
+    D->>D: Registra divergência e auditoria
+    D->>R: Cria ou atualiza uma reposição única
+    D-->>A: Destaque vermelho
+  end
+  A->>D: Finaliza quando todos foram conferidos
+  D->>D: Revalida lista completa e reserva itens separados
+```
+
+As tabelas `separation_checkup_items`, `stock_discrepancies` e `stock_replenishment_requests` são administrativas e protegidas por RLS. O navegador não grava nelas diretamente: as RPCs revalidam o perfil, bloqueiam solicitação e produto durante a transação e registram auditoria. O índice parcial de reposição impede duas solicitações abertas para o mesmo produto; uma nova falta aumenta a necessidade existente. Solicitações antigas permanecem compatíveis e só passam pelo checklist quando forem novamente abertas para separação.
+
 ```mermaid
 sequenceDiagram
   participant R as Recebimento

@@ -19,9 +19,18 @@ Cada pessoa deve usar sua própria conta. Senhas temporárias precisam ser troca
 
 A colaboradora acessa somente as próprias solicitações. O ADM pode excluir definitivamente registros criados por engano quando a regra administrativa permitir.
 
+### Check-up da separação
+
+Cada item de uma solicitação aberta precisa terminar em uma destas situações:
+
+- **Separado:** o item fica verde e está pronto para seguir.
+- **Sem estoque:** use somente após conferir fisicamente. O estoque do produto é zerado, o item fica vermelho, a data e o ADM são registrados e uma reposição é criada automaticamente.
+
+O botão **Finalizar separação** permanece bloqueado enquanto existir qualquer item aguardando conferência. No cadastro do produto, **Tipo de reposição** define se a falta abre uma compra de fornecedor ou uma produção interna. Em **Produtos > Conferência de estoque**, os ADMs acompanham divergências e reposições, registram a conclusão da análise e exportam os dados em Excel ou PDF.
+
 ## Produtos e fornecedores
 
-O ADM cadastra nome, categoria, unidade, cor, quantidade, foto e campos personalizados. Também define a **finalidade operacional**: matéria-prima de produção, suprimento do e-commerce ou produção e e-commerce. Cada material pode ser vinculado ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
+O ADM cadastra nome, categoria, unidade, cor, quantidade, foto, tipo de reposição e campos personalizados. Também define a **finalidade operacional**: matéria-prima de produção, suprimento do e-commerce ou produção e e-commerce. Cada material pode ser vinculado ao fornecedor já cadastrado na área de Inteligência; a mesma relação é reutilizada nos relatórios e pedidos de compra.
 
 Produtos exclusivos da embalagem devem ser classificados como **Suprimento do e-commerce**. Matérias-primas exclusivas aparecem apenas para colaboradoras de produção. Quando o mesmo produto é usado pelos dois setores, classifique como **Produção e e-commerce**: ele aparecerá nos dois catálogos usando o mesmo estoque, custo e fornecedor. Na Inteligência, o consumo compartilhado é atribuído ao setor de quem solicitou. Reclassificar não apaga estoque, fornecedor, custo, movimentações ou solicitações antigas.
 
