@@ -50,7 +50,7 @@ test('notification center provides global, individual, unread and responsive flo
   assert.match(css, /priority-urgent/);
   assert.match(html, /notifications\.css/);
   assert.match(html, /notifications\.js/);
-  assert.match(worker, /harmony-store-v25-53/);
+  assert.match(worker, /harmony-store-v25-54/);
   assert.match(worker, /requireInteraction:data\.priority==='urgent'/);
 });
 

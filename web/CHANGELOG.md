@@ -5,6 +5,18 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.54] - 08/08/2026
+
+### Proteção reforçada para a administração
+
+- Ações administrativas irreversíveis passam a exigir uma confirmação recente da senha.
+- A confirmação vale por 10 minutos, evitando solicitações repetitivas durante o trabalho normal.
+- Exclusões de produtos, solicitações, categorias e campos personalizados são protegidas também no banco, não apenas na interface.
+- Criação, alteração e remoção de acessos são validadas novamente pela função segura do servidor.
+- Sessões administrativas abandonadas são bloqueadas após 30 minutos sem atividade, sem remover as notificações do aparelho.
+- A renovação automática da sessão não substitui a confirmação real da senha.
+- Auditorias de exclusão registram que a identidade administrativa foi confirmada.
+
 ## [v25.53] - 08/08/2026
 
 ### Paginação e histórico preparado para crescimento
