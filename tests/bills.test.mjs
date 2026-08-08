@@ -63,8 +63,8 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(html,/bills\.css\?v=25\.49/);
-  assert.match(html,/bills\.js\?v=25\.53/);
-  assert.match(worker,/bills\.js\?v=25\.53/);
+  assert.match(html,/bills\.js\?v=25\.54/);
+  assert.match(worker,/bills\.js\?v=25\.54/);
 });
 
 test('cancelled bills can be safely reactivated without bypassing duplicate protection',()=>{

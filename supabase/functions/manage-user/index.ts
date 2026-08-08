@@ -28,6 +28,24 @@ const bytesToHex = (value: ArrayBuffer) => [...new Uint8Array(value)]
 async function sha256(value: string) {
   return bytesToHex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
 }
+function jwtPayload(token: string): Record<string, unknown> {
+  try {
+    const encoded = token.split(".")[1];
+    if (!encoded) return {};
+    const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(encoded.length / 4) * 4, "=");
+    return JSON.parse(atob(normalized));
+  } catch {
+    return {};
+  }
+}
+function hasRecentPasswordAuthentication(token: string, maxAgeSeconds = 600) {
+  const claims = jwtPayload(token);
+  const methods = Array.isArray(claims.amr) ? claims.amr as Array<Record<string, unknown>> : [];
+  const passwordAt = Math.max(0, ...methods
+    .filter(item => item.method === "password")
+    .map(item => Number(item.timestamp) || 0));
+  return passwordAt > 0 && Math.floor(Date.now() / 1000) - passwordAt <= maxAgeSeconds;
+}
 async function cpfHashes(cpf?: string) {
   const clean = digits(cpf);
   if (!clean) return { cpf_hash: null, cpf_last4: null, cpf_hash_version: null, candidates: [] as string[] };
@@ -149,6 +167,12 @@ Deno.serve(async req => {
     }
 
     if (caller.role !== "admin") return reply({ error: "Acesso negado." }, 403);
+    if (!hasRecentPasswordAuthentication(token)) {
+      return reply({
+        error: "Confirme novamente sua senha para administrar acessos.",
+        code: "ADMIN_REAUTH_REQUIRED",
+      }, 403);
+    }
 
     if (action === "create") {
       if (!body.username || !body.password || !body.full_name) return reply({ error: "Nome, login e senha são obrigatórios." }, 400);
