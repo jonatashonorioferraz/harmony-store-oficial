@@ -6,7 +6,7 @@ import test from 'node:test';
 
 const run = promisify(execFile);
 
-test('every duplicated official asset stays byte-for-byte synchronized', async () => {
+test('every duplicated official asset stays synchronized across operating systems', async () => {
   const script = fileURLToPath(new URL('../scripts/verify-official-mirrors.mjs', import.meta.url));
   const { stdout, stderr } = await run(process.execPath, [script]);
   assert.equal(stderr, '');
