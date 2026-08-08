@@ -31,6 +31,7 @@ jobs:
         run: npm run lint
       - name: Confirmar cópias oficiais sincronizadas
         run: |
+          npm run verify:mirrors
           cmp app.js web/app.js
           cmp intelligence.js web/intelligence.js
           cmp internal-supplies.js web/internal-supplies.js

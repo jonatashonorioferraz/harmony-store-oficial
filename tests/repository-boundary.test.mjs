@@ -46,6 +46,13 @@ test('package metadata and lockfile identify the same official release', () => {
   assert.equal(packageLock.packages[''].version, packageJson.version);
 });
 
+test('transitive nanoid dependency includes the denial-of-service security fix', () => {
+  const nanoid = packageLock.packages['node_modules/nanoid'];
+  assert.ok(nanoid, 'nanoid must remain represented in the reproducible lockfile');
+  assert.equal(nanoid.version, '3.3.17');
+  assert.match(nanoid.resolved, /nanoid-3\.3\.17\.tgz$/);
+});
+
 test('official build remains the static management PWA', () => {
   assert.equal(packageJson.scripts.build, 'node scripts/build-static.mjs');
   assert.equal(packageJson.scripts.dev, 'node scripts/serve-static.mjs');
