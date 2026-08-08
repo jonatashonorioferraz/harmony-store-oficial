@@ -5,6 +5,18 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.56] - 08/08/2026
+
+### Home mais compacta e organizada
+
+- “Solicitações recentes” passa a iniciar somente com os registros da semana atual, de segunda-feira a domingo.
+- A lista mostra no máximo cinco registros inicialmente, evitando que a página inicial fique excessivamente longa.
+- Um botão permite abrir todas as solicitações do período e recolher novamente a lista.
+- Foram adicionados filtros de período: hoje, ontem, semana atual, últimos 7 dias, últimos 30 dias, mês, ano e histórico completo.
+- O filtro de situação permite visualizar todas, em andamento, pendentes, em separação, agendadas, entregues ou canceladas.
+- A tela completa de Solicitações permanece sem limitação e continua acessível pelo menu.
+- Os controles foram adaptados para computador, tablet e celular.
+
 ## [v25.55] - 08/08/2026
 
 ### Inteligência operacional usando dados existentes
