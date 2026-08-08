@@ -6,7 +6,9 @@ const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
 
 test('timeline aggregates the official operational sources without duplicating business rules',async()=>{
   const source=await read('collaborator-timeline.js');
-  assert.match(source,/rest\('requests\?select=\*&order=created_at\.desc'\)/);
+  assert.match(source,/restAll\(requestQuery\)/);
+  assert.match(source,/requested_by=eq\./);
+  assert.match(source,/created_at=gte\./);
   assert.match(source,/rpc\('list_production_orders'/);
   assert.match(source,/rpc\('list_finished_production_receipts'/);
   assert.match(source,/rpc\('list_production_payment_closings'/);
@@ -48,14 +50,14 @@ test('timeline assets are mirrored, versioned, cached and responsive',async()=>{
   assert.equal(rootCss.trim(),webCss.trim());
   for(const html of [rootHtml,webHtml]){
     assert.match(html,/collaborator-timeline\.css\?v=25\.50/);
-    assert.match(html,/collaborator-timeline\.js\?v=25\.50/);
+    assert.match(html,/collaborator-timeline\.js\?v=25\.53/);
   }
   for(const worker of [rootWorker,webWorker]){
-    assert.match(worker,/harmony-store-v25-52/);
+    assert.match(worker,/harmony-store-v25-53/);
     assert.match(worker,/collaborator-timeline\.css\?v=25\.50/);
-    assert.match(worker,/collaborator-timeline\.js\?v=25\.50/);
+    assert.match(worker,/collaborator-timeline\.js\?v=25\.53/);
   }
   assert.match(rootCss,/@media\(max-width:820px\)/);
   assert.match(rootCss,/@media\(max-width:620px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.52.0');
+  assert.equal(JSON.parse(pkg).version,'25.53.0');
 });

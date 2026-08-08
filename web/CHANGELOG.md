@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.53] - 08/08/2026
+
+### Paginação e histórico preparado para crescimento
+
+- Produtos, solicitações, perfis e configurações deixam de depender do limite padrão de linhas do Supabase.
+- Inteligência, fornecedores, pedidos de compra, ideias, suprimentos internos, cupons e boletos passam a carregar todas as páginas de forma autenticada e determinística.
+- A Linha do Tempo consulta no servidor somente a colaboradora e o período selecionados, reduzindo dados desnecessários sem substituir a lista global do ADM.
+- A paginação preserva cabeçalhos, sessão, renovação de acesso, ordenação e permissões existentes.
+- Novos testes simulam múltiplas páginas, respostas inválidas e o isolamento dos dados da Linha do Tempo.
+
 ## [v25.52] - 07/08/2026
 
 ### Check-up obrigatório de separação
