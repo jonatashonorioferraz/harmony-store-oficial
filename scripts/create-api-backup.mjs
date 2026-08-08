@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { basename, join, relative, resolve, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 
 const API = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET = String(process.env.SUPABASE_SECRET_KEY || '');

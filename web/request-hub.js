@@ -65,7 +65,10 @@ async function mount(force=false){
     if(token===HUB.renderToken&&S.view==='home')renderHub(host);
   }catch(error){
     HUB.error=error.message||'Não foi possível atualizar a central.';
-    if(token===HUB.renderToken)host.innerHTML=`<section class="card hub-error"><span>Não foi possível carregar as pendências.</span><button class="outline compact-action" id="retryRequestHub">Tentar novamente</button></section>`,host.querySelector('#retryRequestHub').onclick=()=>mount(true);
+    if(token===HUB.renderToken){
+      host.innerHTML=`<section class="card hub-error"><span>Não foi possível carregar as pendências.</span><button class="outline compact-action" id="retryRequestHub">Tentar novamente</button></section>`;
+      host.querySelector('#retryRequestHub').onclick=()=>mount(true);
+    }
   }finally{HUB.loading=false}
 }
 

@@ -188,22 +188,6 @@ function requestModal(item){
   document.querySelector('#adminCancelInternal')?.addEventListener('click',async()=>{const reason=prompt('Informe o motivo do cancelamento:');if(reason===null)return;await action(()=>rpc('admin_cancel_internal_supply_request',{p_request_id:item.id,p_reason:reason}),'Solicitação cancelada.')});
 }
 
-function prepareModal(item,items){
-  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box supply-modal" id="prepareInternalForm"><div class="modal-head"><div><p class="eyebrow">SEPARAÇÃO</p><h2>Aprovar quantidades</h2></div><button type="button" data-close>×</button></div><div class="supply-approval-list">${items.map(row=>{const product=productBy(row.product_id);return `<article><div><b>${esc(product?.name||'Produto')}</b><small>Solicitado: ${quantity(row.requested_quantity,product?.unit)}</small></div><label>Aprovado<input name="quantity_${row.product_id}" type="number" min="0" max="${row.requested_quantity}" step=".001" value="${row.approved_quantity??row.requested_quantity}"></label><label>Observação<input name="note_${row.product_id}" value="${esc(row.admin_note||'')}"></label></article>`}).join('')}</div><label>Observação geral<textarea name="admin_notes">${esc(item.admin_notes||'')}</textarea></label><button class="primary full">Salvar separação</button></form></div>`;
-  document.querySelector('[data-close]').onclick=closeModal;
-  document.querySelector('#prepareInternalForm').onsubmit=async event=>{event.preventDefault();const form=new FormData(event.target),payload=items.map(row=>({product_id:row.product_id,approved_quantity:num(form.get('quantity_'+row.product_id)),admin_note:String(form.get('note_'+row.product_id)||'')}));await action(()=>rpc('admin_prepare_internal_supply_request',{p_request_id:item.id,p_items:payload,p_admin_notes:String(form.get('admin_notes')||'')}),'Separação salva.');const updated=IS.requests.find(row=>row.id===item.id);scheduleModal(updated||item)};
-}
-
-function scheduleModal(item){
-  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box compact-modal" id="scheduleInternalForm"><div class="modal-head"><div><p class="eyebrow">AGENDAMENTO</p><h2>Definir entrega</h2></div><button type="button" data-close>×</button></div><label>Data e horário<input name="scheduled_for" type="datetime-local" required></label><button class="primary full">Agendar entrega</button></form></div>`;
-  document.querySelector('[data-close]').onclick=closeModal;document.querySelector('#scheduleInternalForm').onsubmit=async event=>{event.preventDefault();await action(()=>rpc('admin_schedule_internal_supply_request',{p_request_id:item.id,p_scheduled_for:new Date(event.target.scheduled_for.value).toISOString()}),'Entrega agendada.')};
-}
-
-function completeModal(item){
-  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box compact-modal" id="completeInternalForm"><div class="modal-head"><div><p class="eyebrow">CONCLUSÃO</p><h2>Confirmar entrega</h2></div><button type="button" data-close>×</button></div><label>Quem entregou<input name="delivered_by" required></label><label>Quem recebeu<input name="received_by" required></label><button class="primary full">Concluir e baixar estoque</button></form></div>`;
-  document.querySelector('[data-close]').onclick=closeModal;document.querySelector('#completeInternalForm').onsubmit=async event=>{event.preventDefault();await action(()=>rpc('admin_complete_internal_supply_request',{p_request_id:item.id,p_delivered_by:event.target.delivered_by.value,p_received_by:event.target.received_by.value}),'Entrega concluída e estoque atualizado.')};
-}
-
 async function action(operation,message){try{await operation();closeModal();IS.loaded=false;await loadData();await loadInternal(true);renderInternal(document.querySelector('#page'));toast(message)}catch(error){alert(error.message)}}
 function closeModal(){document.querySelector('#modal').innerHTML=''}
 
