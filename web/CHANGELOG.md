@@ -5,6 +5,48 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.52] - 07/08/2026
+
+### Check-up obrigatório de separação
+
+- Cada item das solicitações de produção e materiais do e-commerce pode ser confirmado como **Separado** ou **Sem estoque**.
+- A separação só pode ser finalizada depois que todos os itens forem conferidos, evitando produtos esquecidos.
+- Itens separados recebem destaque verde; faltas de estoque recebem destaque vermelho e identificação permanente do responsável e horário.
+- A ação **Sem estoque** zera o saldo físico de forma transacional, registra a divergência e cria ou atualiza automaticamente uma solicitação de reposição, sem duplicidades.
+- O cadastro do produto define se a reposição é uma compra de fornecedor ou uma produção interna.
+- O novo painel **Conferência de estoque** reúne divergências e reposições, permite concluir verificações e exportar relatórios em Excel ou PDF.
+- As novas tabelas participam do backup e da recuperação do sistema, com acesso administrativo e histórico de auditoria.
+
+## [v25.51] - 06/08/2026
+
+### Central de notificações mais pessoal e organizada
+
+- A página inicial não exibe mais o histórico de notificações enviadas pelo administrador principal para outras pessoas.
+- Colaboradoras e equipe de recebimento visualizam na página inicial somente avisos não lidos vinculados à própria conta.
+- Cada aviso recebeu a ação **Marcar como lida**; depois da confirmação ele sai imediatamente da página inicial, mas permanece no histórico da Central de Notificações.
+- O painel desaparece quando não há avisos pendentes, mantendo a tela inicial limpa no celular, tablet e computador.
+
+## [v25.50] - 04/08/2026
+
+### Corrigido em 06/08/2026
+
+- A conclusão de uma entrega agora reconcilia automaticamente reservas históricas fora de sincronia.
+- O estoque comprometido com outras solicitações abertas continua protegido e uma falta real informa o produto e as quantidades envolvidas.
+- O Harmony Studio passou a ter repositório e hospedagem independentes, sem rotas ou serviços ativos dentro do aplicativo de gestão.
+- Uma verificação automática protege a separação entre os dois produtos e impede a reintrodução acidental de código exclusivo do Studio.
+- A versão do pacote e do arquivo de dependências foi sincronizada para tornar instalações e auditorias reproduzíveis.
+
+### Adicionado
+
+- Nova Linha do Tempo da Colaboradora, reunindo solicitações de materiais, entregas, ordens de produção, recebimentos e fechamentos de pagamento.
+- Filtros por colaboradora e período para administradores; colaboradoras e equipe de recebimento visualizam somente o próprio histórico.
+- Atalhos em cada evento para abrir diretamente o registro no módulo responsável.
+
+### Segurança e experiência
+
+- Consultas preservam as permissões do Supabase e não exibem valores financeiros na linha do tempo.
+- Cache isolado por conta, atualização manual dos dados e layout responsivo para celular, tablet e computador.
+
 ## [v25.49] - 04/08/2026
 
 ### Câmera e galeria para documentos
