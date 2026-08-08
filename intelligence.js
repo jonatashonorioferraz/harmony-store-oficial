@@ -1,5 +1,5 @@
 (()=>{
-const BI={loaded:false,loading:false,error:'',items:[],suppliers:[],supplierProducts:[],orders:[],orderItems:[],ideas:[],ideaEvents:[],tab:'overview',period:'month',from:'',to:'',profileId:'',productId:'',ideaQuery:'',ideaStatus:''};
+const BI={loaded:false,loading:false,error:'',items:[],suppliers:[],supplierProducts:[],orders:[],orderItems:[],ideas:[],ideaEvents:[],productionOrders:[],productionReceipts:[],productionColors:[],operationalKey:'',tab:'overview',period:'month',from:'',to:'',profileId:'',productId:'',ideaQuery:'',ideaStatus:''};
 const n=value=>Number(value||0);
 const round=value=>Math.round((n(value)+Number.EPSILON)*1000)/1000;
 const qty=(value,unit='')=>`${round(value).toLocaleString('pt-BR',{maximumFractionDigits:3})}${unit?' '+unit:''}`;
@@ -21,6 +21,17 @@ function setDefaultPeriod(period=BI.period){
 }
 setDefaultPeriod();
 
+async function loadOperationalIntelligence(force=false){
+  const key=[BI.from,BI.to,BI.profileId].join('|');
+  if(!force&&BI.operationalKey===key)return;
+  const [productionOrders,productionReceipts,productionColors]=await Promise.all([
+    rpc('list_production_orders',{p_from:BI.from||null,p_to:BI.to||null}),
+    rpc('list_finished_production_receipts',{p_from:BI.from||null,p_to:BI.to||null,p_worker_id:BI.profileId||null}),
+    rpc('list_finished_production_colors',{})
+  ]);
+  Object.assign(BI,{productionOrders,productionReceipts,productionColors,operationalKey:key});
+}
+
 async function loadIntelligence(force=false){
   if(BI.loading||BI.loaded&&!force)return;
   BI.loading=true;BI.error='';
@@ -35,6 +46,7 @@ async function loadIntelligence(force=false){
       restAll('improvement_idea_events?select=*&order=created_at.desc,id.desc')
     ]);
     Object.assign(BI,{items,suppliers,supplierProducts,orders,orderItems,ideas,ideaEvents,loaded:true});
+    await loadOperationalIntelligence(force);
   }catch(error){BI.error=error.message||'Não foi possível carregar a inteligência de consumo.'}
   finally{BI.loading=false}
 }
@@ -127,6 +139,40 @@ function collaboratorReport(rows=filteredRows()){
   }).sort((a,b)=>b.requestCount-a.requestCount||a.person.full_name.localeCompare(b.person.full_name));
 }
 
+const normalizedName=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+function productionPlanReport(){
+  const grouped=new Map(),validStatuses=new Set(['sent','viewed','acknowledged','acknowledged_external']);
+  const keyFor=(workerId,modelId,color)=>[workerId,modelId,normalizedName(color)].join('|');
+  BI.productionOrders.filter(row=>validStatuses.has(row.status)&&(!BI.profileId||row.worker_id===BI.profileId)).forEach(row=>{
+    const key=keyFor(row.worker_id,row.model_id,row.color_name),entry=grouped.get(key)||{workerId:row.worker_id,workerName:row.worker_name,modelId:row.model_id,modelName:row.model_name,color:row.color_name,planned:0,received:0,orders:new Set(),receipts:new Set(),dueDate:null};
+    entry.planned+=n(row.quantity);entry.orders.add(row.id);
+    if(!entry.dueDate||new Date(row.due_date)>new Date(entry.dueDate))entry.dueDate=row.due_date;
+    grouped.set(key,entry);
+  });
+  BI.productionReceipts.filter(row=>!BI.profileId||row.worker_id===BI.profileId).forEach(row=>{
+    const key=keyFor(row.worker_id,row.model_id,row.color),entry=grouped.get(key)||{workerId:row.worker_id,workerName:row.worker_name,modelId:row.model_id,modelName:row.model_name,color:row.color,planned:0,received:0,orders:new Set(),receipts:new Set(),dueDate:null};
+    entry.received+=n(row.quantity);entry.receipts.add(row.collection_id||row.id);grouped.set(key,entry);
+  });
+  return [...grouped.values()].map(entry=>{
+    const balance=entry.planned-entry.received;
+    const status=entry.planned===0&&entry.received>0?'unplanned':entry.received===0?'pending':entry.received<entry.planned?'partial':entry.received===entry.planned?'complete':'above';
+    return {...entry,balance,status,orderCount:entry.orders.size,receiptCount:entry.receipts.size};
+  }).sort((a,b)=>Math.max(b.balance,0)-Math.max(a.balance,0)||a.workerName.localeCompare(b.workerName)||a.modelName.localeCompare(b.modelName));
+}
+
+function dataQualityReport(){
+  const activeProducts=S.products.filter(product=>product.active&&managedProductScopes.includes(product.usage_scope||'production'));
+  const colorNames=new Set(BI.productionColors.filter(color=>color.active).map(color=>normalizedName(color.name)));
+  const issues=[
+    {kind:'photos',label:'Produtos ativos sem foto',detail:'Cadastre imagens para facilitar solicitações e separações.',count:activeProducts.filter(product=>!product.image_path).length,target:'products'},
+    {kind:'suppliers',label:'Produtos sem fornecedor',detail:'Vincule ao menos um fornecedor para melhorar o planejamento.',count:activeProducts.filter(product=>!BI.supplierProducts.some(link=>link.product_id===product.id)).length,target:'suppliers'},
+    {kind:'contacts',label:'Fornecedores sem contato',detail:'Informe telefone, e-mail ou site para agilizar a reposição.',count:BI.suppliers.filter(supplier=>supplier.active&&!supplier.phone&&!supplier.email&&!supplier.website).length,target:'suppliers'},
+    {kind:'colors',label:'Recebimentos com cor fora do padrão',detail:'Revise nomes antigos que não pertencem à paleta ativa.',count:BI.productionReceipts.filter(receipt=>!colorNames.has(normalizedName(receipt.color))).length,target:'production'},
+    {kind:'differences',label:'Divergências de contagem no período',detail:'Confira caixas cuja quantidade informada difere da oficial.',count:BI.productionReceipts.filter(receipt=>n(receipt.quantity_difference)!==0).length,target:'production'}
+  ];
+  return issues.sort((a,b)=>b.count-a.count||a.label.localeCompare(b.label));
+}
+
 function filterBar(){
   const scope=BI.tab==='ecommerce'?'ecommerce':BI.tab==='materials'?'production':null,products=S.products.filter(product=>productMatchesScope(product.usage_scope,scope));
   return `<section class="intel-filters card"><label>Período<select id="intelPeriod"><option value="week" ${BI.period==='week'?'selected':''}>Últimos 7 dias</option><option value="month" ${BI.period==='month'?'selected':''}>Mês atual</option><option value="year" ${BI.period==='year'?'selected':''}>Ano atual</option><option value="custom" ${BI.period==='custom'?'selected':''}>Personalizado</option></select></label><label>De<input id="intelFrom" type="date" value="${BI.from}"></label><label>Até<input id="intelTo" type="date" value="${BI.to}"></label><label>Colaboradora<select id="intelPerson"><option value="">Todas</option>${S.team.filter(person=>person.role!=='admin').map(person=>`<option value="${person.id}" ${BI.profileId===person.id?'selected':''}>${esc(person.full_name)}</option>`).join('')}</select></label><label>${scope==='ecommerce'?'Suprimento do e-commerce':'Material'}<select id="intelProduct"><option value="">Todos</option>${products.map(product=>`<option value="${product.id}" ${BI.productId===product.id?'selected':''}>${esc(product.name)}</option>`).join('')}</select></label><button class="outline compact-action" id="applyIntel">Aplicar filtros</button></section>`;
@@ -140,7 +186,18 @@ function overviewView(){
   const low=materials.filter(item=>item.available<=n(item.product.minimum_stock)).length,suggestions=materials.filter(item=>item.product.usage_scope!=='ecommerce'&&item.suggested>0),max=Math.max(...materials.map(item=>item.delivered),1);
   const alerts=[];
   materials.forEach(item=>{if(item.available<=n(item.product.minimum_stock))alerts.push(`<li class="critical"><b>${esc(item.product.name)}</b><span>Estoque disponível em ${qty(item.available,item.product.unit)}.</span></li>`);else if(item.coverageDays!==null&&item.coverageDays<30)alerts.push(`<li class="warning"><b>${esc(item.product.name)}</b><span>Cobertura estimada de ${item.coverageDays} dias.</span></li>`)});
-  return `<div class="intel-kpis"><article><small>SOLICITAÇÕES</small><b>${requestCount}</b><span>No período selecionado</span></article><article><small>ENTREGAS</small><b>${deliveredCount}</b><span>Concluídas no período</span></article><article><small>AJUSTES</small><b>${adjustments}</b><span>Itens alterados ou removidos</span></article><article><small>ALERTAS</small><b>${low}</b><span>Materiais no estoque mínimo</span></article></div><div class="intel-grid"><section class="card intel-section"><div class="card-head"><div><p class="eyebrow">CONSUMO REAL</p><h2>Matérias-primas mais enviadas</h2></div></div><div class="consumption-chart">${materials.filter(item=>item.delivered>0).slice(0,8).map(item=>`<div class="chart-row"><div><b>${esc(item.product.name)}</b><small>${qty(item.delivered,item.product.unit)}</small></div><i><span style="width:${Math.max(3,item.delivered/max*100)}%"></span></i></div>`).join('')||'<div class="empty">Ainda não há entregas concluídas no período.</div>'}</div></section><section class="card intel-section"><div class="card-head"><div><p class="eyebrow">ATENÇÃO</p><h2>Alertas de estoque</h2></div></div><ul class="intel-alerts">${alerts.slice(0,8).join('')||'<li class="ok"><b>Estoque equilibrado</b><span>Nenhum alerta para o período atual.</span></li>'}</ul></section></div><section class="card intel-section purchase-suggestion"><div class="card-head"><div><p class="eyebrow">PLANEJAMENTO</p><h2>Sugestões para próxima compra</h2></div><div class="actions"><button class="outline compact-action" id="exportIntel">Exportar Excel</button><button class="outline compact-action" id="printIntel">Salvar em PDF</button><button class="primary compact-action" id="newSuggestedPurchase">Criar pedido</button></div></div>${materialTable(suggestions,true)}</section>`;
+  return `<div class="intel-kpis"><article><small>SOLICITAÇÕES</small><b>${requestCount}</b><span>No período selecionado</span></article><article><small>ENTREGAS</small><b>${deliveredCount}</b><span>Concluídas no período</span></article><article><small>AJUSTES</small><b>${adjustments}</b><span>Itens alterados ou removidos</span></article><article><small>ALERTAS</small><b>${low}</b><span>Materiais no estoque mínimo</span></article></div><div class="intel-grid"><section class="card intel-section"><div class="card-head"><div><p class="eyebrow">CONSUMO REAL</p><h2>Matérias-primas mais enviadas</h2></div></div><div class="consumption-chart">${materials.filter(item=>item.delivered>0).slice(0,8).map(item=>`<div class="chart-row"><div><b>${esc(item.product.name)}</b><small>${qty(item.delivered,item.product.unit)}</small></div><i><span style="width:${Math.max(3,item.delivered/max*100)}%"></span></i></div>`).join('')||'<div class="empty">Ainda não há entregas concluídas no período.</div>'}</div></section><section class="card intel-section"><div class="card-head"><div><p class="eyebrow">ATENÇÃO</p><h2>Alertas de estoque</h2></div></div><ul class="intel-alerts">${alerts.slice(0,8).join('')||'<li class="ok"><b>Estoque equilibrado</b><span>Nenhum alerta para o período atual.</span></li>'}</ul></section></div>${productionPlanView()}${dataQualityView()}<section class="card intel-section purchase-suggestion"><div class="card-head"><div><p class="eyebrow">PLANEJAMENTO</p><h2>Sugestões para próxima compra</h2><span>Recomendação calculada; o estoque só muda após aprovação e recebimento do ADM.</span></div><div class="actions"><button class="outline compact-action" id="exportIntel">Exportar Excel</button><button class="outline compact-action" id="printIntel">Salvar em PDF</button><button class="primary compact-action" id="newSuggestedPurchase">Criar pedido</button></div></div>${materialTable(suggestions,true)}</section>`;
+}
+
+function productionPlanView(){
+  const rows=productionPlanReport(),planned=rows.reduce((sum,row)=>sum+row.planned,0),received=rows.reduce((sum,row)=>sum+row.received,0),pending=rows.reduce((sum,row)=>sum+Math.max(row.balance,0),0),complete=rows.filter(row=>['complete','above'].includes(row.status)).length;
+  const labels={pending:'Pendente',partial:'Recebimento parcial',complete:'Completo',above:'Acima do planejado',unplanned:'Recebido sem ordem no período'};
+  return `<section class="card intel-section production-plan"><div class="card-head"><div><p class="eyebrow">PLANEJADO × RECEBIDO</p><h2>Acompanhamento da produção</h2><span>Comparativo por colaboradora, modelo e cor dentro do período selecionado. Não interfere no pagamento.</span></div><div class="actions"><button class="outline compact-action" id="exportProductionPlan">Exportar Excel</button><button class="ghost compact-action" id="openProductionOrders">Ver ordens</button></div></div><div class="production-plan-summary"><div><small>PLANEJADO</small><b>${planned.toLocaleString('pt-BR')} un.</b></div><div><small>RECEBIDO</small><b>${received.toLocaleString('pt-BR')} un.</b></div><div><small>SALDO PENDENTE</small><b>${pending.toLocaleString('pt-BR')} un.</b></div><div><small>LINHAS COMPLETAS</small><b>${complete} de ${rows.length}</b></div></div><div class="table-wrap"><table class="intel-table"><thead><tr><th>Colaboradora</th><th>Modelo e cor</th><th>Planejado</th><th>Recebido</th><th>Saldo</th><th>Situação</th><th>Prazo</th></tr></thead><tbody>${rows.map(row=>`<tr><td><b>${esc(row.workerName)}</b><small>${row.orderCount} ${row.orderCount===1?'ordem':'ordens'} · ${row.receiptCount} ${row.receiptCount===1?'coleta':'coletas'}</small></td><td><b>${esc(row.modelName)}</b><small>${esc(row.color)}</small></td><td>${row.planned.toLocaleString('pt-BR')} un.</td><td>${row.received.toLocaleString('pt-BR')} un.</td><td><strong class="plan-balance-${row.status}">${Math.abs(row.balance).toLocaleString('pt-BR')} un.${row.balance<0?' acima':''}</strong></td><td><span class="badge plan-status-${row.status}">${labels[row.status]}</span></td><td>${row.dueDate?new Date(`${row.dueDate}T12:00:00`).toLocaleDateString('pt-BR'):'—'}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">Nenhuma ordem ou coleta encontrada no período.</td></tr>'}</tbody></table></div></section>`;
+}
+
+function dataQualityView(){
+  const issues=dataQualityReport(),total=issues.reduce((sum,item)=>sum+item.count,0);
+  return `<section class="card intel-section data-quality"><div class="card-head"><div><p class="eyebrow">QUALIDADE DOS DADOS</p><h2>${total?`${total} pontos para revisar`:'Dados essenciais em ordem'}</h2><span>Estes avisos não alteram registros automaticamente; servem como checklist para manter os relatórios confiáveis.</span></div></div><div class="data-quality-grid">${issues.map(issue=>`<button type="button" class="data-quality-item ${issue.count?'has-issue':'is-ok'}" data-quality-target="${issue.target}"><i>${issue.count?'!':'✓'}</i><span><b>${esc(issue.label)}</b><small>${esc(issue.detail)}</small></span><strong>${issue.count}</strong></button>`).join('')}</div></section>`;
 }
 
 function materialTable(materials=materialReport(),compact=false){
@@ -307,7 +364,7 @@ function bindIntelligence(){
   document.querySelectorAll('[data-prepare-idea]').forEach(button=>button.onclick=()=>prepareIdeaModal(BI.ideas.find(idea=>idea.id===button.dataset.prepareIdea)));
   const ideaSearch=document.querySelector('#ideaSearch'),ideaStatus=document.querySelector('#ideaStatus');
   if(ideaSearch){ideaSearch.oninput=filterIdeaCards;ideaSearch.onsearch=filterIdeaCards;ideaSearch.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();filterIdeaCards()}};ideaStatus.onchange=filterIdeaCards;filterIdeaCards()}
-  const apply=document.querySelector('#applyIntel');if(apply)apply.onclick=()=>{const period=document.querySelector('#intelPeriod').value;if(period!=='custom')setDefaultPeriod(period);else{BI.period='custom';BI.from=document.querySelector('#intelFrom').value;BI.to=document.querySelector('#intelTo').value}BI.profileId=document.querySelector('#intelPerson').value;BI.productId=document.querySelector('#intelProduct').value;rerender()};
+  const apply=document.querySelector('#applyIntel');if(apply)apply.onclick=async()=>{const period=document.querySelector('#intelPeriod').value;if(period!=='custom')setDefaultPeriod(period);else{BI.period='custom';BI.from=document.querySelector('#intelFrom').value;BI.to=document.querySelector('#intelTo').value}BI.profileId=document.querySelector('#intelPerson').value;BI.productId=document.querySelector('#intelProduct').value;apply.disabled=true;try{await loadOperationalIntelligence(true);rerender()}catch(error){alert(error.message);apply.disabled=false}};
   document.querySelectorAll('[data-person-detail]').forEach(button=>button.onclick=()=>{BI.profileId=button.dataset.personDetail;BI.tab='overview';rerender()});
   document.querySelectorAll('[data-plan-product]').forEach(button=>button.onclick=()=>productPlanningModal(S.products.find(product=>product.id===button.dataset.planProduct)));
   document.querySelectorAll('[data-edit-supplier]').forEach(button=>button.onclick=()=>supplierModal(BI.suppliers.find(item=>item.id===button.dataset.editSupplier)));
@@ -321,7 +378,10 @@ function bindIntelligence(){
   const newSupplierProduct=document.querySelector('#newSupplierProduct');if(newSupplierProduct)newSupplierProduct.onclick=()=>supplierProductModal();
   const newPurchase=document.querySelector('#newPurchase');if(newPurchase)newPurchase.onclick=()=>purchaseModal();
   const suggested=document.querySelector('#newSuggestedPurchase');if(suggested)suggested.onclick=()=>purchaseModal(materialReport(filteredRows()).filter(item=>item.product.usage_scope!=='ecommerce'&&item.suggested>0));
+  const openOrders=document.querySelector('#openProductionOrders');if(openOrders)openOrders.onclick=()=>{S.view='production-orders';renderApp()};
+  document.querySelectorAll('[data-quality-target]').forEach(button=>button.onclick=()=>{const target=button.dataset.qualityTarget;if(target==='suppliers'){BI.tab='suppliers';rerender();return}S.view=target;renderApp()});
   ['exportIntel','exportMaterials'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>exportMaterials()});
+  const exportProduction=document.querySelector('#exportProductionPlan');if(exportProduction)exportProduction.onclick=()=>exportProductionPlan();
   const exportPeople=document.querySelector('#exportPeople');if(exportPeople)exportPeople.onclick=()=>exportCollaborators();
   ['printIntel','printMaterials','printPeople'].forEach(id=>{const button=document.querySelector('#'+id);if(button)button.onclick=()=>window.HarmonyPrint.printCurrentDocument('intelligence-printing')});
 }
@@ -364,6 +424,7 @@ async function cancelPurchase(id){if(!confirm('Cancelar este pedido de compra?')
 function downloadCsv(name,headers,rows){const clean=value=>`"${String(value??'').replaceAll('"','""')}"`,content='\ufeff'+[headers,...rows].map(row=>row.map(clean).join(';')).join('\r\n'),url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'})),link=document.createElement('a');link.href=url;link.download=name;link.hidden=true;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 function exportMaterials(){const scope=BI.tab==='ecommerce'?'ecommerce':'production',rows=materialReport(filteredRows(),scope);downloadCsv(`harmony-${scope}-${BI.from}-${BI.to}.csv`,['Material','Unidade','Solicitado','Enviado','Disponível','Média mensal','Previsão 30 dias','Compra sugerida','Custo estimado'],rows.map(item=>[item.product.name,item.product.unit,round(item.requested),round(item.delivered),item.available,item.monthly,item.forecast30,item.suggested,item.estimatedCost.toFixed(2)]))}
 function exportCollaborators(){const rows=collaboratorReport();downloadCsv(`harmony-colaboradoras-${BI.from}-${BI.to}.csv`,['Colaboradora','Solicitações','Entregas','Itens','Material mais utilizado','Última solicitação'],rows.map(item=>[item.person.full_name,item.requestCount,item.deliveryCount,item.items,item.topProduct,item.last?new Date(item.last).toLocaleDateString('pt-BR'):'']))}
+function exportProductionPlan(){const rows=productionPlanReport();downloadCsv(`harmony-planejado-recebido-${BI.from}-${BI.to}.csv`,['Colaboradora','Modelo','Cor','Planejado','Recebido','Saldo','Situação','Prazo'],rows.map(item=>[item.workerName,item.modelName,item.color,item.planned,item.received,item.balance,item.status,item.dueDate||'']))}
 
 function ensureIntelligenceNav(){
   if(!S?.profile||S.profile.role!=='admin')return;
@@ -376,5 +437,5 @@ function ensureIntelligenceNav(){
 
 new MutationObserver(ensureIntelligenceNav).observe(document.body,{childList:true,subtree:true});
 ensureIntelligenceNav();
-window.HarmonyIntelligence=Object.freeze({state:BI,materialReport,collaboratorReport,filteredRows,setDefaultPeriod,productSupplyContext,savePreferredSupplier,linksForSupplier,buildIdeaPrompt});
+window.HarmonyIntelligence=Object.freeze({state:BI,materialReport,collaboratorReport,productionPlanReport,dataQualityReport,filteredRows,setDefaultPeriod,productSupplyContext,savePreferredSupplier,linksForSupplier,buildIdeaPrompt});
 })();

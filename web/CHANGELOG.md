@@ -5,6 +5,18 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.55] - 08/08/2026
+
+### Inteligência operacional usando dados existentes
+
+- A Inteligência passa a comparar produção planejada e oficialmente recebida por colaboradora, modelo e cor.
+- O comparativo identifica saldo pendente, recebimento parcial, conclusão, produção acima do planejado e recebimento sem ordem no período.
+- O cálculo é exclusivamente gerencial e não altera pagamentos, estoque, ordens ou recebimentos.
+- Uma nova seção de qualidade aponta produtos sem foto ou fornecedor, fornecedores sem contato, cores fora do padrão e divergências de contagem.
+- Cada indicador abre o módulo responsável pela correção, sem criar um novo menu principal.
+- O relatório planejado versus recebido pode ser exportado em CSV compatível com Excel.
+- As sugestões de compra existentes foram preservadas e agora explicam que nenhuma alteração de estoque ocorre sem aprovação e recebimento do ADM.
+
 ## [v25.54] - 08/08/2026
 
 ### Proteção reforçada para a administração
