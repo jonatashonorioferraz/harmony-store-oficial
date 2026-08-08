@@ -26,13 +26,13 @@ async function loadIntelligence(force=false){
   BI.loading=true;BI.error='';
   try{
     const [items,suppliers,supplierProducts,orders,orderItems,ideas,ideaEvents]=await Promise.all([
-      rest('request_items?select=*'),
-      rest('suppliers?select=*&order=name.asc'),
-      rest('supplier_products?select=*&order=created_at.desc'),
-      rest('purchase_orders?select=*&order=created_at.desc'),
-      rest('purchase_order_items?select=*'),
-      rest('improvement_ideas?select=*&order=updated_at.desc'),
-      rest('improvement_idea_events?select=*&order=created_at.desc')
+      restAll('request_items?select=*&order=id.asc'),
+      restAll('suppliers?select=*&order=name.asc,id.asc'),
+      restAll('supplier_products?select=*&order=created_at.desc,id.desc'),
+      restAll('purchase_orders?select=*&order=created_at.desc,id.desc'),
+      restAll('purchase_order_items?select=*&order=id.asc'),
+      restAll('improvement_ideas?select=*&order=updated_at.desc,id.desc'),
+      restAll('improvement_idea_events?select=*&order=created_at.desc,id.desc')
     ]);
     Object.assign(BI,{items,suppliers,supplierProducts,orders,orderItems,ideas,ideaEvents,loaded:true});
   }catch(error){BI.error=error.message||'Não foi possível carregar a inteligência de consumo.'}

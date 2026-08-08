@@ -30,12 +30,12 @@ async function loadInternal(force=false){
   IS.loading=true;IS.error='';
   try{
     const calls=[
-      rest('internal_supply_requests?select=*&order=created_at.desc'),
-      rest('internal_supply_request_items?select=*'),
-      rest('internal_purchase_receipts?select=*&order=purchased_at.desc'),
-      rest('internal_purchase_receipt_items?select=*')
+      restAll('internal_supply_requests?select=*&order=created_at.desc,id.desc'),
+      restAll('internal_supply_request_items?select=*&order=id.asc'),
+      restAll('internal_purchase_receipts?select=*&order=purchased_at.desc,id.desc'),
+      restAll('internal_purchase_receipt_items?select=*&order=id.asc')
     ];
-    if(isAdmin())calls.push(rest('suppliers?select=*&order=name.asc'),rest('internal_receipt_ai_runs?select=*&order=created_at.desc&limit=500'));
+    if(isAdmin())calls.push(restAll('suppliers?select=*&order=name.asc,id.asc'),rest('internal_receipt_ai_runs?select=*&order=created_at.desc&limit=500'));
     const [requests,requestItemsData,receipts,receiptItemsData,suppliers=[],aiRuns=[]]=await Promise.all(calls);
     Object.assign(IS,{products:S.products.filter(product=>product.usage_scope==='internal'),requests,requestItems:requestItemsData,receipts,receiptItems:receiptItemsData,suppliers,aiRuns,loaded:true});
   }catch(error){IS.error=error.message||'Não foi possível carregar os suprimentos internos.'}
