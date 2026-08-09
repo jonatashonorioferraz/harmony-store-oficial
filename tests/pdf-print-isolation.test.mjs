@@ -4,12 +4,14 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const root=new URL('../',import.meta.url);
-const [app,orders,receipts,intelligence,supplies,orderCss,receiptCss,intelligenceCss,supplyCss,isolationCss,index,worker]=await Promise.all([
+const [app,orders,receipts,intelligence,supplies,inventory,inventoryCss,orderCss,receiptCss,intelligenceCss,supplyCss,isolationCss,index,worker]=await Promise.all([
   readFile(new URL('app.js',root),'utf8'),
   readFile(new URL('production-orders.js',root),'utf8'),
   readFile(new URL('production-receipts.js',root),'utf8'),
   readFile(new URL('intelligence.js',root),'utf8'),
   readFile(new URL('internal-supplies.js',root),'utf8'),
+  readFile(new URL('production-inventory.js',root),'utf8'),
+  readFile(new URL('production-inventory.css',root),'utf8'),
   readFile(new URL('production-orders.css',root),'utf8'),
   readFile(new URL('production-receipts.css',root),'utf8'),
   readFile(new URL('intelligence.css',root),'utf8'),
@@ -20,7 +22,7 @@ const [app,orders,receipts,intelligence,supplies,orderCss,receiptCss,intelligenc
 ]);
 
 test('every PDF flow activates an exclusive print mode',()=>{
-  for(const mode of ['request-list-printing','production-order-printing','production-receipt-printing','intelligence-printing','internal-supplies-printing']){
+  for(const mode of ['request-list-printing','production-order-printing','production-receipt-printing','intelligence-printing','internal-supplies-printing','production-inventory-printing']){
     assert.match(app,new RegExp(`'${mode}'`));
   }
   assert.match(app,/printCurrentDocument\('request-list-printing'/);
@@ -28,6 +30,7 @@ test('every PDF flow activates an exclusive print mode',()=>{
   assert.match(receipts,/printCurrentDocument\('production-receipt-printing'/);
   assert.match(intelligence,/printCurrentDocument\('intelligence-printing'\)/);
   assert.match(supplies,/printCurrentDocument\('internal-supplies-printing'\)/);
+  assert.match(inventory,/printCurrentDocument\('production-inventory-printing'/);
 });
 
 test('print mode is applied before printing and removed after the dialog closes',()=>{
@@ -71,11 +74,13 @@ test('module print styles cannot hide another PDF document',()=>{
   assert.match(isolationCss,/body > \*:not\(#requestListPrintRoot\)/);
   assert.match(isolationCss,/body > #requestListPrintRoot/);
   assert.match(isolationCss,/display: block !important/);
+  assert.match(inventoryCss,/body>\*:not\(#productionInventoryPrintRoot\)/);
+  assert.match(inventoryCss,/#productionInventoryPrintRoot/);
 });
 
 test('the isolation stylesheet loads last and remains available offline',()=>{
   assert.match(index,/pdf-print-isolation\.css\?v=25\.49/);
   assert.ok(index.lastIndexOf('pdf-print-isolation.css')>index.lastIndexOf('internal-supplies.css'));
   assert.match(worker,/pdf-print-isolation\.css\?v=25\.49/);
-  assert.match(worker,/harmony-store-v25-56/);
+  assert.match(worker,/harmony-store-v25-57/);
 });
