@@ -15,7 +15,9 @@ async function loadHomeFilters(){
       {id:'current-pending',created_at:'2026-08-08T12:00:00-03:00',status:'pending'},
       {id:'current-delivered',created_at:'2026-08-03T08:00:00-03:00',status:'delivered'},
       {id:'current-cancelled',created_at:'2026-08-07T08:00:00-03:00',status:'cancelled'},
-      {id:'previous',created_at:'2026-08-02T23:00:00-03:00',status:'pending'}
+      // Meio-dia evita que o mesmo domingo atravesse para segunda-feira em ambientes UTC,
+      // preservando o objetivo do teste sem depender do fuso do executor.
+      {id:'previous',created_at:'2026-08-02T12:00:00-03:00',status:'pending'}
     ]},
     Date,
     console

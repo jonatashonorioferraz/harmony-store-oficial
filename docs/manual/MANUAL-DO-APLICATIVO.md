@@ -52,6 +52,39 @@ O pagamento é proporcional: `quantidade oficial × R$ 2,50 ÷ 100`. Assim, qual
 
 Colaboradoras não veem valores ainda em conferência em **Minha produção**. Depois do fechamento, consultam o pagamento em **Meus pagamentos**.
 
+## Inventário de Produção
+
+O **Inventário de Produção** controla exclusivamente mini sabonetes acabados que ficam no estoque interno. Ele reutiliza os modelos, as fotos e as cores já cadastrados no módulo de Produção; não cadastre novamente esses itens e não use o catálogo de matérias-primas ou de suprimentos internos.
+
+O acesso é permitido somente a **ADM principal**, **ADM normal** e **Recebimento**. Colaboradoras de produção não visualizam o menu, o botão da tela inicial, saldos, lotes ou relatórios.
+
+### Registrar uma entrada
+
+1. Abra **Inventário de Produção** pelo menu ou pelo botão de acesso rápido da tela inicial.
+2. Toque em **Registrar entrada**.
+3. Selecione o modelo, a cor e a colaboradora de produção já cadastrados.
+4. Informe a quantidade inteira, a data de entrada e, quando houver, a identificação da caixa.
+5. Revise a foto e salve.
+
+O registro cria um lote auditável. A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
+
+### Registrar saída e preservar a origem
+
+Abra o modelo e a cor desejados. A tela detalhada mostra quanto cada colaboradora produziu e todas as caixas vinculadas. Escolha o lote que realmente será retirado, informe a quantidade e o motivo. Uma saída parcial mantém o restante no mesmo lote; um lote zerado continua no histórico como **Esgotado**.
+
+### Corrigir uma conferência
+
+Use **Ajustar contagem** somente após contar fisicamente a caixa. Informe o saldo encontrado e o motivo obrigatório. O sistema cria uma movimentação positiva ou negativa, registra data e responsável e nunca apaga o saldo anterior. Para corrigir apenas colaboradora, data, caixa ou observação, use **Editar dados**.
+
+### Consultas e relatórios
+
+- **Saldo atual:** posição física por modelo e cor.
+- **Movimentações:** entradas, saídas e ajustes por período.
+- **Por colaboradora:** modelos, cores e quantidades produzidas, sem valores financeiros.
+- **PDF:** relatório isolado e ajustado para A4 em computador, celular e tablet.
+
+O Inventário não calcula pagamentos, não modifica o recebimento oficial da produção e não movimenta matérias-primas. Uma integração automática com recebimentos poderá ser adicionada futuramente sem trocar o modelo de dados atual.
+
 ## Relatórios e inteligência
 
 O ADM filtra dados por colaboradora, produto/modelo, cor, semana, mês ou ano. Relatórios de consumo usam materiais efetivamente entregues, e relatórios de produção usam quantidades oficiais. Os demonstrativos semanais podem ser gerados em PDF para conferência e pagamento.

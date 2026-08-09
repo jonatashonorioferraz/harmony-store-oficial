@@ -11,7 +11,7 @@ async function storageFetch(path,opt={}){await ensureSession();let request=()=>f
 async function privateProfilePhotoUrl(profile){const path=profile?.avatar_path;if(!path)return'';if(profilePhotoCache.has(path))return profilePhotoCache.get(path);const response=await storageFetch('/storage/v1/object/authenticated/profile-images/'+encodedStoragePath(path));if(!response.ok)throw Error('Não foi possível carregar a foto de perfil.');const url=URL.createObjectURL(await response.blob());profilePhotoCache.set(path,url);return url}
 function releaseProfilePhoto(path){const url=profilePhotoCache.get(path);if(url)URL.revokeObjectURL(url);profilePhotoCache.delete(path)}
 function releaseAllProfilePhotos(){for(const url of profilePhotoCache.values())URL.revokeObjectURL(url);profilePhotoCache.clear()}
-const harmonyPrintModes=['request-list-printing','production-order-printing','production-receipt-printing','intelligence-printing','internal-supplies-printing'];
+const harmonyPrintModes=['request-list-printing','production-order-printing','production-receipt-printing','intelligence-printing','internal-supplies-printing','production-inventory-printing'];
 async function printCurrentDocument(mode,cleanup){
   const root=document.documentElement;
   harmonyPrintModes.forEach(name=>root.classList.remove(name));

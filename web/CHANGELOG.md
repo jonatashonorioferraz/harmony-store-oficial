@@ -5,6 +5,21 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.57] - 09/08/2026
+
+### Inventário de Produção rastreável
+
+- Novo módulo interno para controlar o saldo de mini sabonetes acabados por modelo e cor.
+- O catálogo existente de modelos, fotos e cores é reutilizado, sem criar cadastros duplicados.
+- Cada entrada registra colaboradora de produção, data, quantidade, caixa, observação e responsável pelo lançamento.
+- Saídas são vinculadas ao lote exato, preservando a origem mesmo quando apenas parte da caixa é retirada.
+- Ajustes de contagem exigem motivo e geram uma movimentação auditada; saldos anteriores nunca são apagados.
+- A consulta por colaboradora apresenta modelos, cores, entradas e saldo identificado sem expor valores financeiros.
+- Relatórios de saldo, movimentações, detalhe do lote e produção por colaboradora podem ser gerados em PDF no computador, tablet e celular.
+- O acesso é restrito a ADMs e Recebimento; colaboradoras de produção não veem menu, atalho, dados ou relatórios.
+- A Home recebeu um único botão compacto **Inventário de Produção**, com brilho leve, respeito à preferência de movimento reduzido e acesso em um toque.
+- O módulo não altera pagamentos, recebimentos oficiais, matérias-primas, suprimentos ou seus relatórios.
+
 ## [v25.56] - 08/08/2026
 
 ### Home mais compacta e organizada
