@@ -3,14 +3,16 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,js,css,index,worker,app,help,manual,technical,backup,recovery,pkg]=await Promise.all([
+const [baseSql,boxSql,js,css,index,worker,app,help,manual,technical,backup,recovery,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260809103000_production_inventory.sql',root),'utf8'),
+  readFile(new URL('supabase/migrations/20260809193000_production_inventory_unique_boxes.sql',root),'utf8'),
   readFile(new URL('production-inventory.js',root),'utf8'),readFile(new URL('production-inventory.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),readFile(new URL('service-worker.js',root),'utf8'),readFile(new URL('app.js',root),'utf8'),
   readFile(new URL('help-center.js',root),'utf8'),readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
   readFile(new URL('docs/technical/INVENTARIO-DE-PRODUCAO-V25.57.md',root),'utf8'),readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
   readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),readFile(new URL('package.json',root),'utf8'),
 ]);
+const sql=`${baseSql}\n${boxSql}`;
 
 test('inventory reuses the official finished-model, color and collaborator catalogs',()=>{
   assert.match(sql,/references public\.finished_product_models\(id\)/);assert.match(sql,/references public\.finished_production_colors\(id\)/);assert.match(sql,/p\.role='collaborator'/);
@@ -42,7 +44,7 @@ test('inventory remains isolated from payment and raw-material stock rules',()=>
 
 test('balance is alphabetical and detail exposes collaborator, date, box and partial lot balance',()=>{
   assert.match(sql,/order by lower\(m\.name\),c\.sort_order,lower\(c\.name\)/);assert.match(js,/Quantidade identificada por colaboradora/);
-  assert.match(js,/Produzido por/);assert.match(js,/box_reference/);assert.match(js,/entry_on/);assert.match(js,/Registrar saída/);assert.match(js,/Saldo do lote/);
+  assert.match(js,/Produzido por/);assert.match(js,/box_reference/);assert.match(js,/entry_on/);assert.match(js,/Registrar saída/);assert.match(js,/Saldo da caixa/);
 });
 
 test('home shortcut is one compact animated inventory action and honors reduced motion',()=>{
@@ -61,8 +63,8 @@ test('layout covers desktop, tablet and mobile breakpoints',()=>{
 });
 
 test('assets, offline cache, backup, recovery and documentation are complete',()=>{
-  assert.match(index,/production-inventory\.css\?v=25\.57/);assert.match(index,/production-inventory\.js\?v=25\.57/);
-  assert.match(worker,/production-inventory\.css\?v=25\.57/);assert.match(worker,/production-inventory\.js\?v=25\.57/);assert.match(worker,/harmony-store-v25-57/);
+  assert.match(index,/production-inventory\.css\?v=25\.58/);assert.match(index,/production-inventory\.js\?v=25\.58/);
+  assert.match(worker,/production-inventory\.css\?v=25\.58/);assert.match(worker,/production-inventory\.js\?v=25\.58/);assert.match(worker,/harmony-store-v25-58/);
   for(const source of [backup,recovery]){assert.match(source,/'production_inventory_entries'/);assert.match(source,/'production_inventory_movements'/)}
-  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.57.0');
+  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.58.0');
 });

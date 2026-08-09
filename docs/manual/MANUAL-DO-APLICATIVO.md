@@ -58,23 +58,26 @@ O **Inventário de Produção** controla exclusivamente mini sabonetes acabados 
 
 O acesso é permitido somente a **ADM principal**, **ADM normal** e **Recebimento**. Colaboradoras de produção não visualizam o menu, o botão da tela inicial, saldos, lotes ou relatórios.
 
-### Registrar uma entrada
+### Registrar uma nova caixa
 
 1. Abra **Inventário de Produção** pelo menu ou pelo botão de acesso rápido da tela inicial.
-2. Toque em **Registrar entrada**.
-3. Selecione o modelo, a cor e a colaboradora de produção já cadastrados.
-4. Informe a quantidade inteira, a data de entrada e, quando houver, a identificação da caixa.
-5. Revise a foto e salve.
+2. Toque em **Registrar nova caixa**.
+3. Toque em **Gerar código**. O sistema reserva automaticamente um identificador no padrão `CX-000001`.
+4. Selecione o modelo, a cor e a colaboradora de produção já cadastrados.
+5. Informe a quantidade inteira, a data de entrada e, se desejar, a localização física, como **Prateleira A**.
+6. Revise a foto, o código e salve.
 
-O registro cria um lote auditável. A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
+Cada cadastro representa uma única caixa física. O código é exclusivo e permanente: não pode ser repetido, editado ou reutilizado, mesmo depois que o saldo chegar a zero. Se um código for gerado e o cadastro for cancelado, ele também não volta à fila. Isso preserva a rastreabilidade e evita localizar duas caixas diferentes pelo mesmo número.
+
+A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
 
 ### Registrar saída e preservar a origem
 
-Abra o modelo e a cor desejados. A tela detalhada mostra quanto cada colaboradora produziu e todas as caixas vinculadas. Escolha o lote que realmente será retirado, informe a quantidade e o motivo. Uma saída parcial mantém o restante no mesmo lote; um lote zerado continua no histórico como **Esgotado**.
+Abra o modelo e a cor desejados. A tela detalhada mostra quanto cada colaboradora produziu e todas as caixas vinculadas. Escolha o código da caixa que realmente será retirado, informe a quantidade e o motivo. Uma saída parcial mantém o restante na mesma caixa; uma caixa zerada continua no histórico como **Esvaziada**.
 
 ### Corrigir uma conferência
 
-Use **Ajustar contagem** somente após contar fisicamente a caixa. Informe o saldo encontrado e o motivo obrigatório. O sistema cria uma movimentação positiva ou negativa, registra data e responsável e nunca apaga o saldo anterior. Para corrigir apenas colaboradora, data, caixa ou observação, use **Editar dados**.
+Use **Ajustar contagem** somente após contar fisicamente a caixa. Informe o saldo encontrado e o motivo obrigatório. O sistema cria uma movimentação positiva ou negativa, registra data e responsável e nunca apaga o saldo anterior. Para corrigir apenas colaboradora, data, localização física ou observação, use **Editar dados**. O código permanente não é editável.
 
 ### Consultas e relatórios
 

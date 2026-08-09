@@ -5,6 +5,19 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.58] - 09/08/2026
+
+### Código único e permanente por caixa
+
+- Cada entrada do Inventário de Produção passa a representar obrigatoriamente uma nova caixa física.
+- O botão **Gerar código** cria identificadores sequenciais no padrão `CX-000001`.
+- O banco bloqueia códigos vazios, negativos, duplicados e qualquer tentativa posterior de alteração.
+- Um código gerado nunca é reutilizado, inclusive quando o cadastro é cancelado ou a caixa fica sem saldo.
+- Caixas esvaziadas permanecem no histórico, vinculadas à colaboradora, ao modelo, à cor, à data e às movimentações realizadas.
+- A localização física é um dado separado e editável; o código de rastreabilidade é permanente.
+- Telas, relatórios em PDF, ajuda rápida, manual, backup e recuperação foram atualizados para preservar o novo identificador.
+- A mudança é aditiva e mantém compatibilidade com registros e versões anteriores do aplicativo.
+
 ## [v25.57] - 09/08/2026
 
 ### Inventário de Produção rastreável
