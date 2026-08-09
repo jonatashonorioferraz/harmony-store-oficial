@@ -3,16 +3,17 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [baseSql,boxSql,js,css,index,worker,app,help,manual,technical,backup,recovery,pkg]=await Promise.all([
+const [baseSql,boxSql,transferSql,js,css,index,worker,app,help,manual,technical,backup,recovery,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260809103000_production_inventory.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260809193000_production_inventory_unique_boxes.sql',root),'utf8'),
+  readFile(new URL('supabase/migrations/20260809223000_full_box_transfer_to_ecommerce.sql',root),'utf8'),
   readFile(new URL('production-inventory.js',root),'utf8'),readFile(new URL('production-inventory.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),readFile(new URL('service-worker.js',root),'utf8'),readFile(new URL('app.js',root),'utf8'),
   readFile(new URL('help-center.js',root),'utf8'),readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
   readFile(new URL('docs/technical/INVENTARIO-DE-PRODUCAO-V25.57.md',root),'utf8'),readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
   readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),readFile(new URL('package.json',root),'utf8'),
 ]);
-const sql=`${baseSql}\n${boxSql}`;
+const sql=`${baseSql}\n${boxSql}\n${transferSql}`;
 
 test('inventory reuses the official finished-model, color and collaborator catalogs',()=>{
   assert.match(sql,/references public\.finished_product_models\(id\)/);assert.match(sql,/references public\.finished_production_colors\(id\)/);assert.match(sql,/p\.role='collaborator'/);
@@ -28,11 +29,11 @@ test('database and UI access are limited to active admin and receiver profiles',
   assert.match(help,/id:'production-inventory',roles:\['receiver','admin'\]/);assert.doesNotMatch(help,/id:'production-inventory',roles:\[[^\]]*collaborator/);
 });
 
-test('lot movements preserve provenance and block inconsistent withdrawals',()=>{
+test('box movements preserve provenance and block partial withdrawals',()=>{
   assert.match(sql,/original_quantity bigint not null/);assert.match(sql,/current_quantity bigint not null/);assert.match(sql,/for update/);
-  assert.match(sql,/p_quantity>v_entry\.current_quantity/);assert.match(sql,/balance_before,balance_after/);
+  assert.match(sql,/coalesce\(p_quantity,0\)<>v_entry\.current_quantity/);assert.match(sql,/balance_before,balance_after/);
   assert.match(sql,/movement_type in \('entry','exit','adjustment_in','adjustment_out'\)/);
-  assert.match(sql,/production_inventory\.entry_created/);assert.match(sql,/production_inventory\.stock_withdrawn/);assert.match(sql,/production_inventory\.stock_adjusted/);
+  assert.match(sql,/production_inventory\.entry_created/);assert.match(sql,/production_inventory\.box_transferred_to_ecommerce/);assert.match(sql,/production_inventory\.stock_adjusted/);
   assert.doesNotMatch(sql,/delete from public\.production_inventory_(entries|movements)/);
 });
 
@@ -42,9 +43,9 @@ test('inventory remains isolated from payment and raw-material stock rules',()=>
   assert.doesNotMatch(js,/rate_per_100|total_amount/);assert.match(manual,/não calcula pagamentos/);assert.match(technical,/não consulta nem altera `production_weekly_closings`/);
 });
 
-test('balance is alphabetical and detail exposes collaborator, date, box and partial lot balance',()=>{
+test('balance is alphabetical and detail exposes collaborator, date, box and full-box transfer',()=>{
   assert.match(sql,/order by lower\(m\.name\),c\.sort_order,lower\(c\.name\)/);assert.match(js,/Quantidade identificada por colaboradora/);
-  assert.match(js,/Produzido por/);assert.match(js,/box_reference/);assert.match(js,/entry_on/);assert.match(js,/Registrar saída/);assert.match(js,/Saldo da caixa/);
+  assert.match(js,/Produzido por/);assert.match(js,/box_reference/);assert.match(js,/entry_on/);assert.match(js,/Transferir caixa completa/);assert.match(js,/Saldo da caixa/);
 });
 
 test('home shortcut is one compact animated inventory action and honors reduced motion',()=>{
@@ -63,8 +64,8 @@ test('layout covers desktop, tablet and mobile breakpoints',()=>{
 });
 
 test('assets, offline cache, backup, recovery and documentation are complete',()=>{
-  assert.match(index,/production-inventory\.css\?v=25\.58/);assert.match(index,/production-inventory\.js\?v=25\.58/);
-  assert.match(worker,/production-inventory\.css\?v=25\.58/);assert.match(worker,/production-inventory\.js\?v=25\.58/);assert.match(worker,/harmony-store-v25-58/);
+  assert.match(index,/production-inventory\.css\?v=25\.59/);assert.match(index,/production-inventory\.js\?v=25\.59/);
+  assert.match(worker,/production-inventory\.css\?v=25\.59/);assert.match(worker,/production-inventory\.js\?v=25\.59/);assert.match(worker,/harmony-store-v25-59/);
   for(const source of [backup,recovery]){assert.match(source,/'production_inventory_entries'/);assert.match(source,/'production_inventory_movements'/)}
-  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.58.0');
+  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.59.0');
 });

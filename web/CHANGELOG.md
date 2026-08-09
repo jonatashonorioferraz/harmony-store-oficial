@@ -5,6 +5,18 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.59] - 09/08/2026
+
+### Transferência integral da caixa para o e-commerce
+
+- A retirada do Inventário de Produção passa a ser sempre da caixa completa, sem digitação de quantidade.
+- A confirmação mostra código permanente, saldo integral, data e destino **Estoque do e-commerce**.
+- O Supabase bloqueia retiradas parciais, inclusive por clientes antigos ou chamadas manipuladas.
+- A transferência zera o saldo e registra data, horário, usuário, destino e quantidade movimentada.
+- A caixa permanece no histórico com a situação **Transferida ao e-commerce** e o mesmo código permanente.
+- Ajustes de contagem continuam disponíveis antes da transferência e são bloqueados depois dela.
+- PDFs e histórico de movimentações identificam a transferência sem alterar pagamentos, recebimentos ou matérias-primas.
+
 ## [v25.58] - 09/08/2026
 
 ### Código único e permanente por caixa

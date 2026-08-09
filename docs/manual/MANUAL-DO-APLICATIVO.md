@@ -71,13 +71,17 @@ Cada cadastro representa uma única caixa física. O código é exclusivo e perm
 
 A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
 
-### Registrar saída e preservar a origem
+### Transferir uma caixa para o estoque do e-commerce
 
-Abra o modelo e a cor desejados. A tela detalhada mostra quanto cada colaboradora produziu e todas as caixas vinculadas. Escolha o código da caixa que realmente será retirado, informe a quantidade e o motivo. Uma saída parcial mantém o restante na mesma caixa; uma caixa zerada continua no histórico como **Esvaziada**.
+Abra o modelo e a cor desejados. A tela detalhada mostra quanto cada colaboradora produziu e todas as caixas vinculadas. Escolha o código da caixa que será levado fisicamente e toque em **Transferir caixa completa**.
+
+Não é necessário digitar quantidade: o sistema mostra e utiliza automaticamente todo o saldo conferido da caixa. Revise código, modelo, cor, quantidade, destino e data antes de confirmar. Retiradas parciais são bloqueadas também no banco de dados, inclusive se alguém tentar usar uma versão antiga do aplicativo.
+
+Depois da confirmação, o saldo da caixa fica zerado e ela permanece no histórico como **Transferida ao e-commerce**, com data e responsável. Essa transferência registra o destino físico; ela não cria um segundo estoque de produtos acabados nem altera o estoque de matérias-primas.
 
 ### Corrigir uma conferência
 
-Use **Ajustar contagem** somente após contar fisicamente a caixa. Informe o saldo encontrado e o motivo obrigatório. O sistema cria uma movimentação positiva ou negativa, registra data e responsável e nunca apaga o saldo anterior. Para corrigir apenas colaboradora, data, localização física ou observação, use **Editar dados**. O código permanente não é editável.
+Use **Ajustar contagem** somente após contar fisicamente a caixa e antes de transferi-la. Informe o saldo encontrado e o motivo obrigatório. O sistema cria uma movimentação positiva ou negativa, registra data e responsável e nunca apaga o saldo anterior. Depois da transferência, ajustes de quantidade ficam bloqueados para preservar a história da caixa. Para corrigir apenas colaboradora, data, localização física ou observação, use **Editar dados**. O código permanente não é editável.
 
 ### Consultas e relatórios
 
