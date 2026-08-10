@@ -34,6 +34,20 @@ O ADM cadastra nome, categoria, unidade, cor, quantidade, foto, tipo de reposiç
 
 Produtos exclusivos da embalagem devem ser classificados como **Suprimento do e-commerce**. Matérias-primas exclusivas aparecem apenas para colaboradoras de produção. Quando o mesmo produto é usado pelos dois setores, classifique como **Produção e e-commerce**: ele aparecerá nos dois catálogos usando o mesmo estoque, custo e fornecedor. Na Inteligência, o consumo compartilhado é atribuído ao setor de quem solicitou. Reclassificar não apaga estoque, fornecedor, custo, movimentações ou solicitações antigas.
 
+### Estoque individual por colaboradora
+
+Use esta opção somente para materiais personalizados que não podem ser compartilhados, como etiquetas impressas com o nome de cada colaboradora.
+
+1. Abra **Produtos e estoque** e edite o produto.
+2. Em **Controle do estoque**, escolha **Individual por colaboradora**. Para fazer a primeira ativação, o saldo compartilhado físico e reservado precisa estar zerado.
+3. Salve o produto e use **Gerenciar estoques**.
+4. Informe o estoque físico contado e o estoque mínimo de cada colaboradora. O campo reservado é calculado pelo sistema e não deve ser alterado manualmente.
+5. Informe o motivo da entrada ou do ajuste e salve.
+
+Na solicitação, cada colaboradora vê somente o próprio saldo. A mensagem **Sem estoque para você** não revela o estoque das demais. O ADM vê o total e pode abrir os saldos individuais. Ao separar, entregar, cancelar ou corrigir uma solicitação, o sistema usa a colaboradora identificada no item e nunca desconta o material personalizado de outra pessoa.
+
+Ao usar **Sem estoque** durante a separação, somente o saldo daquela colaboradora é zerado. A divergência e a reposição automática também recebem o nome dela. Produtos comuns devem continuar como **Compartilhado entre os perfis**.
+
 ## Ordens de produção
 
 O ADM cria a ordem semanal com colaboradora, prazo, modelos, cores, quantidades, fotos e orientações. A colaboradora recebe a ordem no próprio painel e usa **Confirmar que recebi a lista** para registrar sua ciência.

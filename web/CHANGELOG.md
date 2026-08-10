@@ -5,6 +5,20 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.63] - 10/08/2026
+
+### Estoque individual por colaboradora
+
+- Produtos personalizados, como etiquetas com nome, podem usar um saldo físico e reservado independente para cada colaboradora.
+- Colaboradoras visualizam somente o próprio saldo; ADMs visualizam e administram todos os saldos individuais.
+- O cadastro do produto permite escolher entre **Estoque compartilhado** e **Estoque individual por colaboradora** sem alterar os produtos existentes.
+- Reservas, separações, entregas, cancelamentos, exclusões e correções do ADM principal movimentam somente a dona identificada no item.
+- A opção **Sem estoque** zera apenas o saldo da colaboradora afetada e cria uma reposição identificada pelo nome correto.
+- Entradas e ajustes individuais registram motivo, data, ADM, saldo anterior e saldo posterior na auditoria.
+- Novas colaboradoras de produção recebem automaticamente uma posição zerada nos produtos personalizados já cadastrados.
+- Relatórios de divergência e reposição identificam a colaboradora do estoque, sem expor saldos de outras pessoas.
+- Backup e recuperação passam a incluir `product_collaborator_stocks`; produtos compartilhados e módulos existentes permanecem compatíveis.
+
 ## [v25.62] - 09/08/2026
 
 ### Correção emergencial da interação
