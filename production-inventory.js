@@ -82,7 +82,7 @@ async function syncLiveCounter(){
       if(gallery){gallery.innerHTML=boxCards();bindBoxGalleryActions()}
     }
     updateLiveCounter(count);
-  }catch(error){
+  }catch{
     const updated=document.querySelector('#inventoryLiveBoxUpdated');
     if(updated)updated.textContent='Nova tentativa automática em instantes';
   }finally{liveCounterBusy=false}
