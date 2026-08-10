@@ -5,6 +5,17 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.64] - 10/08/2026
+
+### Preservação do estoque já separado
+
+- A ação **Sem estoque** passa a zerar somente o saldo livre encontrado durante a conferência.
+- Materiais já separados ou reservados para outras solicitações permanecem protegidos e não desaparecem do estoque.
+- O item sem estoque continua zerado e excluído da entrega atual, com divergência, reposição e auditoria registradas.
+- A conclusão da entrega continua bloqueando saldo negativo e reconciliando as demais reservas sob bloqueio transacional.
+- Reservas individuais ativas somente podem ser reparadas quando há evidência explícita de item conferido como separado, sem criação de saldo livre.
+- A correção não altera autenticação, perfis, permissões, pagamentos nem os demais fluxos de estoque.
+
 ## [v25.63] - 10/08/2026
 
 ### Estoque individual por colaboradora
