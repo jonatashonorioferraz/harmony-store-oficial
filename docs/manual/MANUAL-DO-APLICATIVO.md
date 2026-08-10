@@ -113,6 +113,8 @@ O menu **Suprimentos e Compras** é exclusivo dos perfis ADM e Recebimento. Ele 
 
 O menu **Boletos** é exclusivo dos ADMs. Um boleto pode ser cadastrado manualmente ou enviado como foto/PDF para leitura inteligente.
 
+Depois de selecionar o arquivo, a barra de progresso acompanha **Envio**, **Leitura** e **Conferência**. O percentual da interpretação é estimado porque o serviço de inteligência não transmite um percentual interno; por segurança, ele não chega a 100% antes de a resposta ser recebida. Se ocorrer uma falha, o documento continua selecionado para uma nova tentativa ou substituição.
+
 Antes de salvar, confira obrigatoriamente beneficiário, valor, vencimento e todos os números da linha digitável. A automação apenas preenche uma sugestão e não realiza pagamentos.
 
 Use **Copiar código para pagar** e, no aplicativo do banco, confira novamente beneficiário e valor antes de confirmar. Depois do pagamento, use **Marcar como pago** e anexe o comprovante se desejar.
@@ -122,6 +124,7 @@ Boletos que vencem amanhã, vencem hoje ou estão atrasados aparecem no “Meu d
 1. O perfil de Recebimento abre **Solicitar** e marca somente quais itens estão faltando. Não informa quantidade nem valor.
 2. O ADM abre a solicitação depois da compra e seleciona **Anexar cupom da compra**.
 3. A foto é armazenada de forma privada. A leitura inteligente preenche estabelecimento, data, itens, quantidades e valores para conferência administrativa.
+   Durante o processamento, a tela mostra as etapas de envio, preparação, leitura e conferência. Em caso de falha, a mesma imagem permanece selecionada e o envio incompleto é removido do armazenamento privado.
 4. Nada é confirmado automaticamente: o ADM revisa, corrige, vincula cada linha ao catálogo e só então salva.
 5. Se o cupom contiver um item novo, o ADM pode mantê-lo como **Criar novo produto automaticamente**.
 6. Uma compra que não nasceu de pedido é registrada em **Compras e cupons > Registrar compra direta**. Ela entra nos dados sem criar uma solicitação fictícia.

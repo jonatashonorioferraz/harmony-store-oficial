@@ -5,6 +5,17 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.61] - 09/08/2026
+
+### Experiência de carregamento e leitura inteligente
+
+- As transições entre módulos agora exibem um carregamento curto com a marca Harmony somente quando a operação ultrapassa 120 ms, evitando piscadas em telas instantâneas.
+- O carregamento respeita operações simultâneas, bloqueia cliques duplicados e informa o estado ocupado às tecnologias assistivas.
+- A leitura de cupons e boletos ganhou barra de progresso responsiva com as etapas **Envio**, **Leitura** e **Conferência**.
+- O percentual avança de forma estimada durante a interpretação e só chega a 100% depois que a inteligência responde.
+- Em caso de falha, a foto ou o documento permanece selecionado para nova tentativa, e arquivos incompletos são removidos do armazenamento privado.
+- Câmera, galeria, PDF, revisão obrigatória, permissões e regras de gravação permanecem inalterados.
+
 ## [v25.60] - 09/08/2026
 
 ### Galeria visual e contador ao vivo de caixas
