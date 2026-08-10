@@ -5,6 +5,19 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.66] - 10/08/2026
+
+### Conciliação de cupom e acessos rápidos com IA
+
+- O ADM pode vincular uma descrição comercial diferente do cupom ao item originalmente solicitado, sem anexar outro cupom e sem alterar a identidade do produto comprado no estoque.
+- Cada confirmação exige justificativa, preserva a descrição original, registra data, usuário e auditoria e recalcula automaticamente **Compra parcial** ou **Compra concluída**.
+- O vínculo pode ser revisado ou removido por ADM, com novo motivo e recálculo transacional do status.
+- A sugestão automática passa a priorizar os produtos da própria solicitação antes do restante do catálogo, reduzindo associações incorretas entre nomes parecidos.
+- A Home administrativa reúne três acessos compactos: **Inventário de Produção**, **Registrar compra direta com IA** e **Cadastrar boleto com IA**.
+- Os acessos com IA abrem diretamente a captura correspondente e continuam protegidos pelas permissões administrativas existentes; o perfil de Recebimento vê somente o Inventário.
+- O layout dos atalhos e da conciliação foi ajustado para computador, tablet e celular, com suporte à preferência de movimento reduzido.
+- A nova relação auditável foi incluída no backup criptografado e nas verificações de permissões da Data API.
+
 ## [v25.65] - 10/08/2026
 
 ### Sessão persistente durante a rotina

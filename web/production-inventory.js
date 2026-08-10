@@ -116,13 +116,14 @@ function injectNav(){
 function injectHomeShortcut(){
   if(!canManage()||S.view!=='home')return;
   const page=document.querySelector('#page .page');
-  if(!page||page.querySelector('#productionInventoryShortcut'))return;
-  const button=document.createElement('button');
-  button.id='productionInventoryShortcut';button.className='production-inventory-home-shortcut';button.type='button';
-  button.setAttribute('aria-label','Abrir Inventário de Produção');
-  button.innerHTML='<span class="inventory-shortcut-sparkles" aria-hidden="true">✦</span><b>Inventário de Produção</b><span class="inventory-shortcut-arrow" aria-hidden="true">›</span>';
-  button.onclick=()=>{S.view='production-inventory';renderApp()};
-  const anchor=page.querySelector('.metrics');page.insertBefore(button,anchor||page.children[1]||null);
+  if(!page||page.querySelector('#harmonyQuickActions'))return;
+  const actions=document.createElement('section');
+  actions.id='harmonyQuickActions';actions.className='harmony-home-quick-actions';actions.setAttribute('aria-label','Acessos rápidos');
+  actions.innerHTML=`<button id="productionInventoryShortcut" class="production-inventory-home-shortcut" type="button" aria-label="Abrir Inventário de Produção"><span class="inventory-shortcut-sparkles" aria-hidden="true">✦</span><span class="harmony-quick-action-copy"><b>Inventário de Produção</b><small>Controle das caixas em estoque</small></span><span class="inventory-shortcut-arrow" aria-hidden="true">›</span></button>${S.profile?.role==='admin'?`<button id="directPurchaseAiShortcut" class="production-inventory-home-shortcut harmony-ai-home-shortcut" type="button" aria-label="Registrar compra direta com inteligência artificial"><span class="inventory-shortcut-sparkles" aria-hidden="true">🧾</span><span class="harmony-quick-action-copy"><b>Registrar compra direta com IA</b><small><em>IA</em> Leitura inteligente do cupom</small></span><span class="inventory-shortcut-arrow" aria-hidden="true">›</span></button><button id="newBillAiShortcut" class="production-inventory-home-shortcut harmony-ai-home-shortcut" type="button" aria-label="Cadastrar boleto com inteligência artificial"><span class="inventory-shortcut-sparkles" aria-hidden="true">✨</span><span class="harmony-quick-action-copy"><b>Cadastrar boleto com IA</b><small><em>IA</em> Leitura e conferência assistidas</small></span><span class="inventory-shortcut-arrow" aria-hidden="true">›</span></button>`:''}`;
+  actions.querySelector('#productionInventoryShortcut').onclick=()=>{S.view='production-inventory';renderApp()};
+  actions.querySelector('#directPurchaseAiShortcut')?.addEventListener('click',()=>window.HarmonyInternalSupplies?.openDirectPurchase?.());
+  actions.querySelector('#newBillAiShortcut')?.addEventListener('click',()=>window.HarmonyBills?.openNew?.());
+  const anchor=page.querySelector('.metrics');page.insertBefore(actions,anchor||page.children[1]||null);
 }
 
 function tabs(){return `<nav class="production-inventory-tabs" aria-label="Áreas do inventário"><button class="${PI.tab==='balance'?'active':''}" data-inventory-tab="balance">📦 Saldo atual</button><button class="${PI.tab==='boxes'?'active':''}" data-inventory-tab="boxes">🗃️ Caixas em estoque</button><button class="${PI.tab==='movements'?'active':''}" data-inventory-tab="movements">↔ Movimentações</button><button class="${PI.tab==='workers'?'active':''}" data-inventory-tab="workers">👩‍🎨 Por colaboradora</button></nav>`}
