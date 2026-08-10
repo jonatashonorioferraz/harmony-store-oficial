@@ -11,11 +11,14 @@ const [app,webApp,manageUser,migration,rollback]=await Promise.all([
   read('supabase/rollbacks/20260808140000_admin_recent_password_protection.sql'),
 ]);
 
-test('official clients share the same administrative security implementation',()=>{
+test('official clients keep persistent sessions without weakening administrative step-up security',()=>{
   assert.equal(app,webApp);
   assert.match(app,/ADMIN_REAUTH_WINDOW_MS=10\*60\*1000/);
-  assert.match(app,/ADMIN_IDLE_LIMIT_MS=30\*60\*1000/);
-  assert.match(app,/A sessão administrativa foi bloqueada após 30 minutos sem atividade/);
+  assert.doesNotMatch(app,/ADMIN_IDLE_LIMIT_MS|adminSessionExpired|lockIdleAdminSession|ADMIN_IDLE_LOCK/);
+  assert.match(app,/async function restore\(\)[\s\S]*await ensureSession\(\)[\s\S]*await loadAccount\(\)/);
+  assert.match(app,/async function refreshSession\(\)[\s\S]*grant_type=refresh_token/);
+  assert.match(app,/async function logout\(\)[\s\S]*\/auth\/v1\/logout/);
+  assert.match(app,/localStorage\.removeItem\('harmony\.admin\.last_activity'\)/);
 });
 
 test('step-up authentication uses a fresh password grant without persisting the password',()=>{

@@ -5,6 +5,17 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.65] - 10/08/2026
+
+### Sessão persistente durante a rotina
+
+- Removido o bloqueio local que encerrava a sessão administrativa após 30 minutos sem interação.
+- ADMs, colaboradoras e perfil de recebimento podem voltar ao aplicativo durante o dia sem repetir o login apenas por terem ficado algum tempo sem usar a tela.
+- A sessão armazenada continua sendo renovada silenciosamente pelo token seguro do Supabase e só termina por saída manual, cadastro inativo ou sessão realmente inválida.
+- A marca antiga de inatividade é apagada automaticamente no próximo login ou na restauração da sessão.
+- A confirmação recente de senha por 10 minutos continua obrigatória para operações administrativas críticas e permanece validada também no servidor e no banco.
+- Papéis, permissões, RLS e regras de estoque, produção, pagamentos e notificações não foram modificados.
+
 ## [v25.64] - 10/08/2026
 
 ### Preservação do estoque já separado
