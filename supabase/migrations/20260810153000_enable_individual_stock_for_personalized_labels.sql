@@ -12,7 +12,7 @@ declare
   v_reserved numeric(14,3);
   v_minimum numeric(14,3);
 begin
-  select count(*),min(id),min(physical_stock),min(reserved_stock),min(minimum_stock)
+  select count(*),min(id::text)::uuid,min(physical_stock),min(reserved_stock),min(minimum_stock)
   into v_match_count,v_product_id,v_physical,v_reserved,v_minimum
   from public.products
   where lower(trim(name))=lower('Etiquetas de validade e lote 40x60 cm');

@@ -96,6 +96,8 @@ test('individual stock assets are mirrored in the official deployable folder',as
 test('the existing personalized label product starts isolated without inventing stock',async()=>{
   const sql=await read('supabase/migrations/20260810153000_enable_individual_stock_for_personalized_labels.sql');
   assert.match(sql,/lower\(trim\(name\)\)=lower\('Etiquetas de validade e lote 40x60 cm'\)/);
+  assert.match(sql,/min\(id::text\)::uuid/);
+  assert.doesNotMatch(sql,/min\(id\)/);
   assert.match(sql,/if v_match_count<>1 then/);
   assert.match(sql,/if v_physical<>0 or v_reserved<>0 then/);
   assert.match(sql,/set stock_control_mode='collaborator'/);
