@@ -1,4 +1,5 @@
-.harmony-module-loader{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:20px;background:rgba(255,249,252,.64);backdrop-filter:blur(4px);opacity:0;transition:opacity .16s ease;pointer-events:auto}
+.harmony-module-loader{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:20px;background:rgba(255,249,252,.64);backdrop-filter:blur(4px);opacity:0;transition:opacity .16s ease;pointer-events:none}
+.harmony-module-loader[hidden]{display:none!important}
 .harmony-module-loader.is-visible{opacity:1}
 .harmony-module-loader__card{position:relative;display:flex;align-items:center;gap:12px;min-width:238px;max-width:min(88vw,360px);padding:11px 17px 11px 11px;border:1px solid rgba(210,70,137,.22);border-radius:22px;background:rgba(255,255,255,.96);box-shadow:0 18px 48px rgba(83,35,58,.16);overflow:hidden}
 .harmony-module-loader__card>i{position:absolute;inset:auto 0 0;height:3px;background:linear-gradient(90deg,transparent,#f171ae,#6598ed,transparent);animation:harmony-loader-line 1.15s ease-in-out infinite;transform:translateX(-70%)}
