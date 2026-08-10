@@ -71,9 +71,17 @@ Cada cadastro representa uma única caixa física. O código é exclusivo e perm
 
 A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
 
+### Visualizar as caixas disponíveis
+
+A aba **Caixas em estoque** representa cada caixa física em um desenho de papelão com a placa do código permanente, a foto original do modelo, a cor, a quantidade, a colaboradora e a data de entrada. A ordenação é sempre da caixa mais nova para a mais antiga.
+
+O contador verde no topo aparece em todas as telas do módulo e considera somente caixas com saldo disponível e ainda não transferidas. Ele diminui imediatamente após uma transferência feita no aparelho atual e também se sincroniza automaticamente quando outro ADM ou Recebimento movimenta uma caixa em outro dispositivo.
+
+Os modelos, as cores e as colaboradoras vêm dos cadastros oficiais do aplicativo. Novos cadastros são sincronizados automaticamente, inclusive na janela **Registrar nova caixa**, sem criar listas paralelas.
+
 ### Transferir uma caixa para o estoque do e-commerce
 
-Abra o modelo e a cor desejados. A tela detalhada mostra quanto cada colaboradora produziu e todas as caixas vinculadas. Escolha o código da caixa que será levado fisicamente e toque em **Transferir caixa completa**.
+Abra a aba **Caixas em estoque** e toque no botão rosa **Transferir caixa** da caixa física escolhida. Também é possível abrir o modelo e a cor em **Saldo atual** e transferir pelo histórico detalhado.
 
 Não é necessário digitar quantidade: o sistema mostra e utiliza automaticamente todo o saldo conferido da caixa. Revise código, modelo, cor, quantidade, destino e data antes de confirmar. Retiradas parciais são bloqueadas também no banco de dados, inclusive se alguém tentar usar uma versão antiga do aplicativo.
 
@@ -86,6 +94,7 @@ Use **Ajustar contagem** somente após contar fisicamente a caixa e antes de tra
 ### Consultas e relatórios
 
 - **Saldo atual:** posição física por modelo e cor.
+- **Caixas em estoque:** galeria visual das caixas disponíveis, com as mais recentes primeiro.
 - **Movimentações:** entradas, saídas e ajustes por período.
 - **Por colaboradora:** modelos, cores e quantidades produzidas, sem valores financeiros.
 - **PDF:** relatório isolado e ajustado para A4 em computador, celular e tablet.

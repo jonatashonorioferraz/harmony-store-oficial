@@ -5,6 +5,19 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.60] - 09/08/2026
+
+### Galeria visual e contador ao vivo de caixas
+
+- A nova aba **Caixas em estoque** apresenta cada caixa física em formato de papelão, com placa permanente e informações alinhadas.
+- A galeria usa a foto original do modelo e mostra cor, quantidade, colaboradora e data de entrada.
+- As caixas são ordenadas da última cadastrada para a primeira pelo código permanente `CX`.
+- O botão rosa **Transferir caixa** abre a confirmação da saída integral para o estoque do e-commerce.
+- Um contador verde aparece no topo de todas as telas do módulo e inclui somente caixas disponíveis.
+- O contador diminui no mesmo momento da transferência e sincroniza alterações feitas em outros dispositivos.
+- Novos modelos, cores e colaboradoras são atualizados automaticamente a partir dos cadastros oficiais, inclusive com o formulário de entrada aberto.
+- Banco, permissões, auditoria, relatórios e regras de transferência integral permanecem protegidos.
+
 ## [v25.59] - 09/08/2026
 
 ### Transferência integral da caixa para o e-commerce
