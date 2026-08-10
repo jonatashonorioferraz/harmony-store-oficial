@@ -103,5 +103,6 @@ test('the existing personalized label product starts isolated without inventing 
   assert.match(sql,/set stock_control_mode='collaborator'/);
   assert.match(sql,/where p\.role='collaborator'/);
   assert.match(sql,/request\.status in \('pending','separating','scheduled'\)/);
+  assert.match(sql,/'product\.stock_control_mode_activated','product',v_product_id::text,'system'/);
   assert.doesNotMatch(sql,/physical_stock\s*=\s*[1-9]/);
 });

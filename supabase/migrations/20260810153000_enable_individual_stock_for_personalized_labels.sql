@@ -42,7 +42,7 @@ begin
     and request.status in ('pending','separating','scheduled');
 
   insert into public.audit_logs(actor_id,action,entity_type,entity_id,origin,details)
-  values(null,'product.stock_control_mode_activated','product',v_product_id::text,'migration',
+  values(null,'product.stock_control_mode_activated','product',v_product_id::text,'system',
     jsonb_build_object(
       'mode','collaborator',
       'reason','Produto personalizado por nome de colaboradora',
