@@ -57,7 +57,7 @@ test("build contains the official complete app", async () => {
   assert.match(worker, /showNotification/);
   assert.equal(JSON.parse(manifest).orientation, "portrait-primary");
   assert.match(pwa, /screen\.orientation\.lock\('portrait-primary'\)/);
-  assert.match(worker, /harmony-store-v25-66/);
+  assert.match(worker, /harmony-store-v25-67/);
   assert.match(worker, /notification-badge\.svg/);
   assert.match(worker, /Abrir aplicativo/);
   assert.match(manifest, /icon-512-v2\.png/);
@@ -68,6 +68,11 @@ test("build contains the official complete app", async () => {
   assert.match(enhancements, /expressiveMenuIcons/);
   assert.match(enhancements, /🧼/);
   assert.match(enhancements, /brand-mark\.png/);
+  assert.match(enhancements, /harmony-brand-gold-ring/);
+  assert.match(enhancements, /Harmony Store Oficial/);
+  assert.match(enhancements, /Gestão de produção/);
+  assert.match(css, /\.harmony-brand-gold-ring/);
+  assert.match(css, /\.harmony-brand-gold-copy/);
   assert.match(enhancements, /Um Sonho que virou realidade\. Deus é bom o tempo todo/);
   assert.match(enhancements, /mascote-artesa\.png/);
   assert.match(enhancements, /enhanceDailyWelcome/);

@@ -268,6 +268,23 @@ function enhanceBrandPresentation(){
     image.src='brand-mark.png';
     image.classList.add('harmony-brand-mark');
   });
+  const brand=document.querySelector('.sidebar .brand');
+  if(!brand)return;
+  brand.setAttribute('aria-label','Harmony Store Oficial — ir para a visão geral');
+  const image=brand.querySelector('img');
+  if(image&&!image.parentElement.classList.contains('harmony-brand-gold-ring')){
+    const ring=document.createElement('span');
+    ring.className='harmony-brand-gold-ring';
+    image.replaceWith(ring);
+    ring.appendChild(image);
+  }
+  const copy=[...brand.children].find(element=>element.tagName==='SPAN'&&!element.classList.contains('harmony-brand-gold-ring'));
+  if(copy){
+    copy.classList.add('harmony-brand-gold-copy');
+    const name=copy.querySelector('b'),subtitle=copy.querySelector('small');
+    if(name)name.textContent='Harmony Store Oficial';
+    if(subtitle)subtitle.textContent='Gestão de produção';
+  }
 }
 
 function enhanceLoginMessage(){

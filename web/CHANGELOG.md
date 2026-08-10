@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.67] - 10/08/2026
+
+### Assinatura visual dourada da marca
+
+- A marca principal do menu lateral passa a exibir o logotipo oficial rosa e azul em uma moldura metálica dourada.
+- O nome completo **Harmony Store Oficial** recebeu acabamento dourado, mantendo **Gestão de Produção** em azul.
+- O conjunto foi ajustado para computador e tablet; no celular, a navegação inferior permanece compacta e sem alterações funcionais.
+- A nova apresentação preserva autenticação, perfis, permissões, banco de dados e todas as regras operacionais existentes.
+
 ## [v25.66] - 10/08/2026
 
 ### Conciliação de cupom e acessos rápidos com IA
