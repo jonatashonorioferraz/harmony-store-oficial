@@ -1,7 +1,9 @@
 (()=>{
 'use strict';
 
-const PI={loaded:false,loading:null,balance:[],models:[],colors:[],workers:[],movements:[],byWorker:[],tab:'balance',query:'',colorId:'',onlyAvailable:false,from:'',to:'',workerId:''};
+const PI={loaded:false,loading:null,balance:[],boxes:[],boxCount:0,models:[],colors:[],workers:[],movements:[],byWorker:[],tab:'balance',query:'',colorId:'',onlyAvailable:false,from:'',to:'',workerId:''};
+const LIVE_COUNTER_INTERVAL=20000;
+let liveCounterTimer=null,liveCounterBusy=false;
 const canManage=()=>['admin','receiver'].includes(S?.profile?.role);
 const n=value=>Number(value||0);
 const qty=value=>n(value).toLocaleString('pt-BR')+' un.';
@@ -13,27 +15,89 @@ const imageUrl=path=>path?API+'/storage/v1/object/public/product-images/'+String
 const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
 const movementLabels={entry:'Entrada',exit:'Transferência',adjustment_in:'Ajuste positivo',adjustment_out:'Ajuste negativo'};
 
-function reset(){Object.assign(PI,{loaded:false,loading:null,balance:[],models:[],colors:[],workers:[],movements:[],byWorker:[]})}
+function reset(){stopLiveCounter();Object.assign(PI,{loaded:false,loading:null,balance:[],boxes:[],boxCount:0,models:[],colors:[],workers:[],movements:[],byWorker:[]})}
 
 async function load(force=false){
   if(!canManage()){reset();return}
   if(PI.loaded&&!force)return;
   if(PI.loading)return PI.loading;
   PI.loading=(async()=>{
-    const [models,colors,workers,balance,movements,byWorker]=await Promise.all([
+    const [models,colors,workers,balance,boxes,boxCount,movements,byWorker]=await Promise.all([
       rpc('list_finished_product_models',{}),
       rpc('list_finished_production_colors',{}),
       rpc('list_production_inventory_workers',{}),
       rpc('list_production_inventory_balance',{p_query:null,p_color_id:null,p_only_available:false}),
+      rpc('list_available_production_inventory_boxes',{}),
+      rpc('get_production_inventory_available_box_count',{}),
       rpc('list_production_inventory_movements_v2',{p_from:PI.from||null,p_to:PI.to||null,p_worker_id:null,p_model_id:null,p_color_id:null}),
       rpc('list_production_inventory_by_worker',{p_from:PI.from||null,p_to:PI.to||null,p_worker_id:PI.workerId||null})
     ]);
-    Object.assign(PI,{models,colors,workers,balance,movements,byWorker,loaded:true});
+    Object.assign(PI,{models,colors,workers,balance,boxes,boxCount:n(boxCount),movements,byWorker,loaded:true});
+    updateLiveCounter();
   })().finally(()=>PI.loading=null);
   return PI.loading;
 }
 
 async function refresh(message){PI.loaded=false;await load(true);await render();if(message)toast(message)}
+
+function stopLiveCounter(){
+  if(liveCounterTimer)clearInterval(liveCounterTimer);
+  liveCounterTimer=null;
+}
+
+function updateLiveCounter(value=PI.boxCount){
+  const count=Math.max(0,n(value)),number=document.querySelector('#inventoryLiveBoxCount'),label=document.querySelector('#inventoryLiveBoxLabel'),updated=document.querySelector('#inventoryLiveBoxUpdated');
+  PI.boxCount=count;
+  if(number)number.textContent=count.toLocaleString('pt-BR');
+  if(label)label.textContent=count===1?'caixa disponível':'caixas disponíveis';
+  if(updated)updated.textContent='Atualizado agora';
+}
+
+const catalogSignature=rows=>JSON.stringify((rows||[]).map(row=>[row.id,row.name||row.full_name,row.active,row.image_path,row.hex_code]));
+function refreshEntryCatalogOptions(){
+  const form=document.querySelector('#inventoryEntryForm');if(!form)return;
+  const replace=(select,items,placeholder,label)=>{const selected=select.value;select.innerHTML=`<option value="">${placeholder}</option>${items.map(item=>`<option value="${item.id}">${esc(item[label])}</option>`).join('')}`;if(items.some(item=>item.id===selected))select.value=selected};
+  replace(form.model_id,PI.models.filter(model=>model.active),'Selecione','name');
+  replace(form.color_id,PI.colors.filter(color=>color.active),'Selecione','name');
+  replace(form.worker_id,PI.workers,'Selecione a colaboradora','full_name');
+  form.model_id.dispatchEvent(new Event('change'));
+}
+
+async function syncLiveCounter(){
+  if(S.view!=='production-inventory'||!canManage()){stopLiveCounter();return}
+  if(liveCounterBusy)return;
+  liveCounterBusy=true;
+  try{
+    const [boxCount,models,colors,workers]=await Promise.all([
+      rpc('get_production_inventory_available_box_count',{}),
+      rpc('list_finished_product_models',{}),
+      rpc('list_finished_production_colors',{}),
+      rpc('list_production_inventory_workers',{})
+    ]),count=n(boxCount),catalogChanged=catalogSignature(models)!==catalogSignature(PI.models)||catalogSignature(colors)!==catalogSignature(PI.colors)||catalogSignature(workers)!==catalogSignature(PI.workers);
+    Object.assign(PI,{models,colors,workers});
+    if(catalogChanged)refreshEntryCatalogOptions();
+    if(PI.tab==='boxes'&&count!==PI.boxes.length){
+      PI.boxes=await rpc('list_available_production_inventory_boxes',{});
+      const gallery=document.querySelector('#inventoryBoxGallery');
+      if(gallery){gallery.innerHTML=boxCards();bindBoxGalleryActions()}
+    }
+    updateLiveCounter(count);
+  }catch(error){
+    const updated=document.querySelector('#inventoryLiveBoxUpdated');
+    if(updated)updated.textContent='Nova tentativa automática em instantes';
+  }finally{liveCounterBusy=false}
+}
+
+function startLiveCounter(){
+  stopLiveCounter();
+  updateLiveCounter();
+  liveCounterTimer=setInterval(syncLiveCounter,LIVE_COUNTER_INTERVAL);
+}
+
+function liveCounter(){
+  const count=Math.max(0,n(PI.boxCount));
+  return `<aside class="production-inventory-live-counter" aria-label="Contador em tempo real de caixas disponíveis"><span class="production-inventory-live-icon" aria-hidden="true">📦</span><span class="production-inventory-live-copy"><small>ESTOQUE EM TEMPO REAL</small><strong><span id="inventoryLiveBoxCount">${count.toLocaleString('pt-BR')}</span> <span id="inventoryLiveBoxLabel">${count===1?'caixa disponível':'caixas disponíveis'}</span></strong><em id="inventoryLiveBoxUpdated">Atualizado agora</em></span><i aria-hidden="true"></i></aside>`;
+}
 
 function injectNav(){
   if(!canManage())return;
@@ -61,11 +125,19 @@ function injectHomeShortcut(){
   const anchor=page.querySelector('.metrics');page.insertBefore(button,anchor||page.children[1]||null);
 }
 
-function tabs(){return `<nav class="production-inventory-tabs" aria-label="Áreas do inventário"><button class="${PI.tab==='balance'?'active':''}" data-inventory-tab="balance">📦 Saldo atual</button><button class="${PI.tab==='movements'?'active':''}" data-inventory-tab="movements">↔ Movimentações</button><button class="${PI.tab==='workers'?'active':''}" data-inventory-tab="workers">👩‍🎨 Por colaboradora</button></nav>`}
+function tabs(){return `<nav class="production-inventory-tabs" aria-label="Áreas do inventário"><button class="${PI.tab==='balance'?'active':''}" data-inventory-tab="balance">📦 Saldo atual</button><button class="${PI.tab==='boxes'?'active':''}" data-inventory-tab="boxes">🗃️ Caixas em estoque</button><button class="${PI.tab==='movements'?'active':''}" data-inventory-tab="movements">↔ Movimentações</button><button class="${PI.tab==='workers'?'active':''}" data-inventory-tab="workers">👩‍🎨 Por colaboradora</button></nav>`}
 
 function metrics(){
   const available=PI.balance.filter(row=>n(row.quantity)>0),total=available.reduce((sum,row)=>sum+n(row.quantity),0),models=new Set(available.map(row=>row.model_id)).size,producers=new Set(PI.byWorker.map(row=>row.worker_id)).size;
   return `<div class="production-inventory-metrics"><article><small>UNIDADES EM ESTOQUE</small><b>${total.toLocaleString('pt-BR')}</b><span>Saldo físico atual</span></article><article><small>MODELOS COM SALDO</small><b>${models}</b><span>Organizados por cor</span></article><article><small>COMBINAÇÕES</small><b>${available.length}</b><span>Modelo + cor</span></article><article><small>COLABORADORAS</small><b>${producers}</b><span>Com entradas registradas</span></article></div>`;
+}
+
+function boxCards(){
+  return PI.boxes.map((entry,index)=>`<article class="production-inventory-crate-card" data-box-id="${entry.id}"><div class="production-inventory-crate-code"><i aria-hidden="true"></i><b>${esc(entry.box_code||boxCode(entry.box_number))}</b><i aria-hidden="true"></i></div><div class="production-inventory-crate-shell">${index===0?'<span class="production-inventory-newest-box">ÚLTIMA CADASTRADA</span>':''}<div class="production-inventory-crate-label"><div class="production-inventory-crate-product"><span class="production-inventory-crate-photo">${entry.image_path?`<img src="${esc(imageUrl(entry.image_path))}" alt="${esc(entry.model_name)}">`:'<i aria-hidden="true">🧼</i>'}</span><span><b>${esc(entry.model_name)}</b><small><i style="--inventory-color:${esc(entry.color_hex)}"></i>${esc(entry.color_name)}</small></span></div><div class="production-inventory-crate-quantity"><small>QUANTIDADE</small><strong>${qty(entry.current_quantity)}</strong></div><div class="production-inventory-crate-meta"><span><small>PRODUÇÃO</small><b>${esc(entry.worker_name)}</b></span><span><small>ENTRADA</small><b>${br(entry.entry_on)}</b></span></div></div></div><button type="button" class="production-inventory-crate-transfer" data-inventory-box-transfer="${entry.id}" aria-label="Transferir a caixa ${esc(entry.box_code||boxCode(entry.box_number))} completa para o e-commerce">Transferir caixa</button></article>`).join('')||'<div class="empty production-inventory-boxes-empty">Nenhuma caixa disponível no estoque neste momento.</div>';
+}
+
+function boxesView(){
+  return `<section class="card production-inventory-section production-inventory-box-gallery-section"><div class="card-head"><div><p class="eyebrow">ESTOQUE FÍSICO</p><h2>Caixas disponíveis</h2><span>A última caixa cadastrada aparece primeiro. Cada caixa é transferida integralmente.</span></div><span class="production-inventory-box-order">↓ Mais novas primeiro</span></div><div class="production-inventory-box-gallery" id="inventoryBoxGallery">${boxCards()}</div></section>`;
 }
 
 function balanceRows(){
@@ -93,9 +165,9 @@ async function render(){
   page.innerHTML='<div class="loading-inline">Carregando Inventário de Produção…</div>';
   try{
     await load();if(S.view!=='production-inventory')return;
-    const body=PI.tab==='movements'?movementView():PI.tab==='workers'?workersView():balanceView();
-    page.innerHTML=`<div class="page production-inventory-page">${head('CONTROLE INTERNO','Inventário de Produção','Saldo dos mini sabonetes acabados, com origem por colaboradora, caixa e data. Não altera pagamentos nem matérias-primas.','<button class="outline" data-inventory-print="balance">📄 Relatório PDF</button><button class="primary" id="newInventoryEntry">＋ Registrar nova caixa</button>')}${tabs()}${body}</div>`;
-    bind();
+    const body=PI.tab==='boxes'?boxesView():PI.tab==='movements'?movementView():PI.tab==='workers'?workersView():balanceView();
+    page.innerHTML=`<div class="page production-inventory-page">${head('CONTROLE INTERNO','Inventário de Produção','Saldo dos mini sabonetes acabados, com origem por colaboradora, caixa e data. Não altera pagamentos nem matérias-primas.','<button class="outline" data-inventory-print="balance">📄 Relatório PDF</button><button class="primary" id="newInventoryEntry">＋ Registrar nova caixa</button>')}${liveCounter()}${tabs()}${body}</div>`;
+    bind();startLiveCounter();
   }catch(error){page.innerHTML=`<div class="page">${head('INVENTÁRIO DE PRODUÇÃO','Atualização necessária','O módulo foi preparado, mas o banco ainda precisa receber a migração.') }<section class="card intelligence-error"><h2>Banco ainda não atualizado</h2><p>${esc(error.message)}</p></section></div>`}
 }
 
@@ -109,6 +181,14 @@ function bind(){
   document.querySelector('#applyInventoryPeriod')?.addEventListener('click',async()=>{PI.from=document.querySelector('#inventoryFrom')?.value||'';PI.to=document.querySelector('#inventoryTo')?.value||'';PI.workerId=document.querySelector('#inventoryWorker')?.value||'';if(PI.from&&PI.to&&PI.from>PI.to)return alert('A data inicial não pode ser posterior à data final.');PI.loaded=false;await render()});
   document.querySelector('#clearInventoryPeriod')?.addEventListener('click',async()=>{PI.from=PI.to=PI.workerId='';PI.loaded=false;await render()});
   document.querySelectorAll('[data-inventory-print]').forEach(button=>button.onclick=()=>printReport(button.dataset.inventoryPrint,button));
+  bindBoxGalleryActions();
+}
+
+function bindBoxGalleryActions(){
+  document.querySelectorAll('[data-inventory-box-transfer]').forEach(button=>button.onclick=()=>{
+    const entry=PI.boxes.find(item=>item.id===button.dataset.inventoryBoxTransfer);
+    if(entry)actionModal(entry,'transfer',entry.model_id,entry.color_id,'boxes');
+  });
 }
 
 function closeModal(){document.querySelector('#modal').innerHTML=''}
@@ -133,10 +213,11 @@ async function openDetail(modelId,colorId){
   }catch(error){alert(error.message);closeModal()}
 }
 
-function actionModal(entry,kind,modelId,colorId){
+function actionModal(entry,kind,modelId,colorId,source='detail'){
   const isTransfer=kind==='transfer',title=isTransfer?'Transferir caixa completa':'Ajustar contagem física',field=isTransfer?`<section class="production-inventory-transfer-summary"><small>DESTINO</small><b>Estoque do e-commerce</b><strong>${qty(entry.current_quantity)}</strong><span>Todo o saldo desta caixa será retirado do Inventário de Produção.</span></section>`:`<label>Quantidade física conferida<input name="quantity" type="number" inputmode="numeric" min="0" step="1" value="${entry.current_quantity}" required></label>`;
   document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box" id="inventoryActionForm"><div class="modal-head"><div><p class="eyebrow">CAIXA ${esc(entry.box_code||boxCode(entry.box_number))}</p><h2>${title}</h2><span>${esc(entry.worker_name)} · ${esc(entry.box_reference||'Localização não informada')} · saldo ${qty(entry.current_quantity)}</span></div><button type="button" data-inventory-back>×</button></div><div class="form">${field}<label>Data<input name="occurred_on" type="date" max="${today()}" value="${today()}" required></label>${isTransfer?'':`<label class="wide">Motivo<input name="reason" maxlength="240" placeholder="Ex.: Conferência física da caixa" required></label>`}<label class="wide">Observações<textarea name="notes" maxlength="1200" placeholder="Opcional"></textarea></label><div class="form-actions"><button type="button" class="outline" data-inventory-back>Voltar</button><button class="${isTransfer?'primary':'outline'}">${isTransfer?'Transferir caixa completa':'Salvar ajuste auditado'}</button></div></div></form></div>`;
-  document.querySelectorAll('[data-inventory-back]').forEach(button=>button.onclick=()=>openDetail(modelId,colorId));document.querySelector('#inventoryActionForm').onsubmit=async event=>{event.preventDefault();const button=event.submitter,data=new FormData(event.currentTarget),quantity=Number(data.get('quantity'));if(!isTransfer&&(!Number.isInteger(quantity)||quantity<0))return alert('Informe uma quantidade inteira válida.');if(isTransfer&&!confirm(`Transferir a caixa ${entry.box_code||boxCode(entry.box_number)} completa, com ${qty(entry.current_quantity)}, para o estoque do e-commerce?`))return;button.disabled=true;try{if(isTransfer)await rpc('transfer_production_inventory_box_to_ecommerce',{p_entry_id:entry.id,p_occurred_on:data.get('occurred_on'),p_notes:data.get('notes')||null});else await rpc('adjust_production_inventory_entry',{p_entry_id:entry.id,p_counted_quantity:quantity,p_occurred_on:data.get('occurred_on'),p_reason:data.get('reason'),p_notes:data.get('notes')||null});PI.loaded=false;await load(true);await openDetail(modelId,colorId);toast(isTransfer?'Caixa completa transferida para o estoque do e-commerce.':'Contagem ajustada e registrada no histórico.')}catch(error){alert(error.message);button.disabled=false}};
+  const back=()=>source==='boxes'?closeModal():openDetail(modelId,colorId);
+  document.querySelectorAll('[data-inventory-back]').forEach(button=>button.onclick=back);document.querySelector('#inventoryActionForm').onsubmit=async event=>{event.preventDefault();const button=event.submitter,data=new FormData(event.currentTarget),quantity=Number(data.get('quantity'));if(!isTransfer&&(!Number.isInteger(quantity)||quantity<0))return alert('Informe uma quantidade inteira válida.');if(isTransfer&&!confirm(`Transferir a caixa ${entry.box_code||boxCode(entry.box_number)} completa, com ${qty(entry.current_quantity)}, para o estoque do e-commerce?`))return;button.disabled=true;try{if(isTransfer)await rpc('transfer_production_inventory_box_to_ecommerce',{p_entry_id:entry.id,p_occurred_on:data.get('occurred_on'),p_notes:data.get('notes')||null});else await rpc('adjust_production_inventory_entry',{p_entry_id:entry.id,p_counted_quantity:quantity,p_occurred_on:data.get('occurred_on'),p_reason:data.get('reason'),p_notes:data.get('notes')||null});PI.loaded=false;await load(true);if(source==='boxes'){closeModal();await render()}else await openDetail(modelId,colorId);toast(isTransfer?'Caixa completa transferida para o estoque do e-commerce.':'Contagem ajustada e registrada no histórico.')}catch(error){alert(error.message);button.disabled=false}};
 }
 const transferModal=(entry,modelId,colorId)=>actionModal(entry,'transfer',modelId,colorId);
 const adjustModal=(entry,modelId,colorId)=>actionModal(entry,'adjust',modelId,colorId);
@@ -171,6 +252,6 @@ async function printHtml(html,button){
 const printReport=(type,button)=>printHtml(reportHtml(type),button);
 const printDetail=(row,entries,button)=>printHtml(detailHtml(row,entries),button);
 
-const previousRenderPage=renderPage;renderPage=async function(){if(S.view==='production-inventory'&&canManage())return render();return previousRenderPage()};
+const previousRenderPage=renderPage;renderPage=async function(){if(S.view==='production-inventory'&&canManage()){if(!document.querySelector('.production-inventory-page'))PI.loaded=false;return render()}return previousRenderPage()};
 new MutationObserver(()=>{injectNav();injectHomeShortcut()}).observe(document.body,{childList:true,subtree:true});injectNav();injectHomeShortcut();
 })();
