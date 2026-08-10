@@ -142,8 +142,12 @@ Boletos que vencem amanhã, vencem hoje ou estão atrasados aparecem no “Meu d
 4. Nada é confirmado automaticamente: o ADM revisa, corrige, vincula cada linha ao catálogo e só então salva.
 5. Se o cupom contiver um item novo, o ADM pode mantê-lo como **Criar novo produto automaticamente**.
 6. Uma compra que não nasceu de pedido é registrada em **Compras e cupons > Registrar compra direta**. Ela entra nos dados sem criar uma solicitação fictícia.
+7. Se o mercado usar uma descrição diferente e o item continuar como **Aguardando compra**, abra a solicitação e selecione **Vincular item do cupom**. Escolha a linha correta, registre o motivo e confirme. A descrição original e o produto efetivamente comprado permanecem preservados; o vínculo apenas comprova que a compra atende ao pedido.
+8. Para desfazer uma associação manual, selecione **Revisar vínculo > Remover vínculo** e informe o motivo. O status é recalculado sem apagar o cupom ou seu histórico.
 
 Solicitações ficam como **Aguardando compra**, **Compra parcial** ou **Compra concluída** conforme os produtos encontrados nos cupons vinculados. Somente ADMs veem fotos, fornecedores, preços e relatórios financeiros; Recebimento continua sem acesso a valores.
+
+Na tela inicial, ADMs possuem os atalhos **Registrar compra direta com IA** e **Cadastrar boleto com IA**, que abrem diretamente a captura e a revisão obrigatória. ADM e Recebimento também possuem o atalho **Inventário de Produção**. Os atalhos não ampliam permissões: apenas reduzem o número de toques até funções já autorizadas para cada perfil.
 
 Em **Relatórios**, o período selecionado mostra quantidade comprada, valor gasto, consumo vindo de solicitações, estoque e evolução do preço unitário. Para cada item são exibidos preço anterior, preço atual, aumento ou redução em reais e porcentagem, preço médio, menor e maior preço. A exportação para Excel inclui os mesmos campos.
 

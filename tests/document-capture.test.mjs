@@ -37,10 +37,10 @@ test('capture interface is responsive, versioned, offline and mirrored',()=>{
   assert.match(styles,/@media\(max-width:620px\)/);
   assert.match(styles,/@media\(max-width:380px\)/);
   assert.match(index,/document-capture\.css\?v=25\.49/);
-  assert.match(index,/bills\.js\?v=25\.61/);
-  assert.match(index,/internal-supplies\.js\?v=25\.61/);
+  assert.match(index,/bills\.js\?v=25\.66/);
+  assert.match(index,/internal-supplies\.js\?v=25\.66/);
   assert.match(worker,/document-capture\.css\?v=25\.49/);
-  assert.match(worker,/harmony-store-v25-65/);
+  assert.match(worker,/harmony-store-v25-66/);
   assert.equal(webReceipts,receipts);
   assert.equal(webBills,bills);
   assert.equal(webStyles,styles);

@@ -15,7 +15,7 @@ const tables = [
   'improvement_ideas', 'improvement_idea_events',
   'app_notifications', 'app_notification_recipients',
   'separation_checkup_items', 'stock_discrepancies', 'stock_replenishment_requests',
-  'internal_supply_requests', 'internal_supply_request_items',
+  'internal_supply_requests', 'internal_supply_request_items', 'internal_supply_request_item_fulfillments',
   'internal_purchase_receipts', 'internal_purchase_receipt_items', 'internal_receipt_ai_runs',
   'bills', 'bill_ai_runs',
 ];

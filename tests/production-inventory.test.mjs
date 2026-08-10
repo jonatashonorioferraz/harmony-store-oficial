@@ -48,8 +48,8 @@ test('balance is alphabetical and detail exposes collaborator, date, box and ful
   assert.match(js,/Produzido por/);assert.match(js,/box_reference/);assert.match(js,/entry_on/);assert.match(js,/Transferir caixa completa/);assert.match(js,/Saldo da caixa/);
 });
 
-test('home shortcut is one compact animated inventory action and honors reduced motion',()=>{
-  assert.match(js,/button\.id='productionInventoryShortcut'/);assert.match(js,/>Inventário de Produção</);assert.doesNotMatch(js,/Ações rápidas|Pendências de hoje/);
+test('home shortcuts keep the compact inventory action and add protected AI actions',()=>{
+  assert.match(js,/productionInventoryShortcut/);assert.match(js,/>Inventário de Produção</);assert.match(js,/Registrar compra direta com IA/);assert.match(js,/Cadastrar boleto com IA/);assert.doesNotMatch(js,/Pendências de hoje/);
   assert.match(css,/production-inventory-home-shortcut/);assert.match(css,/@keyframes inventoryShortcutShine/);assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 });
 
@@ -64,8 +64,8 @@ test('layout covers desktop, tablet and mobile breakpoints',()=>{
 });
 
 test('assets, offline cache, backup, recovery and documentation are complete',()=>{
-  assert.match(index,/production-inventory\.css\?v=25\.60/);assert.match(index,/production-inventory\.js\?v=25\.60/);
-  assert.match(worker,/production-inventory\.css\?v=25\.60/);assert.match(worker,/production-inventory\.js\?v=25\.60/);assert.match(worker,/harmony-store-v25-65/);
+  assert.match(index,/production-inventory\.css\?v=25\.66/);assert.match(index,/production-inventory\.js\?v=25\.66/);
+  assert.match(worker,/production-inventory\.css\?v=25\.66/);assert.match(worker,/production-inventory\.js\?v=25\.66/);assert.match(worker,/harmony-store-v25-66/);
   for(const source of [backup,recovery]){assert.match(source,/'production_inventory_entries'/);assert.match(source,/'production_inventory_movements'/)}
-  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.65.0');
+  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.66.0');
 });
