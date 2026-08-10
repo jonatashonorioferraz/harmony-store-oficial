@@ -148,6 +148,28 @@ Fotos ficam no bucket privado `internal-receipts`. A chave da OpenAI existe apen
 
 A confirmação usa `confirm_internal_purchase_receipt` para gravar a compra, aumentar o estoque, atualizar custo/fornecedor e concluir parcial ou totalmente a solicitação dentro de uma única transação. Compras diretas usam `request_id=null` e não fabricam solicitações. O histórico de itens do cupom é imutável; cancelamento administrativo preserva o registro, estorna o estoque e grava auditoria.
 
+### Estoque personalizado por colaboradora
+
+`products.stock_control_mode` mantém `shared` como padrão compatível. No modo `collaborator`, o saldo compartilhado do produto permanece obrigatoriamente zerado e a tabela `product_collaborator_stocks` guarda físico, reservado e mínimo pela chave única `(product_id, collaborator_id)`.
+
+```mermaid
+sequenceDiagram
+  participant C as Colaboradora
+  participant I as Item da solicitação
+  participant R as RPC transacional
+  participant E as Estoque individual
+  participant A as Auditoria
+  C->>I: Solicita etiqueta personalizada
+  I->>I: Grava stock_owner_id da solicitante
+  R->>E: Reserva somente product + stock_owner
+  R->>E: Entrega, cancela ou corrige o mesmo saldo
+  R->>A: Registra produto, dona, quantidade e motivo
+```
+
+O trigger `assign_request_item_stock_owner` ignora qualquer proprietária enviada pelo navegador e deriva o valor de `requests.requested_by`. Colaboradoras possuem RLS somente para a própria linha; ADMs usam RPCs protegidas para consultar ou atualizar todas. Os helpers privados bloqueiam produto e saldo com `FOR UPDATE`, validam `0 <= reservado <= físico` e registram `stock_movements.stock_owner_id` na mesma transação.
+
+As reposições usam dois índices parciais: um para estoque compartilhado e outro para `(produto, colaboradora)`. Assim uma falta da Dionela não encerra, aumenta ou substitui uma reposição pertencente à Ana. A criação de uma colaboradora de produção sincroniza posições zeradas sem modificar histórico. Pedidos de compra genéricos são impedidos de lançar um total personalizado no saldo compartilhado; a distribuição deve ser confirmada em **Gerenciar estoques individuais**.
+
 ## Componentes versionados
 
 - `web/`: fonte estática publicada.
