@@ -18,6 +18,7 @@ Nenhuma permissão, regra de estoque, pagamento, compra, solicitação ou audito
 
 - o indicador global é instalado depois dos módulos existentes;
 - operações rápidas não exibem a camada;
+- a camada oculta usa `display:none!important` e ignora eventos do ponteiro, impedindo qualquer bloqueio invisível da interface;
 - o fechamento usa `finally` para não deixar a interface bloqueada;
 - a IA não pode exibir 100% antes da resposta;
 - falhas reabilitam câmera, galeria, preenchimento manual e nova tentativa;

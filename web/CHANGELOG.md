@@ -5,6 +5,15 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.62] - 09/08/2026
+
+### Correção emergencial da interação
+
+- Corrigida a camada transparente do carregamento que podia permanecer sobre a tela e interceptar cliques e toques.
+- O estado `hidden` agora força a remoção completa da camada visual.
+- A animação passou a ignorar eventos do ponteiro, portanto nunca bloqueia botões, campos ou menus, mesmo durante um carregamento.
+- Nenhuma funcionalidade, permissão ou regra de negócio foi alterada.
+
 ## [v25.61] - 09/08/2026
 
 ### Experiência de carregamento e leitura inteligente

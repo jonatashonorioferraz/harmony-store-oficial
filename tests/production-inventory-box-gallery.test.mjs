@@ -81,9 +81,9 @@ test('release assets, help and audit documentation are complete',()=>{
   assert.match(index,/production-inventory\.js\?v=25\.60/);
   assert.match(worker,/production-inventory\.css\?v=25\.60/);
   assert.match(worker,/production-inventory\.js\?v=25\.60/);
-  assert.match(worker,/harmony-store-v25-61/);
+  assert.match(worker,/harmony-store-v25-62/);
   assert.match(manual,/### Visualizar as caixas disponíveis/);
   assert.match(technical,/## Sincronização/);
   assert.match(audit,/## Riscos controlados/);
-  assert.equal(JSON.parse(pkg).version,'25.61.0');
+  assert.equal(JSON.parse(pkg).version,'25.62.0');
 });
