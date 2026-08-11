@@ -282,8 +282,8 @@ function enhanceBrandPresentation(){
   if(copy){
     copy.classList.add('harmony-brand-gold-copy');
     const name=copy.querySelector('b'),subtitle=copy.querySelector('small');
-    if(name)name.textContent='Harmony Store Oficial';
-    if(subtitle)subtitle.textContent='Gestão de produção';
+    if(name&&name.textContent!=='Harmony Store Oficial')name.textContent='Harmony Store Oficial';
+    if(subtitle&&subtitle.textContent!=='Gestão de produção')subtitle.textContent='Gestão de produção';
   }
 }
 
@@ -347,5 +347,9 @@ function improveApp(){applyHarmonyRoleTheme();addRefreshControl();addListControl
 window.addEventListener('online',()=>{updateConnectionBanner();if(S?.profile)toast('Conexão restabelecida.')});
 window.addEventListener('offline',updateConnectionBanner);
 matchMedia('(max-width:720px)').addEventListener('change',()=>{enhanceLoginMessage();enhanceLoginMascot()});
-new MutationObserver(improveApp).observe(document.body,{childList:true,subtree:true});
 improveApp();
+const harmonyEnhancementObserver=new MutationObserver(()=>{
+  harmonyEnhancementObserver.disconnect();
+  try{improveApp()}finally{harmonyEnhancementObserver.observe(document.body,{childList:true,subtree:true})}
+});
+harmonyEnhancementObserver.observe(document.body,{childList:true,subtree:true});

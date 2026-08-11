@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.69] - 10/08/2026
+
+### Estabilidade da interface e recuperação do acesso
+
+- Corrigido o ciclo de atualização visual introduzido pela assinatura dourada da marca, que podia manter o aplicativo preso em **Preparando ambiente seguro…** após restaurar uma sessão ou concluir o login.
+- A aplicação da marca tornou-se idempotente: textos e elementos só são modificados quando realmente precisam mudar.
+- O observador de interface agora fica suspenso enquanto os aprimoramentos visuais são aplicados, impedindo que uma alteração feita pelo próprio aplicativo dispare uma repetição infinita.
+- O cache do PWA e os arquivos versionados foram renovados para distribuir a correção em computador, celular e tablet.
+- Autenticação, permissões, dados do Supabase e regras de negócio não foram modificados.
+
 ## [v25.68] - 10/08/2026
 
 ### Recuperação segura da abertura e do login

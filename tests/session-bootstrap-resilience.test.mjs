@@ -33,8 +33,8 @@ test('login gives immediate feedback and always restores its button after failur
 test('official mirrors and PWA assets publish the recovery patch together',()=>{
   assert.equal(webApp,app);
   assert.equal(webIndex,index);
-  assert.match(index,/app\.js\?v=25\.68/);
-  assert.match(worker,/harmony-store-v25-68/);
-  assert.match(worker,/app\.js\?v=25\.68/);
-  assert.equal(JSON.parse(pkg).version,'25.68.0');
+  assert.match(index,/app\.js\?v=25\.69/);
+  assert.match(worker,/harmony-store-v25-69/);
+  assert.match(worker,/app\.js\?v=25\.69/);
+  assert.equal(JSON.parse(pkg).version,'25.69.0');
 });
