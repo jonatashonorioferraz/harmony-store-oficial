@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const root=new URL('../',import.meta.url);
-const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,technical,pdfCorrection,backup,recovery,pkg,qrcode]=await Promise.all([
+const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,technical,pdfCorrection,reissueTechnical,backup,recovery,pkg,qrcode]=await Promise.all([
   readFile(new URL('supabase/migrations/20260811133000_production_inventory_thermal_labels.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260811150000_production_inventory_label_print_actor_index.sql',root),'utf8'),
   readFile(new URL('supabase/validation/20260811133000_production_inventory_thermal_labels.sql',root),'utf8'),
@@ -16,6 +16,7 @@ const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,techn
   readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
   readFile(new URL('docs/technical/ETIQUETAS-TERMICAS-INVENTARIO-V25.70.md',root),'utf8'),
   readFile(new URL('docs/technical/CORRECAO-PDF-ETIQUETA-V25.71.md',root),'utf8'),
+  readFile(new URL('docs/technical/REEMISSAO-ETIQUETAS-CAIXAS-V25.72.md',root),'utf8'),
   readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
   readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),
   readFile(new URL('package.json',root),'utf8'),
@@ -96,6 +97,21 @@ test('PDF térmico é binário, local e possui uma única página física 150 x 
   assert.match(pdfCorrection,/425,1969 × 283,4646 pontos/);
 });
 
+test('caixas disponíveis permitem gerar ou reimprimir a mesma etiqueta com auditoria',()=>{
+  assert.match(js,/data-inventory-reissue-label/);
+  assert.match(js,/Gerar \/ reimprimir etiqueta/);
+  assert.match(js,/function labelReissueModal\(entry,modelId,colorId\)/);
+  assert.match(js,/Caixa anterior ao sistema de etiquetas/);
+  assert.match(js,/Etiqueta danificada/);
+  assert.match(js,/Motivo registrado:/);
+  assert.match(js,/recordLabelOutput\(entry,format,reissueReason=null\)/);
+  assert.match(js,/p_reason:reissueReason\.trim\(\)/);
+  assert.match(js,/O código permanente e o QR Code serão preservados\. Nenhum saldo ou movimento será alterado\./);
+  assert.doesNotMatch(js,/labelReissueModal[\s\S]{0,2500}create_production_inventory_entry_v3/);
+  assert.match(reissueTechnical,/## Invariantes preservadas/);
+  assert.match(reissueTechnical,/não é recriado/);
+});
+
 test('pendências são retomáveis e não entram no contador',()=>{
   assert.match(js,/rpc\('list_pending_production_inventory_labels'/);
   assert.match(js,/pendingLabelsPanel\(\)/);
@@ -106,14 +122,14 @@ test('pendências são retomáveis e não entram no contador',()=>{
 
 test('PWA, ajuda, documentação e continuidade incluem a nova função',()=>{
   assert.match(index,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
-  assert.match(index,/production-inventory\.css\?v=25\.71/);
-  assert.match(index,/production-inventory\.js\?v=25\.71/);
-  assert.match(worker,/harmony-store-v25-71/);
+  assert.match(index,/production-inventory\.css\?v=25\.72/);
+  assert.match(index,/production-inventory\.js\?v=25\.72/);
+  assert.match(worker,/harmony-store-v25-72/);
   assert.match(worker,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
   assert.match(help,/Gerar etiqueta 150 × 100/);
   assert.match(manual,/Etiquetas pendentes/);
   assert.match(technical,/label_token/);
   assert.match(backup,/'production_inventory_label_prints'/);
   assert.match(recovery,/production_inventory_label_prints: \['protocol'\]/);
-  assert.equal(JSON.parse(pkg).version,'25.71.0');
+  assert.equal(JSON.parse(pkg).version,'25.72.0');
 });

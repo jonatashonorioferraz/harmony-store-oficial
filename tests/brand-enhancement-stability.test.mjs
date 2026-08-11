@@ -27,7 +27,7 @@ test('fixed assets are mirrored and force a fresh PWA cache',()=>{
   assert.equal(webIndex,index);
   assert.match(index,/app\.js\?v=25\.70/);
   assert.match(index,/enhancements\.js\?v=25\.69/);
-  assert.match(worker,/harmony-store-v25-71/);
+  assert.match(worker,/harmony-store-v25-72/);
   assert.match(worker,/enhancements\.js\?v=25\.69/);
-  assert.equal(JSON.parse(pkg).version,'25.71.0');
+  assert.equal(JSON.parse(pkg).version,'25.72.0');
 });

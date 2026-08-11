@@ -90,6 +90,18 @@ Cada cadastro representa uma única caixa física. A numeração continua exatam
 
 O QR Code leva a um identificador opaco da caixa. Ao escanear, o aplicativo continua exigindo login e permite a consulta somente a **ADM** ou **Recebimento**. Nenhum nome, quantidade ou dado da colaboradora é colocado diretamente no endereço do QR Code.
 
+### Gerar novamente uma etiqueta existente
+
+Para substituir uma etiqueta danificada ou identificar uma caixa cadastrada antes do sistema de etiquetas:
+
+1. Abra **Inventário de Produção** e permaneça em **Saldo atual**.
+2. Entre nos detalhes do modelo e da cor.
+3. Localize a caixa disponível pelo código permanente e toque em **Gerar / reimprimir etiqueta**.
+4. Selecione o motivo. Em **Outro motivo**, escreva uma explicação curta.
+5. Gere o PDF, PNG ou use a impressão direta.
+
+A nova via preserva o mesmo código `CX-NNNNNN`, o mesmo QR Code e os dados da caixa. Ela não cria outra caixa, não modifica a quantidade e não registra entrada ou saída de estoque. O motivo, o formato, a pessoa responsável e o horário ficam na auditoria. A opção aparece somente enquanto a caixa estiver disponível no estoque.
+
 A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
 
 ### Visualizar as caixas disponíveis

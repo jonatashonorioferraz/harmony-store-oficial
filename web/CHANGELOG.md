@@ -1,9 +1,20 @@
 # Changelog
 
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
-> Validação final: 277 testes aprovados, incluindo continuidade da numeração das caixas, segurança do pré-cadastro e geração de etiquetas paisagem 150 × 100 mm em PDF de uma única página.
+> Validação final: 278 testes aprovados, incluindo continuidade da numeração das caixas, segurança do pré-cadastro, geração em PDF de uma página e reemissão auditada das etiquetas.
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
+
+## [v25.72] - 11/08/2026
+
+### Geração e reimpressão de etiquetas de caixas existentes
+
+- Caixas disponíveis no Inventário de Produção agora possuem a ação **Gerar / reimprimir etiqueta** dentro do histórico detalhado.
+- O fluxo atende etiquetas danificadas, ilegíveis, perdidas e caixas cadastradas antes da criação do sistema de etiquetas.
+- Toda nova via exige motivo e registra formato, usuário e horário na auditoria existente.
+- A reemissão preserva o código permanente e o QR Code originais da caixa.
+- Nenhuma caixa nova é criada e nenhum saldo, movimentação, numeração, pagamento ou recebimento é alterado.
+- As caixas antigas já possuem identificador opaco retrocompatível; por isso, não foi necessária uma nova migração do Supabase.
 
 ## [v25.71] - 11/08/2026
 
