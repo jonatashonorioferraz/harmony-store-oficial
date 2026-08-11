@@ -1,9 +1,21 @@
 # Changelog
 
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
-> Validação final: 276 testes aprovados, incluindo continuidade da numeração das caixas, segurança do pré-cadastro e geração de etiquetas 100 × 150 mm.
+> Validação final: 277 testes aprovados, incluindo continuidade da numeração das caixas, segurança do pré-cadastro e geração de etiquetas paisagem 150 × 100 mm em PDF de uma única página.
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
+
+## [v25.71] - 11/08/2026
+
+### Etiqueta paisagem e PDF térmico em uma única página
+
+- A etiqueta passou para o formato paisagem de 150 × 100 mm, com melhor aproveitamento horizontal e código permanente da caixa em maior destaque.
+- O modelo ganhou uma miniatura da foto original, convertida localmente para preto e branco de alto contraste sem comprometer o QR Code.
+- O botão da etiqueta agora baixa um PDF real com uma única página de 150 × 100 mm, sem depender da escala do navegador.
+- Cabeçalhos, rodapés e margens adicionados ao imprimir um PNG pelo Gmail deixam de interferir no documento térmico.
+- O PNG foi preservado para aplicativos de impressoras que importam imagens.
+- A impressão direta recebeu proteção adicional contra overflow e quebra de página.
+- Banco, autenticação, permissões, numeração das caixas, QR Code, saldo e movimentações do inventário não foram alterados.
 
 ## [v25.70] - 11/08/2026
 

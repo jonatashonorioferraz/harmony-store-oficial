@@ -79,9 +79,10 @@ O acesso é permitido somente a **ADM principal**, **ADM normal** e **Recebiment
 3. Toque em **Gerar código**. O sistema reserva automaticamente um identificador no padrão `CX-000001`.
 4. Selecione o modelo, a cor e a colaboradora de produção já cadastrados.
 5. Informe a quantidade inteira, a data de entrada e, se desejar, a localização física, como **Prateleira A**.
-6. Use **Salvar pré-cadastro** para continuar depois ou **Gerar etiqueta 100 × 150** para abrir a identificação imediatamente.
-7. Na prévia, baixe o arquivo PNG, gere o PDF ou abra a impressão térmica. O documento usa exatamente 100 × 150 mm e o logotipo oficial da Harmony em alto contraste.
-8. Cole a etiqueta na caixa física e somente então toque em **Confirmar etiqueta aplicada**.
+6. Use **Salvar pré-cadastro** para continuar depois ou **Gerar etiqueta 150 × 100** para abrir a identificação imediatamente.
+7. Na prévia, use **Gerar PDF 150 × 100** para baixar um documento real de uma única página, já configurado em paisagem no tamanho físico da etiqueta. Abra o PDF baixado para imprimir, sem alterar a escala. Não imprima o PNG diretamente pela tela do Gmail, pois o serviço acrescenta cabeçalhos, rodapés e margens que podem criar uma segunda página.
+8. Use **Baixar PNG** somente quando o aplicativo próprio da impressora pedir uma imagem. O PNG possui 1200 × 800 px, usa o logotipo oficial e inclui uma miniatura térmica do produto em alto contraste.
+9. Cole a etiqueta na caixa física e somente então toque em **Confirmar etiqueta aplicada**.
 
 O pré-cadastro reserva o código, porém mantém a quantidade fora do saldo e do contador. Se o aplicativo for fechado ou a impressão falhar, abra novamente o módulo e retome a caixa no quadro **Etiquetas pendentes**. O saldo só é liberado pela confirmação física. Se o pré-cadastro for cancelado, o motivo, a data e o responsável ficam auditados e o código não volta à fila.
 

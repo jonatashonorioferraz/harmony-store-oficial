@@ -64,8 +64,8 @@ test('layout covers desktop, tablet and mobile breakpoints',()=>{
 });
 
 test('assets, offline cache, backup, recovery and documentation are complete',()=>{
-  assert.match(index,/production-inventory\.css\?v=25\.70/);assert.match(index,/production-inventory\.js\?v=25\.70/);
-  assert.match(worker,/production-inventory\.css\?v=25\.70/);assert.match(worker,/production-inventory\.js\?v=25\.70/);assert.match(worker,/harmony-store-v25-70/);
+  assert.match(index,/production-inventory\.css\?v=25\.71/);assert.match(index,/production-inventory\.js\?v=25\.71/);
+  assert.match(worker,/production-inventory\.css\?v=25\.71/);assert.match(worker,/production-inventory\.js\?v=25\.71/);assert.match(worker,/harmony-store-v25-71/);
   for(const source of [backup,recovery]){assert.match(source,/'production_inventory_entries'/);assert.match(source,/'production_inventory_movements'/)}
-  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.70.0');
+  assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.equal(JSON.parse(pkg).version,'25.71.0');
 });

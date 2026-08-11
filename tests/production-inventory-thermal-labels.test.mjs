@@ -3,17 +3,19 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const root=new URL('../',import.meta.url);
-const [sql,actorIndex,validation,js,css,index,worker,help,manual,technical,backup,recovery,pkg,qrcode]=await Promise.all([
+const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,technical,pdfCorrection,backup,recovery,pkg,qrcode]=await Promise.all([
   readFile(new URL('supabase/migrations/20260811133000_production_inventory_thermal_labels.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260811150000_production_inventory_label_print_actor_index.sql',root),'utf8'),
   readFile(new URL('supabase/validation/20260811133000_production_inventory_thermal_labels.sql',root),'utf8'),
   readFile(new URL('production-inventory.js',root),'utf8'),
+  readFile(new URL('thermal-label-pdf.js',root),'utf8'),
   readFile(new URL('production-inventory.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),
   readFile(new URL('service-worker.js',root),'utf8'),
   readFile(new URL('help-center.js',root),'utf8'),
   readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
   readFile(new URL('docs/technical/ETIQUETAS-TERMICAS-INVENTARIO-V25.70.md',root),'utf8'),
+  readFile(new URL('docs/technical/CORRECAO-PDF-ETIQUETA-V25.71.md',root),'utf8'),
   readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
   readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),
   readFile(new URL('package.json',root),'utf8'),
@@ -67,20 +69,31 @@ test('QR é opaco, local e protegido pela mesma permissão do módulo',()=>{
   assert.match(qrcode,/Licensed under the MIT license/);
 });
 
-test('interface produz etiqueta 100 x 150 responsiva com logotipo oficial',()=>{
-  assert.match(js,/LABEL_WIDTH=800,LABEL_HEIGHT=1200,LABEL_TEMPLATE='100x150-v1'/);
+test('interface produz etiqueta paisagem 150 x 100 responsiva com logotipo e foto oficial',()=>{
+  assert.match(js,/LABEL_WIDTH=1200,LABEL_HEIGHT=800,LABEL_TEMPLATE='150x100-landscape-v2'/);
   assert.match(js,/canvas\.dataset\.labelTemplate=LABEL_TEMPLATE/);
   assert.match(js,/loadImage\('logo\.jpg\?v=25\.70'\)/);
-  assert.match(js,/@media print\{\@page\{size:100mm 150mm;margin:0\}\}/);
+  assert.match(js,/drawThermalProductPhoto/);
+  assert.match(js,/imageUrl\(path\),true/);
+  assert.match(js,/@page\{size:150mm 100mm;margin:0\}/);
   assert.match(js,/Baixar PNG/);
-  assert.match(js,/Gerar PDF/);
+  assert.match(js,/Gerar PDF 150 × 100/);
   assert.match(js,/Imprimir etiqueta/);
   assert.match(js,/Confirmar etiqueta aplicada/);
   assert.match(css,/production-inventory-label-preview canvas/);
   assert.match(css,/production-inventory-label-printing/);
-  assert.match(css,/width:100mm!important;height:150mm!important/);
+  assert.match(css,/width:150mm!important;height:100mm!important/);
   assert.match(css,/@media\(max-width:820px\)/);
   assert.match(css,/@media\(max-width:480px\)/);
+});
+
+test('PDF térmico é binário, local e possui uma única página física 150 x 100',()=>{
+  assert.match(pdfHelper,/\/Type \/Pages \/Kids \[3 0 R\] \/Count 1/);
+  assert.match(pdfHelper,/\/MediaBox \[0 0 \$\{pageWidth\} \$\{pageHeight\}\]/);
+  assert.match(pdfHelper,/new Blob\(\[pdf\],\{type:'application\/pdf'\}\)/);
+  assert.match(js,/createPdfBlobFromCanvas\(canvas,\{widthMm:150,heightMm:100/);
+  assert.match(index,/thermal-label-pdf\.js\?v=25\.71/);
+  assert.match(pdfCorrection,/425,1969 × 283,4646 pontos/);
 });
 
 test('pendências são retomáveis e não entram no contador',()=>{
@@ -93,14 +106,14 @@ test('pendências são retomáveis e não entram no contador',()=>{
 
 test('PWA, ajuda, documentação e continuidade incluem a nova função',()=>{
   assert.match(index,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
-  assert.match(index,/production-inventory\.css\?v=25\.70/);
-  assert.match(index,/production-inventory\.js\?v=25\.70/);
-  assert.match(worker,/harmony-store-v25-70/);
+  assert.match(index,/production-inventory\.css\?v=25\.71/);
+  assert.match(index,/production-inventory\.js\?v=25\.71/);
+  assert.match(worker,/harmony-store-v25-71/);
   assert.match(worker,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
-  assert.match(help,/Gerar etiqueta 100 × 150/);
+  assert.match(help,/Gerar etiqueta 150 × 100/);
   assert.match(manual,/Etiquetas pendentes/);
   assert.match(technical,/label_token/);
   assert.match(backup,/'production_inventory_label_prints'/);
   assert.match(recovery,/production_inventory_label_prints: \['protocol'\]/);
-  assert.equal(JSON.parse(pkg).version,'25.70.0');
+  assert.equal(JSON.parse(pkg).version,'25.71.0');
 });
