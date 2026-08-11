@@ -44,7 +44,7 @@ test('transferred boxes cannot be adjusted but remain listed with their history'
   assert.match(sql,/transferred_by_name text/);
   assert.match(js,/Transferida ao e-commerce/);
   assert.match(js,/transferred_by_name/);
-  assert.match(js,/list_production_inventory_entries_v3/);
+  assert.match(js,/list_production_inventory_entries_v4/);
 });
 
 test('UI transfers the complete box without accepting a withdrawal quantity',()=>{
@@ -64,7 +64,7 @@ test('transfer presentation is responsive and included in PDFs and help',()=>{
   assert.match(manual,/não é necessário digitar quantidade/i);
   assert.match(technical,/Esta versão não cria um segundo saldo/);
   assert.match(audit,/zero dados artificiais/);
-  assert.equal(JSON.parse(pkg).version,'25.69.0');
+  assert.equal(JSON.parse(pkg).version,'25.70.0');
 });
 
 test('transfer APIs remain limited to authenticated managers and isolated from other stocks',()=>{

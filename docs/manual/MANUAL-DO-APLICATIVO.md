@@ -79,9 +79,15 @@ O acesso é permitido somente a **ADM principal**, **ADM normal** e **Recebiment
 3. Toque em **Gerar código**. O sistema reserva automaticamente um identificador no padrão `CX-000001`.
 4. Selecione o modelo, a cor e a colaboradora de produção já cadastrados.
 5. Informe a quantidade inteira, a data de entrada e, se desejar, a localização física, como **Prateleira A**.
-6. Revise a foto, o código e salve.
+6. Use **Salvar pré-cadastro** para continuar depois ou **Gerar etiqueta 100 × 150** para abrir a identificação imediatamente.
+7. Na prévia, baixe o arquivo PNG, gere o PDF ou abra a impressão térmica. O documento usa exatamente 100 × 150 mm e o logotipo oficial da Harmony em alto contraste.
+8. Cole a etiqueta na caixa física e somente então toque em **Confirmar etiqueta aplicada**.
 
-Cada cadastro representa uma única caixa física. O código é exclusivo e permanente: não pode ser repetido, editado ou reutilizado, mesmo depois que o saldo chegar a zero. Se um código for gerado e o cadastro for cancelado, ele também não volta à fila. Isso preserva a rastreabilidade e evita localizar duas caixas diferentes pelo mesmo número.
+O pré-cadastro reserva o código, porém mantém a quantidade fora do saldo e do contador. Se o aplicativo for fechado ou a impressão falhar, abra novamente o módulo e retome a caixa no quadro **Etiquetas pendentes**. O saldo só é liberado pela confirmação física. Se o pré-cadastro for cancelado, o motivo, a data e o responsável ficam auditados e o código não volta à fila.
+
+Cada cadastro representa uma única caixa física. A numeração continua exatamente a sequência que já existia antes desta função; nada é zerado ou reiniciado. O código é exclusivo e permanente: não pode ser repetido, editado ou reutilizado, mesmo depois que o saldo chegar a zero.
+
+O QR Code leva a um identificador opaco da caixa. Ao escanear, o aplicativo continua exigindo login e permite a consulta somente a **ADM** ou **Recebimento**. Nenhum nome, quantidade ou dado da colaboradora é colocado diretamente no endereço do QR Code.
 
 A tela **Saldo atual** apresenta somente foto, modelo, cor e quantidade e mantém os modelos em ordem alfabética.
 

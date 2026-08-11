@@ -1,9 +1,24 @@
 # Changelog
 
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
-> Validação final: 63 testes aprovados, fluxo de solicitação/entrega validado com rollback e monitoramento externo confirmado em produção.
+> Validação final: 276 testes aprovados, incluindo continuidade da numeração das caixas, segurança do pré-cadastro e geração de etiquetas 100 × 150 mm.
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
+
+## [v25.70] - 11/08/2026
+
+### Etiquetas térmicas 100 × 150 mm no Inventário de Produção
+
+- A entrada de uma nova caixa agora possui pré-cadastro seguro: o código permanente é reservado, mas a quantidade só entra no saldo depois da confirmação física da etiqueta.
+- A numeração `CX-NNNNNN` continua exatamente a sequência das caixas existentes; nenhum código foi zerado, renumerado ou reutilizado.
+- A etiqueta usa o logotipo oficial Harmony Store em alto contraste, modelo, cor, quantidade, colaboradora, entrada, localização e QR Code protegido.
+- Foram adicionadas saídas PNG, PDF e impressão no tamanho térmico exato de 100 × 150 mm para computador, celular e tablet.
+- Etiquetas pendentes podem ser retomadas após fechar o aplicativo ou falhar a impressão. Cancelamentos exigem motivo e preservam o código no histórico.
+- Geração, reimpressão, aplicação e cancelamento são auditados com usuário e horário; reimpressões do mesmo formato exigem justificativa.
+- O QR Code contém somente um identificador opaco e continua exigindo login de ADM ou Recebimento.
+- O banco impede movimentações, transferências e ajustes enquanto a etiqueta não estiver confirmada.
+- A biblioteca de QR Code é local e fixada na versão 2.0.4, sem envio de informações para serviços externos.
+- A nova tabela de auditoria foi incluída no backup criptografado e na restauração isolada.
 
 ## [v25.69] - 10/08/2026
 

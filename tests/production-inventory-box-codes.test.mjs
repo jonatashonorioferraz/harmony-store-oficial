@@ -43,8 +43,8 @@ test('new-box interface requires generation and shows the permanent code everywh
   assert.match(js,/✨ Gerar código/);
   assert.match(js,/Clique em Gerar código antes de salvar a caixa/);
   assert.match(js,/CX-'\+String\(n\(value\)\)\.padStart\(6,'0'\)/);
-  assert.match(js,/create_production_inventory_entry_v2/);
-  assert.match(js,/list_production_inventory_entries_v3/);
+  assert.match(js,/create_production_inventory_entry_v3/);
+  assert.match(js,/list_production_inventory_entries_v4/);
   assert.match(js,/list_production_inventory_movements_v2/);
   assert.match(js,/CÓDIGO PERMANENTE/);
   assert.match(js,/Código da caixa/);

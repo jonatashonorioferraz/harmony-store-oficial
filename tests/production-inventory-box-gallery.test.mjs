@@ -77,13 +77,13 @@ test('gallery and counter are responsive and accessible',()=>{
 });
 
 test('release assets, help and audit documentation are complete',()=>{
-  assert.match(index,/production-inventory\.css\?v=25\.66/);
-  assert.match(index,/production-inventory\.js\?v=25\.66/);
-  assert.match(worker,/production-inventory\.css\?v=25\.66/);
-  assert.match(worker,/production-inventory\.js\?v=25\.66/);
-  assert.match(worker,/harmony-store-v25-69/);
+  assert.match(index,/production-inventory\.css\?v=25\.70/);
+  assert.match(index,/production-inventory\.js\?v=25\.70/);
+  assert.match(worker,/production-inventory\.css\?v=25\.70/);
+  assert.match(worker,/production-inventory\.js\?v=25\.70/);
+  assert.match(worker,/harmony-store-v25-70/);
   assert.match(manual,/### Visualizar as caixas disponíveis/);
   assert.match(technical,/## Sincronização/);
   assert.match(audit,/## Riscos controlados/);
-  assert.equal(JSON.parse(pkg).version,'25.69.0');
+  assert.equal(JSON.parse(pkg).version,'25.70.0');
 });

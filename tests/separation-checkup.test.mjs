@@ -60,7 +60,7 @@ test('responsive checklist highlights outcomes and exposes reports',async()=>{
   assert.match(css,/@media\(max-width:720px\)/);
   assert.match(html,/separation-checkup\.js\?v=25\.52/);
   assert.match(html,/separation-checkup\.css\?v=25\.52/);
-  assert.match(worker,/harmony-store-v25-69/);
+  assert.match(worker,/harmony-store-v25-70/);
   assert.match(worker,/separation-checkup\.js\?v=25\.52/);
 });
 
@@ -76,5 +76,5 @@ test('product replenishment mode and continuity data are included',async()=>{
   assert.match(help,/Finalizar separação/);
   assert.match(manual,/Check-up da separação/);
   assert.match(technical,/Check-up transacional de separação e reposição/);
-  assert.equal(JSON.parse(pkg).version,'25.69.0');
+  assert.equal(JSON.parse(pkg).version,'25.70.0');
 });

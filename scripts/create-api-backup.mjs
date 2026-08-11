@@ -11,7 +11,7 @@ const tables = [
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
   'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
   'production_payment_schedules', 'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
-  'production_inventory_entries', 'production_inventory_movements',
+  'production_inventory_entries', 'production_inventory_movements', 'production_inventory_label_prints',
   'improvement_ideas', 'improvement_idea_events',
   'app_notifications', 'app_notification_recipients',
   'separation_checkup_items', 'stock_discrepancies', 'stock_replenishment_requests',
