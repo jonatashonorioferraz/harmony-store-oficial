@@ -5,6 +5,16 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.68] - 10/08/2026
+
+### Recuperação segura da abertura e do login
+
+- A inicialização deixa de permanecer indefinidamente na tela de carregamento quando uma sessão antiga não consegue ser restaurada.
+- Todas as chamadas do núcleo ao Supabase passam a ter limite de espera e mensagem clara em caso de conexão demorada.
+- O envio do login, a renovação da sessão, a Data API, o Storage, as Edge Functions e o logout usam a mesma proteção de rede.
+- Uma falha inesperada na restauração limpa somente a sessão local inválida e devolve o usuário à tela de login, sem alterar dados do banco.
+- O cache do PWA foi renovado para distribuir a correção imediatamente em computador, celular e tablet.
+
 ## [v25.67] - 10/08/2026
 
 ### Assinatura visual dourada da marca
