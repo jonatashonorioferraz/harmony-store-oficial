@@ -5,6 +5,21 @@
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 
+## [v25.73] - 11/08/2026
+
+### Inteligência automática do Inventário de Produção
+
+- A aba Inteligência ganhou um painel administrativo dedicado ao Inventário, sem remover os relatórios existentes.
+- O GPT-5.6 Terra interpreta métricas exatas calculadas no Supabase e apresenta prioridades, recomendações e evidências conferíveis.
+- A análise cobre risco estimado de falta, caixas antigas, excesso, localização, ajustes, entradas, transferências e ordens de produção.
+- O modelo não altera estoque, caixas, ordens, pagamentos ou cadastros; toda decisão permanece humana.
+- Nomes das colaboradoras são anonimizados antes da chamada externa, e as tabelas possuem RLS exclusivo para ADM.
+- O orçamento inicial é limitado a US$ 5 por mês, com histórico de tokens/custo, cooldown e cache por dados inalterados.
+- A análise é iniciada pelo ADM nesta versão. O agendamento automático ficou preparado, mas não foi ativado para preservar a verificação JWT padrão do Supabase.
+- Em falha ou limite de custo, os indicadores normais e toda a Inteligência anterior continuam funcionando.
+- O painel possui histórico auditável, marcação de conferência, atalhos para o Inventário e layout responsivo para computador, tablet e celular.
+- Não foi incluído campo de perguntas: a Inteligência identifica prioridades automaticamente para evitar trabalho manual.
+
 ## [v25.72] - 11/08/2026
 
 ### Geração e reimpressão de etiquetas de caixas existentes

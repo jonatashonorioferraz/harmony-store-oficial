@@ -138,6 +138,22 @@ O Inventário não calcula pagamentos, não modifica o recebimento oficial da pr
 
 O ADM filtra dados por colaboradora, produto/modelo, cor, semana, mês ou ano. Relatórios de consumo usam materiais efetivamente entregues, e relatórios de produção usam quantidades oficiais. Os demonstrativos semanais podem ser gerados em PDF para conferência e pagamento.
 
+### Inventário com IA
+
+A primeira aba de **Inteligência** é exclusiva dos ADMs e reúne indicadores em tempo real do Inventário de Produção com uma análise interpretativa do modelo GPT-5.6 Terra.
+
+- Os saldos, quantidades, datas, entradas, transferências, ajustes e ordens são calculados pelo Supabase. A IA não faz contas livres nem consulta o banco diretamente.
+- A análise prioriza risco estimado de falta por modelo e cor, caixas antigas, excesso de estoque, dados sem localização, ajustes frequentes, fluxo de entradas e saídas e concentração por colaboradora.
+- Abra **Por que a IA sugeriu isso?** para conferir os números usados como evidência. Projeções aparecem identificadas como estimativas.
+- Use **Marcar como conferido** depois da verificação humana. O histórico guarda análise, modelo, custo estimado, data e responsável.
+- A IA somente recomenda. Ela nunca altera estoque, transfere caixas, cria ordens, muda pagamentos ou edita cadastros.
+- Abrir a página e consultar análises anteriores não gera nova cobrança. Nesta versão, o uso da API ocorre somente quando um ADM confirma **Analisar agora com IA**.
+- O ADM principal controla habilitação, intervalo manual e orçamento mensal. O padrão inicial é **US$ 5 por mês**; ao atingir o limite, a IA pausa e todos os indicadores e relatórios tradicionais continuam funcionando.
+
+O painel atual é automático e não possui campo de perguntas ou perguntas programadas. A intenção é apresentar prioridades úteis sem acrescentar uma tarefa manual à rotina.
+
+O agendamento periódico está tecnicamente preparado, mas não foi ativado nesta versão porque a função foi publicada mantendo a verificação JWT padrão do Supabase. Isso evita reduzir uma camada de segurança sem autorização específica.
+
 ## Suprimentos e compras internas
 
 O menu **Suprimentos e Compras** é exclusivo dos perfis ADM e Recebimento. Ele controla itens usados pela operação do e-commerce, como café, papel higiênico e produtos de limpeza, sem misturá-los com a matéria-prima das artesãs.
