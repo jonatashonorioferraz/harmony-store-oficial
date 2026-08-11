@@ -351,5 +351,16 @@ async function handleInventoryLabelRoute(){
 }
 
 const previousRenderPage=renderPage;renderPage=async function(){if(S.view==='production-inventory'&&canManage()){if(!document.querySelector('.production-inventory-page'))PI.loaded=false;return render()}return previousRenderPage()};
+window.HarmonyProductionInventory=Object.freeze({
+  state:PI,
+  open(tab='balance'){
+    if(!canManage())return;
+    PI.tab=['balance','boxes','movements','workers'].includes(tab)?tab:'balance';
+    PI.loaded=false;
+    S.view='production-inventory';
+    renderApp();
+  },
+  reset
+});
 new MutationObserver(()=>{injectNav();injectHomeShortcut();handleInventoryLabelRoute()}).observe(document.body,{childList:true,subtree:true});injectNav();injectHomeShortcut();handleInventoryLabelRoute();
 })();
