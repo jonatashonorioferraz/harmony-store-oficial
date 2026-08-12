@@ -109,12 +109,26 @@ function itemCard(item,compact=false){
   </article>`;
 }
 
+function homeCalendarStrip(){
+  const items=allItems().filter(isOpen),start=dateAtNoon(today()),days=[];
+  for(let index=0;index<7;index++){
+    const date=new Date(start);date.setDate(start.getDate()+index);
+    const key=localKey(date),dayItems=items.filter(item=>dueKey(item)===key);
+    const urgent=dayItems.some(item=>item.priority==='urgent'||item.priority==='high');
+    days.push(`<button type="button" class="agenda-home-day ${index===0?'today':''} ${urgent?'attention':''}" data-agenda-home-day="${key}" aria-label="Abrir compromissos de ${brDate(date)}">
+      <small>${date.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')}</small><b>${date.getDate()}</b><span>${dayItems.length?plural(dayItems.length,'item','itens'):'Livre'}</span>
+    </button>`);
+  }
+  return `<div class="agenda-home-calendar"><header><span><small>CALENDÁRIO OPERACIONAL</small><b>Próximos 7 dias</b></span><em>Toque em uma data para abrir a agenda</em></header><div>${days.join('')}</div></div>`;
+}
+
 function homePanel(){
   const items=upcoming(),overdue=items.filter(item=>dueKey(item)<today()).length,todayItems=items.filter(item=>dueKey(item)===today()).length,manualOpen=AH.tasks.filter(isOpen).length;
   const brief=AH.brief?.result||{};
   return `<section class="agenda-home card">
     <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><h2>Seu dia, organizado em um só lugar</h2><span>${brief.headline?esc(brief.headline):'Tarefas próprias e compromissos dos módulos oficiais, sem informações duplicadas.'}</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-refresh>↻ Atualizar</button><button class="primary compact-action" data-agenda-page>Ver agenda completa</button></div></header>
     <div class="agenda-home-stats"><span><i>◷</i><b>${todayItems}</b><small>Para hoje</small></span><span class="${overdue?'attention':''}"><i>!</i><b>${overdue}</b><small>Em atraso</small></span><span><i>✓</i><b>${manualOpen}</b><small>Tarefas abertas</small></span><span><i>□</i><b>${AH.boxCount.toLocaleString('pt-BR')}</b><small>Caixas no inventário</small></span></div>
+    ${homeCalendarStrip()}
     <div class="agenda-home-content"><div class="agenda-home-list">${items.slice(0,5).map(item=>itemCard(item,true)).join('')||'<div class="agenda-empty"><b>Seu dia está em ordem</b><span>Nenhuma pendência com prazo próximo.</span></div>'}</div><aside><small>PRÓXIMOS 7 DIAS</small><strong>${plural(items.length,'compromisso','compromissos')}</strong><p>${brief.summary?esc(brief.summary):'A Agenda reúne somente os itens que precisam da sua atenção.'}</p><button class="outline" data-agenda-new>＋ Nova tarefa</button></aside></div>
   </section>`;
 }
@@ -123,8 +137,10 @@ function mountHome(){
   if(!isAdmin()||S.view!=='home')return;
   const page=document.querySelector('#page .page');if(!page)return;
   page.querySelector('.agenda-home')?.remove();
-  for(const selector of ['.my-day-panel','#adminRequestHub','.home-requests']){
-    const element=page.querySelector(selector);if(element){element.hidden=true;element.dataset.agendaReplaced='true'}
+  const oldDayPanel=page.querySelector('.my-day-panel');
+  if(oldDayPanel){oldDayPanel.hidden=true;oldDayPanel.dataset.agendaReplaced='true'}
+  for(const selector of ['#adminRequestHub','.home-requests']){
+    const element=page.querySelector(selector);if(element){element.hidden=false;delete element.dataset.agendaReplaced}
   }
   const section=document.createElement('div');section.innerHTML=homePanel();const panel=section.firstElementChild;
   const metrics=page.querySelector('.metrics');page.insertBefore(panel,metrics||page.firstChild);
@@ -172,6 +188,7 @@ async function renderPageView(){
 function bindCommon(root=document){
   root.querySelectorAll('[data-agenda-open]').forEach(button=>button.onclick=()=>{const item=allItems().find(row=>String(row.id)===button.dataset.agendaOpen);if(item)openSource(item)});
   root.querySelectorAll('[data-agenda-new]').forEach(button=>button.onclick=()=>taskModal());
+  root.querySelectorAll('[data-agenda-home-day]').forEach(button=>button.onclick=()=>{AH.selected=button.dataset.agendaHomeDay;AH.month=dateAtNoon(AH.selected)||new Date();S.view='agenda-harmony';renderApp()});
   root.querySelectorAll('[data-agenda-refresh]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{AH.loadedAt=0;await load(true);if(S.view==='home')mountHome();else renderAgenda(document.querySelector('#page'))}catch(error){alert(error.message);button.disabled=false}});
 }
 

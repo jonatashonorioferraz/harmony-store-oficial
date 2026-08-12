@@ -1,5 +1,14 @@
 # Changelog
 
+## [v25.76] - 2026-08-12
+
+### Corrigido
+
+- Restaurada na página inicial administrativa a Central de pendências, com as solicitações abertas de matéria-prima, materiais do e-commerce e suprimentos.
+- Restaurada a lista de Solicitações recentes, incluindo os filtros por período (como Hoje) e situação.
+- A Agenda Harmony passa a substituir visualmente somente o painel antigo Meu dia, sem ocultar informações operacionais importantes.
+- Adicionado à página inicial o calendário compacto dos próximos 7 dias, com contagem de compromissos e acesso direto à data escolhida na Agenda Harmony.
+
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
 > Validação final: 295 testes aprovados, incluindo a Agenda Harmony, a navegação reorganizada da Inteligência, continuidade da numeração das caixas, segurança do pré-cadastro, geração em PDF de uma página e reemissão auditada das etiquetas.
 

@@ -37,12 +37,19 @@ test('Agenda stores manual work but reads module items without copying them',()=
   assert.doesNotMatch(ui,/admin_(mark_bill|complete_request|update_production_order|transfer_production_inventory)/i);
 });
 
-test('Agenda replaces repeated admin home panels visually and preserves collaborator home',()=>{
+test('Agenda preserves request panels, replaces only the old day panel and keeps collaborator home',()=>{
   assert.match(ui,/if\(!isAdmin\(\)\|\|S\.view!=='home'\)return/);
-  assert.match(ui,/\.my-day-panel','#adminRequestHub','\.home-requests'/);
-  assert.match(ui,/element\.hidden=true/);
+  assert.match(ui,/querySelector\('\.my-day-panel'\)/);
+  assert.match(ui,/oldDayPanel\.hidden=true/);
+  assert.match(ui,/\['#adminRequestHub','\.home-requests'\]/);
+  assert.match(ui,/element\.hidden=false/);
   assert.doesNotMatch(ui,/\.remove\(\).*my-day|adminRequestHub.*remove/);
   assert.match(ui,/S\?\.profile\?\.role==='admin'/);
+  assert.match(ui,/function homeCalendarStrip\(\)/);
+  assert.match(ui,/data-agenda-home-day/);
+  assert.match(ui,/Próximos 7 dias/);
+  assert.match(css,/\.agenda-home-calendar/);
+  assert.match(css,/scroll-snap-type:x proximity/);
 });
 
 test('AI is server-side, budgeted, advisory and never mutates operational modules',()=>{
@@ -76,13 +83,13 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
   assert.match(css,/@media\(max-width:720px\)/);
   assert.match(css,/@media\(max-width:430px\)/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-  assert.match(index,/agenda-harmony\.css\?v=25\.75/);
-  assert.match(index,/agenda-harmony\.js\?v=25\.75/);
-  assert.match(worker,/harmony-store-v25-75/);
-  assert.match(worker,/agenda-harmony\.css\?v=25\.75/);
-  assert.match(worker,/agenda-harmony\.js\?v=25\.75/);
+  assert.match(index,/agenda-harmony\.css\?v=25\.76/);
+  assert.match(index,/agenda-harmony\.js\?v=25\.76/);
+  assert.match(worker,/harmony-store-v25-76/);
+  assert.match(worker,/agenda-harmony\.css\?v=25\.76/);
+  assert.match(worker,/agenda-harmony\.js\?v=25\.76/);
   assert.match(help,/id:'agenda-harmony'/);
-  assert.equal(JSON.parse(pkg).version,'25.75.0');
+  assert.equal(JSON.parse(pkg).version,'25.76.0');
 });
 
 test('backup and isolated recovery include every Agenda table',()=>{

@@ -223,6 +223,8 @@ Use o botão **Ajuda** dentro de cada tela para instruções rápidas. O menu **
 
 A Agenda Harmony é a secretária administrativa do aplicativo. Ela reúne suas tarefas e as datas que já existem em boletos, solicitações, ordens de produção, compras internas e inventário.
 
+Na página inicial administrativa, o calendário compacto mostra os próximos sete dias. Toque em uma data para abrir diretamente os compromissos daquele dia. A mesma página continua mostrando a **Central de pendências** com solicitações abertas de matéria-prima, materiais do e-commerce e suprimentos, além da lista **Solicitações recentes**, que pode ser filtrada por **Hoje** e por situação.
+
 1. Abra **Agenda Harmony** no menu administrativo.
 2. Use **Nova tarefa** para registrar um compromisso, prazo, prioridade, lembrete e lista de verificação.
 3. Se preferir, escreva uma anotação e toque em **Organizar anotação com IA**. Revise todos os campos antes de salvar.

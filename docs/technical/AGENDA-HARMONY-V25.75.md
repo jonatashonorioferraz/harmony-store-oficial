@@ -58,7 +58,8 @@ O agendamento recorrente da função deve ser configurado no ambiente seguro do 
 
 - Alteração aditiva; nenhuma tabela ou política operacional foi removida.
 - A Home das colaboradoras não é modificada.
-- O painel administrativo antigo permanece no DOM, oculto apenas enquanto a nova Agenda está montada, facilitando rollback.
+- A partir da correção 25.76, somente o painel antigo `Meu dia` fica oculto enquanto a Agenda está montada. A Central de pendências e as Solicitações recentes permanecem visíveis na Home administrativa.
+- O calendário compacto da Home calcula os próximos sete dias em memória e abre a data correspondente na Agenda, sem duplicar registros no banco.
 - Todas as novas tabelas fazem parte do backup criptografado e da restauração isolada.
 - Tag de retorno criada antes da implementação: `backup/pre-agenda-harmony-v25.74-20260812`.
 
