@@ -1,5 +1,17 @@
 # Changelog
 
+## [v25.78] - 2026-08-12
+
+### Agenda inteligente sem informações duplicadas
+
+- A **Central de Pendências** foi preservada como o único painel da Home que lista solicitações abertas.
+- A Agenda da Home agora exibe um calendário semanal aberto com tarefas próprias, compromissos e boletos, incluindo dias sem atividades.
+- Cada data mostra até três resumos e abre a Agenda Harmony completa já filtrada naquele dia.
+- No celular, os dias usam rolagem horizontal e o resumo do dia selecionado aparece em um cartão próprio; tablet e computador mantêm visão ampla.
+- O selo **IA ATIVA** explica o papel real da assistente: organizar prioridades e destacar até três insights sem repetir solicitações ou ordens.
+- A Inteligência do dia combina informações conferíveis do aplicativo com a última análise administrativa, sem alterar módulos operacionais automaticamente.
+- A geração de novas análises foi orientada a priorizar tarefas, boletos, inventário e exceções relevantes, evitando enumerar a Central de Pendências.
+
 ## [v25.77] - 2026-08-12
 
 ### Seu dia conectado
