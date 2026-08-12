@@ -7,7 +7,6 @@ const n=value=>Number(value||0);
 const moneyUsd=value=>'US$ '+n(value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
 const number=value=>n(value).toLocaleString('pt-BR');
 const when=value=>value?new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Ainda não realizada';
-const date=value=>value?new Date(value+'T12:00:00').toLocaleDateString('pt-BR'):'—';
 const ageDays=value=>value?Math.max(0,Math.floor((Date.now()-new Date(value+'T12:00:00').getTime())/86400000)):0;
 const priorityLabel={critical:'Crítico',high:'Alta',medium:'Média',low:'Informativo'};
 const categoryLabel={stockout_risk:'Risco de falta',slow_stock:'Caixas paradas',overstock:'Excesso de estoque',data_quality:'Qualidade dos dados',production_balance:'Produção planejada',worker_concentration:'Origem da produção',movement_anomaly:'Movimentação atípica',opportunity:'Oportunidade'};
@@ -91,12 +90,6 @@ function fullView(){
   if(AI.loading&&!AI.loaded)return'<div class="loading-inline">Preparando os dados seguros do Inventário…</div>';
   if(AI.error)return `<section class="card inventory-ai-unavailable"><p class="eyebrow">INTELIGÊNCIA DO INVENTÁRIO</p><h2>Atualização técnica necessária</h2><p>O restante da aba Inteligência continua funcionando normalmente.</p><small>${esc(AI.error)}</small></section>`;
   return `<div class="inventory-ai-page"><section class="inventory-ai-hero ${health}"><div><p class="eyebrow">INTELIGÊNCIA REAL · GPT-5.6 TERRA</p><h2>O que merece atenção no Inventário?</h2><p>${analysis?esc(analysis.overall_summary):'Gere a primeira análise para relacionar estoque, caixas, movimentações, produção e qualidade dos dados.'}</p><small>${analysis?`Análise de ${analysis.period_days} dias · gerada em ${when(analysis.completed_at)} · números calculados pelo Supabase`:'Os indicadores e gráficos abaixo já usam dados reais; somente a interpretação da IA ainda não foi gerada.'}</small></div><div class="inventory-ai-hero-actions"><span class="inventory-ai-health"><i></i>${analysis?(health==='critical'?'Estado crítico':health==='attention'?'Pontos de atenção':'Operação estável'):'Aguardando análise'}</span><button class="primary" id="runInventoryAi" ${AI.usage&&!AI.usage.enabled?'disabled':''}>✦ Analisar agora com IA</button></div></section>${overviewMetrics()}<div class="inventory-ai-data-grid">${stockTable()}${flowChart()}</div><div class="inventory-ai-main"><section class="inventory-ai-insights"><header><div><p class="eyebrow">INSIGHTS PRIORITÁRIOS</p><h2>Análise e recomendações</h2></div><span>${visible.length} insight(s) visível(is)</span></header>${visible.map(insightCard).join('')||'<div class="card empty">Nenhum insight pendente. Consulte o histórico ou gere uma nova análise.</div>'}</section><div class="inventory-ai-side">${costCard()}${history()}</div></div>${settings()}</div>`;
-}
-
-function compactSummary(){
-  if(!AI.loaded||AI.error||!AI.analysis)return'';
-  const items=AI.insights.filter(item=>!item.dismissed_at).slice(0,3);
-  return `<section class="card inventory-ai-compact"><header><div><p class="eyebrow">ANÁLISE DA IA · INVENTÁRIO</p><h2>O que merece sua atenção agora</h2><span>${esc(AI.analysis.overall_summary)}</span></div><button class="outline compact-action" id="openInventoryAiSummary">Ver análise completa</button></header><div>${items.map(item=>`<article class="${esc(item.priority)}"><span>${priorityLabel[item.priority]||'Atenção'}</span><b>${esc(item.title)}</b><p>${esc(item.recommendation)}</p></article>`).join('')}</div><footer>Gerado pelo GPT-5.6 Terra em ${when(AI.analysis.completed_at)} · métricas exatas do Supabase</footer></section>`;
 }
 
 async function chooseAnalysis(id){
