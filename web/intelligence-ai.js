@@ -143,7 +143,10 @@ function inject(){
   const tabs=document.querySelector('.intel-tabs'),content=document.querySelector('#intelContent');if(!tabs||!content)return;
   let button=tabs.querySelector('[data-inventory-ai-tab]');
   if(!button){button=document.createElement('button');button.type='button';button.dataset.inventoryAiTab='true';button.innerHTML='✦ Inventário com IA';tabs.insertBefore(button,tabs.firstChild);button.onclick=activate;tabs.addEventListener('click',event=>{if(event.target.closest('[data-intel-tab]'))AI.active=false},{capture:true})}
-  if(AI.active){renderActive();return}
+  if(AI.active){
+    if(!content.querySelector('.inventory-ai-page, .inventory-ai-unavailable, .loading-inline'))renderActive();
+    return;
+  }
   const filters=document.querySelector('.intel-filters');if(filters)filters.hidden=false;
   if(tabs.querySelector('[data-intel-tab="overview"].active')&&!document.querySelector('.inventory-ai-compact')){
     load().then(()=>{if(AI.active||S.view!=='intelligence')return;const current=document.querySelector('#intelContent');if(current&&!current.querySelector('.inventory-ai-compact')){const html=compactSummary();if(html){current.insertAdjacentHTML('afterbegin',html);document.querySelector('#openInventoryAiSummary')?.addEventListener('click',activate)}}});

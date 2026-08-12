@@ -19,6 +19,7 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 - Em falha ou limite de custo, os indicadores normais e toda a Inteligência anterior continuam funcionando.
 - O painel possui histórico auditável, marcação de conferência, atalhos para o Inventário e layout responsivo para computador, tablet e celular.
 - Não foi incluído campo de perguntas: a Inteligência identifica prioridades automaticamente para evitar trabalho manual.
+- A validação no domínio oficial identificou e corrigiu um ciclo de renderização do novo painel antes da entrega final, com teste preventivo e atualização forçada do ativo no PWA.
 
 ## [v25.72] - 11/08/2026
 

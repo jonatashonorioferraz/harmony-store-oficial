@@ -92,6 +92,11 @@ test('new panel is admin-only, preserves the traditional Intelligence and opens 
   assert.match(inventory, /\['balance','boxes','movements','workers'\]\.includes\(tab\)/);
 });
 
+test('AI panel mutation observer does not trigger a recursive render loop', () => {
+  assert.match(ui, /if\(AI\.active\)\{[\s\S]*content\.querySelector\('\.inventory-ai-page, \.inventory-ai-unavailable, \.loading-inline'\)[\s\S]*return;/);
+  assert.doesNotMatch(ui, /if\(AI\.active\)\{renderActive\(\);return\}/);
+});
+
 test('desktop, tablet, mobile and offline assets are complete', () => {
   assert.match(css, /@media\(max-width:1100px\)/);
   assert.match(css, /@media\(max-width:720px\)/);
