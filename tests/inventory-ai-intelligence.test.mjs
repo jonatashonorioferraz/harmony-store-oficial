@@ -116,10 +116,10 @@ test('desktop, tablet, mobile and offline assets are complete', () => {
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(index, /intelligence-ai\.css\?v=25\.74/);
   assert.match(index, /intelligence-ai\.js\?v=25\.74/);
-  assert.match(worker, /harmony-store-v25-76/);
+  assert.match(worker, /harmony-store-v25-77/);
   assert.match(worker, /intelligence-ai\.css\?v=25\.74/);
   assert.match(worker, /intelligence-ai\.js\?v=25\.74/);
-  assert.equal(JSON.parse(pkg).version, '25.76.0');
+  assert.equal(JSON.parse(pkg).version, '25.77.0');
 });
 
 test('backup, recovery, help and three documentation levels cover the feature', () => {
