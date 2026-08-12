@@ -50,23 +50,30 @@ test('production orders can be completed only in Agenda without mutating the ori
   assert.match(stateSql,/admin_agenda_production_order_events/);
   assert.doesNotMatch(stateSql,/update\s+public\.production_orders\s+set/i);
   assert.doesNotMatch(stateSql,/delete\s+from\s+public\.production_orders/i);
-  assert.match(ui,/data-agenda-order-state="completed"/);
+  assert.match(ui,/data-agenda-order-state=/);
+  assert.match(ui,/isOpen\(item\)\?'completed':'open'/);
   assert.match(ui,/Reabrir na Agenda/);
   assert.match(ui,/p_status:status/);
   assert.match(ui,/admin_set_agenda_production_order_state/);
   assert.match(ui,/O módulo de produção não foi alterado/);
 });
 
-test('connected timeline prioritizes actions and groups weekly production orders',()=>{
-  assert.match(ui,/Seu dia conectado/);
-  assert.match(ui,/function timelineItem\(item\)/);
-  assert.match(ui,/function productionOrderGroup\(orders\)/);
-  assert.match(ui,/agenda-production-group/);
-  assert.match(ui,/RELEVÂNCIA ANTES DE VOLUME/);
-  assert.match(ui,/Ordens concluídas na Agenda/);
+test('Home calendar separates planned work from operational requests',()=>{
+  assert.match(ui,/Agenda inteligente/);
+  assert.match(ui,/function homeAgendaItems\(\)/);
+  assert.match(ui,/\['manual','bill'\]\.includes\(item\.source_type\)/);
+  assert.match(ui,/function homeCalendarWeek\(items\)/);
+  assert.match(ui,/Sem compromissos/);
+  assert.match(ui,/data-agenda-home-preview-day/);
+  assert.match(ui,/function homeAiInsights\(items\)/);
+  assert.match(ui,/INTELIGÊNCIA DO DIA/);
+  assert.match(ui,/IA ATIVA/);
+  assert.match(ui,/solicita.*ordem de produ/i);
+  assert.doesNotMatch(ui,/Seu dia conectado/);
+  assert.doesNotMatch(ui,/function timelineItem\(item\)/);
   assert.match(ui,/priority:'normal',status:agendaState/);
-  assert.match(css,/\.agenda-timeline::before/);
-  assert.match(css,/\.agenda-production-group/);
+  assert.match(css,/\.agenda-week-grid/);
+  assert.match(css,/\.agenda-home-intelligence/);
   assert.match(css,/@media\(max-width:720px\)/);
   assert.doesNotMatch(ui,/\b(Open|Completed|Reopen|View module)\b/);
 });
@@ -79,10 +86,12 @@ test('Agenda preserves request panels, replaces only the old day panel and keeps
   assert.match(ui,/element\.hidden=false/);
   assert.doesNotMatch(ui,/\.remove\(\).*my-day|adminRequestHub.*remove/);
   assert.match(ui,/S\?\.profile\?\.role==='admin'/);
-  assert.match(ui,/function homeCalendarStrip\(\)/);
+  assert.match(ui,/function homeCalendarWeek\(items\)/);
+  assert.match(ui,/function homeAgendaItems\(\)/);
+  assert.match(ui,/data-agenda-home-preview-day/);
   assert.match(ui,/data-agenda-home-day/);
-  assert.match(ui,/Próximos 7 dias/);
-  assert.match(css,/\.agenda-home-calendar/);
+  assert.match(ui,/Sem compromissos/);
+  assert.match(css,/\.agenda-week/);
   assert.match(css,/scroll-snap-type:x proximity/);
 });
 
@@ -98,6 +107,8 @@ test('AI is server-side, budgeted, advisory and never mutates operational module
   assert.match(edge,/manual_tasks:[\s\S]*task_kind[\s\S]*starts_at/);
   assert.doesNotMatch(edge,/manual_tasks:[^\n]*title/);
   assert.match(edge,/não afirme que realizou ações/i);
+  assert.match(edge,/não repita a lista/i);
+  assert.match(edge,/Priorize tarefas planejadas, compromissos, boletos/i);
   assert.doesNotMatch(edge,/\.from\("(bills|requests|production_orders|production_inventory_entries)"\)\.\s*(insert|update|delete)/i);
   assert.doesNotMatch(ui,/OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
 });
@@ -117,13 +128,15 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
   assert.match(css,/@media\(max-width:720px\)/);
   assert.match(css,/@media\(max-width:430px\)/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-  assert.match(index,/agenda-harmony\.css\?v=25\.77/);
-  assert.match(index,/agenda-harmony\.js\?v=25\.77/);
-  assert.match(worker,/harmony-store-v25-77/);
-  assert.match(worker,/agenda-harmony\.css\?v=25\.77/);
-  assert.match(worker,/agenda-harmony\.js\?v=25\.77/);
+  assert.match(index,/agenda-harmony\.css\?v=25\.78/);
+  assert.match(index,/agenda-harmony\.js\?v=25\.78/);
+  assert.match(worker,/harmony-store-v25-78/);
+  assert.match(worker,/agenda-harmony\.css\?v=25\.78/);
+  assert.match(worker,/agenda-harmony\.js\?v=25\.78/);
   assert.match(help,/id:'agenda-harmony'/);
-  assert.equal(JSON.parse(pkg).version,'25.77.0');
+  assert.match(help,/calendário semanal da Agenda/);
+  assert.match(help,/Central de Pendências/);
+  assert.equal(JSON.parse(pkg).version,'25.78.0');
 });
 
 test('backup and isolated recovery include every Agenda table',()=>{
