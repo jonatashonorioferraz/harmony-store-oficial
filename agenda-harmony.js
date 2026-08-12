@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const AH={tasks:[],system:[],loadedAt:0,loading:null,month:new Date(),selected:'',filter:'open',brief:null,usage:null,boxCount:0};
+const AH={tasks:[],system:[],orderStates:[],loadedAt:0,loading:null,month:new Date(),selected:'',filter:'open',brief:null,usage:null,boxCount:0};
 const openRequestStatuses=new Set(['pending','separating','scheduled']);
 const openOrderStatuses=new Set(['sent','viewed','acknowledged']);
 const priorityWeight={urgent:0,high:1,normal:2,low:3};
@@ -27,6 +27,7 @@ async function load(force=false){
   AH.loading=(async()=>{
     const results=await Promise.allSettled([
       restAll('admin_agenda_tasks?select=*&order=starts_at.asc,created_at.desc,id.desc'),
+      restAll('admin_agenda_production_order_states?select=*&order=updated_at.desc'),
       window.HarmonyBills?.load?.(force),
       window.HarmonyInternalSupplies?.load?.(force),
       window.HarmonyProductionOrders?.load?.(force),
@@ -35,10 +36,12 @@ async function load(force=false){
       rpc('admin_get_agenda_ai_usage',{})
     ]);
     if(results[0].status==='rejected')throw results[0].reason;
+    if(results[1].status==='rejected')throw results[1].reason;
     AH.tasks=results[0].value||[];
-    AH.boxCount=results[4].status==='fulfilled'?Number(results[4].value||0):0;
-    AH.brief=results[5].status==='fulfilled'?(results[5].value||[])[0]||null:null;
-    AH.usage=results[6].status==='fulfilled'?(Array.isArray(results[6].value)?results[6].value[0]:results[6].value)||null:null;
+    AH.orderStates=results[1].value||[];
+    AH.boxCount=results[5].status==='fulfilled'?Number(results[5].value||0):0;
+    AH.brief=results[6].status==='fulfilled'?(results[6].value||[])[0]||null:null;
+    AH.usage=results[7].status==='fulfilled'?(Array.isArray(results[7].value)?results[7].value[0]:results[7].value)||null:null;
     AH.system=systemItems();
     AH.loadedAt=Date.now();
   })().finally(()=>AH.loading=null);
@@ -47,6 +50,7 @@ async function load(force=false){
 
 function systemItems(){
   const items=[];
+  const orderStateById=new Map(AH.orderStates.map(state=>[state.production_order_id,state]));
   for(const request of S.requests.filter(item=>openRequestStatuses.has(item.status))){
     const requester=S.team.find(person=>person.id===request.requested_by);
     items.push({id:`request:${request.id}`,source_type:'request',source_id:request.id,protocol:request.protocol,title:`Solicitação #${pad(request.protocol)}`,description:`${requester?.full_name||'Solicitante'} · materiais aguardando andamento`,starts_at:request.scheduled_for||request.created_at,due_at:request.scheduled_for,priority:request.scheduled_for&&localKey(request.scheduled_for)<today()?'urgent':'high',status:'pending'});
@@ -58,7 +62,8 @@ function systemItems(){
   }
   for(const order of (window.HarmonyProductionOrders?.state?.orders||[]).filter(item=>openOrderStatuses.has(item.status))){
     const worker=S.team.find(person=>person.id===order.worker_id);
-    items.push({id:`production_order:${order.id}`,source_type:'production_order',source_id:order.id,protocol:order.protocol,title:`Ordem de produção #${pad(order.protocol)}`,description:`${worker?.full_name||'Colaboradora'} · entrega ${brDate(dateAtNoon(order.due_date))}`,starts_at:dateAtNoon(order.due_date)?.toISOString(),due_at:dateAtNoon(order.due_date)?.toISOString(),priority:order.due_date<today()?'urgent':'normal',status:'pending'});
+    const agendaState=orderStateById.get(order.id);
+    items.push({id:`production_order:${order.id}`,source_type:'production_order',source_id:order.id,protocol:order.protocol,title:`Ordem de produção #${pad(order.protocol)}`,description:`${worker?.full_name||'Colaboradora'} · acompanhamento semanal · prazo formal ${brDate(dateAtNoon(order.due_date))}`,starts_at:dateAtNoon(order.due_date)?.toISOString(),due_at:dateAtNoon(order.due_date)?.toISOString(),priority:'normal',status:agendaState?.agenda_status==='completed'?'completed':'pending',agenda_completed_at:agendaState?.completed_at||null});
   }
   for(const request of (window.HarmonyInternalSupplies?.state?.requests||[]).filter(item=>openRequestStatuses.has(item.status))){
     items.push({id:`internal_supply:${request.id}`,source_type:'internal_supply',source_id:request.id,protocol:request.protocol,title:`Compra interna #${pad(request.protocol)}`,description:`${request.requested_by_name||'Solicitante'} · suprimentos do e-commerce`,starts_at:dateAtNoon(request.needed_by)?.toISOString()||request.created_at,due_at:dateAtNoon(request.needed_by)?.toISOString(),priority:request.priority==='urgent'?'urgent':request.needed_by&&request.needed_by<today()?'urgent':'normal',status:'pending'});
@@ -97,16 +102,37 @@ function openSource(item){
   return openTask(item.id);
 }
 
-function taskTone(item){const key=dueKey(item);if(isOpen(item)&&key&&key<today())return'overdue';return item.priority||'normal'}
+function taskTone(item){if(item.source_type==='production_order')return isOpen(item)?'production':'completed';const key=dueKey(item);if(isOpen(item)&&key&&key<today())return'overdue';return item.priority||'normal'}
 function sourceLabel(type){return({manual:'Agenda',request:'Solicitação',bill:'Boleto',internal_supply:'Compra interna',production_order:'Ordem de produção',inventory:'Inventário'})[type]||'Agenda'}
-function itemCard(item,compact=false){
+function priorityText(item){if(item.source_type==='production_order')return isOpen(item)?'Acompanhamento':'Concluída na Agenda';return priorityLabel[item.priority]||'Normal'}
+function itemActions(item){
   const manual=item.source_type==='manual';
+  const agendaAction=item.source_type==='production_order'?`<button type="button" class="${isOpen(item)?'agenda-complete':'agenda-reopen'}" data-agenda-order-state="${isOpen(item)?'completed':'open'}" data-agenda-order-id="${esc(item.source_id)}">${isOpen(item)?'✓ Concluir na Agenda':'↻ Reabrir na Agenda'}</button>`:'';
+  return `<span class="agenda-item-actions">${agendaAction}<button type="button" class="outline" data-agenda-open="${esc(item.id)}">${manual?'Abrir':'Ir ao módulo'}</button></span>`;
+}
+function itemCard(item,compact=false){
   return `<article class="agenda-item ${taskTone(item)} ${isOpen(item)?'':'is-closed'}" data-agenda-item="${esc(item.id)}">
     <span class="agenda-item-date"><b>${brDate(item.due_at||item.starts_at).slice(0,5)}</b><small>${item.all_day?'Dia todo':item.due_at||item.starts_at?new Date(item.due_at||item.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}):'—'}</small></span>
     <span class="agenda-item-copy"><small>${sourceLabel(item.source_type)}${item.protocol?` · #${pad(item.protocol)}`:''}</small><strong>${esc(item.title)}</strong>${compact?'':`<p>${esc(item.description||'Sem observações.')}</p>`}</span>
-    <span class="agenda-priority ${item.priority}">${priorityLabel[item.priority]||'Normal'}</span>
-    <button type="button" class="outline" data-agenda-open="${esc(item.id)}">${manual?'Abrir':'Ir ao módulo'}</button>
+    <span class="agenda-priority ${item.priority}">${priorityText(item)}</span>
+    ${itemActions(item)}
   </article>`;
+}
+
+function timelineItem(item){
+  return `<article class="agenda-timeline-item ${taskTone(item)}">
+    <i class="agenda-timeline-node" aria-hidden="true"></i>
+    <span class="agenda-timeline-date"><b>${brDate(item.due_at||item.starts_at).slice(0,5)}</b><small>${item.all_day?'Dia todo':item.due_at||item.starts_at?new Date(item.due_at||item.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}):'—'}</small></span>
+    <span class="agenda-timeline-copy"><small>${sourceLabel(item.source_type)}${item.protocol?` · #${pad(item.protocol)}`:''}</small><strong>${esc(item.title)}</strong><p>${esc(item.description||'Sem observações.')}</p></span>
+    <span class="agenda-priority ${item.priority}">${priorityText(item)}</span>
+    ${itemActions(item)}
+  </article>`;
+}
+
+function productionOrderGroup(orders){
+  if(!orders.length)return'';
+  const rows=orders.map(item=>`<article><span><small>ORDEM #${pad(item.protocol)}</small><b>${esc(item.description.split(' · ')[0]||item.title)}</b><em>Prazo formal ${brDate(item.due_at)}</em></span><span class="agenda-production-actions"><button type="button" class="agenda-complete" data-agenda-order-state="completed" data-agenda-order-id="${esc(item.source_id)}">✓ Concluir na Agenda</button><button type="button" class="outline" data-agenda-open="${esc(item.id)}">Ir ao módulo</button></span></article>`).join('');
+  return `<details class="agenda-production-group"><summary><span class="agenda-timeline-node" aria-hidden="true"></span><span><small>ACOMPANHAMENTO SEMANAL</small><strong>${plural(orders.length,'ordem de produção','ordens de produção')}</strong><em>Agrupadas para não ocupar o espaço das prioridades do dia</em></span><b>Ver ordens</b></summary><div>${rows}</div></details>`;
 }
 
 function homeCalendarStrip(){
@@ -123,13 +149,14 @@ function homeCalendarStrip(){
 }
 
 function homePanel(){
-  const items=upcoming(),overdue=items.filter(item=>dueKey(item)<today()).length,todayItems=items.filter(item=>dueKey(item)===today()).length,manualOpen=AH.tasks.filter(isOpen).length;
+  const items=upcoming(),productionOrders=AH.system.filter(item=>item.source_type==='production_order'&&isOpen(item)),relevant=items.filter(item=>item.source_type!=='production_order'),overdue=relevant.filter(item=>dueKey(item)<today()).length,todayItems=relevant.filter(item=>dueKey(item)===today()).length,manualOpen=AH.tasks.filter(isOpen).length;
+  const completedToday=AH.orderStates.filter(item=>item.agenda_status==='completed'&&localKey(item.completed_at)===today()).length+AH.tasks.filter(item=>item.status==='completed'&&localKey(item.completed_at)===today()).length;
   const brief=AH.brief?.result||{};
   return `<section class="agenda-home card">
-    <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><h2>Seu dia, organizado em um só lugar</h2><span>${brief.headline?esc(brief.headline):'Tarefas próprias e compromissos dos módulos oficiais, sem informações duplicadas.'}</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-refresh>↻ Atualizar</button><button class="primary compact-action" data-agenda-page>Ver agenda completa</button></div></header>
-    <div class="agenda-home-stats"><span><i>◷</i><b>${todayItems}</b><small>Para hoje</small></span><span class="${overdue?'attention':''}"><i>!</i><b>${overdue}</b><small>Em atraso</small></span><span><i>✓</i><b>${manualOpen}</b><small>Tarefas abertas</small></span><span><i>□</i><b>${AH.boxCount.toLocaleString('pt-BR')}</b><small>Caixas no inventário</small></span></div>
+    <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><h2>Seu dia conectado</h2><span>${brief.headline?esc(brief.headline):'Prioridades, compromissos e acompanhamentos em uma linha do tempo integrada.'}</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-refresh>↻ Atualizar</button><button class="primary compact-action" data-agenda-page>Ver agenda completa</button></div></header>
+    <div class="agenda-home-stats"><span><i>◷</i><b>${todayItems}</b><small>Para hoje</small></span><span class="${overdue?'attention':''}"><i>!</i><b>${overdue}</b><small>Precisam de atenção</small></span><span><i>✓</i><b>${completedToday}</b><small>Concluídas hoje</small></span><span><i>□</i><b>${AH.boxCount.toLocaleString('pt-BR')}</b><small>Caixas no inventário</small></span></div>
     ${homeCalendarStrip()}
-    <div class="agenda-home-content"><div class="agenda-home-list">${items.slice(0,5).map(item=>itemCard(item,true)).join('')||'<div class="agenda-empty"><b>Seu dia está em ordem</b><span>Nenhuma pendência com prazo próximo.</span></div>'}</div><aside><small>PRÓXIMOS 7 DIAS</small><strong>${plural(items.length,'compromisso','compromissos')}</strong><p>${brief.summary?esc(brief.summary):'A Agenda reúne somente os itens que precisam da sua atenção.'}</p><button class="outline" data-agenda-new>＋ Nova tarefa</button></aside></div>
+    <div class="agenda-home-content"><div class="agenda-home-list agenda-timeline">${relevant.slice(0,5).map(timelineItem).join('')}${productionOrderGroup(productionOrders)}${!relevant.length&&!productionOrders.length?'<div class="agenda-empty"><b>Seu dia está em ordem</b><span>Nenhuma pendência com prazo próximo.</span></div>':''}</div><aside><small>RELEVÂNCIA ANTES DE VOLUME</small><strong>${plural(relevant.length,'prioridade','prioridades')}</strong><p>${brief.summary?esc(brief.summary):'Ordens semanais ficam agrupadas. Concluir na Agenda retira o aviso sem alterar a ordem de produção original.'}</p><span class="agenda-home-open-tasks">${plural(manualOpen,'tarefa própria aberta','tarefas próprias abertas')}</span><button class="outline" data-agenda-new>＋ Nova tarefa</button></aside></div>
   </section>`;
 }
 
@@ -164,9 +191,10 @@ function agendaList(){
     if(AH.filter==='open')return isOpen(item);
     if(AH.filter==='manual')return item.source_type==='manual';
     if(AH.filter==='system')return item.source_type!=='manual';
+    if(AH.filter==='agenda_completed')return item.source_type==='production_order'&&item.status==='completed';
     return true;
   });
-  return `<section class="card agenda-list"><header><div><small>${selected?'DATA SELECIONADA':'PRÓXIMOS COMPROMISSOS'}</small><h2>${selected?brDate(dateAtNoon(selected)):'Agenda consolidada'}</h2></div><select data-agenda-filter><option value="open">Em aberto</option><option value="all">Todos</option><option value="manual">Tarefas próprias</option><option value="system">Itens dos módulos</option></select></header><div class="agenda-list-scroll">${items.map(item=>itemCard(item)).join('')||'<div class="agenda-empty"><b>Nenhum item nesta visão</b><span>Escolha outra data ou filtro.</span></div>'}</div></section>`;
+  return `<section class="card agenda-list"><header><div><small>${selected?'DATA SELECIONADA':'PRÓXIMOS COMPROMISSOS'}</small><h2>${selected?brDate(dateAtNoon(selected)):'Agenda consolidada'}</h2></div><select data-agenda-filter><option value="open">Em aberto</option><option value="all">Todos</option><option value="manual">Tarefas próprias</option><option value="system">Itens dos módulos</option><option value="agenda_completed">Ordens concluídas na Agenda</option></select></header><div class="agenda-list-scroll">${items.map(item=>itemCard(item)).join('')||'<div class="agenda-empty"><b>Nenhum item nesta visão</b><span>Escolha outra data ou filtro.</span></div>'}</div></section>`;
 }
 
 function aiPanel(){
@@ -187,6 +215,20 @@ async function renderPageView(){
 
 function bindCommon(root=document){
   root.querySelectorAll('[data-agenda-open]').forEach(button=>button.onclick=()=>{const item=allItems().find(row=>String(row.id)===button.dataset.agendaOpen);if(item)openSource(item)});
+  root.querySelectorAll('[data-agenda-order-state]').forEach(button=>button.onclick=async event=>{
+    event.preventDefault();event.stopPropagation();
+    const status=button.dataset.agendaOrderState,orderId=button.dataset.agendaOrderId;
+    const completing=status==='completed';
+    const message=completing?'Concluir este acompanhamento somente na Agenda? A ordem de produção e seu histórico continuarão intactos.':'Reabrir este acompanhamento na Agenda?';
+    if(!confirm(message))return;
+    button.disabled=true;
+    try{
+      await rpc('admin_set_agenda_production_order_state',{p_order_id:orderId,p_status:status});
+      AH.loadedAt=0;await load(true);
+      if(S.view==='home')mountHome();else renderAgenda(document.querySelector('#page'));
+      toast(completing?'Ordem concluída somente na Agenda. O módulo de produção não foi alterado.':'Ordem reaberta na Agenda.');
+    }catch(error){alert(error.message);button.disabled=false}
+  });
   root.querySelectorAll('[data-agenda-new]').forEach(button=>button.onclick=()=>taskModal());
   root.querySelectorAll('[data-agenda-home-day]').forEach(button=>button.onclick=()=>{AH.selected=button.dataset.agendaHomeDay;AH.month=dateAtNoon(AH.selected)||new Date();S.view='agenda-harmony';renderApp()});
   root.querySelectorAll('[data-agenda-refresh]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{AH.loadedAt=0;await load(true);if(S.view==='home')mountHome();else renderAgenda(document.querySelector('#page'))}catch(error){alert(error.message);button.disabled=false}});
