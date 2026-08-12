@@ -15,6 +15,7 @@ const tables = [
   'inventory_ai_settings', 'inventory_ai_analyses', 'inventory_ai_insights',
   'admin_agenda_tasks', 'admin_agenda_task_events', 'admin_agenda_reminder_deliveries',
   'admin_agenda_ai_settings', 'admin_agenda_ai_runs',
+  'admin_agenda_production_order_states', 'admin_agenda_production_order_events',
   'improvement_ideas', 'improvement_idea_events',
   'app_notifications', 'app_notification_recipients',
   'separation_checkup_items', 'stock_discrepancies', 'stock_replenishment_requests',
