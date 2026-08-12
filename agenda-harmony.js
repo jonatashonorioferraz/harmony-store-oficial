@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const AH={tasks:[],system:[],orderStates:[],loadedAt:0,loading:null,month:new Date(),selected:'',filter:'open',brief:null,usage:null,boxCount:0};
+const AH={tasks:[],system:[],orderStates:[],loadedAt:0,loading:null,month:new Date(),selected:'',homeSelected:'',filter:'open',brief:null,usage:null,boxCount:0};
 const openRequestStatuses=new Set(['pending','separating','scheduled']);
 const openOrderStatuses=new Set(['sent','viewed','acknowledged']);
 const priorityWeight={urgent:0,high:1,normal:2,low:3};
@@ -15,6 +15,7 @@ const brWhen=value=>value?new Date(value).toLocaleString('pt-BR',{timeZone:'Amer
 const monthTitle=value=>value.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,letter=>letter.toUpperCase());
 const isOpen=item=>!['completed','cancelled'].includes(item.status);
 const dueKey=item=>localKey(item.due_at||item.starts_at||item.date);
+const calendarKey=item=>item.source_type==='manual'?localKey(item.starts_at||item.due_at||item.date):dueKey(item);
 const daysBetween=(from,to)=>Math.round((dateAtNoon(to)-dateAtNoon(from))/86400000);
 const plural=(count,one,many)=>`${count} ${count===1?one:many}`;
 const taskKindLabel={task:'Tarefa',appointment:'Compromisso',follow_up:'Acompanhamento'};
@@ -76,11 +77,6 @@ function allItems(){return [...AH.tasks,...AH.system].sort((a,b)=>{
   return Number(isOpen(b))-Number(isOpen(a))||aDate-bDate||(priorityWeight[a.priority]??2)-(priorityWeight[b.priority]??2);
 })}
 
-function upcoming(items=allItems()){
-  const current=today();
-  return items.filter(item=>isOpen(item)&&dueKey(item)&&daysBetween(current,dueKey(item))<=7).sort((a,b)=>(priorityWeight[a.priority]??2)-(priorityWeight[b.priority]??2)||String(dueKey(a)).localeCompare(dueKey(b)));
-}
-
 function addNavigation(){
   if(!isAdmin())return;
   const root=document.querySelector('.sidebar nav'),profile=root?.querySelector('[data-view="profile"]');
@@ -119,44 +115,63 @@ function itemCard(item,compact=false){
   </article>`;
 }
 
-function timelineItem(item){
-  return `<article class="agenda-timeline-item ${taskTone(item)}">
-    <i class="agenda-timeline-node" aria-hidden="true"></i>
-    <span class="agenda-timeline-date"><b>${brDate(item.due_at||item.starts_at).slice(0,5)}</b><small>${item.all_day?'Dia todo':item.due_at||item.starts_at?new Date(item.due_at||item.starts_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}):'—'}</small></span>
-    <span class="agenda-timeline-copy"><small>${sourceLabel(item.source_type)}${item.protocol?` · #${pad(item.protocol)}`:''}</small><strong>${esc(item.title)}</strong><p>${esc(item.description||'Sem observações.')}</p></span>
-    <span class="agenda-priority ${item.priority}">${priorityText(item)}</span>
-    ${itemActions(item)}
-  </article>`;
+function homeAgendaItems(){
+  return allItems().filter(item=>isOpen(item)&&['manual','bill'].includes(item.source_type));
 }
 
-function productionOrderGroup(orders){
-  if(!orders.length)return'';
-  const rows=orders.map(item=>`<article><span><small>ORDEM #${pad(item.protocol)}</small><b>${esc(item.description.split(' · ')[0]||item.title)}</b><em>Prazo formal ${brDate(item.due_at)}</em></span><span class="agenda-production-actions"><button type="button" class="agenda-complete" data-agenda-order-state="completed" data-agenda-order-id="${esc(item.source_id)}">✓ Concluir na Agenda</button><button type="button" class="outline" data-agenda-open="${esc(item.id)}">Ir ao módulo</button></span></article>`).join('');
-  return `<details class="agenda-production-group"><summary><span class="agenda-timeline-node" aria-hidden="true"></span><span><small>ACOMPANHAMENTO SEMANAL</small><strong>${plural(orders.length,'ordem de produção','ordens de produção')}</strong><em>Agrupadas para não ocupar o espaço das prioridades do dia</em></span><b>Ver ordens</b></summary><div>${rows}</div></details>`;
+function homeItemTone(item){
+  if(item.source_type==='bill')return'bill';
+  if(item.task_kind==='appointment')return'appointment';
+  if(item.task_kind==='follow_up')return'follow-up';
+  return'task';
 }
 
-function homeCalendarStrip(){
-  const items=allItems().filter(isOpen),start=dateAtNoon(today()),days=[];
-  for(let index=0;index<7;index++){
-    const date=new Date(start);date.setDate(start.getDate()+index);
-    const key=localKey(date),dayItems=items.filter(item=>dueKey(item)===key);
-    const urgent=dayItems.some(item=>item.priority==='urgent'||item.priority==='high');
-    days.push(`<button type="button" class="agenda-home-day ${index===0?'today':''} ${urgent?'attention':''}" data-agenda-home-day="${key}" aria-label="Abrir compromissos de ${brDate(date)}">
-      <small>${date.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')}</small><b>${date.getDate()}</b><span>${dayItems.length?plural(dayItems.length,'item','itens'):'Livre'}</span>
-    </button>`);
-  }
-  return `<div class="agenda-home-calendar"><header><span><small>CALENDÁRIO OPERACIONAL</small><b>Próximos 7 dias</b></span><em>Toque em uma data para abrir a agenda</em></header><div>${days.join('')}</div></div>`;
+function homeItemText(item){
+  if(item.source_type==='bill')return item.title.replace(/^Boleto\s+#\d+\s+·\s*/i,'Boleto · ');
+  const time=item.all_day?'':new Date(item.starts_at||item.due_at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+  return`${time?`${time} · `:''}${item.title}`;
+}
+
+function homeCalendarWeek(items){
+  const start=dateAtNoon(today()),dates=[];
+  for(let index=0;index<7;index++){const date=new Date(start);date.setDate(start.getDate()+index);dates.push({date,key:localKey(date)})}
+  if(!dates.some(item=>item.key===AH.homeSelected))AH.homeSelected=dates[0].key;
+  const cards=dates.map(({date,key},index)=>{
+    const dayItems=items.filter(item=>calendarKey(item)===key).sort((a,b)=>(priorityWeight[a.priority]??2)-(priorityWeight[b.priority]??2)||new Date(a.starts_at||a.due_at)-new Date(b.starts_at||b.due_at));
+    const rows=dayItems.slice(0,3).map(item=>`<span class="agenda-week-entry ${homeItemTone(item)}"><i aria-hidden="true"></i>${esc(homeItemText(item))}</span>`).join('');
+    return `<button type="button" class="agenda-week-card ${index===0?'today':''} ${AH.homeSelected===key?'selected':''}" data-agenda-home-preview-day="${key}" aria-label="Abrir resumo de ${brDate(date)}">
+      <span class="agenda-week-date"><small>${date.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')}</small><b>${date.getDate()}</b>${index===0?'<em>HOJE</em>':''}</span>
+      <span class="agenda-week-entries">${rows||'<span class="agenda-week-empty">Sem compromissos</span>'}${dayItems.length>3?`<strong>+ ${dayItems.length-3} ${dayItems.length-3===1?'item':'itens'}</strong>`:''}</span>
+    </button>`;
+  }).join('');
+  const selected=dates.find(item=>item.key===AH.homeSelected)||dates[0],selectedItems=items.filter(item=>calendarKey(item)===selected.key);
+  const mobileRows=selectedItems.slice(0,4).map(item=>`<span class="agenda-week-entry ${homeItemTone(item)}"><i aria-hidden="true"></i>${esc(homeItemText(item))}</span>`).join('')||'<span class="agenda-week-empty">Sem compromissos neste dia.</span>';
+  return `<div class="agenda-week"><div class="agenda-week-grid">${cards}</div><div class="agenda-week-progress" aria-hidden="true">${dates.map(item=>`<i class="${item.key===AH.homeSelected?'active':''}"></i>`).join('')}</div><section class="agenda-mobile-day-detail"><div>${mobileRows}</div><button type="button" class="outline" data-agenda-home-day="${selected.key}">Abrir agenda deste dia</button></section></div>`;
+}
+
+function homeAiInsights(items){
+  const brief=AH.brief?.result||{},insights=[],seen=new Set();
+  const add=(text,tone='ai')=>{const clean=String(text||'').replace(/\s+/g,' ').trim();if(!clean||seen.has(clean.toLocaleLowerCase('pt-BR'))||insights.length>=3)return;seen.add(clean.toLocaleLowerCase('pt-BR'));insights.push({text:clean,tone})};
+  const bills=items.filter(item=>item.source_type==='bill'),manual=items.filter(item=>item.source_type==='manual'),current=today();
+  const billsToday=bills.filter(item=>calendarKey(item)===current).length,billsSoon=bills.filter(item=>{const distance=daysBetween(current,calendarKey(item));return distance>=0&&distance<=7}).length;
+  const overdueTasks=manual.filter(item=>calendarKey(item)<current).length,plannedTasks=manual.filter(item=>{const distance=daysBetween(current,calendarKey(item));return distance>=0&&distance<=7}).length;
+  if(billsToday)add(plural(billsToday,'boleto vence hoje','boletos vencem hoje'),'bill');
+  else if(billsSoon)add(plural(billsSoon,'boleto nos próximos 7 dias','boletos nos próximos 7 dias'),'bill');
+  if(overdueTasks)add(plural(overdueTasks,'tarefa planejada está atrasada','tarefas planejadas estão atrasadas'),'attention');
+  else if(plannedTasks)add(plural(plannedTasks,'tarefa planejada','tarefas planejadas'),'task');
+  const aiCandidates=[...(Array.isArray(brief.priorities)?brief.priorities:[]),...(Array.isArray(brief.risks)?brief.risks:[])].filter(value=>!/(solicita(?:ç|c)[aã]o|ordem de produ(?:ç|c)[aã]o|pedido\s+#)/i.test(String(value||'')));
+  if(aiCandidates[0])add(aiCandidates[0],'ai');
+  if(insights.length<3)add(`${AH.boxCount.toLocaleString('pt-BR')} ${AH.boxCount===1?'caixa disponível':'caixas disponíveis'} no inventário`,'inventory');
+  if(!insights.length)add('Nenhum alerta importante para os próximos dias.','ok');
+  return `<section class="agenda-home-intelligence"><header><span><i>✦</i><b>INTELIGÊNCIA DO DIA</b></span><small>Insights atualizados com os dados do aplicativo</small></header><div>${insights.map(item=>`<span class="${item.tone}"><i aria-hidden="true"></i><b>${esc(item.text)}</b></span>`).join('')}</div></section>`;
 }
 
 function homePanel(){
-  const items=upcoming(),productionOrders=AH.system.filter(item=>item.source_type==='production_order'&&isOpen(item)),relevant=items.filter(item=>item.source_type!=='production_order'),overdue=relevant.filter(item=>dueKey(item)<today()).length,todayItems=relevant.filter(item=>dueKey(item)===today()).length,manualOpen=AH.tasks.filter(isOpen).length;
-  const completedToday=AH.orderStates.filter(item=>item.agenda_status==='completed'&&localKey(item.completed_at)===today()).length+AH.tasks.filter(item=>item.status==='completed'&&localKey(item.completed_at)===today()).length;
-  const brief=AH.brief?.result||{};
+  const items=homeAgendaItems(),aiEnabled=AH.usage?.enabled!==false;
   return `<section class="agenda-home card">
-    <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><h2>Seu dia conectado</h2><span>${brief.headline?esc(brief.headline):'Prioridades, compromissos e acompanhamentos em uma linha do tempo integrada.'}</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-refresh>↻ Atualizar</button><button class="primary compact-action" data-agenda-page>Ver agenda completa</button></div></header>
-    <div class="agenda-home-stats"><span><i>◷</i><b>${todayItems}</b><small>Para hoje</small></span><span class="${overdue?'attention':''}"><i>!</i><b>${overdue}</b><small>Precisam de atenção</small></span><span><i>✓</i><b>${completedToday}</b><small>Concluídas hoje</small></span><span><i>□</i><b>${AH.boxCount.toLocaleString('pt-BR')}</b><small>Caixas no inventário</small></span></div>
-    ${homeCalendarStrip()}
-    <div class="agenda-home-content"><div class="agenda-home-list agenda-timeline">${relevant.slice(0,5).map(timelineItem).join('')}${productionOrderGroup(productionOrders)}${!relevant.length&&!productionOrders.length?'<div class="agenda-empty"><b>Seu dia está em ordem</b><span>Nenhuma pendência com prazo próximo.</span></div>':''}</div><aside><small>RELEVÂNCIA ANTES DE VOLUME</small><strong>${plural(relevant.length,'prioridade','prioridades')}</strong><p>${brief.summary?esc(brief.summary):'Ordens semanais ficam agrupadas. Concluir na Agenda retira o aviso sem alterar a ordem de produção original.'}</p><span class="agenda-home-open-tasks">${plural(manualOpen,'tarefa própria aberta','tarefas próprias abertas')}</span><button class="outline" data-agenda-new>＋ Nova tarefa</button></aside></div>
+    <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><span class="agenda-home-title"><h2>Agenda inteligente</h2><b class="agenda-ai-status ${aiEnabled?'active':'paused'}">✦ ${aiEnabled?'IA ATIVA':'IA PAUSADA'}</b></span><span>A IA organiza tarefas, boletos e compromissos por prioridade.</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-new>＋ Nova tarefa</button><button class="primary compact-action" data-agenda-page>Ver agenda completa</button></div></header>
+    ${homeCalendarWeek(items)}
+    ${homeAiInsights(items)}
   </section>`;
 }
 
@@ -179,7 +194,7 @@ function calendar(){
   const month=new Date(AH.month.getFullYear(),AH.month.getMonth(),1),first=(month.getDay()+6)%7,start=new Date(month);start.setDate(1-first);
   const items=allItems(),cells=[];
   for(let index=0;index<42;index++){
-    const day=new Date(start);day.setDate(start.getDate()+index);const key=localKey(day),dayItems=items.filter(item=>dueKey(item)===key),outside=day.getMonth()!==month.getMonth();
+    const day=new Date(start);day.setDate(start.getDate()+index);const key=localKey(day),dayItems=items.filter(item=>calendarKey(item)===key),outside=day.getMonth()!==month.getMonth();
     cells.push(`<button type="button" class="agenda-day ${outside?'outside':''} ${key===today()?'today':''} ${AH.selected===key?'selected':''}" data-agenda-day="${key}"><b>${day.getDate()}</b><span>${dayItems.slice(0,3).map(item=>`<i class="${taskTone(item)}" title="${esc(item.title)}">${esc(item.title)}</i>`).join('')}</span>${dayItems.length>3?`<small>+${dayItems.length-3} itens</small>`:''}</button>`);
   }
   return `<section class="card agenda-calendar"><header><button type="button" class="outline" data-month-prev aria-label="Mês anterior">‹</button><div><small>CALENDÁRIO OPERACIONAL</small><h2>${monthTitle(month)}</h2></div><button type="button" class="outline" data-month-next aria-label="Próximo mês">›</button></header><div class="agenda-weekdays">${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(day=>`<span>${day}</span>`).join('')}</div><div class="agenda-days">${cells.join('')}</div></section>`;
@@ -187,7 +202,7 @@ function calendar(){
 
 function agendaList(){
   const selected=AH.selected,items=allItems().filter(item=>{
-    if(selected&&dueKey(item)!==selected)return false;
+    if(selected&&calendarKey(item)!==selected)return false;
     if(AH.filter==='open')return isOpen(item);
     if(AH.filter==='manual')return item.source_type==='manual';
     if(AH.filter==='system')return item.source_type!=='manual';
@@ -230,6 +245,11 @@ function bindCommon(root=document){
     }catch(error){alert(error.message);button.disabled=false}
   });
   root.querySelectorAll('[data-agenda-new]').forEach(button=>button.onclick=()=>taskModal());
+  root.querySelectorAll('[data-agenda-home-preview-day]').forEach(button=>button.onclick=()=>{
+    const key=button.dataset.agendaHomePreviewDay;
+    if(window.matchMedia?.('(max-width:720px)').matches){AH.homeSelected=key;mountHome();return}
+    AH.selected=key;AH.month=dateAtNoon(key)||new Date();S.view='agenda-harmony';renderApp();
+  });
   root.querySelectorAll('[data-agenda-home-day]').forEach(button=>button.onclick=()=>{AH.selected=button.dataset.agendaHomeDay;AH.month=dateAtNoon(AH.selected)||new Date();S.view='agenda-harmony';renderApp()});
   root.querySelectorAll('[data-agenda-refresh]').forEach(button=>button.onclick=async()=>{button.disabled=true;try{AH.loadedAt=0;await load(true);if(S.view==='home')mountHome();else renderAgenda(document.querySelector('#page'))}catch(error){alert(error.message);button.disabled=false}});
 }
