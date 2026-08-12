@@ -124,12 +124,12 @@ test('PWA, ajuda, documentação e continuidade incluem a nova função',()=>{
   assert.match(index,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
   assert.match(index,/production-inventory\.css\?v=25\.72/);
   assert.match(index,/production-inventory\.js\?v=25\.73/);
-  assert.match(worker,/harmony-store-v25-76/);
+  assert.match(worker,/harmony-store-v25-77/);
   assert.match(worker,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
   assert.match(help,/Gerar etiqueta 150 × 100/);
   assert.match(manual,/Etiquetas pendentes/);
   assert.match(technical,/label_token/);
   assert.match(backup,/'production_inventory_label_prints'/);
   assert.match(recovery,/production_inventory_label_prints: \['protocol'\]/);
-  assert.equal(JSON.parse(pkg).version,'25.76.0');
+  assert.equal(JSON.parse(pkg).version,'25.77.0');
 });
