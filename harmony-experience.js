@@ -9,7 +9,7 @@ const viewLabels={
   'production-orders':'Carregando ordens de produção',production:'Carregando recebimentos',
   'production-inventory':'Carregando inventário',notifications:'Carregando notificações',
   bills:'Carregando boletos','collaborator-timeline':'Carregando histórico',help:'Abrindo a central de ajuda',
-  health:'Verificando a saúde do sistema'
+  health:'Verificando a saúde do sistema','agenda-harmony':'Organizando sua Agenda Harmony'
 };
 
 let overlay=null,activeLoads=0,showTimer=0,hideTimer=0,visibleAt=0;

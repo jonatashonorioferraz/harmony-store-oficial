@@ -1,9 +1,22 @@
 # Changelog
 
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
-> Validação final: 288 testes aprovados, incluindo a navegação reorganizada da Inteligência, continuidade da numeração das caixas, segurança do pré-cadastro, geração em PDF de uma página e reemissão auditada das etiquetas.
+> Validação final: 295 testes aprovados, incluindo a Agenda Harmony, a navegação reorganizada da Inteligência, continuidade da numeração das caixas, segurança do pré-cadastro, geração em PDF de uma página e reemissão auditada das etiquetas.
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
+
+## [v25.75] - 12/08/2026
+
+### Agenda Harmony administrativa em três fases
+
+- Criada a Agenda Harmony exclusiva para ADMs, com calendário mensal, tarefas, compromissos, prioridades, lembretes e lista de verificação.
+- A Home administrativa passou a destacar os próximos sete dias e substitui visualmente painéis repetidos, mantendo a Home de colaboradoras e Recebimento sem alterações.
+- Boletos, solicitações, ordens, compras internas e inventário permanecem como fonte oficial; a Agenda apenas aponta prazos e abre o módulo responsável.
+- A IA organiza anotações e gera resumo executivo sob demanda usando `gpt-5.6-luna`, JSON estrito, orçamento mensal de US$ 2, cooldown, limite diário, cache e histórico de tokens/custo.
+- A IA não altera estoque, pagamentos, ordens, solicitações ou cadastros e o resumo não envia nomes pessoais ao provedor externo.
+- Lembretes push reutilizam a infraestrutura existente, são idempotentes e destinados somente aos ADMs.
+- Novas tabelas possuem RLS administrativo, RPCs auditadas, índices de desempenho e participação no backup criptografado e na recuperação isolada.
+- Ativos do PWA foram versionados como 25.75 para computador, tablet e celular.
 
 ## [v25.74] - 12/08/2026
 

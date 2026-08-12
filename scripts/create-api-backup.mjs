@@ -13,6 +13,8 @@ const tables = [
   'production_payment_schedules', 'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
   'production_inventory_entries', 'production_inventory_movements', 'production_inventory_label_prints',
   'inventory_ai_settings', 'inventory_ai_analyses', 'inventory_ai_insights',
+  'admin_agenda_tasks', 'admin_agenda_task_events', 'admin_agenda_reminder_deliveries',
+  'admin_agenda_ai_settings', 'admin_agenda_ai_runs',
   'improvement_ideas', 'improvement_idea_events',
   'app_notifications', 'app_notification_recipients',
   'separation_checkup_items', 'stock_discrepancies', 'stock_replenishment_requests',

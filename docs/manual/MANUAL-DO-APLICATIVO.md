@@ -219,3 +219,15 @@ Avisos urgentes devem ser usados apenas para prazos ou mudanças que exigem aç�
 ## Ajuda e suporte
 
 Use o botão **Ajuda** dentro de cada tela para instruções rápidas. O menu **Central de ajuda** permite pesquisar todos os módulos. Se algo falhar, informe ao ADM qual tela estava aberta e o horário aproximado; não envie senhas nem códigos secretos.
+## Agenda Harmony (somente ADMs)
+
+A Agenda Harmony é a secretária administrativa do aplicativo. Ela reúne suas tarefas e as datas que já existem em boletos, solicitações, ordens de produção, compras internas e inventário.
+
+1. Abra **Agenda Harmony** no menu administrativo.
+2. Use **Nova tarefa** para registrar um compromisso, prazo, prioridade, lembrete e lista de verificação.
+3. Se preferir, escreva uma anotação e toque em **Organizar anotação com IA**. Revise todos os campos antes de salvar.
+4. Clique em um item de boleto, solicitação, ordem ou compra para abrir o módulo oficial e concluir a operação ali.
+5. Use **Analisar meu dia com IA** somente quando desejar um resumo executivo; abrir o calendário não gera custo.
+6. O ADM principal pode abrir **Configurar limite da IA** para ativar ou pausar análises e definir o orçamento mensal. O padrão da Agenda é **US$ 2 por mês**.
+
+A IA nunca paga boletos, altera estoque, conclui solicitações ou modifica ordens. Os lembretes exigem notificações ativas no aparelho. Colaboradoras e Recebimento não visualizam este módulo.
