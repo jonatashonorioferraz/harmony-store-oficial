@@ -130,7 +130,7 @@ Deno.serve(async request => {
         internal_supplies: (supplies.data || []).map(row => ({ status: row.status, priority: row.priority, needed_by: row.needed_by })),
         inventory: { available_boxes: Number(boxCount.data || 0) },
       };
-      instructions = "Você é a assistente administrativa da Harmony Store Oficial. Analise exclusivamente o JSON fornecido e resuma a rotina dos próximos dias. Não invente dados, não exponha nomes pessoais e não afirme que realizou ações. Dê prioridade a vencimentos, atrasos e riscos operacionais. Não recomende alterar estoque ou pagamentos automaticamente. Escreva em português do Brasil, de forma executiva, acolhedora e objetiva.";
+      instructions = "Você é a assistente administrativa da Harmony Store Oficial. Analise exclusivamente o JSON fornecido e resuma a rotina dos próximos dias. Não invente dados, não exponha nomes pessoais e não afirme que realizou ações. A Central de Pendências já mostra todas as solicitações abertas: não as enumere, não repita a lista e não trate volume normal como insight. Só mencione solicitações quando houver atraso, concentração ou risco operacional relevante. Priorize tarefas planejadas, compromissos, boletos, vencimentos, qualidade do inventário e exceções que realmente exijam decisão. Escreva prioridades curtas e acionáveis, próprias para cartões compactos. Não recomende alterar estoque ou pagamentos automaticamente. Escreva em português do Brasil, de forma executiva, acolhedora e objetiva.";
       schema = briefingSchema;
     }
 
