@@ -1,0 +1,30 @@
+name: Lembretes da Agenda Harmony
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harmony-agenda-reminders
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enviar lembretes administrativos pendentes
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_BACKUP_SECRET_KEY }}
+        run: |
+          test -n "$SUPABASE_SECRET_KEY"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-all-errors --max-time 60 \
+            -X POST 'https://tyzfznwvjzmudxtcbbaf.supabase.co/functions/v1/send-agenda-reminders' \
+            -H "apikey: $SUPABASE_SECRET_KEY" \
+            -H 'Content-Type: application/json' \
+            --data '{}'
