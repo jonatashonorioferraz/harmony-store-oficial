@@ -223,13 +223,15 @@ Use o botão **Ajuda** dentro de cada tela para instruções rápidas. O menu **
 
 A Agenda Harmony é a secretária administrativa do aplicativo. Ela reúne suas tarefas e as datas que já existem em boletos, solicitações, ordens de produção, compras internas e inventário.
 
-Na página inicial administrativa, o calendário compacto mostra os próximos sete dias. Toque em uma data para abrir diretamente os compromissos daquele dia. A mesma página continua mostrando a **Central de pendências** com solicitações abertas de matéria-prima, materiais do e-commerce e suprimentos, além da lista **Solicitações recentes**, que pode ser filtrada por **Hoje** e por situação.
+Na página inicial administrativa, a **Central de pendências** é o único painel que lista solicitações abertas de matéria-prima, materiais do e-commerce e suprimentos. Logo abaixo, a **Agenda inteligente** apresenta um calendário aberto dos próximos sete dias somente com tarefas planejadas, compromissos e boletos; datas sem atividade continuam visíveis como **Sem compromissos**. Toque em uma data para abrir a Agenda completa já filtrada naquele dia. A faixa **Inteligência do dia** mostra no máximo três orientações úteis sem repetir as solicitações da Central. A lista **Solicitações recentes** continua disponível com filtros por período e situação.
 
 1. Abra **Agenda Harmony** no menu administrativo.
 2. Use **Nova tarefa** para registrar um compromisso, prazo, prioridade, lembrete e lista de verificação.
 3. Se preferir, escreva uma anotação e toque em **Organizar anotação com IA**. Revise todos os campos antes de salvar.
-4. Clique em um item de boleto, solicitação, ordem ou compra para abrir o módulo oficial e concluir a operação ali.
-5. Use **Analisar meu dia com IA** somente quando desejar um resumo executivo; abrir o calendário não gera custo.
-6. O ADM principal pode abrir **Configurar limite da IA** para ativar ou pausar análises e definir o orçamento mensal. O padrão da Agenda é **US$ 2 por mês**.
+4. Nas ordens de produção, use **Concluir na Agenda** quando o acompanhamento já tiver sido resolvido. A ordem original e seu histórico permanecem intactos no módulo de produção.
+5. Para consultar ou desfazer essa ação, selecione **Ordens concluídas na Agenda** e toque em **Reabrir na Agenda**.
+6. Clique em um item de boleto, solicitação, ordem ou compra para abrir o módulo oficial e concluir a operação ali.
+7. Use **Analisar meu dia com IA** somente quando desejar um resumo executivo; abrir o calendário não gera custo.
+8. O ADM principal pode abrir **Configurar limite da IA** para ativar ou pausar análises e definir o orçamento mensal. O padrão da Agenda é **US$ 2 por mês**.
 
-A IA nunca paga boletos, altera estoque, conclui solicitações ou modifica ordens. Os lembretes exigem notificações ativas no aparelho. Colaboradoras e Recebimento não visualizam este módulo.
+A ação **Concluir na Agenda** não confirma entrega, recebimento ou pagamento. A IA nunca paga boletos, altera estoque, conclui solicitações ou modifica ordens. Os lembretes exigem notificações ativas no aparelho. Colaboradoras e Recebimento não visualizam este módulo.
