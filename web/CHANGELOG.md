@@ -1,5 +1,17 @@
 # Changelog
 
+## [v25.77] - 2026-08-12
+
+### Seu dia conectado
+
+- A Home administrativa ganhou uma linha do tempo conectada que destaca primeiro boletos, solicitações, compras internas e tarefas próprias.
+- Ordens de produção ativas agora ficam reunidas em um acompanhamento semanal expansível, sem dominar a lista principal.
+- O ADM pode usar **Concluir na Agenda** para retirar uma ordem de `Seu dia` sem alterar a ordem original, o recebimento, o estoque ou o pagamento.
+- O filtro **Ordens concluídas na Agenda** permite consultar o histórico e reabrir o acompanhamento.
+- Conclusões e reaberturas são compartilhadas entre os ADMs, protegidas por RLS e registradas com usuário e data.
+- A interface e as mensagens foram mantidas integralmente em português do Brasil e ajustadas para computador, tablet e celular.
+- As novas tabelas participam do backup criptografado e da recuperação isolada.
+
 ## [v25.76] - 2026-08-12
 
 ### Corrigido
