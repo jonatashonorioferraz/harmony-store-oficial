@@ -1,9 +1,21 @@
 # Changelog
 
 > Continuidade: restauração completa real ensaiada em projeto Supabase isolado, com bloqueio explícito da produção, remapeamento de usuários e reconciliação de tabelas e Storage.
-> Validação final: 278 testes aprovados, incluindo continuidade da numeração das caixas, segurança do pré-cadastro, geração em PDF de uma página e reemissão auditada das etiquetas.
+> Validação final: 288 testes aprovados, incluindo a navegação reorganizada da Inteligência, continuidade da numeração das caixas, segurança do pré-cadastro, geração em PDF de uma página e reemissão auditada das etiquetas.
 
 Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
+
+## [v25.74] - 12/08/2026
+
+### Central de Inteligência reorganizada
+
+- A navegação foi reduzida de oito abas concorrentes para quatro áreas principais: **Painel inteligente**, **Operação**, **Compras e parceiros** e **Ideias e evolução**.
+- A IA deixou de ocupar uma aba adicional e passou a integrar o painel principal.
+- O painel usa dados reais do Supabase para exibir estatísticas do Inventário, maiores saldos e gráfico de entradas e transferências, além dos insights do GPT-5.6 Terra.
+- Relatórios de matérias-primas, e-commerce, colaboradoras, planejado × recebido, qualidade, compras, fornecedores e planejamento foram preservados em seletores internos.
+- Indicadores repetidos foram separados por finalidade: Inventário no painel executivo e solicitações/consumo no resumo operacional.
+- Filtros aparecem somente nos relatórios que realmente os utilizam; o filtro de produto foi removido do comparativo de produção porque não tinha efeito nessa tela.
+- Nenhuma tabela, política RLS, permissão, cálculo de pagamento, movimentação de estoque ou dado do Supabase foi alterado.
 
 ## [v25.73] - 11/08/2026
 

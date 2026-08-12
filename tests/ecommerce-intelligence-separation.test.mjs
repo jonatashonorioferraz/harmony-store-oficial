@@ -44,7 +44,8 @@ test('product form lets admins classify production, ecommerce and shared product
 });
 
 test('intelligence separates ecommerce reports, planning and exports',()=>{
-  assert.match(intelligence,/data-intel-tab="ecommerce"/);
+  assert.match(intelligence,/data-intel-subtab="ecommerce"/);
+  assert.match(intelligence,/data-intel-area="operation"/);
   assert.match(intelligence,/SUPRIMENTOS DO E-COMMERCE/);
   assert.match(intelligence,/materialReport\(filteredRows\(\),scope\)/);
   assert.match(intelligence,/harmony-\$\{scope\}/);

@@ -138,9 +138,16 @@ O Inventário não calcula pagamentos, não modifica o recebimento oficial da pr
 
 O ADM filtra dados por colaboradora, produto/modelo, cor, semana, mês ou ano. Relatórios de consumo usam materiais efetivamente entregues, e relatórios de produção usam quantidades oficiais. Os demonstrativos semanais podem ser gerados em PDF para conferência e pagamento.
 
-### Inventário com IA
+### Central de Inteligência e Inventário com IA
 
-A primeira aba de **Inteligência** é exclusiva dos ADMs e reúne indicadores em tempo real do Inventário de Produção com uma análise interpretativa do modelo GPT-5.6 Terra.
+A área **Inteligência** é exclusiva dos ADMs e foi organizada em quatro entradas principais para evitar informações repetidas:
+
+- **Painel inteligente:** estatísticas ao vivo, gráficos reais do Inventário de Produção, insights e histórico do GPT-5.6 Terra.
+- **Operação:** resumo, matérias-primas, e-commerce, colaboradoras, planejado × recebido e qualidade dos dados, escolhidos em um seletor interno.
+- **Compras e parceiros:** pedidos de compra, fornecedores e planejamento de reposição.
+- **Ideias e evolução:** registro e acompanhamento das propostas de melhoria.
+
+Os relatórios antigos não foram apagados. Eles continuam disponíveis nas áreas internas, com os mesmos filtros, exportações e regras; somente deixaram de competir visualmente com o painel executivo.
 
 - Os saldos, quantidades, datas, entradas, transferências, ajustes e ordens são calculados pelo Supabase. A IA não faz contas livres nem consulta o banco diretamente.
 - A análise prioriza risco estimado de falta por modelo e cor, caixas antigas, excesso de estoque, dados sem localização, ajustes frequentes, fluxo de entradas e saídas e concentração por colaboradora.

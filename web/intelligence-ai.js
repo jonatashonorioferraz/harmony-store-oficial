@@ -90,7 +90,7 @@ function fullView(){
   const analysis=AI.analysis,visible=AI.insights.filter(item=>!item.dismissed_at),health=analysis?.health_status||'attention';
   if(AI.loading&&!AI.loaded)return'<div class="loading-inline">Preparando os dados seguros do Inventário…</div>';
   if(AI.error)return `<section class="card inventory-ai-unavailable"><p class="eyebrow">INTELIGÊNCIA DO INVENTÁRIO</p><h2>Atualização técnica necessária</h2><p>O restante da aba Inteligência continua funcionando normalmente.</p><small>${esc(AI.error)}</small></section>`;
-  return `<div class="inventory-ai-page"><section class="inventory-ai-hero ${health}"><div><p class="eyebrow">INTELIGÊNCIA REAL · GPT-5.6 TERRA</p><h2>O que merece atenção no Inventário?</h2><p>${analysis?esc(analysis.overall_summary):'Gere a primeira análise para relacionar estoque, caixas, movimentações, produção e qualidade dos dados.'}</p><small>${analysis?`Análise de ${analysis.period_days} dias · gerada em ${when(analysis.completed_at)} · números calculados pelo Supabase`:'Os indicadores abaixo já estão atualizados; somente a interpretação ainda não foi gerada.'}</small></div><div class="inventory-ai-hero-actions"><span class="inventory-ai-health"><i></i>${analysis?(health==='critical'?'Estado crítico':health==='attention'?'Pontos de atenção':'Operação estável'):'Aguardando análise'}</span><button class="primary" id="runInventoryAi" ${AI.usage&&!AI.usage.enabled?'disabled':''}>✦ Analisar agora com IA</button></div></section>${overviewMetrics()}<div class="inventory-ai-main"><section class="inventory-ai-insights"><header><div><p class="eyebrow">INSIGHTS PRIORITÁRIOS</p><h2>Análise e recomendações</h2></div><span>${visible.length} insight(s) visível(is)</span></header>${visible.map(insightCard).join('')||'<div class="card empty">Nenhum insight pendente. Consulte o histórico ou gere uma nova análise.</div>'}</section><div class="inventory-ai-side">${costCard()}${history()}</div></div><div class="inventory-ai-data-grid">${stockTable()}${flowChart()}</div>${settings()}</div>`;
+  return `<div class="inventory-ai-page"><section class="inventory-ai-hero ${health}"><div><p class="eyebrow">INTELIGÊNCIA REAL · GPT-5.6 TERRA</p><h2>O que merece atenção no Inventário?</h2><p>${analysis?esc(analysis.overall_summary):'Gere a primeira análise para relacionar estoque, caixas, movimentações, produção e qualidade dos dados.'}</p><small>${analysis?`Análise de ${analysis.period_days} dias · gerada em ${when(analysis.completed_at)} · números calculados pelo Supabase`:'Os indicadores e gráficos abaixo já usam dados reais; somente a interpretação da IA ainda não foi gerada.'}</small></div><div class="inventory-ai-hero-actions"><span class="inventory-ai-health"><i></i>${analysis?(health==='critical'?'Estado crítico':health==='attention'?'Pontos de atenção':'Operação estável'):'Aguardando análise'}</span><button class="primary" id="runInventoryAi" ${AI.usage&&!AI.usage.enabled?'disabled':''}>✦ Analisar agora com IA</button></div></section>${overviewMetrics()}<div class="inventory-ai-data-grid">${stockTable()}${flowChart()}</div><div class="inventory-ai-main"><section class="inventory-ai-insights"><header><div><p class="eyebrow">INSIGHTS PRIORITÁRIOS</p><h2>Análise e recomendações</h2></div><span>${visible.length} insight(s) visível(is)</span></header>${visible.map(insightCard).join('')||'<div class="card empty">Nenhum insight pendente. Consulte o histórico ou gere uma nova análise.</div>'}</section><div class="inventory-ai-side">${costCard()}${history()}</div></div>${settings()}</div>`;
 }
 
 function compactSummary(){
@@ -129,28 +129,22 @@ function bind(){
 }
 
 function renderActive(){
-  const content=document.querySelector('#intelContent');if(!content||!AI.active)return;
-  document.querySelectorAll('[data-intel-tab]').forEach(button=>button.classList.remove('active'));
-  document.querySelector('[data-inventory-ai-tab]')?.classList.add('active');
-  const filters=document.querySelector('.intel-filters');if(filters)filters.hidden=true;
-  content.innerHTML=fullView();bind();
+  const dashboard=document.querySelector('#inventoryAiDashboard');if(!dashboard)return;
+  dashboard.innerHTML=fullView();bind();
 }
 
-async function activate(){AI.active=true;const content=document.querySelector('#intelContent');if(content)content.innerHTML='<div class="loading-inline">Conectando métricas e Inteligência do Inventário…</div>';await load();renderActive()}
+async function activate(){
+  AI.active=true;
+  if(S.view!=='intelligence'){S.view='intelligence';renderApp()}
+  if(window.HarmonyIntelligence?.state?.tab!=='overview'){window.HarmonyIntelligence?.openTab('overview');return}
+  const dashboard=document.querySelector('#inventoryAiDashboard');if(dashboard)dashboard.innerHTML='<div class="loading-inline">Conectando métricas e Inteligência do Inventário…</div>';
+  await load();renderActive();
+}
 
 function inject(){
   if(!isAdmin()||S.view!=='intelligence')return;
-  const tabs=document.querySelector('.intel-tabs'),content=document.querySelector('#intelContent');if(!tabs||!content)return;
-  let button=tabs.querySelector('[data-inventory-ai-tab]');
-  if(!button){button=document.createElement('button');button.type='button';button.dataset.inventoryAiTab='true';button.innerHTML='✦ Inventário com IA';tabs.insertBefore(button,tabs.firstChild);button.onclick=activate;tabs.addEventListener('click',event=>{if(event.target.closest('[data-intel-tab]'))AI.active=false},{capture:true})}
-  if(AI.active){
-    if(!content.querySelector('.inventory-ai-page, .inventory-ai-unavailable, .loading-inline'))renderActive();
-    return;
-  }
-  const filters=document.querySelector('.intel-filters');if(filters)filters.hidden=false;
-  if(tabs.querySelector('[data-intel-tab="overview"].active')&&!document.querySelector('.inventory-ai-compact')){
-    load().then(()=>{if(AI.active||S.view!=='intelligence')return;const current=document.querySelector('#intelContent');if(current&&!current.querySelector('.inventory-ai-compact')){const html=compactSummary();if(html){current.insertAdjacentHTML('afterbegin',html);document.querySelector('#openInventoryAiSummary')?.addEventListener('click',activate)}}});
-  }
+  const dashboard=document.querySelector('#inventoryAiDashboard');if(!dashboard||dashboard.querySelector('.inventory-ai-page,.inventory-ai-unavailable'))return;
+  load().then(()=>{if(S.view!=='intelligence'||!document.querySelector('#inventoryAiDashboard'))return;renderActive()});
 }
 
 window.HarmonyInventoryAI=Object.freeze({state:AI,load,activate});
