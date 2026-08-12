@@ -82,19 +82,31 @@ test('AI is advisory, evidence-based and never performs inventory or payment mut
   assert.doesNotMatch(ui, /Pergunte aos dados|perguntas programadas|campo de perguntas/i);
 });
 
-test('new panel is admin-only, preserves the traditional Intelligence and opens inventory tabs', () => {
+test('AI is admin-only, integrated into the main dashboard and opens inventory tabs', () => {
   assert.match(ui, /const isAdmin=\(\)=>S\?\.profile\?\.role==='admin'/);
   assert.match(ui, /S\.view!=='intelligence'/);
-  assert.match(ui, /tabs\.insertBefore\(button,tabs\.firstChild\)/);
+  assert.match(ui, /#inventoryAiDashboard/);
+  assert.doesNotMatch(ui, /tabs\.insertBefore\(button,tabs\.firstChild\)/);
   assert.match(ui, /O restante da aba Inteligência continua funcionando normalmente/);
   assert.match(ui, /window\.HarmonyProductionInventory\?\.open/);
   assert.match(inventory, /window\.HarmonyProductionInventory=Object\.freeze/);
   assert.match(inventory, /\['balance','boxes','movements','workers'\]\.includes\(tab\)/);
 });
 
-test('AI panel mutation observer does not trigger a recursive render loop', () => {
-  assert.match(ui, /if\(AI\.active\)\{[\s\S]*content\.querySelector\('\.inventory-ai-page, \.inventory-ai-unavailable, \.loading-inline'\)[\s\S]*return;/);
-  assert.doesNotMatch(ui, /if\(AI\.active\)\{renderActive\(\);return\}/);
+test('AI dashboard observer renders once and does not create an extra tab', () => {
+  assert.match(ui, /dashboard\.querySelector\('\.inventory-ai-page,\.inventory-ai-unavailable'\)\)return/);
+  assert.doesNotMatch(ui, /data-inventory-ai-tab|inventoryAiTab/);
+  assert.match(ui, /inventory-ai-live-metrics/);
+  assert.match(ui, /inventory-ai-data-grid/);
+});
+
+test('Intelligence navigation has four main areas and preserves detailed reports internally', async () => {
+  const intelligence = await readFile(new URL('intelligence.js', root), 'utf8');
+  assert.equal((intelligence.match(/data-intel-area=/g)||[]).length,4);
+  for (const area of ['dashboard','operation','supply','ideas']) assert.match(intelligence,new RegExp(`data-intel-area="${area}"`));
+  for (const report of ['operations','materials','ecommerce','people','production','quality','purchases','suppliers','planning']) assert.match(intelligence,new RegExp(`data-intel-subtab="${report}"`));
+  assert.match(intelligence,/id="inventoryAiDashboard"/);
+  assert.doesNotMatch(intelligence,/data-intel-tab=/);
 });
 
 test('desktop, tablet, mobile and offline assets are complete', () => {
@@ -102,12 +114,12 @@ test('desktop, tablet, mobile and offline assets are complete', () => {
   assert.match(css, /@media\(max-width:720px\)/);
   assert.match(css, /@media\(max-width:430px\)/);
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
-  assert.match(index, /intelligence-ai\.css\?v=25\.73/);
-  assert.match(index, /intelligence-ai\.js\?v=25\.73/);
-  assert.match(worker, /harmony-store-v25-73/);
-  assert.match(worker, /intelligence-ai\.css\?v=25\.73/);
-  assert.match(worker, /intelligence-ai\.js\?v=25\.73/);
-  assert.equal(JSON.parse(pkg).version, '25.73.0');
+  assert.match(index, /intelligence-ai\.css\?v=25\.74/);
+  assert.match(index, /intelligence-ai\.js\?v=25\.74/);
+  assert.match(worker, /harmony-store-v25-74/);
+  assert.match(worker, /intelligence-ai\.css\?v=25\.74/);
+  assert.match(worker, /intelligence-ai\.js\?v=25\.74/);
+  assert.equal(JSON.parse(pkg).version, '25.74.0');
 });
 
 test('backup, recovery, help and three documentation levels cover the feature', () => {
@@ -118,7 +130,7 @@ test('backup, recovery, help and three documentation levels cover the feature', 
   }
   assert.match(help, /Inventário com IA/);
   assert.match(help, /A IA não altera estoque, ordens, pagamentos ou cadastros/);
-  assert.match(manual, /### Inventário com IA/);
+  assert.match(manual, /### Central de Inteligência e Inventário com IA/);
   assert.match(manual, /não possui campo de perguntas/i);
   assert.match(technical, /## Separação de responsabilidades/);
   assert.match(audit, /## Riscos avaliados e controles/);
