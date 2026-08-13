@@ -10,6 +10,7 @@ const tables = [
   'custom_field_values', 'requests', 'request_items', 'stock_movements',
   'audit_logs', 'push_subscriptions', 'suppliers', 'supplier_products',
   'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
+  'shipping_exclusive_products', 'shipping_plans', 'shipping_plan_items',
   'production_payment_schedules', 'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
   'production_inventory_entries', 'production_inventory_movements', 'production_inventory_label_prints',
   'inventory_ai_settings', 'inventory_ai_analyses', 'inventory_ai_insights',
