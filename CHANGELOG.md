@@ -1,5 +1,24 @@
 # Changelog
 
+## [v25.82] - 2026-08-13
+
+### Combinações de cores no Planejamento de envios
+
+- O campo **Cor** agora aceita combinações reutilizáveis de 2, 3 ou 4 cores para kits, como **Rosa BB / Azul BB**.
+- As combinações usam exclusivamente as cores oficiais já cadastradas e permanecem isoladas no Planejamento de envios, sem alterar Produção, Inventário ou Solicitações.
+- A criação monta o nome automaticamente, impede cores repetidas e salva a combinação para planos futuros.
+- Formulário, visualização do plano e PDF exibem todas as tonalidades da combinação em computador, tablet e celular.
+- Planos antigos de uma única cor permanecem compatíveis e não precisam ser convertidos.
+- A nova estrutura possui autorização da Gerente de e-commerce e do ADM principal, RLS, privilégios mínimos, auditoria, índices, backup e recuperação isolada.
+
+## CorreÃ§Ã£o pÃ³s-v25.80 - 2026-08-13
+
+### Corrigido
+
+- O formulÃ¡rio de produtos do **Planejamento de envios** agora organiza os campos pela largura real do modal, sem cortar **ObservaÃ§Ã£o** ou **Remover** em computadores com tela ampla.
+- O layout foi validado em computador, tablet e celular, sempre sem rolagem horizontal escondida.
+- O cache do aplicativo foi renovado para impedir que dispositivos continuem usando o formulÃ¡rio antigo.
+
 ## [v25.80] - 2026-08-13
 
 ### Catálogo interno de produtos exclusivos

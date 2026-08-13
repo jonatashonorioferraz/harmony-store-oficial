@@ -246,6 +246,14 @@ O módulo **Planejamento de envios** organiza antecipadamente os envios do e-com
 4. Use **Produto exclusivo** para itens próprios dos kits de envio. Ao salvar, ele passa a integrar automaticamente um catálogo interno reutilizável do Planejamento de envios, com nome, foto, cor e padrões; esse catálogo nunca é misturado ao cadastro oficial de Produção, Solicitações ou Inventário.
 5. Em novos planos, escolha um exclusivo já salvo ou selecione **Criar novo produto exclusivo**. A quantidade de volumes continua específica de cada envio.
 
+### Combinações de cores dos kits
+
+- No campo **Cor**, escolha uma cor oficial ou selecione **Nova combinação de cores**.
+- Uma combinação aceita de **2 a 4 cores oficiais diferentes**. O sistema monta o nome automaticamente, por exemplo `Rosa BB / Azul BB`, mostra as tonalidades e salva a combinação para outros planos.
+- As combinações pertencem somente ao **Planejamento de envios**. Elas não criam, duplicam ou alteram cores nos cadastros de Produção, Inventário, Recebimento ou Solicitações.
+- Planos antigos de uma única cor continuam funcionando sem conversão. Na visualização e no PDF, combinações mostram o nome completo e todos os indicadores de cor.
+- Criar ou alterar uma combinação em um item já conferido reabre somente aquele item para nova conferência. A ação registra usuário, data e conteúdo no histórico de auditoria.
+
 No cabeçalho, **Nome da outra plataforma** aparece somente quando a opção **Outra plataforma** for selecionada. Para Mercado Livre e Shopee, informe apenas a **Conta da plataforma** usada pela empresa.
 5. Em **Anúncio**, escolha 50, 100 ou 200 unidades, ou use uma quantidade personalizada. Informe o número de kits ou caixas; o sistema calcula `unidades do anúncio × volumes`.
 6. Marque o produto quando a microtarefa estiver concluída. A linha fica verde e a barra de progresso é atualizada.
