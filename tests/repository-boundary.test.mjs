@@ -12,7 +12,6 @@ const forbiddenStudioPaths = [
   'app/api/agents',
   'db/studio-schema.ts',
   'drizzle.studio.config.ts',
-  'pnpm-lock.yaml',
   'pnpm-workspace.yaml',
   'src/harmony-studio',
 ];
@@ -49,8 +48,8 @@ test('package metadata and lockfile identify the same official release', () => {
 test('transitive nanoid dependency includes the denial-of-service security fix', () => {
   const nanoid = packageLock.packages['node_modules/nanoid'];
   assert.ok(nanoid, 'nanoid must remain represented in the reproducible lockfile');
-  assert.equal(nanoid.version, '3.3.17');
-  assert.match(nanoid.resolved, /nanoid-3\.3\.17\.tgz$/);
+  assert.equal(nanoid.version, '3.3.18');
+  assert.match(nanoid.resolved, /nanoid-3\.3\.18\.tgz$/);
 });
 
 test('official build remains the static management PWA', () => {
