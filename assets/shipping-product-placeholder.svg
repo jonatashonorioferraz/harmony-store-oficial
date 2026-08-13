@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Produto Harmony sem foto">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff1f7"/><stop offset="1" stop-color="#edf4ff"/></linearGradient></defs>
+  <rect width="160" height="160" rx="30" fill="url(#g)"/>
+  <circle cx="80" cy="76" r="38" fill="#fff" stroke="#edb9d2" stroke-width="3"/>
+  <path d="M80 44l8 22 22 8-22 8-8 22-8-22-22-8 22-8z" fill="#d64d8e"/>
+  <text x="80" y="137" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#8f6680">HARMONY STORE</text>
+</svg>
