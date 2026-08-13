@@ -235,3 +235,19 @@ Na página inicial administrativa, a **Central de pendências** é o único pain
 8. O ADM principal pode abrir **Configurar limite da IA** para ativar ou pausar análises e definir o orçamento mensal. O padrão da Agenda é **US$ 2 por mês**.
 
 A ação **Concluir na Agenda** não confirma entrega, recebimento ou pagamento. A IA nunca paga boletos, altera estoque, conclui solicitações ou modifica ordens. Os lembretes exigem notificações ativas no aparelho. Colaboradoras e Recebimento não visualizam este módulo.
+
+## Planejamento de envios
+
+O módulo **Planejamento de envios** organiza antecipadamente os envios do e-commerce. Ele é exibido somente para a pessoa marcada como **Gerente de e-commerce** e para o ADM principal em situações de contingência e auditoria. Essa permissão é concedida pelo ADM principal no cadastro da pessoa e não altera as outras permissões do perfil.
+
+1. Use **Novo plano** e informe nome, plataforma, conta, data, horário e orientações gerais.
+2. Marque **Envio na modalidade FULL** quando necessário. Mercado Livre e Shopee recebem identificação visual própria.
+3. Use **Produto do catálogo** para reutilizar os modelos de produção, incluindo a foto atual, sem criar cadastros duplicados.
+4. Use **Produto exclusivo** apenas para um item específico daquele envio. Ele pode ter foto própria e não entra no catálogo oficial.
+5. Em **Anúncio**, escolha 50, 100 ou 200 unidades, ou use uma quantidade personalizada. Informe o número de kits ou caixas; o sistema calcula `unidades do anúncio × volumes`.
+6. Marque o produto quando a microtarefa estiver concluída. A linha fica verde e a barra de progresso é atualizada.
+7. Mova o cartão por **Próximos envios**, **Em preparação**, **Em conferência** e **Prontos para coleta**. Nenhum plano pode ficar pronto ou ser arquivado com item pendente.
+8. Use **Gerar PDF** dentro do plano. A impressão contém somente a lista aberta e foi preparada para folha A4 em computador, tablet e celular.
+9. Planos finalizados ou cancelados permanecem no **Histórico**. Criação, edição, conclusão e mudança de etapa registram usuário e horário para auditoria.
+
+Produtos e cores desativados continuam preservados em planos históricos. Alterar a foto de um produto oficial atualiza sua visualização nos planos sem duplicar o produto.
