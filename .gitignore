@@ -44,3 +44,8 @@ next-env.d.ts
 /backups/
 /.pnpm-store/
 /supabase/.temp/
+
+# artefatos locais de diagnostico e prototipos (nunca publicar)
+/tmp/
+/test*.log
+/*.official-*.js
