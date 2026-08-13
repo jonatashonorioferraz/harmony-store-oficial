@@ -125,7 +125,7 @@ Deno.serve(async req => {
     const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: authData, error: authError } = await admin.auth.getUser(token);
     if (authError || !authData.user) return reply({ error: "Sessão inválida." }, 401);
-    const { data: caller } = await admin.from("profiles").select("role,status,is_primary_admin,must_change_password").eq("id", authData.user.id).single();
+    const { data: caller } = await admin.from("profiles").select("role,status,is_primary_admin,must_change_password,is_ecommerce_manager").eq("id", authData.user.id).single();
     if (!caller || caller.status !== "active") return reply({ error: "Acesso negado." }, 403);
     const body = await req.json().catch(() => { throw new AppError("Dados da solicitação inválidos.", 400); });
     const action = String(body.action || "");
@@ -179,6 +179,7 @@ Deno.serve(async req => {
       const issue = passwordIssue(body.password);
       if (issue) return reply({ error: issue }, 400);
       const requestedRole = safeRole(body.role);
+      const isEcommerceManager = caller.is_primary_admin && body.is_ecommerce_manager === true;
       if (requestedRole === "admin" && !caller.is_primary_admin) {
         return reply({ error: "Somente a administradora principal pode criar outro ADM." }, 403);
       }
@@ -194,13 +195,14 @@ Deno.serve(async req => {
         role: requestedRole, department: body.department || null,
         phone: body.phone || null, status: body.status === "inactive" ? "inactive" : "active",
         must_change_password: true,
+        is_ecommerce_manager: isEcommerceManager,
         cpf_hash: cpf.cpf_hash, cpf_last4: cpf.cpf_last4, cpf_hash_version: cpf.cpf_hash_version,
       }).eq("id", data.user.id);
       if (profileError) { await admin.auth.admin.deleteUser(data.user.id); throw profileError; }
       await writeAudit(admin, {
         actor_id: authData.user.id, action: "profile.created", entity_type: "profile", entity_id: data.user.id,
         correlation_id: correlationId,
-        details: { after: { username: body.username.trim().toLowerCase(), role: requestedRole, status: body.status === "inactive" ? "inactive" : "active", department: body.department || null } },
+        details: { after: { username: body.username.trim().toLowerCase(), role: requestedRole, status: body.status === "inactive" ? "inactive" : "active", department: body.department || null, is_ecommerce_manager: isEcommerceManager } },
       });
       return reply({ id: data.user.id });
     }
@@ -208,7 +210,7 @@ Deno.serve(async req => {
     const id = String(body.id || "");
     if (!id) return reply({ error: "Usuário inválido." }, 400);
     const { data: target } = await admin.from("profiles")
-      .select("role,status,is_primary_admin,username,full_name,department,phone,cpf_hash_version")
+      .select("role,status,is_primary_admin,is_ecommerce_manager,username,full_name,department,phone,cpf_hash_version")
       .eq("id", id).single();
     if (!target) return reply({ error: "Usuário não localizado." }, 404);
 
@@ -275,6 +277,9 @@ Deno.serve(async req => {
         department: body.department || null, phone: body.phone || null,
         status: protectedStatus,
       };
+      if (caller.is_primary_admin && !target.is_primary_admin) {
+        patch.is_ecommerce_manager = body.is_ecommerce_manager === true;
+      }
       if (cpf) {
         patch.cpf_hash = cpf.cpf_hash;
         patch.cpf_last4 = cpf.cpf_last4;
@@ -289,7 +294,7 @@ Deno.serve(async req => {
         correlation_id: correlationId,
         details: {
           before: target,
-          after: { username: patch.username, full_name: patch.full_name, role: protectedRole, status: protectedStatus, department: patch.department, phone: patch.phone, cpf_hash_version: cpf?.cpf_hash_version || target.cpf_hash_version },
+          after: { username: patch.username, full_name: patch.full_name, role: protectedRole, status: protectedStatus, department: patch.department, phone: patch.phone, cpf_hash_version: cpf?.cpf_hash_version || target.cpf_hash_version, is_ecommerce_manager: patch.is_ecommerce_manager ?? target.is_ecommerce_manager },
         },
       });
       return reply({ ok: true });
