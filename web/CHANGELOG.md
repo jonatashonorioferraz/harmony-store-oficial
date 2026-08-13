@@ -921,3 +921,13 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 ### Validação
 
 - Build aprovado, 51 testes automatizados e smoke test transacional no banco.
+# 25.79.0 - 12/08/2026
+
+- Novo módulo **Planejamento de envios**, em quadro visual com Próximos envios, Em preparação, Em conferência e Prontos para coleta.
+- Acesso exclusivo para a pessoa marcada como Gerente de e-commerce, com contingência auditada do ADM principal.
+- Planos reaproveitam modelos, cores e fotos do catálogo de produção sem duplicar cadastros.
+- Produtos exclusivos do envio podem receber foto própria sem entrar no catálogo principal.
+- Cálculo automático por anúncio × caixas/kits, checklist por item, progresso ao vivo e trava contra finalização incompleta.
+- Logotipos compactos de Mercado Livre e Shopee e etiquetas Full próprias: amarela/verde no Mercado Livre e laranja/branca na Shopee.
+- PDF isolado em A4 contendo somente o plano aberto, preparado para computador, tablet e celular.
+- Auditoria de criação, edição, conclusão, reabertura, mudança de etapa e cancelamento.
