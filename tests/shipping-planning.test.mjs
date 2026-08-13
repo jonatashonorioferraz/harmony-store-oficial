@@ -18,9 +18,9 @@ const [backup,recovery] = await Promise.all([
 ]);
 
 test('módulo está carregado, versionado e disponível offline',()=>{
-  assert.match(html,/shipping-planning\.css\?v=25\.80/);
+  assert.match(html,/shipping-planning\.css\?v=25\.81/);
   assert.match(html,/shipping-planning\.js\?v=25\.80/);
-  assert.match(sw,/shipping-planning\.css\?v=25\.80/);
+  assert.match(sw,/shipping-planning\.css\?v=25\.81/);
   assert.match(sw,/shipping-planning\.js\?v=25\.80/);
 });
 
@@ -80,4 +80,7 @@ test('editor mantem produto, observacao e remocao visiveis no desktop, tablet e 
   assert.match(style,/@media\(max-width:900px\)/);
   assert.match(style,/shipping-plan-editor\{overflow-x:hidden\}/);
   assert.match(style,/data-remove-shipping-item[^}]+width:100%/);
+  assert.match(style,/grid-template-areas:\s*"photo listing product color volume total"\s*"photo notes notes notes notes remove"/);
+  assert.match(style,/grid-template-areas:\s*"photo product product"\s*"photo listing listing"[\s\S]*"remove remove remove"/);
+  assert.match(style,/label:nth-child\(7\)\{grid-area:notes\}/);
 });
