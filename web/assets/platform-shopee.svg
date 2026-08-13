@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 64" role="img" aria-label="Shopee">
+  <rect width="180" height="64" rx="18" fill="#fff3ed"/>
+  <path d="M18 22h42v34H18z" fill="#ee4d2d"/><path d="M27 22c0-10 5-15 12-15s12 5 12 15" fill="none" stroke="#ee4d2d" stroke-width="5"/>
+  <text x="39" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" font-weight="900" fill="#fff">S</text>
+  <text x="72" y="42" font-family="Arial,sans-serif" font-size="25" font-weight="800" fill="#ee4d2d">Shopee</text>
+</svg>
