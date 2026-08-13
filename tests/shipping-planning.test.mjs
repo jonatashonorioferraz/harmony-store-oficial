@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html,app,script,style,migration,catalogMigration,edge,sw] = await Promise.all([
+const [html,app,script,style,migration,catalogMigration,colorMigration,edge,sw] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url),'utf8'),
   readFile(new URL('../app.js', import.meta.url),'utf8'),
   readFile(new URL('../shipping-planning.js', import.meta.url),'utf8'),
   readFile(new URL('../shipping-planning.css', import.meta.url),'utf8'),
   readFile(new URL('../supabase/migrations/20260812223000_shipping_planning.sql', import.meta.url),'utf8'),
   readFile(new URL('../supabase/migrations/20260813103000_shipping_exclusive_product_catalog.sql', import.meta.url),'utf8'),
+  readFile(new URL('../supabase/migrations/20260813210448_shipping_color_combinations.sql', import.meta.url),'utf8'),
   readFile(new URL('../supabase/functions/manage-user/index.ts', import.meta.url),'utf8'),
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
 ]);
@@ -18,10 +19,10 @@ const [backup,recovery] = await Promise.all([
 ]);
 
 test('módulo está carregado, versionado e disponível offline',()=>{
-  assert.match(html,/shipping-planning\.css\?v=25\.81/);
-  assert.match(html,/shipping-planning\.js\?v=25\.80/);
-  assert.match(sw,/shipping-planning\.css\?v=25\.81/);
-  assert.match(sw,/shipping-planning\.js\?v=25\.80/);
+  assert.match(html,/shipping-planning\.css\?v=25\.82/);
+  assert.match(html,/shipping-planning\.js\?v=25\.82/);
+  assert.match(sw,/shipping-planning\.css\?v=25\.82/);
+  assert.match(sw,/shipping-planning\.js\?v=25\.82/);
 });
 
 test('acesso é restrito à gerente de e-commerce e ADM principal',()=>{
@@ -69,6 +70,30 @@ test('produto exclusivo é salvo e reutilizado em catálogo isolado do módulo',
   for(const source of [backup,recovery])for(const table of ['shipping_exclusive_products','shipping_plans','shipping_plan_items'])assert.match(source,new RegExp(`'${table}'`));
 });
 
+test('combinações de 2 a 4 cores reutilizam apenas o catálogo oficial e ficam isoladas no módulo',()=>{
+  assert.match(colorMigration,/create table if not exists public\.shipping_color_combinations/);
+  assert.match(colorMigration,/create table if not exists public\.shipping_color_combination_items/);
+  assert.match(colorMigration,/references public\.finished_production_colors\(id\)/);
+  assert.match(colorMigration,/position between 1 and 4/);
+  assert.match(colorMigration,/v_count not between 2 and 4/);
+  assert.match(colorMigration,/unique \(combination_id, color_id\)/);
+  assert.match(colorMigration,/shipping_color_combinations_active_signature_uidx/);
+  assert.match(colorMigration,/enable row level security/g);
+  assert.match(colorMigration,/private\.can_manage_shipping_planning/);
+  assert.match(colorMigration,/revoke all privileges on table public\.shipping_color_combinations from public, anon, authenticated/);
+  assert.match(colorMigration,/list_shipping_plans_with_colors/);
+  assert.match(colorMigration,/save_shipping_plan_with_colors/);
+  assert.match(colorMigration,/shipping_color_combination\.saved/);
+  assert.match(script,/Nova combinação de cores/);
+  assert.match(script,/Escolha de 2 a 4 cores/);
+  assert.match(script,/list_shipping_color_combinations/);
+  assert.match(script,/save_shipping_color_combination/);
+  assert.match(script,/save_shipping_plan_with_colors/);
+  assert.match(script,/color_combination_id:selected\.combinationId/);
+  assert.match(script,/colorDots\(item\.color_hex\)/);
+  for(const source of [backup,recovery])for(const table of ['shipping_color_combinations','shipping_color_combination_items'])assert.match(source,new RegExp(`'${table}'`));
+});
+
 test('nome da outra plataforma aparece somente quando Outra plataforma é selecionada',()=>{
   assert.match(script,/shipping-other-platform/);
   assert.match(script,/other\.style\.display=visible\?'':'none'/);
@@ -84,3 +109,4 @@ test('editor mantem produto, observacao e remocao visiveis no desktop, tablet e 
   assert.match(style,/grid-template-areas:\s*"photo product product"\s*"photo listing listing"[\s\S]*"remove remove remove"/);
   assert.match(style,/label:nth-child\(7\)\{grid-area:notes\}/);
 });
+
