@@ -12,6 +12,7 @@ const forbiddenStudioPaths = [
   'app/api/agents',
   'db/studio-schema.ts',
   'drizzle.studio.config.ts',
+  'pnpm-lock.yaml',
   'pnpm-workspace.yaml',
   'src/harmony-studio',
 ];

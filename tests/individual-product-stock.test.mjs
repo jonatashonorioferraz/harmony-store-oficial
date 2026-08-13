@@ -65,7 +65,7 @@ test('admin UI manages physical stock while reserved stock stays system controll
   assert.match(css,/@media\(max-width:430px\)/);
   assert.match(html,/individual-product-stock\.js\?v=25\.63/);
   assert.match(html,/individual-product-stock\.css\?v=25\.63/);
-  assert.match(worker,/harmony-store-v25-79/);
+  assert.match(worker,/harmony-store-v25-80/);
   assert.match(worker,/SHELL\.push\('\.\/individual-product-stock\.css\?v=25\.63','\.\/individual-product-stock\.js\?v=25\.63'\)/);
 });
 
@@ -81,7 +81,7 @@ test('backup, recovery, help and technical documentation cover individualized ba
   assert.match(manual,/Estoque individual por colaboradora/);
   assert.match(technical,/product_collaborator_stocks/);
   assert.match(help,/Cada mulher terá saldo próprio/);
-  assert.equal(JSON.parse(pkg).version,'25.79.0');
+  assert.equal(JSON.parse(pkg).version,'25.80.0');
 });
 
 test('individual stock assets are mirrored in the official deployable folder',async()=>{
