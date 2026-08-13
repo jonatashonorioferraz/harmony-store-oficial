@@ -243,7 +243,10 @@ O módulo **Planejamento de envios** organiza antecipadamente os envios do e-com
 1. Use **Novo plano** e informe nome, plataforma, conta, data, horário e orientações gerais.
 2. Marque **Envio na modalidade FULL** quando necessário. Mercado Livre e Shopee recebem identificação visual própria.
 3. Use **Produto do catálogo** para reutilizar os modelos de produção, incluindo a foto atual, sem criar cadastros duplicados.
-4. Use **Produto exclusivo** apenas para um item específico daquele envio. Ele pode ter foto própria e não entra no catálogo oficial.
+4. Use **Produto exclusivo** para itens próprios dos kits de envio. Ao salvar, ele passa a integrar automaticamente um catálogo interno reutilizável do Planejamento de envios, com nome, foto, cor e padrões; esse catálogo nunca é misturado ao cadastro oficial de Produção, Solicitações ou Inventário.
+5. Em novos planos, escolha um exclusivo já salvo ou selecione **Criar novo produto exclusivo**. A quantidade de volumes continua específica de cada envio.
+
+No cabeçalho, **Nome da outra plataforma** aparece somente quando a opção **Outra plataforma** for selecionada. Para Mercado Livre e Shopee, informe apenas a **Conta da plataforma** usada pela empresa.
 5. Em **Anúncio**, escolha 50, 100 ou 200 unidades, ou use uma quantidade personalizada. Informe o número de kits ou caixas; o sistema calcula `unidades do anúncio × volumes`.
 6. Marque o produto quando a microtarefa estiver concluída. A linha fica verde e a barra de progresso é atualizada.
 7. Mova o cartão por **Próximos envios**, **Em preparação**, **Em conferência** e **Prontos para coleta**. Nenhum plano pode ficar pronto ou ser arquivado com item pendente.

@@ -1,6 +1,6 @@
 # Planejamento de Envios - Especificacao viva
 
-> Status: implementacao concluida localmente na versao 25.79; aguardando validacao final e publicacao.
+> Status: módulo oficial publicado na versão 25.79 e catálogo interno de exclusivos concluído na versão 25.80.
 >
 > Objetivo: registrar todas as decisoes do modulo antes da implementacao, evitando perda de contexto, divergencias e retrabalho.
 
@@ -68,9 +68,19 @@ Conta Harmony Principal
   - Mercado Livre;
   - Shopee.
 - Deve existir uma opcao generica para outras plataformas.
+- O campo **Nome da outra plataforma** deve aparecer somente quando essa opção genérica estiver selecionada. Mercado Livre e Shopee não exibem esse campo.
+- **Conta da plataforma** identifica a conta operacional usada pela Harmony dentro da plataforma selecionada.
 - A estrutura deve permitir Amazon, Correios, site proprio e outras integracoes futuras.
 - Os arquivos visuais devem ficar compactados no proprio aplicativo para nao depender de links externos.
 - O banco deve salvar o codigo da plataforma, nao uma copia da imagem em cada envio.
+
+## 5.1. Catálogo interno de produtos exclusivos
+
+- Produtos exclusivos criados no módulo são salvos automaticamente para uso futuro.
+- Esse catálogo é interno ao Planejamento de envios e não possui vínculo com `finished_product_models`.
+- Nome, foto, cor e padrões de anúncio, volume e observação podem ser reaproveitados.
+- A quantidade de caixas ou kits é específica de cada plano e não é fixada pelo catálogo.
+- Gerente de e-commerce e ADM principal compartilham o mesmo catálogo sincronizado.
 
 ## 6. Abertura do cartao
 

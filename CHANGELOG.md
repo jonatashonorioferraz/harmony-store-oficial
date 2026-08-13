@@ -1,5 +1,18 @@
 # Changelog
 
+## [v25.80] - 2026-08-13
+
+### Catálogo interno de produtos exclusivos
+
+- Todo produto exclusivo criado no **Planejamento de envios** passa a ser salvo automaticamente para reutilização em planos futuros.
+- O catálogo interno preserva nome, foto, cor, quantidade padrão do anúncio, tipo de volume e observação, sem criar ou alterar produtos do catálogo oficial de Produção.
+- A quantidade de caixas ou kits continua sendo informada em cada envio, porque varia de um plano para outro.
+- O formulário agora exibe **Nome da outra plataforma** somente ao selecionar **Outra plataforma**. Mercado Livre e Shopee usam apenas o campo **Conta da plataforma**.
+- O novo catálogo possui RLS, autorização exclusiva da Gerente de e-commerce e do ADM principal, auditoria, índices e funções RPC sem acesso anônimo.
+- As tabelas do Planejamento de envios e do catálogo de exclusivos foram incorporadas ao backup criptografado e ao ensaio de recuperação.
+- Versões de computador, tablet e celular utilizam o mesmo catálogo sincronizado pelo Supabase.
+- Validação concluída com **303 testes automatizados aprovados**, teste transacional no banco sem dados residuais e revisão dos advisors de segurança e desempenho.
+
 ## [v25.78] - 2026-08-12
 
 ### Agenda inteligente sem informações duplicadas
@@ -931,3 +944,9 @@ Todas as mudanças relevantes do Harmony Store Oficial são registradas aqui.
 - Logotipos compactos de Mercado Livre e Shopee e etiquetas Full próprias: amarela/verde no Mercado Livre e laranja/branca na Shopee.
 - PDF isolado em A4 contendo somente o plano aberto, preparado para computador, tablet e celular.
 - Auditoria de criação, edição, conclusão, reabertura, mudança de etapa e cancelamento.
+# 25.80.0 - 13/08/2026
+
+- Produtos exclusivos do Planejamento de envios agora são salvos automaticamente em catálogo interno e reutilizável.
+- O catálogo exclusivo preserva nome, foto, cor e padrões sem misturar itens com Produção, Solicitações ou Inventário.
+- O campo **Nome da outra plataforma** aparece somente quando **Outra plataforma** é selecionada.
+- Segurança com RLS, RPCs de privilégio mínimo, auditoria e validação de imagens compartilhadas entre gerente e ADM principal.
