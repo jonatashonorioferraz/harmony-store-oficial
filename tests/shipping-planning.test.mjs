@@ -2,21 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html,app,script,style,migration,edge,sw] = await Promise.all([
+const [html,app,script,style,migration,catalogMigration,edge,sw] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url),'utf8'),
   readFile(new URL('../app.js', import.meta.url),'utf8'),
   readFile(new URL('../shipping-planning.js', import.meta.url),'utf8'),
   readFile(new URL('../shipping-planning.css', import.meta.url),'utf8'),
   readFile(new URL('../supabase/migrations/20260812223000_shipping_planning.sql', import.meta.url),'utf8'),
+  readFile(new URL('../supabase/migrations/20260813103000_shipping_exclusive_product_catalog.sql', import.meta.url),'utf8'),
   readFile(new URL('../supabase/functions/manage-user/index.ts', import.meta.url),'utf8'),
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
 ]);
+const [backup,recovery] = await Promise.all([
+  readFile(new URL('../scripts/create-api-backup.mjs', import.meta.url),'utf8'),
+  readFile(new URL('../scripts/execute-api-recovery.mjs', import.meta.url),'utf8'),
+]);
 
 test('módulo está carregado, versionado e disponível offline',()=>{
-  assert.match(html,/shipping-planning\.css\?v=25\.79/);
-  assert.match(html,/shipping-planning\.js\?v=25\.79/);
-  assert.match(sw,/shipping-planning\.css\?v=25\.79/);
-  assert.match(sw,/shipping-planning\.js\?v=25\.79/);
+  assert.match(html,/shipping-planning\.css\?v=25\.80/);
+  assert.match(html,/shipping-planning\.js\?v=25\.80/);
+  assert.match(sw,/shipping-planning\.css\?v=25\.80/);
+  assert.match(sw,/shipping-planning\.js\?v=25\.80/);
 });
 
 test('acesso é restrito à gerente de e-commerce e ADM principal',()=>{
@@ -48,4 +53,31 @@ test('UX inclui quadro, fotos, produtos exclusivos, tags Full e PDF isolado',()=
   assert.match(app,/shipping-planning-printing/);
   assert.match(style,/@media\(max-width:720px\)/);
   assert.match(style,/@media print/);
+});
+
+test('produto exclusivo é salvo e reutilizado em catálogo isolado do módulo',()=>{
+  assert.match(catalogMigration,/create table if not exists public\.shipping_exclusive_products/);
+  assert.doesNotMatch(catalogMigration,/shipping_exclusive_products[\s\S]{0,300}references public\.finished_product_models/);
+  assert.match(catalogMigration,/enable row level security/);
+  assert.match(catalogMigration,/private\.can_manage_shipping_planning/);
+  assert.match(catalogMigration,/list_shipping_exclusive_products/);
+  assert.match(catalogMigration,/save_shipping_exclusive_product/);
+  assert.match(script,/list_shipping_exclusive_products/);
+  assert.match(script,/save_shipping_exclusive_product/);
+  assert.match(script,/Salvo somente no Planejamento de envios/);
+  assert.match(script,/Criar novo produto exclusivo/);
+  for(const source of [backup,recovery])for(const table of ['shipping_exclusive_products','shipping_plans','shipping_plan_items'])assert.match(source,new RegExp(`'${table}'`));
+});
+
+test('nome da outra plataforma aparece somente quando Outra plataforma é selecionada',()=>{
+  assert.match(script,/shipping-other-platform/);
+  assert.match(script,/other\.style\.display=visible\?'':'none'/);
+  assert.match(style,/shipping-other-platform\[hidden\]\{display:none!important\}/);
+});
+
+test('editor mantem produto, observacao e remocao visiveis no desktop, tablet e celular',()=>{
+  assert.match(style,/@media\(max-width:1500px\)/);
+  assert.match(style,/@media\(max-width:900px\)/);
+  assert.match(style,/shipping-plan-editor\{overflow-x:hidden\}/);
+  assert.match(style,/data-remove-shipping-item[^}]+width:100%/);
 });
