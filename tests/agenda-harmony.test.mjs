@@ -120,6 +120,10 @@ test('reminders use the existing protected push infrastructure and target admins
   assert.match(reminders,/scheduled_for: task\.reminder_at/);
   assert.match(reminders,/push_subscriptions/);
   assert.match(reminders,/icon: "\.\/icon-192-v2\.png"/);
+  assert.match(reminders,/source: "edge"/);
+  assert.match(reminders,/agenda_reminder_idle/);
+  assert.match(reminders,/agenda_reminder_failed/);
+  assert.doesNotMatch(reminders,/source: "agenda"/);
   assert.doesNotMatch(reminders,/role.*collaborator|role.*receiver/);
 });
 

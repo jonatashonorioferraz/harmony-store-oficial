@@ -22,12 +22,21 @@ Deno.serve(async request => {
   if (request.method !== "POST") return reply({ error: "Método não permitido." }, 405);
   const apiKey = request.headers.get("apikey") || "";
   if (!trustedSecretKeys().has(apiKey)) return reply({ error: "Acesso negado." }, 403);
+  let admin: ReturnType<typeof createClient> | null = null;
+  const recordHealthEvent = async (level: "info" | "warning" | "error", code: string, details: Record<string, unknown>) => {
+    if (!admin) return;
+    const { error } = await admin.from("system_events").insert({ source: "edge", level, code, details });
+    if (error) console.error(JSON.stringify({ event: "agenda_health_event_error", code, name: error.code || "database_error" }));
+  };
   try {
     const url = Deno.env.get("SUPABASE_URL")!,serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const publicKey = Deno.env.get("VAPID_PUBLIC_KEY")!,privateKey = Deno.env.get("VAPID_PRIVATE_KEY")!;
     const subject = Deno.env.get("VAPID_SUBJECT") || "https://harmonylembrancinhas.com.br";
-    if (!publicKey || !privateKey) return reply({ error: "Notificações ainda não configuradas." }, 503);
-    const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+    if (!publicKey || !privateKey) {
+      await recordHealthEvent("error", "agenda_reminder_not_configured", { component: "push_credentials" });
+      return reply({ error: "Notificações ainda não configuradas." }, 503);
+    }
     const now = new Date().toISOString();
     const { data: tasks, error: taskError } = await admin.from("admin_agenda_tasks")
       .select("id,protocol,title,description,priority,reminder_at,due_at")
@@ -35,7 +44,10 @@ Deno.serve(async request => {
     if (taskError) throw taskError;
     const { data: admins, error: adminError } = await admin.from("profiles").select("id").eq("role", "admin").eq("status", "active");
     if (adminError) throw adminError;
-    if (!tasks?.length || !admins?.length) return reply({ sent: 0, tasks: tasks?.length || 0 });
+    if (!tasks?.length || !admins?.length) {
+      await recordHealthEvent("info", "agenda_reminder_idle", { tasks: tasks?.length || 0, recipients: admins?.length || 0 });
+      return reply({ sent: 0, tasks: tasks?.length || 0 });
+    }
 
     webpush.setVapidDetails(subject, publicKey, privateKey);
     let sent = 0, failed = 0;
@@ -68,11 +80,12 @@ Deno.serve(async request => {
         sent_at: recipientSent ? new Date().toISOString() : null,
       }, { onConflict: "task_id,recipient_id,scheduled_for" });
     }
-    await admin.from("system_events").insert({ source: "agenda", level: failed ? "warning" : "info", code: failed ? "agenda_reminder_partial" : "agenda_reminder_sent", details: { tasks: tasks.length, sent, failed } });
+    await recordHealthEvent(failed ? "warning" : "info", failed ? "agenda_reminder_partial" : "agenda_reminder_sent", { tasks: tasks.length, sent, failed });
     return reply({ sent, failed, tasks: tasks.length });
   } catch (error) {
     const errorId = crypto.randomUUID();
-    console.error(JSON.stringify({ event: "agenda_reminder_error", error_id: errorId, name: error instanceof Error ? error.message : "Unknown" }));
+    await recordHealthEvent("error", "agenda_reminder_failed", { error_id: errorId, component: "agenda_reminders" });
+    console.error(JSON.stringify({ event: "agenda_reminder_error", error_id: errorId, name: error instanceof Error ? error.name : "Unknown" }));
     return reply({ error: "Não foi possível processar os lembretes da Agenda.", error_id: errorId }, 500);
   }
 });

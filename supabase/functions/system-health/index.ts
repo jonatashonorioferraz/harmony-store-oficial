@@ -85,7 +85,20 @@ Deno.serve(async request => {
     const since = new Date(Date.now() - 86400000).toISOString();
     const { count: errorCount, error: errorCountError } = await admin.from("system_events").select("id", { count: "exact", head: true }).eq("level", "error").neq("source", "backup").gte("created_at", since);
     const operationalErrors = errorCount || 0;
-    items.push({ key: "errors", label: "Erros do aplicativo nas últimas 24 horas", status: errorCountError ? "red" : operationalErrors > 10 ? "red" : operationalErrors > 0 ? "yellow" : "green", value: errorCountError ? "Sem resposta" : operationalErrors === 0 ? "Nenhum erro" : quantityLabel(operationalErrors, "erro", "erros"), detail: errorCountError ? "O histórico de erros não respondeu ao diagnóstico." : "Falhas de backup são mostradas separadamente. Nenhum dado pessoal é exibido.", checked_at: checkedAt });
+    items.push({ key: "errors", label: "Erros registrados nas últimas 24 horas", status: errorCountError ? "red" : operationalErrors > 10 ? "red" : operationalErrors > 0 ? "yellow" : "green", value: errorCountError ? "Sem resposta" : operationalErrors === 0 ? "Nenhum erro registrado" : quantityLabel(operationalErrors, "erro", "erros"), detail: errorCountError ? "O histórico de erros não respondeu ao diagnóstico." : "Inclui falhas registradas pelo aplicativo e pelas automações monitoradas. Falhas de backup aparecem separadamente.", checked_at: checkedAt });
+
+    const { data: agendaAutomation, error: agendaAutomationError } = await admin.from("system_events")
+      .select("level,code,created_at,details")
+      .eq("source", "edge")
+      .like("code", "agenda_reminder_%")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const agendaAge = ageHours(agendaAutomation?.created_at);
+    const agendaStatus = agendaAutomationError ? "red" : !agendaAutomation ? "yellow" : agendaAutomation.level === "error" || agendaAge > 1 ? "red" : agendaAutomation.level === "warning" || agendaAge > 0.5 ? "yellow" : "green";
+    const agendaValue = agendaAutomationError ? "Sem resposta" : !agendaAutomation ? "Aguardando verificação" : agendaAutomation.level === "error" ? "Falha detectada" : agendaAutomation.level === "warning" ? "Envio parcial" : "Operacional";
+    const agendaDetail = agendaAutomationError ? "O histórico da automação não respondeu ao diagnóstico." : !agendaAutomation ? "A rotina ainda não registrou sua primeira execução monitorada." : agendaAutomation.code === "agenda_reminder_idle" ? "A rotina está em dia; não havia lembretes pendentes na última verificação." : agendaAutomation.level === "error" ? "A rotina encontrou uma falha e exige verificação administrativa." : agendaAutomation.level === "warning" ? "Parte dos lembretes foi processada; há aparelhos ou entregas que precisam de acompanhamento." : "Os lembretes administrativos foram processados na última execução.";
+    items.push({ key: "agenda_automation", label: "Automação da Agenda", status: agendaStatus, value: agendaValue, detail: agendaDetail, checked_at: agendaAutomation?.created_at || null });
 
     const [pushResult, subscriptionResult] = await Promise.all([
       admin.from("system_events").select("level,code,created_at,details").eq("source", "notification").order("created_at", { ascending: false }).limit(1).maybeSingle(),
