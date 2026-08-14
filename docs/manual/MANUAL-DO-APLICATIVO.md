@@ -243,8 +243,22 @@ O módulo **Planejamento de envios** organiza antecipadamente os envios do e-com
 1. Use **Novo plano** e informe nome, plataforma, conta, data, horário e orientações gerais.
 2. Marque **Envio na modalidade FULL** quando necessário. Mercado Livre e Shopee recebem identificação visual própria.
 3. Use **Produto do catálogo** para reutilizar os modelos de produção, incluindo a foto atual, sem criar cadastros duplicados.
-4. Use **Produto exclusivo** para itens próprios dos kits de envio. Ao salvar, ele passa a integrar automaticamente um catálogo interno reutilizável do Planejamento de envios, com nome, foto, cor e padrões; esse catálogo nunca é misturado ao cadastro oficial de Produção, Solicitações ou Inventário.
-5. Em novos planos, escolha um exclusivo já salvo ou selecione **Criar novo produto exclusivo**. A quantidade de volumes continua específica de cada envio.
+4. Use **Item exclusivo** para um produto próprio do Planejamento de envios. Ao salvar, ele passa a integrar um catálogo interno reutilizável, com nome, foto, cor e padrões; esse catálogo nunca é misturado ao cadastro oficial de Produção, Solicitações ou Inventário.
+5. Use **Kit composto** quando um anúncio reúne dois ou mais modelos e cores oficiais. Informe a quantidade de cada componente por kit e salve a composição para reutilização em outros envios.
+6. O kit pode receber uma **foto de capa opcional**. Sem foto própria, o sistema usa automaticamente a imagem do primeiro componente; nos detalhes, cada componente continua exibindo sua foto oficial.
+7. A ação **Excluir** no catálogo de kits é segura: o kit deixa de aparecer em novos planos, mas os planos antigos preservam nome, componentes, fotos e quantidades para auditoria.
+8. A quantidade de volumes continua específica de cada envio, e o total é calculado automaticamente a partir da composição salva.
+
+### Solicitar caixas do Inventário em um envio FULL
+
+1. Abra o plano FULL e toque em **Solicitar caixas do Inventário de Produção** no produto ou kit desejado.
+2. Para cada componente, o sistema mostra somente caixas disponíveis com o mesmo modelo e a mesma cor.
+3. Selecione as caixas físicas exatas. O resumo informa quantidade necessária, selecionada, sobra ou falta.
+4. Ao confirmar, as caixas ficam **reservadas** e saem imediatamente do contador e da lista de caixas disponíveis. O saldo físico ainda não é baixado.
+5. Um ADM ou colaborador de **Recebimento** deve conferir as caixas e confirmar a transferência física para o e-commerce. Somente nessa etapa cada caixa é baixada por inteiro.
+6. Cancelar uma reserva antes da transferência libera todas as caixas e as devolve à disponibilidade.
+
+A mesma caixa não pode participar de duas reservas ativas. Todas as reservas, liberações e transferências registram usuário, data e vínculo com o plano de envio. Itens exclusivos sem modelo oficial não podem reservar caixas do Inventário.
 
 ### Combinações de cores dos kits
 
