@@ -276,3 +276,29 @@ No cabeçalho, **Nome da outra plataforma** aparece somente quando a opção **O
 9. Planos finalizados ou cancelados permanecem no **Histórico**. Criação, edição, conclusão e mudança de etapa registram usuário e horário para auditoria.
 
 Produtos e cores desativados continuam preservados em planos históricos. Alterar a foto de um produto oficial atualiza sua visualização nos planos sem duplicar o produto.
+
+## Shopee Analytics (somente ADMs)
+
+O **Shopee Analytics** transforma três relatórios oficiais em uma visão executiva única, sem alterar nenhuma informação dentro da Shopee. Ele fica em **Inteligência → Shopee Analytics**.
+
+### Importar uma semana
+
+1. Abra **Importações**.
+2. Selecione o cartão correspondente ao arquivo: **Estatísticas da Loja**, **Funil de Produtos** ou **Promoções e Descontos**.
+3. Escolha a planilha `.xlsx` exportada pela Shopee.
+4. Aguarde a validação do tipo, das colunas, do período, do tamanho e do conteúdo.
+5. Repita o processo para os outros dois relatórios da mesma semana.
+
+O sistema identifica arquivos iguais pelo hash e não soma seus valores novamente. Se a Shopee gerar uma correção para o mesmo período, a nova versão passa a alimentar os gráficos e a anterior permanece preservada no histórico. Nunca renomeie um relatório para tentar transformá-lo em outro tipo; o conteúdo também é validado.
+
+### Interpretar as áreas
+
+- **Visão geral:** vendas realizadas e pagas, diferença, pedidos, compradores, evolução diária e alertas calculados.
+- **Produtos:** jornada da visita ao carrinho e ao pagamento, além dos anúncios com maior resultado.
+- **Marketing:** fontes de tráfego, impressões, cliques, CTR, conversão e receita atribuída.
+- **Promoções:** desempenho por formato e por campanha.
+- **Importações:** situação dos três arquivos, períodos, responsáveis e histórico.
+
+Os números e gráficos são calculados no banco e não consomem créditos da OpenAI. O botão **Analisar agora com IA** é opcional: ele envia apenas o consolidado do período ao serviço protegido, recebe uma resposta estruturada em português e apresenta recomendações com evidências. A IA não altera planilhas, produtos, campanhas, estoque, pedidos ou pagamentos.
+
+O ADM principal pode configurar orçamento e intervalo entre análises. Se a IA estiver indisponível ou o limite for atingido, todos os dados e gráficos continuam funcionando normalmente.
