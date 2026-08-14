@@ -21,6 +21,13 @@ await mkdir(resolve(dist, "server"), { recursive: true });
 await cp(resolve(root, "web"), resolve(dist, "client"), { recursive: true });
 await cp(resolve(root, "production-orders.js"), resolve(dist, "client", "production-orders.js"));
 await cp(resolve(root, "production-orders.css"), resolve(dist, "client", "production-orders.css"));
+await cp(resolve(root, "shipping-planning.js"), resolve(dist, "client", "shipping-planning.js"));
+await cp(resolve(root, "shipping-planning.css"), resolve(dist, "client", "shipping-planning.css"));
+await cp(resolve(root, "shipping-inventory-integration.js"), resolve(dist, "client", "shipping-inventory-integration.js"));
+await mkdir(resolve(dist, "client", "assets"), { recursive: true });
+for (const filename of ["platform-mercado-livre.svg", "platform-shopee.svg", "shipping-product-placeholder.svg"]) {
+  await cp(resolve(root, "assets", filename), resolve(dist, "client", "assets", filename));
+}
 await cp(resolve(root, "help-center.js"), resolve(dist, "client", "help-center.js"));
 await cp(resolve(root, "system-health.js"), resolve(dist, "client", "system-health.js"));
 await cp(resolve(root, "CHANGELOG.md"), resolve(dist, "client", "CHANGELOG.md"));

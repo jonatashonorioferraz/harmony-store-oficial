@@ -1,5 +1,20 @@
 # Changelog
 
+## [v25.83] - 2026-08-14
+
+### Kits compostos e solicitação segura de caixas do Inventário
+
+- O Planejamento de envios agora separa claramente **Produto do catálogo**, **Item exclusivo** e **Kit composto**.
+- Kits compostos reutilizáveis aceitam dois ou mais modelos e cores oficiais, quantidade por componente e foto de capa opcional.
+- Sem foto própria, a capa usa a imagem do primeiro componente; a visualização detalhada preserva e mostra as fotos oficiais de todos os componentes.
+- Kits retirados do catálogo usam exclusão lógica: deixam de aparecer em novos planos, mas não alteram o histórico dos planos existentes.
+- Planos FULL podem solicitar caixas físicas exatas do Inventário por modelo e cor, com cálculo de necessário, selecionado, sobra e falta.
+- A reserva remove imediatamente a caixa da disponibilidade, impede uso duplo e não baixa o saldo antes da conferência física.
+- A transferência da caixa completa exige confirmação por ADM ou Recebimento; cancelamentos liberam as caixas com rastreabilidade.
+- Novas tabelas e operações usam RLS, acesso exclusivo por RPC, privilégios mínimos, auditoria, bloqueio transacional e índices de consistência.
+- Backup e recuperação isolada passam a incluir kits, componentes, solicitações e caixas reservadas.
+- Não houve alteração nas regras de pagamentos, recebimentos de produção ou estoque de matérias-primas.
+
 ## [v25.82] - 2026-08-13
 
 ### Combinações de cores no Planejamento de envios
