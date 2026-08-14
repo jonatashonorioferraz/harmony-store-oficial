@@ -73,8 +73,16 @@ test('health data is private, summarized and role protected', () => {
   assert.match(healthEdge, /Aguardando primeiro backup/);
   assert.match(healthEdge, /Falha na última tentativa/);
   assert.match(healthEdge, /\.neq\("source", "backup"\)/);
-  assert.match(healthEdge, /Nenhum aparelho ativo/);
+  assert.match(healthEdge, /Nenhum aparelho cadastrado/);
   assert.match(healthEdge, /application\/json; charset=utf-8/);
+  assert.match(healthEdge, /package\.json\?health_version=/);
+  assert.match(healthEdge, /publishedVersionLabel/);
+  assert.match(healthEdge, /mode: "live"/);
+  assert.match(healthEdge, /backupQueryError/);
+  assert.match(healthEdge, /errorCountError/);
+  assert.match(healthEdge, /notificationQueryError/);
+  assert.match(healthEdge, /monitorQueryError/);
+  assert.doesNotMatch(healthEdge, /value: "v25\.23"/);
   assert.doesNotMatch(healthEdge, /error instanceof Error \? error\.message/);
   assert.match(health, /S\?\.profile\?\.role!=='admin'/);
   assert.match(index, /system-health\.js\?v=25\.50/);
