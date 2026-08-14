@@ -82,6 +82,9 @@ test('health data is private, summarized and role protected', () => {
   assert.match(healthEdge, /errorCountError/);
   assert.match(healthEdge, /notificationQueryError/);
   assert.match(healthEdge, /monitorQueryError/);
+  assert.match(healthEdge, /agenda_automation/);
+  assert.match(healthEdge, /agenda_reminder_%/);
+  assert.match(healthEdge, /Erros registrados nas últimas 24 horas/);
   assert.doesNotMatch(healthEdge, /value: "v25\.23"/);
   assert.doesNotMatch(healthEdge, /error instanceof Error \? error\.message/);
   assert.match(health, /S\?\.profile\?\.role!=='admin'/);
