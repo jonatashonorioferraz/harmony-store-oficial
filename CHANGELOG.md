@@ -1,5 +1,17 @@
 # Changelog
 
+## [v25.86] - 2026-08-15
+
+### Importação Shopee incremental e kit composto estável
+
+- A importação passa a controlar uma fonte oficial por tipo de relatório e por dia, permitindo combinar planilhas diárias e semanais sem soma duplicada.
+- **Adicionar nova planilha** preserva os dias existentes; **Corrigir este período** é uma ação separada, confirmada e limitada aos dias do arquivo.
+- O resultado informa dias adicionados e ignorados e muda automaticamente o dashboard para o período recebido; não existe fila ou atraso após o sucesso.
+- A central de importação ganhou foco automático, instruções objetivas e ações distintas em computador, tablet e celular.
+- Backup e recuperação isolada incluem o novo livro auditável de dias importados.
+- O salvamento de Kit composto foi corrigido de forma transacional, sem reduzir a proteção da restrição de integridade.
+- Estoque, pagamentos, solicitações, permissões e os arquivos já importados foram preservados.
+
 ## [v25.85] - 2026-08-15
 
 ### Shopee Analytics executivo e responsivo
