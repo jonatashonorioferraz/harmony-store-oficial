@@ -1,5 +1,14 @@
 # Changelog
 
+## [v25.90] - 2026-08-15
+
+### Agrupamento correto de Conta e Financeiro
+
+- O título **Conta** agora permanece sempre imediatamente acima de **Meu perfil**.
+- Seções carregadas dinamicamente, como **Financeiro**, não são mais inseridas entre o título Conta e seu botão.
+- A correção é somente visual e preserva permissões, rotas, dados e funcionalidades.
+- O comportamento foi protegido para computador, tablet e celular.
+
 ## [v25.89] - 2026-08-15
 
 ### Ícones profissionais e consistentes
