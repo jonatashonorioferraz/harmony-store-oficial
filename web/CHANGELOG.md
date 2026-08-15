@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.84.1] - 2026-08-14
+
+### Confirmação visual da importação Shopee
+
+- Corrigido o cartão de importação que permanecia exibindo “Validando e importando…” após a planilha já ter sido salva com sucesso.
+- O estado do importador agora é redesenhado ao término da operação e libera imediatamente a próxima planilha.
+- Mantidas a deduplicação por conteúdo, a auditoria, a privacidade dos arquivos e todas as métricas já registradas.
+
 ## [v25.84] - 2026-08-14
 
 ### Shopee Analytics com importação segura e IA real

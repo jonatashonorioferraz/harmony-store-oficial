@@ -140,7 +140,7 @@ async function upload(type,file,button){
   SH.uploading=type;renderActive();
   try{const form=new FormData();form.append('report_type',type);form.append('file',file,file.name);const result=await edge('process-shopee-report',form,true);SH.loaded=false;await load(true);SH.tab='imports';renderActive();toast(result.result?.status==='duplicate'?'Esta planilha já estava importada. Nenhum valor foi duplicado.':`${reportLabels[type]} importado e validado com sucesso.`)}
   catch(error){SH.uploading='';renderActive();alert(error.message)}
-  finally{SH.uploading='';if(document.body.contains(button))button.disabled=false}
+  finally{SH.uploading='';renderActive();if(document.body.contains(button))button.disabled=false}
 }
 async function runAI(button){
   const original=button.innerHTML;button.disabled=true;button.innerHTML='<span class="shopee-spinner"></span> Analisando os relatórios…';
