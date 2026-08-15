@@ -1,5 +1,15 @@
 # Changelog
 
+## [v25.89] - 2026-08-15
+
+### Ícones profissionais e consistentes
+
+- O menu principal deixou de usar emojis coloridos e passou a utilizar uma família única de ícones vetoriais leves.
+- Cada módulo possui um símbolo próprio, inclusive telas adicionadas dinamicamente por perfil.
+- A navegação da Inteligência recebeu ícones exclusivos para Painel inteligente, Shopee Analytics, Operação, Compras e parceiros e Ideias e evolução.
+- O destaque ativo foi padronizado em rosa Harmony, preservando a paleta candy de forma mais discreta.
+- O mesmo sistema visual se adapta a computador, tablet e celular sem alterar permissões, rotas ou funcionalidades.
+
 ## [v25.88] - 2026-08-15
 
 ### Histórico Shopee organizado e filtrável
