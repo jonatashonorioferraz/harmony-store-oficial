@@ -46,6 +46,7 @@ test('imports are deduplicated, versioned and transactionally committed',()=>{
   assert.match(parser,/workbook\.SheetNames\.length > 30/);
   assert.match(parser,/rowCount > 100000/);
   assert.match(parser,/service_commit_shopee_import/);
+  assert.match(ui,/finally\{SH\.uploading='';renderActive\(\)/);
 });
 
 test('three Shopee report families have independent structural validation',()=>{
@@ -71,7 +72,7 @@ test('dashboard is isolated, responsive and available offline',()=>{
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
   assert.match(index,/shopee-intelligence\.css\?v=25\.84/);assert.match(index,/shopee-intelligence\.js\?v=25\.84/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.84/);assert.match(worker,/shopee-intelligence\.js\?v=25\.84/);assert.match(worker,/harmony-store-v25-84/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.84/);assert.match(worker,/shopee-intelligence\.js\?v=25\.84/);assert.match(worker,/harmony-store-v25-84-r1/);
   assert.equal(JSON.parse(pkg).version,'25.84.0');
 });
 
