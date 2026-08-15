@@ -1,6 +1,6 @@
 # Changelog
 
-## [v25.85] - 2026-08-14
+## [v25.84.1] - 2026-08-14
 
 ### Confirmação visual da importação Shopee
 
