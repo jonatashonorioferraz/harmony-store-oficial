@@ -2,6 +2,7 @@
 'use strict';
 
 const SH={tab:'overview',loaded:false,loading:null,error:'',data:null,usage:null,analyses:[],analysis:null,insights:[],from:'',to:'',uploading:''};
+const ANALYSIS_REQUEST_TIMEOUT_MS=75000;
 const reportLabels={shop_stats:'Estatísticas da Loja',product_funnel:'Funil de Produtos',promotions:'Promoções e Descontos'};
 const reportDescriptions={shop_stats:'Vendas, pedidos, tráfego e produtos líderes.',product_funnel:'Visitas, carrinho, pedidos realizados e pagos.',promotions:'Campanhas, descontos, combos e desempenho.'};
 const priorityLabels={critical:'Crítico',high:'Alta',medium:'Média',low:'Informativo'};
@@ -18,9 +19,18 @@ const datetime=value=>value?new Date(value).toLocaleString('pt-BR',{dateStyle:'s
 const daysAgo=days=>{const value=new Date();value.setDate(value.getDate()-days);return value.toISOString().slice(0,10)};
 SH.from=daysAgo(29);SH.to=new Date().toISOString().slice(0,10);
 
+async function fetchAnalysis(url,opt){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ANALYSIS_REQUEST_TIMEOUT_MS);
+  try{return await fetch(url,{...opt,signal:controller.signal})}
+  catch(error){if(error?.name==='AbortError')throw Error('A análise com IA demorou mais que o esperado. Tente novamente.');throw error}
+  finally{clearTimeout(timer)}
+}
+
 async function edge(path,body,form=false){
   await ensureSession();
-  const call=()=>apiFetch(API+'/functions/v1/'+path,{method:'POST',headers:form?{apikey:KEY,Authorization:'Bearer '+S.session.access_token}:{apikey:KEY,Authorization:'Bearer '+S.session.access_token,'Content-Type':'application/json'},body:form?body:JSON.stringify(body)});
+  const url=API+'/functions/v1/'+path;
+  const options={method:'POST',headers:form?{apikey:KEY,Authorization:'Bearer '+S.session.access_token}:{apikey:KEY,Authorization:'Bearer '+S.session.access_token,'Content-Type':'application/json'},body:form?body:JSON.stringify(body)};
+  const call=()=>path==='analyze-shopee-intelligence'?fetchAnalysis(url,options):apiFetch(url,options);
   let response=await call();if(response.status===401){await refreshSession();response=await call()}return json(response);
 }
 
