@@ -134,13 +134,13 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
   assert.match(index,/agenda-harmony\.css\?v=25\.78/);
   assert.match(index,/agenda-harmony\.js\?v=25\.78/);
-  assert.match(worker,/harmony-store-v25-85-r1/);
+  assert.match(worker,/harmony-store-v25-86-r1/);
   assert.match(worker,/agenda-harmony\.css\?v=25\.78/);
   assert.match(worker,/agenda-harmony\.js\?v=25\.78/);
   assert.match(help,/id:'agenda-harmony'/);
   assert.match(help,/calendário semanal da Agenda/);
   assert.match(help,/Central de Pendências/);
-  assert.equal(JSON.parse(pkg).version,'25.85.0');
+  assert.equal(JSON.parse(pkg).version,'25.86.0');
 });
 
 test('backup and isolated recovery include every Agenda table',()=>{

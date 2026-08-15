@@ -9,7 +9,7 @@ const allowedOrigins = new Set([
 ]);
 const reportTypes = new Set(["shop_stats", "product_funnel", "promotions"]);
 const maxFileBytes = 12 * 1024 * 1024;
-const parserVersion = "1.0.0";
+const parserVersion = "1.1.0";
 
 const corsFor = (request: Request) => {
   const origin = request.headers.get("Origin") || "";
@@ -221,8 +221,10 @@ Deno.serve(async request => {
 
     const form = await request.formData();
     const reportType = String(form.get("report_type") || "");
+    const importMode = String(form.get("import_mode") || "append");
     const file = form.get("file");
     if (!reportTypes.has(reportType)) return reply(request, { error: "Selecione o tipo correto de relatório." }, 400);
+    if (!new Set(["append", "replace"]).has(importMode)) return reply(request, { error: "Modo de importação inválido." }, 400);
     if (!(file instanceof File)) return reply(request, { error: "Selecione uma planilha .xlsx." }, 400);
     if (!file.name.toLowerCase().endsWith(".xlsx")) return reply(request, { error: "Somente planilhas .xlsx da Shopee são aceitas." }, 400);
     if (file.size < 100 || file.size > maxFileBytes) return reply(request, { error: "O arquivo deve ter no máximo 12 MB." }, 413);
@@ -240,15 +242,19 @@ Deno.serve(async request => {
       contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", upsert: false,
     });
     if (uploadError && !/already exists|duplicate/i.test(uploadError.message)) throw uploadError;
-    const { data: committed, error: commitError } = await admin.rpc("service_commit_shopee_import", {
+    const { data: committed, error: commitError } = await admin.rpc("service_commit_shopee_import_v2", {
       p_report_type: reportType, p_period_start: parsed.periodStart, p_period_end: parsed.periodEnd,
       p_file_name: safeText(file.name, 240), p_file_size_bytes: file.size, p_file_hash: hash,
       p_storage_path: storagePath, p_parser_version: parserVersion, p_imported_by: authData.user.id,
       p_validation_summary: { ...parsed.summary, parser_version: parserVersion, workbook_sheets: workbook.SheetNames.length },
       p_sales: parsed.sales, p_traffic: parsed.traffic, p_products: parsed.products, p_funnel: parsed.funnel,
       p_promotion_metrics: parsed.promotionMetrics, p_campaigns: parsed.campaigns,
+      p_import_mode: importMode,
     });
     if (commitError) throw commitError;
+    if (committed?.status === "already_covered") {
+      await admin.storage.from("shopee-imports").remove([storagePath]);
+    }
     return reply(request, { ok: true, result: committed, report_type: reportType, period_start: parsed.periodStart,
       period_end: parsed.periodEnd, row_count: rowCount, validation: parsed.summary });
   } catch (error) {

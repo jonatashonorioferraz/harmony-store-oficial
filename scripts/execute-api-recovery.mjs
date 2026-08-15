@@ -20,7 +20,7 @@ const tables = [
   'production_inventory_entries', 'production_inventory_movements', 'production_inventory_label_prints',
   'shipping_inventory_requests', 'shipping_inventory_request_boxes',
   'inventory_ai_settings', 'inventory_ai_analyses', 'inventory_ai_insights',
-  'shopee_import_batches', 'shopee_sales_daily', 'shopee_traffic_sources', 'shopee_product_performance',
+  'shopee_import_batches', 'shopee_import_days', 'shopee_sales_daily', 'shopee_traffic_sources', 'shopee_product_performance',
   'shopee_product_funnel_daily', 'shopee_promotion_metrics', 'shopee_promotion_campaigns',
   'shopee_ai_settings', 'shopee_ai_analyses', 'shopee_ai_insights',
   'admin_agenda_tasks', 'admin_agenda_task_events', 'admin_agenda_reminder_deliveries',

@@ -3,8 +3,9 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,parser,ai,ui,css,index,worker,help,manual,technical,audit,backup,recovery,pkg]=await Promise.all([
+const [sql,dailyMigration,parser,ai,ui,css,index,worker,help,manual,technical,audit,backup,recovery,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260814223000_shopee_intelligence.sql',root),'utf8'),
+  readFile(new URL('supabase/migrations/20260815130000_shopee_day_ledger_and_shipping_kit_fix.sql',root),'utf8'),
   readFile(new URL('supabase/functions/process-shopee-report/index.ts',root),'utf8'),
   readFile(new URL('supabase/functions/analyze-shopee-intelligence/index.ts',root),'utf8'),
   readFile(new URL('shopee-intelligence.js',root),'utf8'),
@@ -45,8 +46,28 @@ test('imports are deduplicated, versioned and transactionally committed',()=>{
   assert.match(parser,/bytes\[0\] !== 0x50 \|\| bytes\[1\] !== 0x4b/);
   assert.match(parser,/workbook\.SheetNames\.length > 30/);
   assert.match(parser,/rowCount > 100000/);
-  assert.match(parser,/service_commit_shopee_import/);
+  assert.match(parser,/service_commit_shopee_import_v2/);
+  assert.match(parser,/p_import_mode: importMode/);
   assert.match(ui,/finally\{SH\.uploading='';renderActive\(\)/);
+});
+
+test('planilhas diárias e semanais têm uma única fonte canônica por dia',()=>{
+  assert.match(dailyMigration,/create table if not exists public\.shopee_import_days/);
+  assert.match(dailyMigration,/primary key \(report_type,metric_date\)/);
+  assert.match(dailyMigration,/enable row level security/);
+  assert.match(dailyMigration,/service_commit_shopee_import_v2/);
+  assert.match(dailyMigration,/p_import_mode text default 'append'/);
+  assert.match(dailyMigration,/p_import_mode not in \('append','replace'\)/);
+  assert.match(dailyMigration,/status','already_covered'/);
+  assert.match(dailyMigration,/accepted_dates/);
+  assert.match(dailyMigration,/skipped_dates/);
+  assert.match(dailyMigration,/join public\.shopee_import_days d on d\.report_type='shop_stats'/);
+  assert.match(ui,/Adicionar nova planilha/);
+  assert.match(ui,/Corrigir este período/);
+  assert.match(ui,/scrollIntoView/);
+  assert.match(ui,/SH\.from=response\.period_start/);
+  assert.match(ui,/dia\(s\) adicionado\(s\)/);
+  for(const source of [backup,recovery])assert.match(source,/'shopee_import_days'/);
 });
 
 test('three Shopee report families have independent structural validation',()=>{
@@ -73,9 +94,9 @@ test('dashboard is isolated, responsive and available offline',()=>{
   for(const tab of ['overview','products','marketing','promotions','imports'])assert.match(ui,new RegExp(`'${tab}'`));
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
-  assert.match(index,/shopee-intelligence\.css\?v=25\.85/);assert.match(index,/shopee-intelligence\.js\?v=25\.85/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.85/);assert.match(worker,/shopee-intelligence\.js\?v=25\.85/);assert.match(worker,/harmony-store-v25-85-r1/);
-  assert.equal(JSON.parse(pkg).version,'25.85.0');
+  assert.match(index,/shopee-intelligence\.css\?v=25\.86/);assert.match(index,/shopee-intelligence\.js\?v=25\.86/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.86/);assert.match(worker,/shopee-intelligence\.js\?v=25\.86/);assert.match(worker,/harmony-store-v25-86-r1/);
+  assert.equal(JSON.parse(pkg).version,'25.86.0');
 });
 
 test('executive dashboard uses the Shopee identity and exposes daily values',()=>{

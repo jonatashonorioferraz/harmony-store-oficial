@@ -283,15 +283,20 @@ O **Shopee Analytics** transforma três relatórios oficiais em uma visão execu
 
 Na **Visão geral**, escolha **Faturamento (R$)** para conferir o valor realizado e pago em cada dia ou **Pedidos** para comparar as quantidades. No computador, passe o mouse sobre os pontos; no celular e tablet, toque no dia. A faixa abaixo do gráfico mantém todos os valores diários disponíveis sem poluir o desenho.
 
-### Importar uma semana
+### Importar um dia ou uma semana
 
 1. Abra **Importações**.
 2. Selecione o cartão correspondente ao arquivo: **Estatísticas da Loja**, **Funil de Produtos** ou **Promoções e Descontos**.
 3. Escolha a planilha `.xlsx` exportada pela Shopee.
-4. Aguarde a validação do tipo, das colunas, do período, do tamanho e do conteúdo.
-5. Repita o processo para os outros dois relatórios da mesma semana.
+4. Use **Adicionar nova planilha**. O sistema registra somente os dias ainda ausentes e preserva automaticamente os dias que já estavam no dashboard.
+5. Ao terminar, o painel abre o período reconhecido no arquivo e informa quantos dias foram adicionados ou ignorados.
+6. Repita o processo para os outros dois relatórios do mesmo período.
 
-O sistema identifica arquivos iguais pelo hash e não soma seus valores novamente. Se a Shopee gerar uma correção para o mesmo período, a nova versão passa a alimentar os gráficos e a anterior permanece preservada no histórico. Nunca renomeie um relatório para tentar transformá-lo em outro tipo; o conteúdo também é validado.
+Não existe fila de processamento: depois da mensagem de sucesso, os dados já estão disponíveis. Se os números parecerem antigos, confira o período exibido no filtro. Uma planilha diária pode ser enviada primeiro e depois complementada pela planilha semanal; o mesmo dia nunca é somado duas vezes.
+
+Use **Corrigir este período** somente quando a Shopee tiver fornecido um arquivo corrigido. Essa opção exige confirmação, troca a fonte apenas dos dias contidos no arquivo e mantém todos os outros períodos.
+
+O sistema identifica arquivos iguais pelo hash e também controla uma única fonte oficial por tipo de relatório e por dia. Reenvios ou sobreposições entre relatórios diários e semanais não duplicam vendas, pedidos ou funil. Nunca renomeie um relatório para tentar transformá-lo em outro tipo; o conteúdo também é validado.
 
 ### Interpretar as áreas
 

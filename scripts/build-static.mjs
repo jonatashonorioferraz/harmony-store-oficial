@@ -3,6 +3,21 @@ import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const dist = resolve(root, "dist");
+const web = resolve(root, "web");
+
+// Estes arquivos têm uma cópia oficial em web/ para o GitHub Pages. Mantê-los
+// sincronizados durante o build evita publicar um shell antigo com JavaScript
+// novo (ou o contrário), principalmente após uma atualização do PWA.
+for (const filename of [
+  "CHANGELOG.md",
+  "help-center.js",
+  "index.html",
+  "service-worker.js",
+  "shopee-intelligence.css",
+  "shopee-intelligence.js",
+]) {
+  await cp(resolve(root, filename), resolve(web, filename));
+}
 try {
   await rm(dist, { recursive: true, force: true });
 } catch (error) {
@@ -18,7 +33,7 @@ try {
 }
 await mkdir(resolve(dist, "client"), { recursive: true });
 await mkdir(resolve(dist, "server"), { recursive: true });
-await cp(resolve(root, "web"), resolve(dist, "client"), { recursive: true });
+await cp(web, resolve(dist, "client"), { recursive: true });
 await cp(resolve(root, "production-orders.js"), resolve(dist, "client", "production-orders.js"));
 await cp(resolve(root, "production-orders.css"), resolve(dist, "client", "production-orders.css"));
 await cp(resolve(root, "shipping-planning.js"), resolve(dist, "client", "shipping-planning.js"));

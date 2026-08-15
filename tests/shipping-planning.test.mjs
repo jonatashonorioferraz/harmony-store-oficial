@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html,app,script,style,migration,catalogMigration,colorMigration,kitMigration,availabilityMigration,integration,edge,sw] = await Promise.all([
+const [html,app,script,style,migration,catalogMigration,colorMigration,kitMigration,availabilityMigration,safetyMigration,kindTriggerMigration,integration,edge,sw] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url),'utf8'),
   readFile(new URL('../app.js', import.meta.url),'utf8'),
   readFile(new URL('../shipping-planning.js', import.meta.url),'utf8'),
@@ -12,6 +12,8 @@ const [html,app,script,style,migration,catalogMigration,colorMigration,kitMigrat
   readFile(new URL('../supabase/migrations/20260813210448_shipping_color_combinations.sql', import.meta.url),'utf8'),
   readFile(new URL('../supabase/migrations/20260814170000_shipping_composite_kits_inventory_reservations.sql', import.meta.url),'utf8'),
   readFile(new URL('../supabase/migrations/20260814173000_shipping_inventory_availability_projection.sql', import.meta.url),'utf8'),
+  readFile(new URL('../supabase/migrations/20260815130000_shopee_day_ledger_and_shipping_kit_fix.sql', import.meta.url),'utf8'),
+  readFile(new URL('../supabase/migrations/20260815134500_shipping_item_kind_insert_normalization.sql', import.meta.url),'utf8'),
   readFile(new URL('../shipping-inventory-integration.js', import.meta.url),'utf8'),
   readFile(new URL('../supabase/functions/manage-user/index.ts', import.meta.url),'utf8'),
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
@@ -143,6 +145,17 @@ test('reserva de caixas é transacional, exata e separada da baixa física',()=>
   assert.match(integration,/Reservar caixas selecionadas/);
   assert.match(integration,/Confirmar transferência física/);
   assert.match(integration,/Solicitar caixas novamente/);
+});
+
+test('kit composto é gravado sem violar a referência obrigatória',()=>{
+  assert.match(safetyMigration,/create or replace function public\.save_shipping_plan_v2/);
+  assert.match(safetyMigration,/jsonb_set\(v_item,'\{item_kind\}',to_jsonb\('exclusive'::text\),true\)/);
+  assert.match(safetyMigration,/set item_kind=v_kind,kit_template_id=v_kit_id/);
+  assert.match(safetyMigration,/insert into public\.shipping_plan_item_components/);
+  assert.match(safetyMigration,/constraint_safe_insert',true/);
+  assert.match(kindTriggerMigration,/normalize_shipping_plan_item_kind_on_insert/);
+  assert.match(kindTriggerMigration,/when new\.model_id is null then 'exclusive'/);
+  assert.match(kindTriggerMigration,/before insert on public\.shipping_plan_items/);
 });
 
 test('caixas reservadas saem do contador e da lista disponível em tempo real',()=>{
