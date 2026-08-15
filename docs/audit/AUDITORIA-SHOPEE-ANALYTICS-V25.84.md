@@ -14,7 +14,7 @@
 | Risco | Controle |
 |---|---|
 | Importar o arquivo no cartão errado | assinatura de abas e colunas obrigatórias |
-| Somar a mesma semana duas vezes | SHA-256, índices únicos e lote atual por período |
+| Somar o mesmo dia em planilhas diárias e semanais | SHA-256, chave única por tipo/dia e livro canônico `shopee_import_days` |
 | Duas importações simultâneas | bloqueio transacional com `pg_advisory_xact_lock` |
 | Arquivo malformado ou excessivo | extensão, assinatura, 12 MB, 30 abas e 100 mil linhas |
 | Gravação parcial | uma RPC transacional grava todo o lote |
@@ -22,6 +22,14 @@
 | IA inventar métricas | snapshot do banco, JSON Schema e evidências obrigatórias |
 | Custo descontrolado | orçamento mensal, intervalo, cache e contagem de tokens |
 | Indisponibilidade da IA | gráficos determinísticos permanecem disponíveis |
+
+### Revisão v25.86
+
+- Importação incremental e correção explícita são operações separadas.
+- Dias repetidos são ignorados no modo normal, sem apagar nem alterar o histórico.
+- O dashboard consulta somente a fonte canônica de cada dia.
+- A tela informa o resultado real da importação e muda para o período recebido, eliminando a falsa impressão de atraso.
+- O conserto do kit composto preserva a `check constraint`; nenhuma permissão, estoque ou regra financeira foi ampliada.
 | Regressão em módulos existentes | arquivos isolados, tela administrativa e testes automatizados |
 
 ## Garantias funcionais
