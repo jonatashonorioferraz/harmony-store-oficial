@@ -1,5 +1,16 @@
 # Changelog
 
+## [v25.87] - 2026-08-15
+
+### Importação Shopee clara e correção protegida
+
+- **Adicionar novos dados** agora é um fluxo exclusivo para uma data ou período ainda não registrado, com três botões próprios para os três tipos de relatório.
+- Os cartões de último período passaram a ser somente informativos e não substituem arquivos.
+- **Corrigir período** foi movido para o histórico auditável e abre uma confirmação profissional com relatório, período e arquivo atual.
+- O servidor exige que a planilha corrigida tenha exatamente o mesmo período escolhido; em caso de diferença, a operação é recusada antes de alterar qualquer dado.
+- Planilhas diárias e semanais continuam combináveis, com datas repetidas preservadas e sem soma duplicada.
+- Estoque, pagamentos, solicitações, permissões, IA e os arquivos anteriormente importados permanecem inalterados.
+
 ## [v25.86] - 2026-08-15
 
 ### Importação Shopee incremental e kit composto estável
