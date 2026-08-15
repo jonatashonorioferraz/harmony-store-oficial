@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.84.2] - 2026-08-14
+
+### Tempo de análise Shopee compatível com a IA real
+
+- A chamada da IA Shopee agora aguarda até 75 segundos, sem herdar o limite curto das requisições comuns do aplicativo.
+- O ajuste é exclusivo da análise com IA e não altera login, estoque, solicitações, pagamentos ou os demais módulos.
+- Validado em produção com 6 insights, evidências salvas e controle de orçamento mensal ativo.
+
 ## [v25.84.1] - 2026-08-14
 
 ### Confirmação visual da importação Shopee
