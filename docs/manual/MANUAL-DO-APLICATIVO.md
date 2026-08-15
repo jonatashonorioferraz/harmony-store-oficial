@@ -288,13 +288,13 @@ Na **Visão geral**, escolha **Faturamento (R$)** para conferir o valor realizad
 1. Abra **Importações**.
 2. Selecione o cartão correspondente ao arquivo: **Estatísticas da Loja**, **Funil de Produtos** ou **Promoções e Descontos**.
 3. Escolha a planilha `.xlsx` exportada pela Shopee.
-4. Use **Adicionar nova planilha**. O sistema registra somente os dias ainda ausentes e preserva automaticamente os dias que já estavam no dashboard.
+4. Na seção **Adicionar dados de uma nova data ou período**, use **Selecionar nova planilha**. O sistema registra somente os dias ainda ausentes e preserva automaticamente os dias que já estavam no dashboard.
 5. Ao terminar, o painel abre o período reconhecido no arquivo e informa quantos dias foram adicionados ou ignorados.
 6. Repita o processo para os outros dois relatórios do mesmo período.
 
 Não existe fila de processamento: depois da mensagem de sucesso, os dados já estão disponíveis. Se os números parecerem antigos, confira o período exibido no filtro. Uma planilha diária pode ser enviada primeiro e depois complementada pela planilha semanal; o mesmo dia nunca é somado duas vezes.
 
-Use **Corrigir este período** somente quando a Shopee tiver fornecido um arquivo corrigido. Essa opção exige confirmação, troca a fonte apenas dos dias contidos no arquivo e mantém todos os outros períodos.
+Os cartões de **Últimos períodos recebidos** servem apenas para consulta e nunca substituem arquivos. Use **Corrigir período** somente pelo **Histórico auditável** e somente quando a Shopee tiver fornecido um arquivo corrigido. A janela de confirmação identifica relatório, período e arquivo atual; o servidor só aceita a substituição quando a nova planilha possui exatamente o mesmo período escolhido. Se houver diferença, nenhum dado é alterado.
 
 O sistema identifica arquivos iguais pelo hash e também controla uma única fonte oficial por tipo de relatório e por dia. Reenvios ou sobreposições entre relatórios diários e semanais não duplicam vendas, pedidos ou funil. Nunca renomeie um relatório para tentar transformá-lo em outro tipo; o conteúdo também é validado.
 
