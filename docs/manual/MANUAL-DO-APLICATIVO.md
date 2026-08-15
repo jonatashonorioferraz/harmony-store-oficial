@@ -296,6 +296,8 @@ Não existe fila de processamento: depois da mensagem de sucesso, os dados já e
 
 Os cartões de **Últimos períodos recebidos** servem apenas para consulta e nunca substituem arquivos. Use **Corrigir período** somente pelo **Histórico auditável** e somente quando a Shopee tiver fornecido um arquivo corrigido. A janela de confirmação identifica relatório, período e arquivo atual; o servidor só aceita a substituição quando a nova planilha possui exatamente o mesmo período escolhido. Se houver diferença, nenhum dado é alterado.
 
+O **Histórico auditável** mostra primeiro os períodos mais recentes. Ele fica dentro de uma janela com rolagem própria para não aumentar indefinidamente a página. Use **Categoria** para visualizar apenas **Visão geral**, **Produtos** ou **Marketing** e os campos **Período a partir de** e **Período até** para localizar uma data específica. O contador mostra quantos arquivos correspondem ao filtro. **Limpar** restaura a lista completa, mantendo a ordem do mais recente para o mais antigo.
+
 O sistema identifica arquivos iguais pelo hash e também controla uma única fonte oficial por tipo de relatório e por dia. Reenvios ou sobreposições entre relatórios diários e semanais não duplicam vendas, pedidos ou funil. Nunca renomeie um relatório para tentar transformá-lo em outro tipo; o conteúdo também é validado.
 
 ### Interpretar as áreas
