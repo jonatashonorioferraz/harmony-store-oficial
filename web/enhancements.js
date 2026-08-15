@@ -252,10 +252,6 @@ function addButtonFeedback(){
 }
 
 function enhanceMobileMenu(){
-  document.querySelectorAll('.nav[data-view]').forEach(button=>{
-    const icon=button.querySelector('i'),value=expressiveMenuIcons[button.dataset.view];
-    if(icon&&value&&icon.textContent!==value)icon.textContent=value;
-  });
   const navRoot=document.querySelector('.sidebar nav'),active=navRoot?.querySelector('.nav.active');
   if(navRoot&&active&&matchMedia('(max-width:720px)').matches&&navRoot.dataset.activeView!==active.dataset.view){
     navRoot.dataset.activeView=active.dataset.view;

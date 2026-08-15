@@ -1,0 +1,14 @@
+/* Harmony Store v25.89 — linguagem visual profissional e unificada. */
+.harmony-line-icon{display:block;width:1em;height:1em;overflow:visible}
+.sidebar .nav>i{display:grid;flex:0 0 30px;width:30px;height:30px;place-items:center;border:1px solid #efdce5;border-radius:9px;background:#fff9fc;color:#6f5f67;font-size:17px;box-shadow:0 3px 10px #753f5908;transition:border-color .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}
+.sidebar .nav>i .harmony-line-icon{width:17px;height:17px}
+.sidebar .nav:hover>i{border-color:#e5bdd0;background:#fff;color:#ae3a73}
+.sidebar .nav.active>i{border-color:#e28bb3;background:#fff1f7;color:#b72f70;box-shadow:0 5px 14px #c63f7e16}
+.sidebar .nav.active>i .harmony-line-icon{stroke-width:1.9}
+.intel-primary-tabs button>i{border:1px solid #efdce5!important;background:#fff9fc!important;color:#73646b!important;box-shadow:0 3px 10px #753f5908;transition:border-color .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease}
+.intel-primary-tabs button>i .harmony-line-icon{width:14px;height:14px}
+.intel-primary-tabs button:hover>i{border-color:#e5bdd0!important;background:#fff!important;color:#ae3a73!important}
+.intel-primary-tabs button.active>i{border-color:#e28bb3!important;background:#fff1f7!important;color:#b72f70!important;box-shadow:0 5px 14px #c63f7e16}
+.intel-primary-tabs button.active>i .harmony-line-icon{stroke-width:1.9}
+@media(min-width:721px) and (max-width:1100px){.sidebar .nav>i{width:32px;height:32px;flex-basis:32px;border-radius:10px}.sidebar .nav>i .harmony-line-icon{width:18px;height:18px}}
+@media(max-width:720px){.sidebar .nav>i{width:36px!important;height:36px!important;flex-basis:36px!important;border-radius:11px!important;background:#fff9fc!important;color:#6f5f67!important;box-shadow:0 4px 12px #753f590d!important}.sidebar .nav.active>i{border-color:#e28bb3!important;background:#fff1f7!important;color:#b72f70!important;box-shadow:0 6px 15px #c63f7e1d!important}.sidebar .nav>i .harmony-line-icon{width:20px;height:20px}.intel-primary-tabs button>i{width:28px!important;height:28px!important}.intel-primary-tabs button>i .harmony-line-icon{width:15px;height:15px}}
