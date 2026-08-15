@@ -1,5 +1,16 @@
 # Changelog
 
+## [v25.88] - 2026-08-15
+
+### Histórico Shopee organizado e filtrável
+
+- O histórico auditável agora é ordenado pelo fim do período, sempre do mais recente para o mais antigo.
+- A lista passou a funcionar em uma janela com rolagem interna e cabeçalho fixo, evitando crescimento infinito da página.
+- Foram adicionados filtros independentes por categoria — **Visão geral**, **Produtos** e **Marketing** — e por intervalo de datas.
+- O painel informa quantos arquivos estão visíveis em relação ao total e oferece limpeza imediata dos filtros.
+- A ação protegida **Corrigir período** e todos os dados previamente importados foram preservados.
+- Não houve mudança no Supabase, na IA, nos cálculos do dashboard, nas permissões ou em outros módulos do aplicativo.
+
 ## [v25.87] - 2026-08-15
 
 ### Importação Shopee clara e correção protegida
