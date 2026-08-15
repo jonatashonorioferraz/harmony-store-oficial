@@ -100,10 +100,10 @@ test('AI dashboard observer renders once and does not create an extra tab', () =
   assert.match(ui, /inventory-ai-data-grid/);
 });
 
-test('Intelligence navigation has four main areas and preserves detailed reports internally', async () => {
+test('Intelligence navigation has five main areas and preserves detailed reports internally', async () => {
   const intelligence = await readFile(new URL('intelligence.js', root), 'utf8');
-  assert.equal((intelligence.match(/data-intel-area=/g)||[]).length,4);
-  for (const area of ['dashboard','operation','supply','ideas']) assert.match(intelligence,new RegExp(`data-intel-area="${area}"`));
+  assert.equal((intelligence.match(/data-intel-area=/g)||[]).length,5);
+  for (const area of ['dashboard','shopee','operation','supply','ideas']) assert.match(intelligence,new RegExp(`data-intel-area="${area}"`));
   for (const report of ['operations','materials','ecommerce','people','production','quality','purchases','suppliers','planning']) assert.match(intelligence,new RegExp(`data-intel-subtab="${report}"`));
   assert.match(intelligence,/id="inventoryAiDashboard"/);
   assert.doesNotMatch(intelligence,/data-intel-tab=/);
@@ -116,10 +116,10 @@ test('desktop, tablet, mobile and offline assets are complete', () => {
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(index, /intelligence-ai\.css\?v=25\.74/);
   assert.match(index, /intelligence-ai\.js\?v=25\.74/);
-  assert.match(worker, /harmony-store-v25-83/);
+  assert.match(worker, /harmony-store-v25-84/);
   assert.match(worker, /intelligence-ai\.css\?v=25\.74/);
   assert.match(worker, /intelligence-ai\.js\?v=25\.74/);
-  assert.equal(JSON.parse(pkg).version, '25.83.0');
+  assert.equal(JSON.parse(pkg).version, '25.84.0');
 });
 
 test('backup, recovery, help and three documentation levels cover the feature', () => {
