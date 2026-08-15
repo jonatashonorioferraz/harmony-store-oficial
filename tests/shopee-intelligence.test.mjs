@@ -73,9 +73,25 @@ test('dashboard is isolated, responsive and available offline',()=>{
   for(const tab of ['overview','products','marketing','promotions','imports'])assert.match(ui,new RegExp(`'${tab}'`));
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
-  assert.match(index,/shopee-intelligence\.css\?v=25\.84/);assert.match(index,/shopee-intelligence\.js\?v=25\.84/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.84/);assert.match(worker,/shopee-intelligence\.js\?v=25\.84/);assert.match(worker,/harmony-store-v25-84-r1/);
-  assert.equal(JSON.parse(pkg).version,'25.84.0');
+  assert.match(index,/shopee-intelligence\.css\?v=25\.85/);assert.match(index,/shopee-intelligence\.js\?v=25\.85/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.85/);assert.match(worker,/shopee-intelligence\.js\?v=25\.85/);assert.match(worker,/harmony-store-v25-85-r1/);
+  assert.equal(JSON.parse(pkg).version,'25.85.0');
+});
+
+test('executive dashboard uses the Shopee identity and exposes daily values',()=>{
+  assert.match(ui,/assets\/platform-shopee\.svg/);
+  assert.match(ui,/Faturamento diário/);
+  assert.match(ui,/data-shopee-metric="sales"/);
+  assert.match(ui,/data-shopee-metric="orders"/);
+  assert.match(ui,/data-shopee-trend-index/);
+  assert.match(ui,/row\[`\$\{series\}_\$\{SH\.trendMetric\}`\]/);
+  assert.match(sql,/placed_sales/);assert.match(sql,/paid_sales/);assert.match(sql,/placed_orders/);assert.match(sql,/paid_orders/);
+  assert.match(ui,/FUNIL DE CONVERSÃO/);assert.match(ui,/ORIGEM DAS VENDAS PAGAS/);assert.match(ui,/QUALIDADE DOS DADOS/);
+  assert.doesNotMatch(ui,/Pedidos feitos × pagos/);
+  for(const selector of ['shopee-executive-grid','shopee-chart-selected','shopee-daily-values','shopee-support-grid'])assert.match(css,new RegExp(`\\.${selector}`));
+  assert.match(css,/\.shopee-intelligence,\.shopee-intelligence \*\{box-sizing:border-box;min-width:0\}/);
+  assert.match(css,/\.shopee-header-brand,\.shopee-header-actions\{flex:none;width:100%\}/);
+  assert.match(css,/\.shopee-tabs button\{[^}]*flex:0 0 auto[^}]*white-space:nowrap/);
 });
 
 test('help, manual, audit, backup and recovery cover the module',()=>{

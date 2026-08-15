@@ -46,6 +46,14 @@ flowchart LR
 - Bloqueio transacional por tipo e período evita duas importações simultâneas.
 - O dashboard consulta apenas lotes `validated` e `is_latest`.
 
+## Evolução executiva v25.85
+
+- A interface continua consumindo exclusivamente `admin_get_shopee_dashboard`; nenhum cálculo financeiro foi transferido para o navegador.
+- A série diária utiliza `placed_sales` e `paid_sales` no modo faturamento e `placed_orders` e `paid_orders` no modo pedidos.
+- Pontos, escala, cartões diários e seleção por toque compartilham o mesmo conjunto de dados retornado pelo Supabase.
+- A tela principal apenas reorganiza funil, tráfego, produtos, qualidade e IA; não cria uma segunda fonte de verdade.
+- O logotipo é carregado do ativo local `assets/platform-shopee.svg`, sem dependência de rede externa.
+
 ## Segurança e privacidade
 
 - Apenas perfis `admin` ativos podem importar, consultar e gerar análise.

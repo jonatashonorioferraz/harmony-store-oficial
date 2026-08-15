@@ -1,5 +1,18 @@
 # Changelog
 
+## [v25.85] - 2026-08-15
+
+### Shopee Analytics executivo e responsivo
+
+- A Visão geral foi reorganizada com a identidade visual da Shopee, usando o logotipo correto já armazenado no aplicativo.
+- Período, validação dos relatórios, atualização e importação ficaram reunidos no cabeçalho para reduzir páginas e cartões sobrepostos.
+- O gráfico passou a identificar corretamente **faturamento realizado × faturamento pago**, com escala em reais, pontos selecionáveis e valores por dia.
+- Um seletor permite alternar o mesmo gráfico entre **Faturamento (R$)** e **Quantidade de pedidos**, sempre usando as métricas reais do Supabase.
+- Funil de conversão, leitura da IA, origem do tráfego, movimento de produtos e qualidade dos dados foram reunidos em uma central executiva sem duplicar cálculos.
+- A análise completa e suas evidências continuam disponíveis em uma área recolhível, preservando auditoria e deixando a tela principal mais limpa.
+- Foram reforçados limites de largura, rolagem interna e reorganização dos cartões para computador, tablet e celular.
+- Nenhuma tabela, importação, regra da IA, estoque, solicitação, pagamento ou permissão foi alterada.
+
 ## [v25.84.2] - 2026-08-14
 
 ### Tempo de análise Shopee compatível com a IA real
