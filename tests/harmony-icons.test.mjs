@@ -16,6 +16,13 @@ test('menus usam biblioteca vetorial única sem alterar rotas',()=>{
   assert.doesNotMatch(icons,/onclick\s*=/);
 });
 
+test('a seção Conta permanece unida ao Meu perfil após módulos dinâmicos',()=>{
+  assert.match(icons,/function normalizeAccountSection\(\)/);
+  assert.match(icons,/account\.nextElementSibling!==profile/);
+  assert.match(icons,/nav\.insertBefore\(account,profile\)/);
+  assert.match(icons,/normalizeAccountSection\(\);/);
+});
+
 test('ícones possuem estados profissionais e responsivos',()=>{
   assert.match(css,/\.sidebar \.nav>i/);
   assert.match(css,/\.sidebar \.nav\.active>i/);
@@ -24,10 +31,10 @@ test('ícones possuem estados profissionais e responsivos',()=>{
   assert.match(css,/@media\(max-width:720px\)/);
 });
 
-test('ativos da versão 25.89 são carregados e mantidos offline',()=>{
-  assert.match(index,/harmony-icons\.css\?v=25\.89/);
-  assert.match(index,/harmony-icons\.js\?v=25\.89/);
-  assert.match(worker,/harmony-store-v25-89-r1/);
-  assert.match(worker,/harmony-icons\.css\?v=25\.89/);
-  assert.match(worker,/harmony-icons\.js\?v=25\.89/);
+test('ativos da versão 25.90 são carregados e mantidos offline',()=>{
+  assert.match(index,/harmony-icons\.css\?v=25\.90/);
+  assert.match(index,/harmony-icons\.js\?v=25\.90/);
+  assert.match(worker,/harmony-store-v25-90-r1/);
+  assert.match(worker,/harmony-icons\.css\?v=25\.90/);
+  assert.match(worker,/harmony-icons\.js\?v=25\.90/);
 });
