@@ -1,5 +1,7 @@
 # Manual do Harmony Store Oficial
 
+> **Identidade visual dos menus:** os módulos utilizam uma família única de ícones vetoriais. O ícone e o fundo rosa discreto indicam a tela ativa. No celular, os mesmos símbolos aparecem no menu inferior; no tablet e no computador, aparecem no menu lateral. A mudança é somente visual e não altera os acessos de cada perfil.
+
 ## Acesso e perfis
 
 - **Colaboradora:** solicita matéria-prima, edita pedidos pendentes, acompanha sua produção conferida e vê pagamentos semanais já consolidados.
