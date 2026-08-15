@@ -62,6 +62,8 @@ test('AI is real, server-side, evidence-based and cost controlled',()=>{
   assert.match(ai,/OPENAI_API_KEY/);assert.match(ai,/store: false/);assert.match(ai,/type: "json_schema"/);assert.match(ai,/strict: true/);
   assert.match(ai,/Toda afirmação quantitativa deve aparecer em evidence/);
   assert.match(ai,/BUDGET_REACHED/);assert.match(ai,/ANALYSIS_IN_PROGRESS/);assert.match(ai,/snapshot_fingerprint/);
+  assert.match(ui,/ANALYSIS_REQUEST_TIMEOUT_MS=75000/);
+  assert.match(ui,/path==='analyze-shopee-intelligence'\?fetchAnalysis/);
   assert.doesNotMatch(ui,/OPENAI_API_KEY|SUPABASE_SERVICE_ROLE_KEY|sb_secret_/);
   assert.doesNotMatch(ai,/transfer_production_inventory|production_weekly_closings|update public\.products/i);
 });
