@@ -1,5 +1,20 @@
 # Changelog
 
+## [v25.84] - 2026-08-14
+
+### Shopee Analytics com importação segura e IA real
+
+- A Central de Inteligência ganhou uma área própria para a Shopee, sem misturar os relatórios do marketplace com Inventário, Operação ou Compras.
+- Três importadores independentes recebem **Estatísticas da Loja**, **Funil de Produtos** e **Promoções e Descontos**.
+- Cada planilha é validada por estrutura, período, tamanho e hash; reenvios idênticos não duplicam vendas ou pedidos.
+- Arquivos corrigidos do mesmo período substituem somente a visão atual e preservam o histórico anterior para auditoria.
+- O dashboard apresenta vendas feitas e pagas, pedidos, compradores, cancelamentos, funil, produtos, fontes de tráfego, promoções e campanhas.
+- Gráficos e alertas determinísticos são calculados no Supabase e continuam disponíveis sem créditos da OpenAI.
+- A análise opcional usa IA real no servidor, resposta estruturada, evidências, histórico, limite mensal, intervalo entre execuções e cache de dados iguais.
+- Planilhas originais ficam em bucket privado; tabelas possuem RLS, privilégio mínimo e acesso apenas para ADMs.
+- Backup e recuperação isolada passaram a cobrir planilhas, métricas, análises e insights da Shopee.
+- Nenhuma função de estoque, produção, solicitações, pagamentos ou campanhas externas foi alterada.
+
 ## [v25.83] - 2026-08-14
 
 ### Kits compostos e solicitação segura de caixas do Inventário

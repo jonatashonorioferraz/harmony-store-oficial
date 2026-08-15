@@ -181,11 +181,11 @@ function filterBar(){
 
 const operationTabs=new Set(['operations','materials','ecommerce','people','production','quality']);
 const supplyTabs=new Set(['purchases','suppliers','planning']);
-const areaForTab=tab=>tab==='overview'?'dashboard':operationTabs.has(tab)?'operation':supplyTabs.has(tab)?'supply':'ideas';
+const areaForTab=tab=>tab==='overview'?'dashboard':tab==='shopee'?'shopee':operationTabs.has(tab)?'operation':supplyTabs.has(tab)?'supply':'ideas';
 
 function tabBar(){
   const area=areaForTab(BI.tab);
-  return `<div class="intel-tabs intel-primary-tabs" aria-label="Áreas da Inteligência"><button data-intel-area="dashboard" class="${area==='dashboard'?'active':''}"><i>✦</i><span>Painel inteligente</span></button><button data-intel-area="operation" class="${area==='operation'?'active':''}"><i>◫</i><span>Operação</span></button><button data-intel-area="supply" class="${area==='supply'?'active':''}"><i>◇</i><span>Compras e parceiros</span></button><button data-intel-area="ideas" class="${area==='ideas'?'active':''}"><i>↗</i><span>Ideias e evolução</span></button></div>`;
+  return `<div class="intel-tabs intel-primary-tabs" aria-label="Áreas da Inteligência"><button data-intel-area="dashboard" class="${area==='dashboard'?'active':''}"><i>✦</i><span>Painel inteligente</span></button><button data-intel-area="shopee" class="${area==='shopee'?'active':''}"><i>◉</i><span>Shopee Analytics</span></button><button data-intel-area="operation" class="${area==='operation'?'active':''}"><i>◫</i><span>Operação</span></button><button data-intel-area="supply" class="${area==='supply'?'active':''}"><i>◇</i><span>Compras e parceiros</span></button><button data-intel-area="ideas" class="${area==='ideas'?'active':''}"><i>↗</i><span>Ideias e evolução</span></button></div>`;
 }
 
 function subTabBar(){
@@ -197,6 +197,10 @@ function subTabBar(){
 
 function overviewView(){
   return `<div id="inventoryAiDashboard" class="inventory-ai-dashboard" aria-live="polite"><div class="loading-inline">Conectando estatísticas reais e Inteligência do Inventário…</div></div>`;
+}
+
+function shopeeView(){
+  return `<div id="shopeeIntelligenceDashboard" class="shopee-intelligence-dashboard" aria-live="polite"><div class="loading-inline">Conectando relatórios oficiais, gráficos e Inteligência Shopee…</div></div>`;
 }
 
 function operationOverviewView(){
@@ -371,10 +375,10 @@ async function renderIntelligence(){
   await loadIntelligence();
   if(S.view!=='intelligence')return;
   if(BI.error){page.innerHTML=`<div class="page">${head('INTELIGÊNCIA','Relatórios e planejamento','A nova área está isolada das funções atuais.')}<section class="card intelligence-error"><h2>Atualização do banco necessária</h2><p>Execute primeiro o arquivo <b>008_consumption_intelligence.sql</b> no SQL Editor do Supabase. O restante do aplicativo continua funcionando normalmente.</p><small>${esc(BI.error)}</small></section></div>`;return}
-  const area=areaForTab(BI.tab),headings={dashboard:['CENTRAL DE INTELIGÊNCIA','Decisões guiadas por dados reais','Estatísticas ao vivo, gráficos do Inventário e recomendações da IA em uma única visão.'],operation:['INTELIGÊNCIA OPERACIONAL','Relatórios organizados por assunto','Consulte consumo, equipe, produção e qualidade sem misturar informações.'],supply:['COMPRAS E PARCEIROS','Planejamento de abastecimento','Pedidos, fornecedores e sugestões de reposição em um só lugar.'],ideas:['INTELIGÊNCIA E EVOLUÇÃO','Um espaço para construir o futuro','Registre, analise e acompanhe melhorias sem perder nenhuma decisão.']};
+  const area=areaForTab(BI.tab),headings={dashboard:['CENTRAL DE INTELIGÊNCIA','Decisões guiadas por dados reais','Estatísticas ao vivo, gráficos do Inventário e recomendações da IA em uma única visão.'],shopee:['INTELIGÊNCIA DE E-COMMERCE','Shopee Analytics','Relatórios oficiais, funil, marketing, promoções e IA sem misturar os cadastros operacionais.'],operation:['INTELIGÊNCIA OPERACIONAL','Relatórios organizados por assunto','Consulte consumo, equipe, produção e qualidade sem misturar informações.'],supply:['COMPRAS E PARCEIROS','Planejamento de abastecimento','Pedidos, fornecedores e sugestões de reposição em um só lugar.'],ideas:['INTELIGÊNCIA E EVOLUÇÃO','Um espaço para construir o futuro','Registre, analise e acompanhe melhorias sem perder nenhuma decisão.']};
   const [eyebrow,title,description]=headings[area];
   const filters=['operations','materials','ecommerce','people','production'].includes(BI.tab);
-  const view=BI.tab==='overview'?overviewView():BI.tab==='operations'?operationOverviewView():BI.tab==='people'?peopleView():['materials','ecommerce'].includes(BI.tab)?materialsView():BI.tab==='production'?productionPlanView():BI.tab==='quality'?dataQualityView():BI.tab==='suppliers'?suppliersView():BI.tab==='purchases'?purchasesView():BI.tab==='planning'?purchasePlanningView():ideasView();
+  const view=BI.tab==='overview'?overviewView():BI.tab==='shopee'?shopeeView():BI.tab==='operations'?operationOverviewView():BI.tab==='people'?peopleView():['materials','ecommerce'].includes(BI.tab)?materialsView():BI.tab==='production'?productionPlanView():BI.tab==='quality'?dataQualityView():BI.tab==='suppliers'?suppliersView():BI.tab==='purchases'?purchasesView():BI.tab==='planning'?purchasePlanningView():ideasView();
   page.innerHTML=`<div class="page intelligence-page">${head(eyebrow,title,description)}${tabBar()}${subTabBar()}${filters?filterBar():''}<div id="intelContent">${view}</div></div>`;
   bindIntelligence();
 }
@@ -382,7 +386,7 @@ async function renderIntelligence(){
 function rerender(){const page=document.querySelector('#page');if(page)delete page.dataset.intelligence;renderIntelligence()}
 
 function bindIntelligence(){
-  document.querySelectorAll('[data-intel-area]').forEach(button=>button.onclick=()=>{const area=button.dataset.intelArea;if(area==='dashboard')BI.tab='overview';else if(area==='operation'&&!operationTabs.has(BI.tab))BI.tab='operations';else if(area==='supply'&&!supplyTabs.has(BI.tab))BI.tab='purchases';else if(area==='ideas')BI.tab='ideas';rerender()});
+  document.querySelectorAll('[data-intel-area]').forEach(button=>button.onclick=()=>{const area=button.dataset.intelArea;if(area==='dashboard')BI.tab='overview';else if(area==='shopee')BI.tab='shopee';else if(area==='operation'&&!operationTabs.has(BI.tab))BI.tab='operations';else if(area==='supply'&&!supplyTabs.has(BI.tab))BI.tab='purchases';else if(area==='ideas')BI.tab='ideas';rerender()});
   document.querySelectorAll('[data-intel-subtab]').forEach(button=>button.onclick=()=>{const tab=button.dataset.intelSubtab;if(['materials','ecommerce'].includes(tab)&&tab!==BI.tab)BI.productId='';BI.tab=tab;rerender()});
   const newIdea=document.querySelector('#newIdea');if(newIdea)newIdea.onclick=()=>ideaModal();
   document.querySelectorAll('[data-view-idea]').forEach(button=>button.onclick=()=>ideaDetailModal(BI.ideas.find(idea=>idea.id===button.dataset.viewIdea)));
