@@ -79,6 +79,23 @@ test('planilhas diárias e semanais têm uma única fonte canônica por dia',()=
   for(const source of [backup,recovery])assert.match(source,/'shopee_import_days'/);
 });
 
+test('histórico de importações é cronológico, compacto e filtrável',()=>{
+  assert.match(ui,/const sortedImports=items=>/);
+  assert.match(ui,/importDateValue\(b\)-importDateValue\(a\)/);
+  assert.match(ui,/historyCategory:'all'/);
+  assert.match(ui,/id="shopeeHistoryFilters"/);
+  assert.match(ui,/Todas as categorias/);
+  assert.match(ui,/Visão geral/);
+  assert.match(ui,/Produtos/);
+  assert.match(ui,/Marketing/);
+  assert.match(ui,/type="date"/);
+  assert.match(ui,/id="clearShopeeHistoryFilters"/);
+  assert.match(css,/\.shopee-history-window\{max-height:500px;overflow:auto/);
+  assert.match(css,/\.shopee-history-window \.shopee-table thead\{position:sticky/);
+  assert.match(css,/@media\(max-width:820px\)\{\.shopee-import-history/);
+  assert.match(css,/@media\(max-width:560px\)\{\.shopee-history-filters/);
+});
+
 test('three Shopee report families have independent structural validation',()=>{
   assert.match(parser,/parseShopStats/);assert.match(parser,/parseProductFunnel/);assert.match(parser,/parsePromotions/);
   assert.match(parser,/Estatísticas da Loja|shop_stats/);
@@ -103,9 +120,9 @@ test('dashboard is isolated, responsive and available offline',()=>{
   for(const tab of ['overview','products','marketing','promotions','imports'])assert.match(ui,new RegExp(`'${tab}'`));
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
-  assert.match(index,/shopee-intelligence\.css\?v=25\.87/);assert.match(index,/shopee-intelligence\.js\?v=25\.87/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.87/);assert.match(worker,/shopee-intelligence\.js\?v=25\.87/);assert.match(worker,/harmony-store-v25-87-r1/);
-  assert.equal(JSON.parse(pkg).version,'25.87.0');
+  assert.match(index,/shopee-intelligence\.css\?v=25\.88/);assert.match(index,/shopee-intelligence\.js\?v=25\.88/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.88/);assert.match(worker,/shopee-intelligence\.js\?v=25\.88/);assert.match(worker,/harmony-store-v25-88-r1/);
+  assert.equal(JSON.parse(pkg).version,'25.88.0');
 });
 
 test('executive dashboard uses the Shopee identity and exposes daily values',()=>{
