@@ -62,8 +62,17 @@ test('planilhas diárias e semanais têm uma única fonte canônica por dia',()=
   assert.match(dailyMigration,/accepted_dates/);
   assert.match(dailyMigration,/skipped_dates/);
   assert.match(dailyMigration,/join public\.shopee_import_days d on d\.report_type='shop_stats'/);
-  assert.match(ui,/Adicionar nova planilha/);
-  assert.match(ui,/Corrigir este período/);
+  assert.match(ui,/Adicionar dados de uma nova data ou período/);
+  assert.match(ui,/Selecionar nova planilha/);
+  assert.match(ui,/Corrigir um período já importado/);
+  assert.match(ui,/data-shopee-new-upload/);
+  assert.match(ui,/data-shopee-correct/);
+  assert.match(ui,/expected_period_start/);
+  assert.match(ui,/expected_period_end/);
+  assert.match(parser,/PERIODO_DA_CORRECAO_DIFERENTE/);
+  assert.match(parser,/parsed\.periodStart !== expectedPeriodStart/);
+  assert.match(parser,/Nenhum dado foi alterado/);
+  assert.doesNotMatch(ui,/Substituir por arquivo corrigido/);
   assert.match(ui,/scrollIntoView/);
   assert.match(ui,/SH\.from=response\.period_start/);
   assert.match(ui,/dia\(s\) adicionado\(s\)/);
@@ -94,9 +103,9 @@ test('dashboard is isolated, responsive and available offline',()=>{
   for(const tab of ['overview','products','marketing','promotions','imports'])assert.match(ui,new RegExp(`'${tab}'`));
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
-  assert.match(index,/shopee-intelligence\.css\?v=25\.86/);assert.match(index,/shopee-intelligence\.js\?v=25\.86/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.86/);assert.match(worker,/shopee-intelligence\.js\?v=25\.86/);assert.match(worker,/harmony-store-v25-86-r1/);
-  assert.equal(JSON.parse(pkg).version,'25.86.0');
+  assert.match(index,/shopee-intelligence\.css\?v=25\.87/);assert.match(index,/shopee-intelligence\.js\?v=25\.87/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.87/);assert.match(worker,/shopee-intelligence\.js\?v=25\.87/);assert.match(worker,/harmony-store-v25-87-r1/);
+  assert.equal(JSON.parse(pkg).version,'25.87.0');
 });
 
 test('executive dashboard uses the Shopee identity and exposes daily values',()=>{

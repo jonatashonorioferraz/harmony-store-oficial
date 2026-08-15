@@ -9,7 +9,7 @@ const allowedOrigins = new Set([
 ]);
 const reportTypes = new Set(["shop_stats", "product_funnel", "promotions"]);
 const maxFileBytes = 12 * 1024 * 1024;
-const parserVersion = "1.1.0";
+const parserVersion = "1.2.0";
 
 const corsFor = (request: Request) => {
   const origin = request.headers.get("Origin") || "";
@@ -222,9 +222,14 @@ Deno.serve(async request => {
     const form = await request.formData();
     const reportType = String(form.get("report_type") || "");
     const importMode = String(form.get("import_mode") || "append");
+    const expectedPeriodStart = String(form.get("expected_period_start") || "");
+    const expectedPeriodEnd = String(form.get("expected_period_end") || "");
     const file = form.get("file");
     if (!reportTypes.has(reportType)) return reply(request, { error: "Selecione o tipo correto de relatório." }, 400);
     if (!new Set(["append", "replace"]).has(importMode)) return reply(request, { error: "Modo de importação inválido." }, 400);
+    if (importMode === "replace" && (!/^\d{4}-\d{2}-\d{2}$/.test(expectedPeriodStart) || !/^\d{4}-\d{2}-\d{2}$/.test(expectedPeriodEnd))) {
+      return reply(request, { error: "Selecione no histórico o período que deseja corrigir." }, 400);
+    }
     if (!(file instanceof File)) return reply(request, { error: "Selecione uma planilha .xlsx." }, 400);
     if (!file.name.toLowerCase().endsWith(".xlsx")) return reply(request, { error: "Somente planilhas .xlsx da Shopee são aceitas." }, 400);
     if (file.size < 100 || file.size > maxFileBytes) return reply(request, { error: "O arquivo deve ter no máximo 12 MB." }, 413);
@@ -234,6 +239,9 @@ Deno.serve(async request => {
     const workbook = XLSX.read(bytes, { type: "array", raw: false, cellDates: false, bookVBA: false, dense: false });
     if (!workbook.SheetNames.length || workbook.SheetNames.length > 30) throw new Error("QUANTIDADE_DE_ABAS_INVALIDA");
     const parsed = reportType === "shop_stats" ? parseShopStats(workbook) : reportType === "product_funnel" ? parseProductFunnel(workbook) : parsePromotions(workbook);
+    if (importMode === "replace" && (parsed.periodStart !== expectedPeriodStart || parsed.periodEnd !== expectedPeriodEnd)) {
+      throw new Error("PERIODO_DA_CORRECAO_DIFERENTE");
+    }
     const rowCount = parsed.sales.length + parsed.traffic.length + parsed.products.length + parsed.funnel.length + parsed.promotionMetrics.length + parsed.campaigns.length;
     if (rowCount < 1 || rowCount > 100000) throw new Error("QUANTIDADE_DE_LINHAS_INVALIDA");
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 160);
@@ -265,6 +273,7 @@ Deno.serve(async request => {
       COLUNAS_OBRIGATORIAS_AUSENTES: "A Shopee alterou ou removeu colunas obrigatórias desta planilha.",
       PERIODO_NAO_LOCALIZADO: "Não foi possível identificar o período da planilha.",
       PERIODO_INVALIDO: "O período informado na planilha é inválido.",
+      PERIODO_DA_CORRECAO_DIFERENTE: "O arquivo selecionado não corresponde exatamente ao período escolhido para correção. Nenhum dado foi alterado.",
       DATA_INVALIDA: "Uma das datas da planilha não pôde ser validada.",
       RELATORIO_SEM_DADOS_VALIDOS: "A planilha não possui dados válidos para importar.",
       QUANTIDADE_DE_ABAS_INVALIDA: "A estrutura do arquivo não é compatível com os relatórios da Shopee.",
