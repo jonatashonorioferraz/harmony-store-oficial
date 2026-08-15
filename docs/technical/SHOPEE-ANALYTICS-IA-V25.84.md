@@ -67,3 +67,15 @@ flowchart LR
 ## Falha segura
 
 Falhas de importação não criam lote parcial. Falhas da IA não afetam as métricas. O módulo não executa mutações em estoque, produção, solicitações, pagamentos ou serviços externos da Shopee.
+
+## Importação incremental por dia — v25.86
+
+- `shopee_import_batches` continua sendo o documento auditável de cada arquivo recebido.
+- `shopee_import_days` define qual lote é a fonte canônica de cada combinação `tipo de relatório + dia`.
+- O modo `append` aceita somente dias ainda ausentes. Uma planilha semanal pode complementar arquivos diários anteriores sem duplicar métricas.
+- O modo `replace` é separado, exige confirmação na interface e reatribui somente os dias presentes no arquivo corrigido.
+- A RPC retorna datas aceitas e ignoradas. O cliente muda o filtro para o período detectado imediatamente após a gravação.
+- Métricas diárias do dashboard fazem `join` com o livro de dias. Retratos agregados de produtos, tráfego e campanhas preservam o arquivo de maior cobertura para evitar soma dupla.
+- A tabela nova possui RLS, leitura administrativa, privilégio integral apenas para `service_role`, índice por lote e cobertura nos fluxos de backup e recuperação.
+
+O salvamento de kits compostos também foi corrigido na mesma versão: o item intermediário nasce como um exclusivo válido e recebe `item_kind='kit'` e `kit_template_id` atomicamente na mesma transação. A restrição de integridade não foi enfraquecida.
