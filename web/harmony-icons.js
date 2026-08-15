@@ -35,7 +35,14 @@ const intelligence={dashboard:'dashboard',shopee:'shopee',operation:'operation',
 
 function svg(name){return `<svg class="harmony-line-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[name]||paths.home}</svg>`}
 function setIcon(container,name){if(!container||container.dataset.harmonyIcon===name)return;container.innerHTML=svg(name);container.dataset.harmonyIcon=name}
+function normalizeAccountSection(){
+  const nav=document.querySelector('.sidebar nav'),profile=nav?.querySelector('[data-view="profile"]');
+  if(!nav||!profile)return;
+  const account=[...nav.children].find(node=>node.tagName==='SMALL'&&node.textContent.trim().toUpperCase()==='CONTA');
+  if(account&&account.nextElementSibling!==profile)nav.insertBefore(account,profile);
+}
 function apply(){
+  normalizeAccountSection();
   document.querySelectorAll('.sidebar .nav[data-view]').forEach(button=>setIcon(button.querySelector(':scope > i'),menu[button.dataset.view]||'home'));
   document.querySelectorAll('.intel-primary-tabs [data-intel-area]').forEach(button=>setIcon(button.querySelector(':scope > i'),intelligence[button.dataset.intelArea]||'dashboard'));
 }
