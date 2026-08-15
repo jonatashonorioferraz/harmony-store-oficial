@@ -28,6 +28,13 @@
 
 O módulo é somente analítico. Não há comandos para criar, editar ou concluir pedidos da Shopee, nem para alterar produtos, estoque, solicitações, produção ou pagamentos da Harmony.
 
+## Revisão visual v25.85
+
+- Corrigida a divergência semântica em que valores monetários eram apresentados como “Pedidos feitos × pagos”.
+- O usuário pode conferir cada data por mouse, teclado ou toque, e também consultar todos os valores na faixa diária rolável.
+- Grids possuem `min-width: 0`, tabelas mantêm rolagem própria e cartões são reorganizados nos pontos de quebra de 1450, 1180, 820 e 560 pixels.
+- A visão executiva não escreve no banco e não altera as políticas RLS, Edge Functions, parser, deduplicação ou orçamento da IA.
+
 ## Evidências de validação
 
 - 315 testes automatizados aprovados, sem falhas.
