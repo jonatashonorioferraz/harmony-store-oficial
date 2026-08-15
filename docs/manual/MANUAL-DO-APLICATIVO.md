@@ -281,6 +281,8 @@ Produtos e cores desativados continuam preservados em planos históricos. Altera
 
 O **Shopee Analytics** transforma três relatórios oficiais em uma visão executiva única, sem alterar nenhuma informação dentro da Shopee. Ele fica em **Inteligência → Shopee Analytics**.
 
+Na **Visão geral**, escolha **Faturamento (R$)** para conferir o valor realizado e pago em cada dia ou **Pedidos** para comparar as quantidades. No computador, passe o mouse sobre os pontos; no celular e tablet, toque no dia. A faixa abaixo do gráfico mantém todos os valores diários disponíveis sem poluir o desenho.
+
 ### Importar uma semana
 
 1. Abra **Importações**.
