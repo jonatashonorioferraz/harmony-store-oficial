@@ -136,9 +136,11 @@ test('backup, recovery, help and three documentation levels cover the feature', 
   assert.match(audit, /## Riscos avaliados e controles/);
 });
 
+const primaryIntelligenceCss = await readFile(new URL('intelligence.css', root), 'utf8');
+
 test('menu principal da Inteligência fica equilibrado e legível no celular', () => {
-  assert.match(css, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
-  assert.match(css, /button:nth-child\(-n\+2\)\{grid-column:span 3\}/);
-  assert.match(css, /-webkit-line-clamp:2/);
-  assert.match(css, /min-height:66px/);
+  assert.match(primaryIntelligenceCss, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+  assert.match(primaryIntelligenceCss, /button:nth-child\(-n\+2\)\{grid-column:span 3\}/);
+  assert.match(primaryIntelligenceCss, /-webkit-line-clamp:2/);
+  assert.match(primaryIntelligenceCss, /min-height:66px/);
 });
