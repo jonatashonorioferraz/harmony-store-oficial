@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Validação responsiva — reserva de caixas</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../transfer-center.css">
+</head>
+<body>
+  <div class="modal">
+    <form class="modal-box large transfer-reservation" id="transferReservationForm">
+      <div class="modal-head">
+        <div><p class="eyebrow">RESERVA FÍSICA #0001</p><h2>Selecionar caixas exatas</h2><span>As caixas mais antigas aparecem primeiro. Cada caixa permanece inteira.</span></div>
+        <button type="button" aria-label="Fechar seleção de caixas">×</button>
+      </div>
+      <aside><b>Proteção contra dupla reserva</b><span>Ao confirmar, as caixas escolhidas ficam indisponíveis para outras solicitações.</span></aside>
+      <div class="transfer-reservation-list">
+        <section class="transfer-reservation-item" data-covered="false">
+          <header><img src="../../assets/shipping-product-placeholder.svg" alt="Mini Sabonete Coração 2g"><span><b>Mini Sabonete Coração 2g</b><em><i style="--transfer-color:#89bde8"></i>Azul BB</em></span><strong><small>NECESSÁRIO</small>3.000 un.<em>Faltam 3.000 un.</em></strong></header>
+          <div class="transfer-box-options">
+            <label class="transfer-box-option" data-selected="false"><input type="checkbox" aria-label="Selecionar caixa CX-000051"><i class="transfer-box-check" aria-hidden="true">✓</i><span><b>CX-000051</b><small>630 un.</small><em><span>Entrada 11/08/2026</span><span>Sem localização</span></em></span></label>
+            <label class="transfer-box-option" data-selected="true"><input type="checkbox" checked aria-label="Selecionar caixa CX-000053"><i class="transfer-box-check" aria-hidden="true">✓</i><span><b>CX-000053</b><small>6.000 un.</small><em><span>Entrada 12/08/2026</span><span>Corredor A · Prateleira 3</span></em></span></label>
+            <label class="transfer-box-option" data-selected="false"><input type="checkbox" aria-label="Selecionar caixa CX-000077"><i class="transfer-box-check" aria-hidden="true">✓</i><span><b>CX-000077</b><small>3.000 un.</small><em><span>Entrada 15/08/2026</span><span>P4 S-D</span></em></span></label>
+            <label class="transfer-box-option" data-selected="false"><input type="checkbox" aria-label="Selecionar caixa CX-000081"><i class="transfer-box-check" aria-hidden="true">✓</i><span><b>CX-000081</b><small>2.500 un.</small><em><span>Entrada 16/08/2026</span><span>Sem localização</span></em></span></label>
+          </div>
+          <footer><span>Total após a seleção: <b>6.000 un.</b></span><i aria-hidden="true"><em style="width:100%"></em></i></footer>
+        </section>
+      </div>
+      <label class="transfer-reservation-notes">Observação da reserva<textarea placeholder="Opcional"></textarea></label>
+      <div class="form-actions transfer-reservation-actions"><span data-transfer-selection-summary>1 caixa selecionada · 6.000 un.</span><button type="button" class="outline">Voltar</button><button class="primary">Reservar caixas selecionadas</button></div>
+    </form>
+  </div>
+</body>
+</html>
