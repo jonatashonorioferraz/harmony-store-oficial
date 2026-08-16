@@ -104,7 +104,7 @@ function deterministicAlerts(){
 function logo(){return`<span class="shopee-brand-logo"><img src="./assets/platform-shopee.svg" alt="Shopee"></span>`}
 function navigation(){
   const tabs=[['overview','Visão geral'],['products','Produtos'],['marketing','Marketing'],['promotions','Promoções'],['imports','Importações']];
-  return`<nav class="shopee-tabs" aria-label="Relatórios Shopee">${tabs.map(([id,label])=>`<button data-shopee-tab="${id}" class="${SH.tab===id?'active':''}">${label}</button>`).join('')}</nav>`;
+  return`<nav class="shopee-tabs" aria-label="Relatórios Shopee" role="tablist">${tabs.map(([id,label])=>`<button type="button" role="tab" aria-selected="${SH.tab===id}" data-shopee-tab="${id}" class="${SH.tab===id?'active':''}">${label}</button>`).join('')}</nav>`;
 }
 function periodControls(){
   const comp=completeness(),validated=comp.total&&comp.missing===0;
