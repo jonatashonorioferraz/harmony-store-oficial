@@ -38,6 +38,14 @@ O índice parcial por `inventory_entry_id` impede que uma caixa esteja simultane
 
 Os RPCs anteriores `list_shipping_inventory_options`, `reserve_shipping_inventory_boxes` e `confirm_shipping_inventory_request_transfer` permanecem como adaptadores. Assim, um PWA ainda em cache usa as mesmas restrições e não cria um segundo fluxo paralelo.
 
+## Correções granulares v25.94
+
+- `release_transfer_center_box` libera somente a reserva informada, exige perfil de gestão, motivo e solicitação ainda não despachada.
+- `remove_transfer_center_request_item` faz remoção lógica de itens criados em solicitações diretas, preserva o histórico e libera suas caixas.
+- Itens do Planejamento FULL não podem ser removidos pela Central, evitando divergência com a origem.
+- `private.refresh_transfer_center_request_status` recalcula `requested`, `partially_reserved` ou `reserved` após cada correção.
+- A caixa nunca é apagada nem movimentada durante a liberação; somente o vínculo ativo recebe `released_at`, `released_by` e `release_reason`.
+
 ## Regras invariantes
 
 1. Uma caixa possui um único código permanente.
