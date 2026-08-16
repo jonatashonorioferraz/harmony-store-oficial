@@ -264,6 +264,32 @@ O módulo **Planejamento de envios** organiza antecipadamente os envios do e-com
 
 A mesma caixa não pode participar de duas reservas ativas. Todas as reservas, liberações e transferências registram usuário, data e vínculo com o plano de envio. Itens exclusivos sem modelo oficial não podem reservar caixas do Inventário.
 
+## Central de Transferências
+
+A **Central de Transferências** organiza toda movimentação de caixas completas entre o Inventário de Produção e o estoque do e-commerce. Ela não tenta calcular o saldo diário do e-commerce: controla a demanda, a reserva das caixas físicas e a confirmação da entrega.
+
+### Solicitação direta
+
+1. Abra **Central de Transferências** e selecione **Nova solicitação**.
+2. Informe título, finalidade, prioridade, data necessária e observação.
+3. Adicione um ou mais modelos, cores e quantidades necessárias usando o mesmo catálogo oficial do Inventário.
+4. Salve a solicitação. Nenhuma caixa é baixada ou reservada nesta etapa.
+5. Abra a solicitação e escolha as caixas físicas exatas. O sistema sugere primeiro as caixas mais antigas para favorecer o giro do estoque.
+6. Uma reserva parcial permanece sinalizada até que todos os itens tenham quantidade suficiente. Toda caixa selecionada sai imediatamente da lista de disponibilidade.
+
+### Solicitação originada em envio FULL
+
+O botão **Solicitar caixas do Inventário** dentro de um cartão FULL cria ou abre a mesma solicitação na Central. Produtos simples e cada componente de um kit mantêm modelo, cor e quantidade independentes, sem duplicar cadastro.
+
+### Despacho e recebimento
+
+1. A gerente de e-commerce ou o ADM principal prepara a solicitação e reserva as caixas.
+2. Um ADM ou colaborador de Recebimento confere e seleciona **Despachar caixas**. Nesse momento a caixa completa é retirada do Inventário e fica **Em transferência**.
+3. Depois da chegada física ao e-commerce, o mesmo perfil seleciona **Confirmar recebimento**.
+4. Cancelamentos antes do despacho liberam as caixas. Uma transferência já despachada não pode ser cancelada para evitar divergência física.
+
+O histórico recente inicia recolhido e pode ser expandido. Os indicadores e a exportação CSV usam apenas eventos registrados no banco. A Central não altera pagamentos, ordens de produção ou solicitações de matéria-prima.
+
 ### Combinações de cores dos kits
 
 - No campo **Cor**, escolha uma cor oficial ou selecione **Nova combinação de cores**.
