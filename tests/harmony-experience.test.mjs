@@ -19,7 +19,7 @@ test('carregamento Harmony é tardio, concorrente e acessível',async()=>{
   assert.match(index,/harmony-experience\.css\?v=25\.62/);
   assert.match(index,/harmony-experience\.js\?v=25\.61/);
   assert.ok(index.indexOf('collaborator-timeline.js')<index.indexOf('harmony-experience.js'),'o interceptador deve ser carregado por último');
-  assert.match(worker,/harmony-store-v25-90-r1/);
+  assert.match(worker,/harmony-store-v25-91-r1/);
   assert.match(worker,/harmony-experience\.js\?v=25\.61/);
   assert.match(worker,/harmony-experience\.css\?v=25\.62/);
 });
@@ -62,5 +62,5 @@ test('documentação da experiência acompanha a versão',async()=>{
   assert.match(technical,/Leitura pela IA — até 84%/);
   assert.match(audit,/Nenhuma permissão/);
   assert.match(changelog,/\[v25\.61\]/);
-  assert.equal(JSON.parse(pkg).version,'25.90.0');
+  assert.equal(JSON.parse(pkg).version,'25.91.0');
 });

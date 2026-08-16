@@ -64,7 +64,7 @@ test('transfer presentation is responsive and included in PDFs and help',()=>{
   assert.match(manual,/não é necessário digitar quantidade/i);
   assert.match(technical,/Esta versão não cria um segundo saldo/);
   assert.match(audit,/zero dados artificiais/);
-  assert.equal(JSON.parse(pkg).version,'25.90.0');
+  assert.equal(JSON.parse(pkg).version,'25.91.0');
 });
 
 test('transfer APIs remain limited to authenticated managers and isolated from other stocks',()=>{
