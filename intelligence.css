@@ -15,3 +15,16 @@
 @media(max-width:1100px){.intel-filters.without-product{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.intel-primary-tabs{position:static;display:grid;grid-template-columns:1fr 1fr;margin:0 0 12px}.intel-primary-tabs button{min-width:0;padding:9px 8px}.intel-primary-tabs button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.intel-subtabs{align-items:flex-start;flex-direction:column;padding:9px 10px}.intel-subtabs>div{width:100%;padding-bottom:2px}.intel-subtabs button{padding:8px 10px}.intel-filters.without-product{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.intel-primary-tabs button i{width:21px;height:21px}.intel-primary-tabs button{font-size:7px}}
+
+/* v25.96 — navegação principal da Inteligência organizada no celular. */
+@media(max-width:720px){
+.intel-primary-tabs{position:static;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%;margin:0 0 12px;padding:8px;overflow:visible}
+.intel-primary-tabs button{grid-column:span 2;min-width:0;min-height:66px;padding:9px 6px;flex-direction:column;gap:6px;border:1px solid transparent;line-height:1.18;text-align:center}
+.intel-primary-tabs button:nth-child(-n+2){grid-column:span 3}
+.intel-primary-tabs button span{display:-webkit-box;overflow:hidden;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.intel-primary-tabs button i{width:30px;height:30px;flex:0 0 30px}
+}
+@media(max-width:380px){
+.intel-primary-tabs{gap:6px;padding:6px}
+.intel-primary-tabs button{min-height:64px;padding:8px 4px;font-size:7px}
+}

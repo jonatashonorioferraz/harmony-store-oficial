@@ -1,5 +1,14 @@
 # Changelog
 
+## [v25.96] - 2026-08-16
+
+### Menu principal da Inteligência organizado no celular
+
+- Os cinco acessos da Inteligência foram distribuídos em uma grade equilibrada: dois botões na primeira linha e três na segunda.
+- Ícones, áreas de toque e alinhamento foram padronizados sem alterar permissões ou conteúdo dos módulos.
+- Títulos podem ocupar até duas linhas, eliminando cortes e botões isolados em telas estreitas.
+- A correção foi sincronizada entre a aplicação oficial, o espelho web e o cache do PWA.
+
 ## [v25.95] - 2026-08-16
 
 ### Shopee Analytics responsivo e funcional em todas as telas
