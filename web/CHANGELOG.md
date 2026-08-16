@@ -1,5 +1,18 @@
 # Changelog
 
+## [v25.95] - 2026-08-16
+
+### Shopee Analytics responsivo e funcional em todas as telas
+
+- O cabeçalho móvel foi compactado e o filtro de período voltou a permanecer visível antes dos indicadores.
+- O calendário de cobertura agora abre dentro do próprio módulo no celular, sem sobrepor botões, abas ou conteúdo.
+- As cinco abas foram reorganizadas em duas linhas acessíveis no celular, eliminando corte e rolagem lateral da página.
+- Visão geral, Produtos, Marketing, Promoções e Importações receberam grades próprias para celular, tablet e computador.
+- Gráficos, indicadores, funis, campanhas, tabelas e histórico passaram a respeitar a largura disponível; tabelas extensas usam somente rolagem interna.
+- A central de importação, filtros do histórico e janela de correção foram adaptados para toque e telas estreitas.
+- Foi reservado espaço seguro acima do menu inferior do aplicativo, evitando que cartões e botões fiquem escondidos.
+- A navegação interna ganhou semântica de abas e foco visível para melhorar acessibilidade e previsibilidade.
+
 ## [v25.94] - 2026-08-16
 
 ### Correção granular de modelos e caixas reservadas
