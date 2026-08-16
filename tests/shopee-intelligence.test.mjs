@@ -72,11 +72,36 @@ test('planilhas diárias e semanais têm uma única fonte canônica por dia',()=
   assert.match(parser,/PERIODO_DA_CORRECAO_DIFERENTE/);
   assert.match(parser,/parsed\.periodStart !== expectedPeriodStart/);
   assert.match(parser,/Nenhum dado foi alterado/);
+  assert.match(parser,/const parserVersion = "1\.3\.0"/);
+  assert.match(parser,/hasHourlyRows/);
+  assert.match(parser,/period\.start === period\.end && hasHourlyRows/);
+  assert.match(parser,/const officialTotal = rows\[1\]/);
+  assert.match(parser,/salesRow\(officialTotal, orderType, period\.start\)/);
+  assert.match(parser,/TOTAL_DIARIO_NAO_LOCALIZADO/);
+  assert.match(parser,/single_day_hourly_consolidated/);
+  assert.match(parser,/if \(uploadedNow\) await admin\.storage\.from\("shopee-imports"\)\.remove/);
   assert.doesNotMatch(ui,/Substituir por arquivo corrigido/);
   assert.match(ui,/scrollIntoView/);
   assert.match(ui,/SH\.from=response\.period_start/);
   assert.match(ui,/dia\(s\) adicionado\(s\)/);
   for(const source of [backup,recovery])assert.match(source,/'shopee_import_days'/);
+});
+
+test('calendário próprio informa cobertura diária sem depender do seletor nativo',()=>{
+  assert.match(ui,/shopee_import_days\?select=metric_date,report_type/);
+  assert.match(ui,/function coverageByDay\(\)/);
+  assert.match(ui,/function coverageState\(iso\)/);
+  assert.match(ui,/function coverageCalendar\(\)/);
+  assert.match(ui,/Dados completos/);
+  assert.match(ui,/Dados parciais/);
+  assert.match(ui,/Sem dados/);
+  assert.match(ui,/Fora do período monitorado/);
+  assert.match(ui,/data-shopee-import-missing/);
+  assert.match(css,/\.shopee-calendar-day\.complete/);
+  assert.match(css,/\.shopee-calendar-day\.partial/);
+  assert.match(css,/\.shopee-calendar-day\.missing/);
+  assert.match(css,/\.shopee-calendar-day\.outside/);
+  assert.match(css,/@media\(max-width:560px\)[\s\S]*\.shopee-coverage-calendar/);
 });
 
 test('histórico de importações é cronológico, compacto e filtrável',()=>{
@@ -120,9 +145,9 @@ test('dashboard is isolated, responsive and available offline',()=>{
   for(const tab of ['overview','products','marketing','promotions','imports'])assert.match(ui,new RegExp(`'${tab}'`));
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
-  assert.match(index,/shopee-intelligence\.css\?v=25\.88/);assert.match(index,/shopee-intelligence\.js\?v=25\.88/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.88/);assert.match(worker,/shopee-intelligence\.js\?v=25\.88/);assert.match(worker,/harmony-store-v25-90-r1/);
-  assert.equal(JSON.parse(pkg).version,'25.90.0');
+  assert.match(index,/shopee-intelligence\.css\?v=25\.91/);assert.match(index,/shopee-intelligence\.js\?v=25\.91/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.91/);assert.match(worker,/shopee-intelligence\.js\?v=25\.91/);assert.match(worker,/harmony-store-v25-91-r1/);
+  assert.equal(JSON.parse(pkg).version,'25.91.0');
 });
 
 test('executive dashboard uses the Shopee identity and exposes daily values',()=>{

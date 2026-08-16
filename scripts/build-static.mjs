@@ -10,6 +10,8 @@ const web = resolve(root, "web");
 // novo (ou o contrário), principalmente após uma atualização do PWA.
 for (const filename of [
   "CHANGELOG.md",
+  "agenda-harmony.css",
+  "agenda-harmony.js",
   "help-center.js",
   "index.html",
   "service-worker.js",

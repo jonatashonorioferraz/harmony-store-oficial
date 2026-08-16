@@ -19,4 +19,19 @@
 @media(max-width:1100px){.agenda-week-grid{display:flex;overflow-x:auto;padding:1px 1px 7px;scroll-snap-type:x proximity}.agenda-week-card{flex:0 0 180px;scroll-snap-align:start}.agenda-home-intelligence>div{grid-template-columns:1fr}.agenda-home-intelligence>div>span{border-right:0;border-bottom:1px solid #ebe3e8}.agenda-home-intelligence>div>span:last-child{border-bottom:0}}
 @media(max-width:720px){.agenda-home-title{align-items:flex-start;flex-wrap:wrap}.agenda-ai-status{margin-top:4px}.agenda-home-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.agenda-home-actions .outline{display:block}.agenda-week{padding-inline:11px}.agenda-week-card{flex-basis:104px;min-height:112px}.agenda-week-date{min-height:62px}.agenda-week-date b{font-size:19px}.agenda-week-entries{align-items:center;justify-content:center;gap:5px;padding:8px}.agenda-week-entry{display:block;font-size:0}.agenda-week-entry>i{display:block;margin:0}.agenda-week-empty{min-height:auto;font-size:0}.agenda-week-empty::before{content:"";display:block;width:7px;height:7px;border-radius:50%;background:#ddd5d9}.agenda-week-entries>strong{font-size:6px}.agenda-week-progress{display:flex;justify-content:center;gap:7px;padding:3px 0 10px}.agenda-week-progress i{width:6px;height:6px;border-radius:50%;background:#d5cdd1}.agenda-week-progress i.active{width:16px;border-radius:999px;background:#cf467f}.agenda-mobile-day-detail{display:grid;gap:11px;padding:12px;border:1px solid #ead7e0;border-radius:12px;background:#fff}.agenda-mobile-day-detail>div{display:grid;gap:9px}.agenda-mobile-day-detail .agenda-week-entry{display:grid;font-size:8px}.agenda-mobile-day-detail button{width:100%}.agenda-home-intelligence{margin-inline:11px}.agenda-home-intelligence>header{align-items:flex-start}.agenda-home-intelligence>header small{max-width:160px;text-align:right}}
 @media(max-width:430px){.agenda-home-actions{grid-template-columns:1fr}.agenda-week-card{flex-basis:96px}.agenda-home-intelligence>header{display:grid}.agenda-home-intelligence>header small{max-width:none;text-align:left}}
+
+/* Ações compactas e independentes do calendário no celular. Mantê-las no
+   fluxo normal evita que botões cubram a agenda em telas estreitas. */
+@media(max-width:720px){
+  .agenda-home-head{position:relative;display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:12px}
+  .agenda-home-head>div{min-width:0}
+  .agenda-home-actions{position:static;z-index:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;width:100%;min-width:0}
+  .agenda-home-actions .outline{display:block}
+  .agenda-home-actions button{position:static;display:block;width:100%;min-width:0;max-width:100%;margin:0;padding:9px 8px;overflow:hidden;font-size:7px;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+  .agenda-week{position:relative;z-index:0;clear:both}
+}
+@media(max-width:430px){
+  .agenda-home-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .agenda-home-actions button{min-height:38px}
+}
 @media(prefers-reduced-motion:reduce){.agenda-week-card{transition:none}.agenda-week-card:hover,.agenda-week-card:focus-visible{transform:none}}

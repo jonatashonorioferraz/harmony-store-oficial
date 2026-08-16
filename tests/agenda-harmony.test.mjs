@@ -132,15 +132,19 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
   assert.match(css,/@media\(max-width:720px\)/);
   assert.match(css,/@media\(max-width:430px\)/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-  assert.match(index,/agenda-harmony\.css\?v=25\.78/);
-  assert.match(index,/agenda-harmony\.js\?v=25\.78/);
-  assert.match(worker,/harmony-store-v25-90-r1/);
-  assert.match(worker,/agenda-harmony\.css\?v=25\.78/);
-  assert.match(worker,/agenda-harmony\.js\?v=25\.78/);
+  assert.match(index,/agenda-harmony\.css\?v=25\.91/);
+  assert.match(index,/agenda-harmony\.js\?v=25\.91/);
+  assert.match(worker,/harmony-store-v25-91-r1/);
+  assert.match(worker,/agenda-harmony\.css\?v=25\.91/);
+  assert.match(worker,/agenda-harmony\.js\?v=25\.91/);
   assert.match(help,/id:'agenda-harmony'/);
   assert.match(help,/calendário semanal da Agenda/);
   assert.match(help,/Central de Pendências/);
-  assert.equal(JSON.parse(pkg).version,'25.90.0');
+  assert.match(ui,/>Ver agenda<\/button>/);
+  assert.doesNotMatch(ui,/Ver agenda completa/);
+  assert.match(css,/\.agenda-home-actions\{position:static;z-index:0;display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
+  assert.match(css,/\.agenda-week\{position:relative;z-index:0;clear:both\}/);
+  assert.equal(JSON.parse(pkg).version,'25.91.0');
 });
 
 test('backup and isolated recovery include every Agenda table',()=>{

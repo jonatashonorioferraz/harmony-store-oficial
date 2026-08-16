@@ -1,5 +1,17 @@
 # Changelog
 
+## [v25.91] - 2026-08-15
+
+### Planilhas diárias, calendário de dados e Agenda móvel
+
+- Relatórios diários de **Estatísticas da Loja** com detalhamento por hora agora usam uma única vez o total oficial consolidado da Shopee, evitando registros repetidos na mesma data.
+- A compatibilidade com relatórios semanais foi preservada e a proteção canônica `tipo de relatório + dia` continua impedindo soma duplicada.
+- Falhas na gravação removem uploads recém-criados sem vínculo, preservam uploads anteriores e retornam mensagens específicas com identificador técnico.
+- O filtro do Shopee Analytics recebeu um calendário próprio: verde para dados completos, amarelo para dados parciais, vermelho para dias sem dados e cinza para dias ainda não monitorados.
+- Ao selecionar um dia incompleto, o calendário informa exatamente quais relatórios faltam e oferece acesso direto à importação.
+- Na Home móvel, os botões **Nova tarefa** e **Ver agenda** permanecem compactos, lado a lado e sem cobrir o calendário.
+- Nenhuma permissão, regra de estoque, solicitação, pagamento ou dado previamente importado foi alterado.
+
 ## [v25.90] - 2026-08-15
 
 ### Agrupamento correto de Conta e Financeiro

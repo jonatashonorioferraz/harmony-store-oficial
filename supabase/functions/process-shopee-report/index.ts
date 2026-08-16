@@ -9,7 +9,7 @@ const allowedOrigins = new Set([
 ]);
 const reportTypes = new Set(["shop_stats", "product_funnel", "promotions"]);
 const maxFileBytes = 12 * 1024 * 1024;
-const parserVersion = "1.2.0";
+const parserVersion = "1.3.0";
 
 const corsFor = (request: Request) => {
   const origin = request.headers.get("Origin") || "";
@@ -94,14 +94,27 @@ function parseShopStats(workbook: XLSX.WorkBook): ParsedReport {
   const period = periodRange(placed.rows[1]?.[0]);
   result.periodStart = period.start; result.periodEnd = period.end;
 
-  const parseSales = (rows: unknown[][], orderType: "placed" | "paid") => rows.slice(4).filter(row => /^\d{1,2}\//.test(String(row[0] || ""))).map(row => ({
-    metric_date: isoDate(row[0]), order_type: orderType, sales: numberBR(row[1]),
+  const salesRow = (row: unknown[], orderType: "placed" | "paid", metricDate = isoDate(row[0])) => ({
+    metric_date: metricDate, order_type: orderType, sales: numberBR(row[1]),
     sales_without_shopee_discount: numberBR(row[2]), orders: numberBR(row[3]), average_order_value: numberBR(row[4]),
     product_clicks: integerBR(row[5]), visitors: integerBR(row[6]), conversion_rate: rateBR(row[7]),
     cancelled_orders: numberBR(row[8]), cancelled_sales: numberBR(row[9]), refunded_orders: numberBR(row[10]),
     refunded_sales: numberBR(row[11]), buyers: integerBR(row[12]), new_buyers: integerBR(row[13]),
     returning_buyers: integerBR(row[14]), potential_buyers: integerBR(row[15]),
-  }));
+  });
+  const parseSales = (rows: unknown[][], orderType: "placed" | "paid") => {
+    const detailRows = rows.slice(4).filter(row => /^\d{1,2}\//.test(String(row[0] || "")));
+    const hasHourlyRows = detailRows.some(row => /^\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}/.test(String(row[0] || "").trim()));
+    // O relatório de um único dia traz 24 linhas horárias. Visitantes,
+    // compradores e taxas não são aditivos, portanto o total confiável é a
+    // linha consolidada oficial fornecida pela própria Shopee.
+    if (period.start === period.end && hasHourlyRows) {
+      const officialTotal = rows[1] || [];
+      if (!/^\d{1,2}\//.test(String(officialTotal[0] || ""))) throw new Error("TOTAL_DIARIO_NAO_LOCALIZADO");
+      return [salesRow(officialTotal, orderType, period.start)];
+    }
+    return detailRows.map(row => salesRow(row, orderType));
+  };
   result.sales = [...parseSales(placed.rows, "placed"), ...parseSales(paid.rows, "paid")];
 
   const trafficPlaced = findSheet(workbook, name => name.includes("pedidos enviados") && name.includes("fontes"));
@@ -146,7 +159,8 @@ function parseShopStats(workbook: XLSX.WorkBook): ParsedReport {
   };
   result.products = [...parseProducts(productsPlaced.rows, "placed"), ...parseProducts(productsPaid.rows, "paid")];
   if (result.sales.length < 2 || result.traffic.length < 2 || result.products.length < 1) throw new Error("RELATORIO_SEM_DADOS_VALIDOS");
-  result.summary = { sales_rows: result.sales.length, traffic_rows: result.traffic.length, product_rows: result.products.length };
+  result.summary = { sales_rows: result.sales.length, traffic_rows: result.traffic.length, product_rows: result.products.length,
+    single_day_hourly_consolidated: period.start === period.end && result.sales.length === 2 };
   return result;
 }
 
@@ -250,6 +264,7 @@ Deno.serve(async request => {
       contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", upsert: false,
     });
     if (uploadError && !/already exists|duplicate/i.test(uploadError.message)) throw uploadError;
+    const uploadedNow = !uploadError;
     const { data: committed, error: commitError } = await admin.rpc("service_commit_shopee_import_v2", {
       p_report_type: reportType, p_period_start: parsed.periodStart, p_period_end: parsed.periodEnd,
       p_file_name: safeText(file.name, 240), p_file_size_bytes: file.size, p_file_hash: hash,
@@ -259,8 +274,13 @@ Deno.serve(async request => {
       p_promotion_metrics: parsed.promotionMetrics, p_campaigns: parsed.campaigns,
       p_import_mode: importMode,
     });
-    if (commitError) throw commitError;
-    if (committed?.status === "already_covered") {
+    if (commitError) {
+      if (uploadedNow) await admin.storage.from("shopee-imports").remove([storagePath]);
+      console.error(JSON.stringify({ event: "shopee_report_commit_error", error_id: errorId,
+        code: commitError.code, hint: commitError.hint, details: commitError.details }));
+      throw new Error(commitError.code || "FALHA_AO_REGISTRAR_IMPORTACAO");
+    }
+    if (committed?.status === "already_covered" && uploadedNow) {
       await admin.storage.from("shopee-imports").remove([storagePath]);
     }
     return reply(request, { ok: true, result: committed, report_type: reportType, period_start: parsed.periodStart,
@@ -276,8 +296,11 @@ Deno.serve(async request => {
       PERIODO_DA_CORRECAO_DIFERENTE: "O arquivo selecionado não corresponde exatamente ao período escolhido para correção. Nenhum dado foi alterado.",
       DATA_INVALIDA: "Uma das datas da planilha não pôde ser validada.",
       RELATORIO_SEM_DADOS_VALIDOS: "A planilha não possui dados válidos para importar.",
+      TOTAL_DIARIO_NAO_LOCALIZADO: "A planilha diária não possui a linha oficial de totais da Shopee.",
       QUANTIDADE_DE_ABAS_INVALIDA: "A estrutura do arquivo não é compatível com os relatórios da Shopee.",
       QUANTIDADE_DE_LINHAS_INVALIDA: "A quantidade de linhas do relatório é inválida.",
+      "23505": "A planilha contém dados repetidos na mesma data. Nenhum valor foi registrado.",
+      FALHA_AO_REGISTRAR_IMPORTACAO: "A planilha foi validada, mas não foi possível registrar os dados. Nenhum valor foi alterado.",
     };
     return reply(request, { error: messages[code] || "Não foi possível validar e importar esta planilha.", error_id: errorId }, 400);
   }
