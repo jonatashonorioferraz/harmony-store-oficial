@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Validação responsiva — Shopee Analytics</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../shopee-intelligence.css">
+</head>
+<body style="margin:0;padding:12px;background:#fff7fb">
+  <div id="shopeeIntelligenceDashboard" class="shopee-intelligence-dashboard">
+    <div class="shopee-intelligence">
+      <header class="shopee-header">
+        <div class="shopee-header-brand"><span class="shopee-brand-logo"><img src="../../assets/platform-shopee.svg" alt="Shopee"></span><span><p class="eyebrow">INTELIGÊNCIA SHOPEE</p><h2>Desempenho da loja</h2><p>Dados oficiais de vendas, produtos, marketing, promoções e IA.</p></span></div>
+        <div class="shopee-header-actions">
+          <div class="shopee-period"><button class="shopee-date-trigger"><span>De</span><b>01/08/2026</b><i class="complete"></i></button><em>até</em><button class="shopee-date-trigger"><span>Até</span><b>16/08/2026</b><i class="partial"></i></button><button id="applyShopeeFilters">→</button></div>
+          <span class="shopee-validation complete"><b>✓</b> Relatórios validados</span>
+          <button class="shopee-outline on-orange">↻ Atualizar</button><button class="shopee-primary on-orange">⇧ Abrir importação</button>
+        </div>
+      </header>
+      <nav class="shopee-tabs" role="tablist" aria-label="Relatórios Shopee">
+        <button class="active" role="tab" aria-selected="true">Visão geral</button><button role="tab">Produtos</button><button role="tab">Marketing</button><button role="tab">Promoções</button><button role="tab">Importações</button>
+      </nav>
+      <main>
+        <section class="shopee-kpis">
+          <article><i>↗</i><span><small>VENDAS REALIZADAS</small><b>R$ 146.842,73</b><em>3.435 pedidos</em></span></article>
+          <article><i>✓</i><span><small>VENDAS PAGAS</small><b>R$ 138.204,51</b><em>3.221 pedidos</em></span></article>
+          <article><i>□</i><span><small>ITENS PAGOS</small><b>12.480</b><em>unidades</em></span></article>
+          <article><i>%</i><span><small>CONVERSÃO</small><b>4,8%</b><em>visita até compra</em></span></article>
+        </section>
+        <div class="shopee-executive-grid">
+          <section class="card shopee-trend-card"><div class="shopee-chart-heading"><div><p class="eyebrow">VENDAS AO LONGO DO PERÍODO</p><h2>Faturamento diário</h2></div><div class="shopee-chart-toggle"><button class="active">Faturamento (R$)</button><button>Pedidos</button></div></div><div class="shopee-chart-selected"><span><small>15/08/2026</small><b>R$ 8.420,00</b><em>Realizado</em></span><span><small>CONFIRMADO</small><b>R$ 7.980,00</b><em>Pago</em></span><span><small>DIFERENÇA</small><b>R$ 440,00</b><em>Acompanhamento</em></span></div><svg class="shopee-line-chart" viewBox="0 0 820 300"><polyline class="placed" points="74,235 220,180 360,210 500,115 650,155 798,60"></polyline><polyline class="paid" points="74,250 220,195 360,225 500,132 650,170 798,80"></polyline></svg></section>
+          <section class="card shopee-funnel-card"><header><p class="eyebrow">FUNIL</p><h2>Da visita ao pagamento</h2></header><div class="shopee-funnel"><article><span><small>Visitantes</small><b>25.480</b></span><em>100%</em></article><article><span><small>Carrinho</small><b>6.220</b></span><em>24%</em></article><article><span><small>Pagos</small><b>3.221</b></span><em>52%</em></article></div></section>
+        </div>
+        <section class="card shopee-section"><div class="card-head"><div><p class="eyebrow">PRODUTOS</p><h2>Produtos líderes</h2></div></div><div class="table-wrap"><table class="shopee-table"><thead><tr><th>Produto</th><th>Vendas</th><th>Unidades</th><th>Conversão</th></tr></thead><tbody><tr><td><b>Mini Sabonete Coração 2g</b></td><td>R$ 24.850,00</td><td>3.200</td><td>6,4%</td></tr></tbody></table></div></section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
