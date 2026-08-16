@@ -34,7 +34,7 @@ test('ícones possuem estados profissionais e responsivos',()=>{
 test('ativos vetoriais atuais são carregados e mantidos offline',()=>{
   assert.match(index,/harmony-icons\.css\?v=25\.92/);
   assert.match(index,/harmony-icons\.js\?v=25\.92/);
-  assert.match(worker,/harmony-store-v25-93-r1/);
+  assert.match(worker,/harmony-store-v25-94-r1/);
   assert.match(worker,/harmony-icons\.css\?v=25\.92/);
   assert.match(worker,/harmony-icons\.js\?v=25\.92/);
 });
