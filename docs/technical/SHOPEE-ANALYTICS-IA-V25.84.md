@@ -79,3 +79,12 @@ Falhas de importação não criam lote parcial. Falhas da IA não afetam as mét
 - A tabela nova possui RLS, leitura administrativa, privilégio integral apenas para `service_role`, índice por lote e cobertura nos fluxos de backup e recuperação.
 
 O salvamento de kits compostos também foi corrigido na mesma versão: o item intermediário nasce como um exclusivo válido e recebe `item_kind='kit'` e `kit_template_id` atomicamente na mesma transação. A restrição de integridade não foi enfraquecida.
+
+## Consolidação diária e calendário de cobertura — v25.91
+
+- O parser `1.3.0` detecta relatórios de um único dia com linhas horárias em `Pedido Feito` e `Produto Pago`.
+- Para esse formato, `rows[1]` é a linha consolidada oficial e gera exatamente um fato `placed` e um fato `paid` para a data. Métricas não aditivas, como visitantes e compradores, nunca são somadas por hora.
+- Relatórios semanais continuam usando suas linhas diárias; o ramo horário só é executado quando `period_start = period_end` e há horário no campo de data.
+- Se a RPC transacional falhar, o objeto recém-enviado ao Storage é removido. Objetos já existentes não são apagados.
+- O calendário consulta `shopee_import_days` sob a RLS administrativa já existente e transforma a contagem de tipos por dia em quatro estados visuais.
+- Vermelho e amarelo são atalhos de diagnóstico e importação, não operações de banco. O registro canônico continua pertencendo exclusivamente à RPC de importação.
