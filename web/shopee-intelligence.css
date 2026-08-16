@@ -98,3 +98,161 @@
   .shopee-coverage-calendar>footer{align-items:stretch;flex-direction:column}
   .shopee-coverage-calendar>footer button{width:100%}
 }
+
+/* Shopee Analytics v25.92 — calendário integrado ao fluxo, sem sobreposição */
+.shopee-header-brand{flex-basis:100%}
+.shopee-header-actions{display:grid!important;grid-template-columns:minmax(430px,1fr) auto auto auto;width:100%;flex-basis:100%;align-items:start!important}
+.shopee-period{width:100%;min-width:0}
+.shopee-period:has(.shopee-coverage-calendar){display:grid;grid-template-columns:minmax(145px,1fr) auto minmax(145px,1fr) 36px;align-items:center;grid-column:1/-1;padding:8px}
+.shopee-period:has(.shopee-coverage-calendar)>.shopee-coverage-calendar{position:static;grid-column:1/-1;width:100%;max-width:none;max-height:none;margin-top:8px;overflow:visible;box-shadow:0 14px 36px rgba(82,34,24,.18)}
+.shopee-period>#applyShopeeFilters{position:relative;z-index:2;flex:none;min-width:34px;width:34px!important;height:34px!important}
+@media(max-width:1050px){
+  .shopee-header-actions{grid-template-columns:1fr 1fr}
+  .shopee-period,.shopee-validation{grid-column:1/-1}
+  .shopee-header-actions>.on-orange{width:100%}
+}
+@media(max-width:620px){
+  .shopee-header-actions{grid-template-columns:1fr}
+  .shopee-period:has(.shopee-coverage-calendar){grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 36px}
+  .shopee-period:has(.shopee-coverage-calendar)>.shopee-coverage-calendar{padding:10px}
+  .shopee-calendar-day{height:34px!important}
+  .shopee-coverage-calendar>footer{align-items:stretch;flex-direction:column}
+  .shopee-coverage-calendar>footer button{width:100%}
+}
+
+/* Shopee Analytics v25.95 — revisão responsiva completa */
+.shopee-intelligence-dashboard,.shopee-intelligence,.shopee-intelligence>main,.shopee-intelligence>main>*{width:100%;max-width:100%;min-width:0}
+.shopee-intelligence{isolation:isolate}
+.shopee-intelligence>main{overflow:clip}
+.shopee-intelligence .table-wrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.shopee-intelligence img,.shopee-intelligence svg{max-width:100%}
+.shopee-header-actions{align-content:start}
+.shopee-period>.shopee-coverage-calendar{position:absolute;top:calc(100% + 10px);right:0;z-index:220;width:min(390px,calc(100vw - 32px));max-height:min(640px,calc(100vh - 110px));overflow:auto}
+.shopee-tabs button{min-height:46px;outline-offset:-3px}
+.shopee-tabs button:focus-visible,.shopee-date-trigger:focus-visible,.shopee-period>#applyShopeeFilters:focus-visible{outline:3px solid rgba(238,77,45,.28)}
+
+@media(max-width:1100px){
+  .shopee-header{align-items:stretch;flex-direction:column;gap:16px;padding:20px 22px;overflow:visible}
+  .shopee-header-brand,.shopee-header-actions{width:100%;flex:none}
+  .shopee-header-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .shopee-period,.shopee-validation{grid-column:1/-1}
+  .shopee-period{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 44px;gap:5px;width:100%;padding:6px}
+  .shopee-date-trigger{min-width:0;min-height:44px}
+  .shopee-period>#applyShopeeFilters{width:44px!important;height:44px!important;min-width:44px}
+  .shopee-header-actions>.on-orange{width:100%;min-height:44px}
+  .shopee-executive-grid{grid-template-columns:1fr 1fr}
+  .shopee-trend-card,.shopee-funnel-card,.shopee-ai-panel{grid-column:auto}
+  .shopee-trend-card,.shopee-ai-panel{grid-column:1/-1}
+  .shopee-support-grid{grid-template-columns:1fr 1fr}
+  .shopee-support-grid>*:last-child{grid-column:1/-1}
+  .shopee-products-grid,.shopee-marketing-grid,.shopee-overview-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:720px){
+  .shopee-intelligence-dashboard{margin-inline:0;padding:0 0 calc(104px + env(safe-area-inset-bottom));overflow:visible}
+  .shopee-intelligence{gap:0;border-radius:18px;overflow:hidden}
+  .shopee-header{gap:14px;padding:16px;border-radius:0;overflow:visible}
+  .shopee-header:after{right:-80px;top:-100px;width:230px;height:230px;border-width:34px}
+  .shopee-header-brand{display:grid!important;grid-template-columns:112px minmax(0,1fr);align-items:center!important;gap:12px!important;min-height:0;flex-basis:auto}
+  .shopee-brand-logo{width:112px;height:48px;min-width:112px;padding:6px 8px;border-radius:13px}
+  .shopee-header-brand>span{display:grid;align-content:center;gap:1px}
+  .shopee-header h2{margin:0;font-size:clamp(23px,7vw,28px);line-height:1.02}
+  .shopee-header p{font-size:11px;line-height:1.35}
+  .shopee-header .eyebrow{font-size:8px;line-height:1.25}
+  .shopee-header-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;width:100%;flex-basis:auto}
+  .shopee-period{grid-column:1/-1;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:6px;border-radius:13px}
+  .shopee-period>em{display:none}
+  .shopee-date-trigger{grid-template-columns:auto minmax(0,1fr) 8px;min-width:0;min-height:44px;padding:6px 8px;border-radius:9px;background:#fff8f5}
+  .shopee-date-trigger b{overflow:hidden;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+  .shopee-period>#applyShopeeFilters{display:grid!important;width:44px!important;height:44px!important;min-width:44px;border-radius:10px;font-size:18px}
+  .shopee-validation{grid-column:1/-1;justify-content:center;min-height:40px;text-align:center}
+  .shopee-header-actions>.on-orange{grid-column:auto;min-height:44px;padding:9px 8px;font-size:11px}
+  .shopee-period>.shopee-coverage-calendar,.shopee-period:has(.shopee-coverage-calendar)>.shopee-coverage-calendar{position:static;grid-column:1/-1;width:100%;max-width:none;max-height:68vh;margin-top:4px;padding:10px;overflow:auto;border-radius:14px;box-shadow:0 12px 32px rgba(82,34,24,.17)}
+  .shopee-calendar-day{height:42px!important}
+  .shopee-calendar-day>span{font-size:11px}
+  .shopee-coverage-calendar>footer{align-items:stretch;flex-direction:column}
+  .shopee-coverage-calendar>footer button{width:100%;min-height:40px;font-size:9px}
+  .shopee-tabs{position:sticky;top:0;z-index:12;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:6px;border-bottom:1px solid #f1d5ce;overflow:visible;background:rgba(255,255,255,.97);box-shadow:0 6px 18px rgba(111,54,37,.07);backdrop-filter:blur(8px)}
+  .shopee-tabs button{grid-column:span 2;display:grid;place-items:center;min-width:0;min-height:44px;padding:7px 4px;border:1px solid transparent;border-radius:9px;font-size:10px;line-height:1.15;white-space:normal;text-align:center}
+  .shopee-tabs button:nth-child(4),.shopee-tabs button:nth-child(5){grid-column:span 3}
+  .shopee-tabs button.active{border-color:#ffd2c7;border-radius:9px;background:#fff1ed}
+  .shopee-tabs button.active:after{left:24%;right:24%;bottom:3px;height:2px}
+  .shopee-intelligence>main{display:grid;gap:12px;padding:12px 10px calc(16px + env(safe-area-inset-bottom));overflow:clip}
+  .shopee-kpis{grid-template-columns:1fr 1fr;gap:8px}
+  .shopee-kpis article{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;min-height:92px;padding:12px;gap:9px}
+  .shopee-kpis article>i{width:38px;height:38px;flex-basis:38px;border-radius:11px;font-size:17px}
+  .shopee-kpis article b{font-size:clamp(18px,5.7vw,23px);overflow-wrap:anywhere}
+  .shopee-kpis article small{font-size:8px}.shopee-kpis article em{font-size:9px}
+  .shopee-executive-grid,.shopee-support-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .shopee-trend-card,.shopee-funnel-card,.shopee-ai-panel,.shopee-support-grid>*{grid-column:1/-1!important;width:100%;padding:14px}
+  .shopee-chart-heading{display:grid;gap:10px}
+  .shopee-chart-heading h2,.shopee-funnel-card h2,.shopee-ai-panel h2,.shopee-snapshot h2{font-size:21px}
+  .shopee-chart-toggle{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .shopee-chart-toggle button{min-height:38px;white-space:normal}
+  .shopee-chart-selected{grid-template-columns:1fr;gap:6px}
+  .shopee-chart-selected>span:last-child{grid-column:auto}
+  .shopee-chart-wrap{width:100%;min-height:0;overflow:hidden}
+  .shopee-line-chart{width:100%;height:auto;min-width:0;max-height:none}
+  .shopee-daily-values{margin-right:0;padding-bottom:9px}
+  .shopee-daily-values button{min-width:112px;min-height:62px}
+  .shopee-mini-donut-layout,.shopee-donut-layout{grid-template-columns:1fr;justify-items:center}
+  .shopee-mini-donut-layout>div:last-child,.shopee-donut-layout>div:last-child{width:100%}
+  .shopee-products-grid,.shopee-marketing-grid,.shopee-overview-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .shopee-section,.shopee-alerts{width:100%;padding:14px;overflow:hidden}
+  .shopee-section .card-head{align-items:flex-start;gap:8px;margin-bottom:12px}
+  .shopee-section .card-head h2,.shopee-alerts h2{font-size:22px}
+  .shopee-funnel article{width:100%!important;min-width:0!important}
+  .shopee-campaigns>article{grid-template-columns:1fr;padding:13px;gap:12px}
+  .shopee-campaigns dl{grid-template-columns:1fr 1fr;gap:6px}
+  .shopee-campaigns dd{overflow-wrap:anywhere}
+  .shopee-ai-summary{display:grid;gap:14px;padding:16px}
+  .shopee-ai-summary>div:last-child{justify-items:stretch;width:100%;min-width:0}
+  .shopee-ai-insights{grid-template-columns:1fr}
+  .shopee-ai-insights article{padding:14px}
+  .shopee-import-hero{display:grid;gap:13px;padding:16px;border-radius:16px}
+  .shopee-import-hero>div{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;gap:11px}
+  .shopee-import-hero .shopee-brand-logo{width:96px;min-width:96px;height:44px}
+  .shopee-import-hero h2{font-size:23px;line-height:1.05}
+  .shopee-import-hero p{font-size:11px;line-height:1.4}
+  .shopee-import-hero aside{width:100%;min-width:0;padding:11px}
+  .shopee-import-upload-region,.shopee-import-current{gap:12px;padding:13px;border-radius:15px}
+  .shopee-import-upload-region>header,.shopee-import-current>header{align-items:flex-start;flex-direction:column}
+  .shopee-import-upload-region>header em,.shopee-import-current>header>em{white-space:normal}
+  .shopee-new-import-grid,.shopee-import-grid{grid-template-columns:1fr;gap:10px}
+  .shopee-new-import-card,.shopee-import-card{padding:13px;border-radius:14px}
+  .shopee-import-meta{display:grid;gap:7px}
+  .shopee-import-meta strong{justify-self:start}
+  .shopee-import-history>.card-head{align-items:flex-start;flex-direction:column}
+  .shopee-history-total{align-self:flex-start}
+  .shopee-history-filters{grid-template-columns:1fr;padding:11px}
+  .shopee-history-filters label:first-child{grid-column:auto}
+  .shopee-history-filters select,.shopee-history-filters input,.shopee-history-filters button{min-height:44px}
+  .shopee-history-window{max-height:58vh;border-radius:11px}
+  .shopee-history-window .shopee-table{min-width:820px}
+  .shopee-table{min-width:640px}
+  .shopee-table th,.shopee-table td{padding:10px 8px}
+  .shopee-history-footer{align-items:flex-start;flex-direction:column}
+  .shopee-history-footer b{white-space:normal}
+  .shopee-settings form,.shopee-budget{display:grid;grid-template-columns:1fr}
+  .shopee-correction-dialog{max-height:calc(100vh - 24px);overflow:auto}
+  .shopee-correction-dialog form{padding:21px 15px}
+  .shopee-correction-selection{grid-template-columns:1fr}
+  .shopee-correction-selection span:last-child{grid-column:auto}
+  .shopee-correction-dialog footer{display:grid}
+  .shopee-correction-dialog footer button{width:100%;min-height:44px}
+}
+
+@media(max-width:420px){
+  .shopee-header-brand{grid-template-columns:96px minmax(0,1fr);gap:9px!important}
+  .shopee-brand-logo{width:96px;min-width:96px;height:44px}
+  .shopee-header h2{font-size:22px}
+  .shopee-header-brand>span>p:last-child{display:none}
+  .shopee-kpis{grid-template-columns:1fr}
+  .shopee-kpis article{min-height:80px}
+  .shopee-period{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 42px}
+  .shopee-date-trigger{padding-inline:6px}
+  .shopee-date-trigger span{font-size:7px}.shopee-date-trigger b{font-size:9px}
+  .shopee-period>#applyShopeeFilters{width:42px!important;height:42px!important;min-width:42px}
+  .shopee-tabs button{font-size:9px}
+  .shopee-campaigns dl{grid-template-columns:1fr}
+}

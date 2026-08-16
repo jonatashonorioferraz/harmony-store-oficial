@@ -24,14 +24,14 @@ const [sql,corrections,indexes,foundation,ui,css,integration,icons,index,worker,
 ]);
 
 test('central is versioned, available offline and included in static build',()=>{
-  assert.equal(JSON.parse(pkg).version,'25.94.0');
+  assert.equal(JSON.parse(pkg).version,'25.95.0');
   for(const asset of ['transfer-center.css','transfer-center.js']){
     assert.match(index,new RegExp(asset.replaceAll('.','\\.')));
     assert.match(worker,new RegExp(asset.replaceAll('.','\\.')));
   }
   assert.match(ui,/assets\/peugeot-expert-harmony\.png/);
   assert.match(worker,/assets\/peugeot-expert-harmony\.png/);
-  assert.match(worker,/harmony-store-v25-94-r1/);
+  assert.match(worker,/harmony-store-v25-95-r1/);
 });
 
 test('schema is additive, constrained and protected by row level security',()=>{
