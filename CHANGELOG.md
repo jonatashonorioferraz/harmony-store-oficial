@@ -1,5 +1,19 @@
 # Changelog
 
+## [v25.92] - 2026-08-16
+
+### Central de Transferências e estabilidade do Shopee Analytics
+
+- Nova **Central de Transferências** para solicitar, reservar, despachar e confirmar o recebimento de caixas completas do Inventário de Produção.
+- Solicitações diretas e solicitações originadas em cartões FULL compartilham o mesmo fluxo, as mesmas permissões e o mesmo histórico auditável.
+- A gerente de e-commerce e o ADM principal podem selecionar caixas físicas exatas por modelo e cor; ADM e Recebimento confirmam a saída e o recebimento.
+- Reservas parciais retiram imediatamente a caixa da disponibilidade, sem baixar o saldo antes da transferência física.
+- O painel ganhou indicadores operacionais, relatório CSV e histórico recente recolhido por padrão para preservar a leitura da página.
+- A compatibilidade com versões anteriores do PWA foi mantida no banco para impedir erros em aparelhos ainda com arquivos em cache.
+- O calendário de cobertura e o botão de filtro do Shopee Analytics foram reorganizados para não sobrepor conteúdo em computador, tablet ou celular.
+- Backup e recuperação passam a incluir os itens individualizados das solicitações de transferência.
+- Nenhuma regra de pagamento, recebimento de produção ou cadastro oficial de produtos foi modificada.
+
 ## [v25.91] - 2026-08-15
 
 ### Planilhas diárias, calendário de dados e Agenda móvel

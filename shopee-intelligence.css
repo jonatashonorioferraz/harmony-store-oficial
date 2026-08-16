@@ -98,3 +98,24 @@
   .shopee-coverage-calendar>footer{align-items:stretch;flex-direction:column}
   .shopee-coverage-calendar>footer button{width:100%}
 }
+
+/* Shopee Analytics v25.92 — calendário integrado ao fluxo, sem sobreposição */
+.shopee-header-brand{flex-basis:100%}
+.shopee-header-actions{display:grid!important;grid-template-columns:minmax(430px,1fr) auto auto auto;width:100%;flex-basis:100%;align-items:start!important}
+.shopee-period{width:100%;min-width:0}
+.shopee-period:has(.shopee-coverage-calendar){display:grid;grid-template-columns:minmax(145px,1fr) auto minmax(145px,1fr) 36px;align-items:center;grid-column:1/-1;padding:8px}
+.shopee-period:has(.shopee-coverage-calendar)>.shopee-coverage-calendar{position:static;grid-column:1/-1;width:100%;max-width:none;max-height:none;margin-top:8px;overflow:visible;box-shadow:0 14px 36px rgba(82,34,24,.18)}
+.shopee-period>#applyShopeeFilters{position:relative;z-index:2;flex:none;min-width:34px;width:34px!important;height:34px!important}
+@media(max-width:1050px){
+  .shopee-header-actions{grid-template-columns:1fr 1fr}
+  .shopee-period,.shopee-validation{grid-column:1/-1}
+  .shopee-header-actions>.on-orange{width:100%}
+}
+@media(max-width:620px){
+  .shopee-header-actions{grid-template-columns:1fr}
+  .shopee-period:has(.shopee-coverage-calendar){grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) 36px}
+  .shopee-period:has(.shopee-coverage-calendar)>.shopee-coverage-calendar{padding:10px}
+  .shopee-calendar-day{height:34px!important}
+  .shopee-coverage-calendar>footer{align-items:stretch;flex-direction:column}
+  .shopee-coverage-calendar>footer button{width:100%}
+}
