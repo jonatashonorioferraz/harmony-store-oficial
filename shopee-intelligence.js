@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const SH={tab:'overview',loaded:false,loading:null,error:'',data:null,usage:null,analyses:[],analysis:null,insights:[],from:'',to:'',uploading:'',trendMetric:'sales',activeTrendIndex:null,historyCategory:'all',historyFrom:'',historyTo:''};
+const SH={tab:'overview',loaded:false,loading:null,error:'',data:null,coverage:[],usage:null,analyses:[],analysis:null,insights:[],from:'',to:'',uploading:'',trendMetric:'sales',activeTrendIndex:null,historyCategory:'all',historyFrom:'',historyTo:'',calendarOpen:'',calendarMonth:'',coverageSelected:''};
 const ANALYSIS_REQUEST_TIMEOUT_MS=75000;
 const reportLabels={shop_stats:'Estatísticas da Loja',product_funnel:'Funil de Produtos',promotions:'Promoções e Descontos'};
 const reportDescriptions={shop_stats:'Vendas, pedidos, tráfego e produtos líderes.',product_funnel:'Visitas, carrinho, pedidos realizados e pagos.',promotions:'Campanhas, descontos, combos e desempenho.'};
@@ -41,12 +41,13 @@ async function load(force=false){
   SH.loading=(async()=>{
     SH.error='';
     try{
-      const [data,usage,analyses]=await Promise.all([
+      const [data,usage,analyses,coverage]=await Promise.all([
         rpc('admin_get_shopee_dashboard',{p_from:SH.from||null,p_to:SH.to||null}),
         rpc('admin_get_shopee_ai_usage',{}),
-        rest('shopee_ai_analyses?select=*&status=eq.completed&order=completed_at.desc&limit=12')
+        rest('shopee_ai_analyses?select=*&status=eq.completed&order=completed_at.desc&limit=12'),
+        rest('shopee_import_days?select=metric_date,report_type&order=metric_date.asc&limit=5000').catch(()=>[])
       ]);
-      SH.data=data||{};SH.usage=Array.isArray(usage)?usage[0]||null:usage;SH.analyses=analyses||[];SH.analysis=SH.analyses[0]||null;
+      SH.data=data||{};SH.coverage=coverage||[];SH.usage=Array.isArray(usage)?usage[0]||null:usage;SH.analyses=analyses||[];SH.analysis=SH.analyses[0]||null;
       SH.insights=SH.analysis?await rest(`shopee_ai_insights?analysis_id=eq.${encodeURIComponent(SH.analysis.id)}&select=*&order=position.asc`):[];
       SH.loaded=true;
     }catch(error){SH.error=error.message||'Não foi possível carregar a Inteligência Shopee.';SH.loaded=true}
@@ -59,6 +60,33 @@ function completeness(){
   const periods=SH.data?.completeness||[];
   if(!periods.length)return{complete:0,total:0,missing:3};
   return{complete:periods.filter(item=>n(item.report_count)===3).length,total:periods.length,missing:Math.max(0,3-n(periods[0]?.report_count))};
+}
+function coverageRows(){
+  if(SH.coverage.length)return SH.coverage;
+  return(SH.data?.completeness||[]).flatMap(day=>(day.report_types||[]).map(report_type=>({metric_date:day.period_start,report_type})));
+}
+function coverageByDay(){
+  const map=new Map();
+  coverageRows().forEach(row=>{const key=String(row.metric_date||'').slice(0,10);if(!key)return;if(!map.has(key))map.set(key,new Set());map.get(key).add(row.report_type)});
+  return map;
+}
+function localIso(value=new Date()){const offset=value.getTimezoneOffset()*60000;return new Date(value.getTime()-offset).toISOString().slice(0,10)}
+function coverageState(iso){
+  const map=coverageByDay(),first=[...map.keys()].sort()[0]||SH.from,today=localIso();
+  if(iso>=today||iso<first)return{kind:'outside',count:0,reports:new Set(),label:iso>=today?'Dia ainda não encerrado':'Fora do período monitorado'};
+  const reports=map.get(iso)||new Set(),count=reports.size;
+  if(count===3)return{kind:'complete',count,reports,label:'Dados completos'};
+  if(count>0)return{kind:'partial',count,reports,label:'Dados parciais'};
+  return{kind:'missing',count,reports,label:'Sem dados'};
+}
+function missingReports(iso){const reports=coverageState(iso).reports;return Object.entries(reportLabels).filter(([type])=>!reports.has(type)).map(([,label])=>label)}
+function monthIso(value){return /^\d{4}-\d{2}$/.test(value||'')?value:localIso().slice(0,7)}
+function shiftMonth(value,amount){const [year,month]=monthIso(value).split('-').map(Number),next=new Date(year,month-1+amount,1);return`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`}
+function coverageCalendar(){
+  const field=SH.calendarOpen||'from',selected=field==='from'?SH.from:SH.to,month=monthIso(SH.calendarMonth||selected?.slice(0,7)),[year,numberMonth]=month.split('-').map(Number),first=new Date(year,numberMonth-1,1),start=new Date(year,numberMonth-1,1-first.getDay()),days=[];
+  for(let index=0;index<42;index++){const current=new Date(start);current.setDate(start.getDate()+index);const iso=localIso(current),state=coverageState(iso),sameMonth=current.getMonth()===numberMonth-1,isSelected=iso===selected;days.push(`<button type="button" class="shopee-calendar-day ${state.kind} ${sameMonth?'':'other-month'} ${isSelected?'selected':''}" data-shopee-calendar-day="${iso}" aria-label="${current.toLocaleDateString('pt-BR',{dateStyle:'long'})}: ${state.label}" title="${state.label}"><span>${current.getDate()}</span><i aria-hidden="true">${state.count||''}</i></button>`)}
+  const focus=SH.coverageSelected||selected,state=coverageState(focus),missing=missingReports(focus),canImport=['missing','partial'].includes(state.kind);
+  return`<section class="shopee-coverage-calendar" role="dialog" aria-label="Calendário de disponibilidade dos dados"><header><button type="button" data-shopee-calendar-month="-1" aria-label="Mês anterior">‹</button><b>${first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</b><button type="button" data-shopee-calendar-month="1" aria-label="Próximo mês">›</button></header><div class="shopee-calendar-weekdays" aria-hidden="true"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div><div class="shopee-calendar-grid">${days.join('')}</div><div class="shopee-calendar-legend"><span><i class="complete"></i>Completo</span><span><i class="partial"></i>Parcial</span><span><i class="missing"></i>Sem dados</span><span><i class="outside"></i>Não monitorado</span></div><footer class="${state.kind}"><span><b>${date(focus)} · ${state.label}</b><small>${canImport?`Faltam: ${missing.join(', ')}.`:'Use as cores para conferir a cobertura diária.'}</small></span>${canImport?'<button type="button" data-shopee-import-missing>Importar o que falta</button>':'<button type="button" data-shopee-calendar-close>Concluir seleção</button>'}</footer></section>`;
 }
 function deterministicAlerts(){
   const placed=sales('placed'),paid=sales('paid'),alerts=[];
@@ -80,7 +108,7 @@ function navigation(){
 }
 function periodControls(){
   const comp=completeness(),validated=comp.total&&comp.missing===0;
-  return`<div class="shopee-header-actions"><div class="shopee-period" aria-label="Período analisado"><label><span>De</span><input id="shopeeFrom" type="date" value="${SH.from}"></label><i>até</i><label><span>Até</span><input id="shopeeTo" type="date" value="${SH.to}"></label><button id="applyShopeeFilters" title="Aplicar período" aria-label="Aplicar período">→</button></div><span class="shopee-validation ${validated?'complete':'attention'}"><b>${validated?'✓':'!'}</b>${validated?'Relatórios validados':`${comp.missing} relatório(s) pendente(s)`}</span><button class="shopee-outline on-orange" id="refreshShopee">↻ Atualizar</button><button class="shopee-primary on-orange" data-shopee-open-imports aria-controls="shopeeUploadCards">⇧ Abrir importação</button></div>`;
+  return`<div class="shopee-header-actions"><div class="shopee-period" aria-label="Período analisado"><input hidden id="shopeeFrom" value="${SH.from}"><input hidden id="shopeeTo" value="${SH.to}"><button type="button" class="shopee-date-trigger" data-shopee-calendar="from" aria-expanded="${SH.calendarOpen==='from'}"><span>De</span><b>${date(SH.from)}</b><i class="${coverageState(SH.from).kind}" aria-hidden="true"></i></button><em>até</em><button type="button" class="shopee-date-trigger" data-shopee-calendar="to" aria-expanded="${SH.calendarOpen==='to'}"><span>Até</span><b>${date(SH.to)}</b><i class="${coverageState(SH.to).kind}" aria-hidden="true"></i></button><button id="applyShopeeFilters" title="Aplicar período" aria-label="Aplicar período">→</button>${SH.calendarOpen?coverageCalendar():''}</div><span class="shopee-validation ${validated?'complete':'attention'}"><b>${validated?'✓':'!'}</b>${validated?'Relatórios validados':`${comp.missing} relatório(s) pendente(s)`}</span><button class="shopee-outline on-orange" id="refreshShopee">↻ Atualizar</button><button class="shopee-primary on-orange" data-shopee-open-imports aria-controls="shopeeUploadCards">⇧ Abrir importação</button></div>`;
 }
 
 const compactMoney=value=>{const amount=n(value);return Math.abs(amount)>=1000?`R$ ${(amount/1000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})} mil`:money(amount)};
@@ -213,7 +241,12 @@ function bind(){
   document.querySelectorAll('[data-shopee-tab]').forEach(button=>button.onclick=()=>openTab(button.dataset.shopeeTab));
   document.querySelectorAll('[data-shopee-open-imports]').forEach(button=>button.onclick=openImports);
   document.querySelector('#refreshShopee')?.addEventListener('click',async event=>{event.currentTarget.disabled=true;SH.loaded=false;await load(true);renderActive()});
-  document.querySelector('#applyShopeeFilters')?.addEventListener('click',async event=>{const from=document.querySelector('#shopeeFrom').value,to=document.querySelector('#shopeeTo').value;if(!from||!to||to<from)return alert('Informe um período válido.');SH.from=from;SH.to=to;event.currentTarget.disabled=true;SH.loaded=false;await load(true);renderActive()});
+  document.querySelectorAll('[data-shopee-calendar]').forEach(button=>button.onclick=()=>{const field=button.dataset.shopeeCalendar;SH.calendarOpen=SH.calendarOpen===field?'':field;SH.coverageSelected=field==='from'?SH.from:SH.to;SH.calendarMonth=(SH.coverageSelected||localIso()).slice(0,7);renderActive()});
+  document.querySelectorAll('[data-shopee-calendar-month]').forEach(button=>button.onclick=()=>{SH.calendarMonth=shiftMonth(SH.calendarMonth,n(button.dataset.shopeeCalendarMonth));renderActive()});
+  document.querySelectorAll('[data-shopee-calendar-day]').forEach(button=>button.onclick=()=>{const value=button.dataset.shopeeCalendarDay;if(SH.calendarOpen==='from'){SH.from=value;if(SH.to<value)SH.to=value}else{SH.to=value;if(SH.from>value)SH.from=value}SH.coverageSelected=value;renderActive()});
+  document.querySelector('[data-shopee-calendar-close]')?.addEventListener('click',()=>{SH.calendarOpen='';SH.coverageSelected='';renderActive()});
+  document.querySelector('[data-shopee-import-missing]')?.addEventListener('click',()=>{const value=SH.coverageSelected;if(value){SH.from=value;SH.to=value}SH.calendarOpen='';SH.coverageSelected='';openImports()});
+  document.querySelector('#applyShopeeFilters')?.addEventListener('click',async event=>{const from=document.querySelector('#shopeeFrom').value,to=document.querySelector('#shopeeTo').value;if(!from||!to||to<from)return alert('Informe um período válido.');SH.from=from;SH.to=to;SH.calendarOpen='';SH.coverageSelected='';event.currentTarget.disabled=true;SH.loaded=false;await load(true);renderActive()});
   document.querySelectorAll('[data-shopee-metric]').forEach(button=>button.onclick=()=>{SH.trendMetric=button.dataset.shopeeMetric;SH.activeTrendIndex=null;renderActive()});
   document.querySelectorAll('[data-shopee-trend-index]').forEach(button=>{const activate=()=>{SH.activeTrendIndex=n(button.dataset.shopeeTrendIndex);renderActive()};button.onclick=activate;button.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate()}}});
   document.querySelectorAll('[data-shopee-alert]').forEach(button=>button.onclick=()=>openTab(button.dataset.shopeeAlert));
