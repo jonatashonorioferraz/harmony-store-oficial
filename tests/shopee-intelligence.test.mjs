@@ -145,9 +145,9 @@ test('dashboard is isolated, responsive and available offline',()=>{
   for(const tab of ['overview','products','marketing','promotions','imports'])assert.match(ui,new RegExp(`'${tab}'`));
   assert.match(ui,/Visão geral/);assert.match(ui,/Produtos/);assert.match(ui,/Marketing/);assert.match(ui,/Promoções/);assert.match(ui,/Importações/);
   assert.match(css,/@media\(max-width:1180px\)/);assert.match(css,/@media\(max-width:820px\)/);assert.match(css,/@media\(max-width:560px\)/);assert.match(css,/@media\(max-width:390px\)/);
-  assert.match(index,/shopee-intelligence\.css\?v=25\.91/);assert.match(index,/shopee-intelligence\.js\?v=25\.91/);
-  assert.match(worker,/shopee-intelligence\.css\?v=25\.91/);assert.match(worker,/shopee-intelligence\.js\?v=25\.91/);assert.match(worker,/harmony-store-v25-91-r1/);
-  assert.equal(JSON.parse(pkg).version,'25.91.0');
+  assert.match(index,/shopee-intelligence\.css\?v=25\.92/);assert.match(index,/shopee-intelligence\.js\?v=25\.92/);
+  assert.match(worker,/shopee-intelligence\.css\?v=25\.92/);assert.match(worker,/shopee-intelligence\.js\?v=25\.92/);assert.match(worker,/harmony-store-v25-92-r1/);
+  assert.equal(JSON.parse(pkg).version,'25.92.0');
 });
 
 test('executive dashboard uses the Shopee identity and exposes daily values',()=>{
