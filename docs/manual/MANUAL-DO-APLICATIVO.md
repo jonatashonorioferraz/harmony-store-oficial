@@ -298,6 +298,19 @@ Na **Visão geral**, escolha **Faturamento (R$)** para conferir o valor realizad
 
 Não existe fila de processamento: depois da mensagem de sucesso, os dados já estão disponíveis. Se os números parecerem antigos, confira o período exibido no filtro. Uma planilha diária pode ser enviada primeiro e depois complementada pela planilha semanal; o mesmo dia nunca é somado duas vezes.
 
+Relatórios de **Estatísticas da Loja** exportados para apenas um dia podem conter 24 linhas horárias. O sistema identifica automaticamente esse formato e registra uma única vez a linha oficial consolidada da Shopee. Não é necessário ajustar ou apagar linhas da planilha antes do envio.
+
+### Conferir dias completos e pendentes
+
+Clique nas datas do filtro para abrir o calendário de cobertura. Cada dia apresenta uma situação:
+
+- **Verde — completo:** os três relatórios daquele dia estão registrados.
+- **Amarelo — parcial:** existe ao menos um relatório, mas ainda falta completar a leitura.
+- **Vermelho — sem dados:** nenhum dos três relatórios foi recebido naquele dia monitorado.
+- **Cinza — não monitorado:** data futura, dia corrente ainda não encerrado ou período anterior ao início dos dados.
+
+Ao tocar em um dia amarelo ou vermelho, o aplicativo informa quais relatórios faltam. Use **Importar o que falta** para abrir diretamente a área correta. As cores são apenas informativas: selecionar uma data nunca exclui, substitui ou modifica dados anteriores.
+
 Os cartões de **Últimos períodos recebidos** servem apenas para consulta e nunca substituem arquivos. Use **Corrigir período** somente pelo **Histórico auditável** e somente quando a Shopee tiver fornecido um arquivo corrigido. A janela de confirmação identifica relatório, período e arquivo atual; o servidor só aceita a substituição quando a nova planilha possui exatamente o mesmo período escolhido. Se houver diferença, nenhum dado é alterado.
 
 O **Histórico auditável** mostra primeiro os períodos mais recentes. Ele fica dentro de uma janela com rolagem própria para não aumentar indefinidamente a página. Use **Categoria** para visualizar apenas **Visão geral**, **Produtos** ou **Marketing** e os campos **Período a partir de** e **Período até** para localizar uma data específica. O contador mostra quantos arquivos correspondem ao filtro. **Limpar** restaura a lista completa, mantendo a ordem do mais recente para o mais antigo.
