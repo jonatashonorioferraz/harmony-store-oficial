@@ -119,7 +119,7 @@ test('desktop, tablet, mobile and offline assets are complete', () => {
   assert.match(worker, /harmony-store-v25-95-r1/);
   assert.match(worker, /intelligence-ai\.css\?v=25\.74/);
   assert.match(worker, /intelligence-ai\.js\?v=25\.74/);
-  assert.equal(JSON.parse(pkg).version, '25.95.0');
+  assert.equal(JSON.parse(pkg).version, '25.96.0');
 });
 
 test('backup, recovery, help and three documentation levels cover the feature', () => {
@@ -134,4 +134,11 @@ test('backup, recovery, help and three documentation levels cover the feature', 
   assert.match(manual, /não possui campo de perguntas/i);
   assert.match(technical, /## Separação de responsabilidades/);
   assert.match(audit, /## Riscos avaliados e controles/);
+});
+
+test('menu principal da Inteligência fica equilibrado e legível no celular', () => {
+  assert.match(css, /grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);
+  assert.match(css, /button:nth-child\(-n\+2\)\{grid-column:span 3\}/);
+  assert.match(css, /-webkit-line-clamp:2/);
+  assert.match(css, /min-height:66px/);
 });
