@@ -23,14 +23,14 @@ const [sql,indexes,foundation,ui,css,integration,icons,index,worker,backup,recov
 ]);
 
 test('central is versioned, available offline and included in static build',()=>{
-  assert.equal(JSON.parse(pkg).version,'25.92.0');
+  assert.equal(JSON.parse(pkg).version,'25.93.0');
   for(const asset of ['transfer-center.css','transfer-center.js']){
     assert.match(index,new RegExp(asset.replaceAll('.','\\.')));
     assert.match(worker,new RegExp(asset.replaceAll('.','\\.')));
   }
   assert.match(ui,/assets\/peugeot-expert-harmony\.png/);
   assert.match(worker,/assets\/peugeot-expert-harmony\.png/);
-  assert.match(worker,/harmony-store-v25-92-r1/);
+  assert.match(worker,/harmony-store-v25-93-r1/);
 });
 
 test('schema is additive, constrained and protected by row level security',()=>{
@@ -85,6 +85,18 @@ test('responsive interface keeps movements collapsed and exposes reports',()=>{
   assert.match(css,/@media\(max-width:700px\)/);
   assert.match(css,/@media\(max-width:420px\)/);
   assert.match(css,/transfer-movement-window\{max-height:/);
+});
+
+test('reservation modal isolates checkboxes and remains fluid on desktop, tablet and phone',()=>{
+  assert.match(ui,/class="transfer-box-option"/);
+  assert.match(ui,/data-transfer-selection-summary/);
+  assert.match(ui,/data-transfer-reserve-button disabled/);
+  assert.match(ui,/section\.querySelectorAll\('\.transfer-box-option'\)/);
+  assert.match(css,/\.transfer-box-option>input\[type="checkbox"\]\{[^}]*width:1px!important;[^}]*height:1px!important/);
+  assert.match(css,/grid-template-columns:repeat\(auto-fit,minmax\(220px,1fr\)\)/);
+  assert.match(css,/@media\(max-width:900px\)/);
+  assert.match(css,/@media\(max-width:620px\)/);
+  assert.match(css,/\.transfer-reservation-actions\{position:sticky/);
 });
 
 test('backup, help, manual and technical continuity cover the new table and lifecycle',()=>{
