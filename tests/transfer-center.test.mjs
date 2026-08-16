@@ -3,8 +3,9 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,indexes,foundation,ui,css,integration,icons,index,worker,backup,recovery,help,manual,technical,audit,pkg]=await Promise.all([
+const [sql,corrections,indexes,foundation,ui,css,integration,icons,index,worker,backup,recovery,help,manual,technical,audit,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260816012000_transfer_center.sql',root),'utf8'),
+  readFile(new URL('supabase/migrations/20260816092801_transfer_center_granular_corrections.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260816014500_transfer_center_fk_indexes.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260814170000_shipping_composite_kits_inventory_reservations.sql',root),'utf8'),
   readFile(new URL('transfer-center.js',root),'utf8'),
@@ -23,14 +24,14 @@ const [sql,indexes,foundation,ui,css,integration,icons,index,worker,backup,recov
 ]);
 
 test('central is versioned, available offline and included in static build',()=>{
-  assert.equal(JSON.parse(pkg).version,'25.93.0');
+  assert.equal(JSON.parse(pkg).version,'25.94.0');
   for(const asset of ['transfer-center.css','transfer-center.js']){
     assert.match(index,new RegExp(asset.replaceAll('.','\\.')));
     assert.match(worker,new RegExp(asset.replaceAll('.','\\.')));
   }
   assert.match(ui,/assets\/peugeot-expert-harmony\.png/);
   assert.match(worker,/assets\/peugeot-expert-harmony\.png/);
-  assert.match(worker,/harmony-store-v25-93-r1/);
+  assert.match(worker,/harmony-store-v25-94-r1/);
 });
 
 test('schema is additive, constrained and protected by row level security',()=>{
@@ -97,6 +98,25 @@ test('reservation modal isolates checkboxes and remains fluid on desktop, tablet
   assert.match(css,/@media\(max-width:900px\)/);
   assert.match(css,/@media\(max-width:620px\)/);
   assert.match(css,/\.transfer-reservation-actions\{position:sticky/);
+});
+
+test('granular corrections undo selections, release one box and remove manual items with audit',()=>{
+  assert.match(ui,/data-transfer-clear-selection/);
+  assert.match(ui,/data-transfer-release-box/);
+  assert.match(ui,/data-transfer-remove-item/);
+  assert.match(ui,/release_transfer_center_box/);
+  assert.match(ui,/remove_transfer_center_request_item/);
+  assert.match(css,/\.transfer-detail-boxes/);
+  assert.match(css,/\.transfer-detail-box>button/);
+  assert.match(corrections,/create or replace function public\.release_transfer_center_box/);
+  assert.match(corrections,/create or replace function public\.remove_transfer_center_request_item/);
+  assert.match(corrections,/private\.refresh_transfer_center_request_status/);
+  assert.match(corrections,/transfer_center\.box_released/);
+  assert.match(corrections,/transfer_center\.item_removed/);
+  assert.match(corrections,/source_type<>'manual'/);
+  assert.match(corrections,/released_at=now\(\),released_by=v_actor/);
+  assert.match(corrections,/revoke all on function public\.release_transfer_center_box/);
+  assert.match(corrections,/grant execute on function public\.release_transfer_center_box/);
 });
 
 test('backup, help, manual and technical continuity cover the new table and lifecycle',()=>{
