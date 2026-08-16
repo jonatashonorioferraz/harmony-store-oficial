@@ -288,6 +288,14 @@ O botão **Solicitar caixas do Inventário** dentro de um cartão FULL cria ou a
 3. Depois da chegada física ao e-commerce, o mesmo perfil seleciona **Confirmar recebimento**.
 4. Cancelamentos antes do despacho liberam as caixas. Uma transferência já despachada não pode ser cancelada para evitar divergência física.
 
+### Corrigir uma reserva sem cancelar tudo
+
+- Antes de confirmar, toque novamente em uma caixa selecionada para desmarcá-la ou use **Limpar seleção**.
+- Depois de salvar e antes do despacho, abra a solicitação e use **Liberar caixa** na caixa escolhida. Somente ela volta à disponibilidade; as demais reservas permanecem.
+- Em uma solicitação direta com mais de um modelo, **Retirar modelo da solicitação** remove apenas o modelo incluído por engano e libera suas caixas.
+- Modelos originados no Planejamento FULL precisam ser corrigidos no plano original; a Central permite liberar as caixas sem romper o vínculo do planejamento.
+- Toda liberação solicita um motivo e registra usuário, data, caixa, modelo e novo estado na auditoria.
+
 O histórico recente inicia recolhido e pode ser expandido. Os indicadores e a exportação CSV usam apenas eventos registrados no banco. A Central não altera pagamentos, ordens de produção ou solicitações de matéria-prima.
 
 ### Combinações de cores dos kits
