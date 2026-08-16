@@ -1,5 +1,17 @@
 # Changelog
 
+## [v25.93] - 2026-08-16
+
+### Reserva de caixas fluida em computador, tablet e celular
+
+- Corrigido o conflito visual que fazia os checkboxes ocuparem toda a largura e sobreporem os dados das caixas.
+- Os cartões agora se reorganizam automaticamente em três, duas ou uma coluna conforme o espaço disponível, sem rolagem lateral.
+- A caixa selecionada recebe confirmação visual verde, foco acessível e destaque sem alterar a regra de reserva integral.
+- O resumo informa em tempo real quantas caixas e unidades foram selecionadas; a confirmação só habilita quando existe uma seleção válida.
+- A barra de ações permanece acessível em listas longas, inclusive no celular, e o modal ganhou rolagem vertical controlada.
+- Textos longos de modelo, código e localização passam a quebrar corretamente sem invadir outros campos.
+- Nenhuma regra de estoque, reserva, expedição, recebimento, perfil ou banco de dados foi modificada.
+
 ## [v25.92] - 2026-08-16
 
 ### Central de Transferências e estabilidade do Shopee Analytics
