@@ -13,13 +13,22 @@ for (const filename of [
   "agenda-harmony.css",
   "agenda-harmony.js",
   "help-center.js",
+  "harmony-icons.css",
+  "harmony-icons.js",
   "index.html",
   "service-worker.js",
+  "shipping-inventory-integration.js",
+  "shipping-planning.css",
+  "shipping-planning.js",
   "shopee-intelligence.css",
   "shopee-intelligence.js",
+  "transfer-center.css",
+  "transfer-center.js",
 ]) {
   await cp(resolve(root, filename), resolve(web, filename));
 }
+await mkdir(resolve(web, "assets"), { recursive: true });
+await cp(resolve(root, "assets", "peugeot-expert-harmony.png"), resolve(web, "assets", "peugeot-expert-harmony.png"));
 try {
   await rm(dist, { recursive: true, force: true });
 } catch (error) {
@@ -41,8 +50,10 @@ await cp(resolve(root, "production-orders.css"), resolve(dist, "client", "produc
 await cp(resolve(root, "shipping-planning.js"), resolve(dist, "client", "shipping-planning.js"));
 await cp(resolve(root, "shipping-planning.css"), resolve(dist, "client", "shipping-planning.css"));
 await cp(resolve(root, "shipping-inventory-integration.js"), resolve(dist, "client", "shipping-inventory-integration.js"));
+await cp(resolve(root, "transfer-center.js"), resolve(dist, "client", "transfer-center.js"));
+await cp(resolve(root, "transfer-center.css"), resolve(dist, "client", "transfer-center.css"));
 await mkdir(resolve(dist, "client", "assets"), { recursive: true });
-for (const filename of ["platform-mercado-livre.svg", "platform-shopee.svg", "shipping-product-placeholder.svg"]) {
+for (const filename of ["platform-mercado-livre.svg", "platform-shopee.svg", "shipping-product-placeholder.svg", "peugeot-expert-harmony.png"]) {
   await cp(resolve(root, "assets", filename), resolve(dist, "client", "assets", filename));
 }
 await cp(resolve(root, "help-center.js"), resolve(dist, "client", "help-center.js"));

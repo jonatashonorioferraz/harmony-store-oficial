@@ -12,7 +12,7 @@ const tables = [
   'purchase_orders', 'purchase_order_items', 'finished_product_models', 'finished_production_colors',
   'shipping_exclusive_products', 'shipping_color_combinations', 'shipping_color_combination_items',
   'shipping_kit_templates', 'shipping_kit_template_components', 'shipping_plans', 'shipping_plan_items',
-  'shipping_plan_item_components', 'shipping_inventory_requests', 'shipping_inventory_request_boxes',
+  'shipping_plan_item_components', 'shipping_inventory_requests', 'shipping_inventory_request_items', 'shipping_inventory_request_boxes',
   'production_payment_schedules', 'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
   'production_inventory_entries', 'production_inventory_movements', 'production_inventory_label_prints',
   'inventory_ai_settings', 'inventory_ai_analyses', 'inventory_ai_insights',

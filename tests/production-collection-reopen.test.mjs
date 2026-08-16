@@ -36,5 +36,5 @@ test('responsive interface exposes reopen flow without revealing receiver values
   assert.match(js,/Pagamento protegido/);
   assert.match(css,/production-reopen-note/);
   assert.match(css,/@media\(max-width:700px\)/);
-  assert.match(worker,/harmony-store-v25-91-r1/);
+  assert.match(worker,/harmony-store-v25-92-r1/);
 });

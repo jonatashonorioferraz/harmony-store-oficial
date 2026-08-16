@@ -18,7 +18,7 @@ const tables = [
   'shipping_plan_item_components',
   'production_payment_schedules', 'production_weekly_closings', 'finished_production_receipts', 'production_orders', 'production_order_items',
   'production_inventory_entries', 'production_inventory_movements', 'production_inventory_label_prints',
-  'shipping_inventory_requests', 'shipping_inventory_request_boxes',
+  'shipping_inventory_requests', 'shipping_inventory_request_items', 'shipping_inventory_request_boxes',
   'inventory_ai_settings', 'inventory_ai_analyses', 'inventory_ai_insights',
   'shopee_import_batches', 'shopee_import_days', 'shopee_sales_daily', 'shopee_traffic_sources', 'shopee_product_performance',
   'shopee_product_funnel_daily', 'shopee_promotion_metrics', 'shopee_promotion_campaigns',

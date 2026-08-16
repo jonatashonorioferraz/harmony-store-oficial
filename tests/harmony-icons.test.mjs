@@ -31,10 +31,10 @@ test('ícones possuem estados profissionais e responsivos',()=>{
   assert.match(css,/@media\(max-width:720px\)/);
 });
 
-test('ativos da versão 25.90 são carregados e mantidos offline',()=>{
-  assert.match(index,/harmony-icons\.css\?v=25\.90/);
-  assert.match(index,/harmony-icons\.js\?v=25\.90/);
-  assert.match(worker,/harmony-store-v25-91-r1/);
-  assert.match(worker,/harmony-icons\.css\?v=25\.90/);
-  assert.match(worker,/harmony-icons\.js\?v=25\.90/);
+test('ativos vetoriais atuais são carregados e mantidos offline',()=>{
+  assert.match(index,/harmony-icons\.css\?v=25\.92/);
+  assert.match(index,/harmony-icons\.js\?v=25\.92/);
+  assert.match(worker,/harmony-store-v25-92-r1/);
+  assert.match(worker,/harmony-icons\.css\?v=25\.92/);
+  assert.match(worker,/harmony-icons\.js\?v=25\.92/);
 });

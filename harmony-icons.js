@@ -22,6 +22,7 @@ const paths={
   supplies:'<path d="M4 9h16l-1.5 11h-13zM8 9l4-6 4 6"/><path d="M9 13v3M15 13v3"/>',
   help:'<circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.5 2.5 0 1 1 3.7 2.2c-1 .6-1.4 1.1-1.4 2.3M12 17h.01"/>',
   shipping:'<path d="M3 6h12v10H3zM15 9h3l3 3v4h-6z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/>',
+  transfer:'<path d="M4 7h12v9H4zM16 10h3l2 3v3h-5"/><circle cx="8" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M7 4h10M14 2l3 2-3 2M17 21H7M10 19l-3 2 3 2"/>',
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="m8 15 2 2 5-5"/>',
   dashboard:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 16v-3M12 16V8M17 16v-6"/><path d="m16 4 .6 1.4L18 6l-1.4.6L16 8l-.6-1.4L14 6l1.4-.6z"/>',
   shopee:'<path d="M6 8h12l1 13H5zM9 8a3 3 0 0 1 6 0"/><path d="M14.5 12.5c-.5-.4-1.2-.6-2-.6-1.2 0-2 .6-2 1.4 0 2.2 4.5 1 4.5 3.5 0 .9-.9 1.6-2.2 1.6-.9 0-1.8-.3-2.4-.8"/>',
@@ -30,7 +31,7 @@ const paths={
   ideas:'<path d="M9 18h6M10 22h4M8 14a7 7 0 1 1 8 0c-1 .8-1 1.5-1 2H9c0-.5 0-1.2-1-2z"/><path d="m14 11 2-2M10 11l-2-2"/>'
 };
 
-const menu={home:'home',new:'new',requests:'requests',products:'products',categories:'categories',team:'team',fields:'fields',audit:'audit',profile:'profile',health:'health',notifications:'notifications',bills:'bills',intelligence:'intelligence',production:'production','production-inventory':'inventory','production-orders':'orders','collaborator-timeline':'timeline','internal-supplies':'supplies',help:'help','shipping-planning':'shipping','agenda-harmony':'agenda'};
+const menu={home:'home',new:'new',requests:'requests',products:'products',categories:'categories',team:'team',fields:'fields',audit:'audit',profile:'profile',health:'health',notifications:'notifications',bills:'bills',intelligence:'intelligence',production:'production','production-inventory':'inventory','production-orders':'orders','collaborator-timeline':'timeline','internal-supplies':'supplies',help:'help','shipping-planning':'shipping','transfer-center':'transfer','agenda-harmony':'agenda'};
 const intelligence={dashboard:'dashboard',shopee:'shopee',operation:'operation',supply:'supply',ideas:'ideas'};
 
 function svg(name){return `<svg class="harmony-line-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths[name]||paths.home}</svg>`}

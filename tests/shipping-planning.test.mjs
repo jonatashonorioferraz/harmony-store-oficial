@@ -26,12 +26,13 @@ const [backup,recovery] = await Promise.all([
 test('módulo está carregado, versionado e disponível offline',()=>{
   assert.match(html,/shipping-planning\.css\?v=25\.83/);
   assert.match(html,/shipping-planning\.js\?v=25\.83/);
-  assert.match(html,/shipping-inventory-integration\.js\?v=25\.83/);
+  assert.match(html,/transfer-center\.js\?v=25\.92/);
+  assert.match(html,/shipping-inventory-integration\.js\?v=25\.92/);
   assert.match(sw,/shipping-planning\.css\?v=25\.83/);
   assert.match(sw,/shipping-planning\.js\?v=25\.83/);
-  assert.match(sw,/shipping-inventory-integration\.js\?v=25\.83/);
+  assert.match(sw,/transfer-center\.js\?v=25\.92/);
+  assert.match(sw,/shipping-inventory-integration\.js\?v=25\.92/);
 });
-
 test('acesso é restrito à gerente de e-commerce e ADM principal',()=>{
   assert.match(migration,/p\.is_ecommerce_manager or p\.is_primary_admin/);
   assert.match(migration,/enable row level security/g);
@@ -141,10 +142,10 @@ test('reserva de caixas é transacional, exata e separada da baixa física',()=>
   assert.match(kitMigration,/model_id<>v_component\.model_id or v_entry\.color_id<>v_component\.color_id/);
   assert.match(kitMigration,/values\(v_request_id,v_component\.id,v_box_id,v_entry\.current_quantity,v_actor\)/);
   assert.match(kitMigration,/transfer_production_inventory_box_to_ecommerce/);
-  assert.match(integration,/list_shipping_inventory_options/);
-  assert.match(integration,/Reservar caixas selecionadas/);
-  assert.match(integration,/Confirmar transferência física/);
-  assert.match(integration,/Solicitar caixas novamente/);
+  assert.match(integration,/HarmonyTransferCenter\.createFromPlan/);
+  assert.match(integration,/HarmonyTransferCenter\?\.openReservation|HarmonyTransferCenter\.openReservation/);
+  assert.match(integration,/Central de Transferências/);
+  assert.doesNotMatch(integration,/confirm_shipping_inventory_request_transfer/);
 });
 
 test('kit composto é gravado sem violar a referência obrigatória',()=>{
@@ -172,4 +173,3 @@ test('novas estruturas usam RLS, RPC autenticada, backup e recuperação',()=>{
   assert.match(kitMigration,/grant execute on function public\.save_shipping_kit_template[\s\S]{0,200}authenticated,service_role/);
   for(const source of [backup,recovery])for(const table of ['shipping_kit_templates','shipping_kit_template_components','shipping_plan_item_components','shipping_inventory_requests','shipping_inventory_request_boxes'])assert.match(source,new RegExp(`'${table}'`));
 });
-
