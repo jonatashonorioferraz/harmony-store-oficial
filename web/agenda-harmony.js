@@ -169,7 +169,7 @@ function homeAiInsights(items){
 function homePanel(){
   const items=homeAgendaItems(),aiEnabled=AH.usage?.enabled!==false;
   return `<section class="agenda-home card">
-    <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><span class="agenda-home-title"><h2>Agenda inteligente</h2><b class="agenda-ai-status ${aiEnabled?'active':'paused'}">✦ ${aiEnabled?'IA ATIVA':'IA PAUSADA'}</b></span><span>A IA organiza tarefas, boletos e compromissos por prioridade.</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-new>＋ Nova tarefa</button><button class="primary compact-action" data-agenda-page>Ver agenda completa</button></div></header>
+    <header class="agenda-home-head"><div><p class="eyebrow">AGENDA HARMONY · VISÃO ADMINISTRATIVA</p><span class="agenda-home-title"><h2>Agenda inteligente</h2><b class="agenda-ai-status ${aiEnabled?'active':'paused'}">✦ ${aiEnabled?'IA ATIVA':'IA PAUSADA'}</b></span><span>A IA organiza tarefas, boletos e compromissos por prioridade.</span></div><div class="agenda-home-actions"><button class="outline compact-action" data-agenda-new>＋ Nova tarefa</button><button class="primary compact-action" data-agenda-page>Ver agenda</button></div></header>
     ${homeCalendarWeek(items)}
     ${homeAiInsights(items)}
   </section>`;
