@@ -1,5 +1,17 @@
 # Changelog
 
+## [v25.94] - 2026-08-16
+
+### Correção granular de modelos e caixas reservadas
+
+- A seleção ainda não confirmada agora pode ser desfeita caixa por caixa ou totalmente pelo botão **Limpar seleção**.
+- Reservas já salvas podem liberar somente a caixa escolhida, sem cancelar nem refazer toda a solicitação.
+- Solicitações diretas com mais de um modelo permitem retirar apenas o modelo incluído por engano e liberam automaticamente suas caixas.
+- Modelos originados do Planejamento FULL continuam protegidos contra remoção fora da origem, evitando divergência entre o plano e a transferência.
+- Toda liberação exige motivo e registra usuário, data, caixa, modelo e novo estado no histórico de auditoria.
+- O status e o percentual da solicitação são recalculados imediatamente após a correção, preservando a proteção contra reserva dupla.
+- Os controles foram adaptados para computador, tablet e celular sem adicionar rolagem lateral.
+
 ## [v25.93] - 2026-08-16
 
 ### Reserva de caixas fluida em computador, tablet e celular
