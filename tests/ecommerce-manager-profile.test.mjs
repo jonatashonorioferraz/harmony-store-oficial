@@ -7,7 +7,7 @@ const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8'
 test('perfil Gerente de e-commerce usa papel colaborador e permissão adicional', () => {
   const app = read('app.js');
   assert.match(app, /value="ecommerce_manager"/);
-  assert.match(app, /role:isEcommerceManager?'collaborator':accessProfile/);
+  assert.ok(app.includes("role:isEcommerceManager?'collaborator':accessProfile"));
   assert.match(app, /is_ecommerce_manager:isEcommerceManager/);
   assert.doesNotMatch(app, /function ecommerceManagerField/);
   assert.match(app, /Gerente de e-commerce/);
@@ -18,9 +18,9 @@ test('Gerente acessa somente os módulos extras definidos', () => {
   const inventory = read('production-inventory.js');
   const health = read('system-health.js');
   const help = read('help-center.js');
-  assert.match(inventory, /Boolean(S?.profile?.is_ecommerce_manager)/);
-  assert.match(health, /S?.profile?.is_ecommerce_manager/);
-  assert.match(health, /profile||null/);
+  assert.ok(inventory.includes('Boolean(S?.profile?.is_ecommerce_manager)'));
+  assert.ok(health.includes('S?.profile?.is_ecommerce_manager'));
+  assert.ok(health.includes('profile||null'));
   assert.match(help, /transfer-center','production-inventory','health/);
   assert.equal(inventory, read('web/production-inventory.js'));
   assert.equal(health, read('web/system-health.js'));
