@@ -4,7 +4,7 @@
 const PI={loaded:false,loading:null,balance:[],boxes:[],boxCount:0,pendingLabels:[],models:[],colors:[],workers:[],movements:[],byWorker:[],tab:'balance',query:'',colorId:'',onlyAvailable:false,from:'',to:'',workerId:'',labelRouteHandled:false};
 const LIVE_COUNTER_INTERVAL=20000;
 let liveCounterTimer=null,liveCounterBusy=false;
-const canManage=()=>['admin','receiver'].includes(S?.profile?.role);
+const canManage=()=>['admin','receiver'].includes(S?.profile?.role)||Boolean(S?.profile?.is_ecommerce_manager);
 const n=value=>Number(value||0);
 const qty=value=>n(value).toLocaleString('pt-BR')+' un.';
 const boxCode=value=>'CX-'+String(n(value)).padStart(6,'0');

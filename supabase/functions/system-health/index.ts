@@ -43,8 +43,8 @@ Deno.serve(async request => {
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: authData, error: authError } = await admin.auth.getUser(token);
     if (authError || !authData.user) return reply({ error: "Sessão inválida." }, 401);
-    const { data: caller } = await admin.from("profiles").select("role,status").eq("id", authData.user.id).single();
-    if (!caller || caller.status !== "active" || caller.role !== "admin") return reply({ error: "Acesso negado." }, 403);
+    const { data: caller } = await admin.from("profiles").select("role,status,is_ecommerce_manager").eq("id", authData.user.id).single();
+    if (!caller || caller.status !== "active" || (caller.role !== "admin" && caller.is_ecommerce_manager !== true)) return reply({ error: "Acesso negado." }, 403);
 
     const items: Array<Record<string, unknown> & { status: string }> = [];
     const dbStart = performance.now();
@@ -63,7 +63,7 @@ Deno.serve(async request => {
     } catch { /* resposta saneada abaixo */ }
     items.push({ key: "application", label: "Aplicativo oficial", status: appStatus, value: appValue, detail: appDetail, checked_at: checkedAt });
 
-    items.push({ key: "edge", label: "Diagnóstico do servidor", status: "green", value: "Operacional", detail: "A função segura respondeu e validou o acesso do ADM.", checked_at: checkedAt });
+    items.push({ key: "edge", label: "Diagnóstico do servidor", status: "green", value: "Operacional", detail: "A função segura respondeu e validou o perfil autorizado.", checked_at: checkedAt });
     const { data: buckets, error: storageError } = await admin.storage.listBuckets();
     const bucketCount = buckets?.length || 0;
     items.push({ key: "storage", label: "Arquivos e fotos", status: storageError ? "red" : "green", value: storageError ? "Sem resposta" : quantityLabel(bucketCount, "área de arquivos", "áreas de arquivos"), detail: storageError ? "O serviço de arquivos não respondeu ao diagnóstico." : "Fotos e documentos estão acessíveis.", checked_at: checkedAt });
@@ -139,3 +139,4 @@ Deno.serve(async request => {
     return reply({ error: "Não foi possível concluir o diagnóstico.", error_id: errorId }, 500);
   }
 });
+
