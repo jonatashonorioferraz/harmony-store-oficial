@@ -30,9 +30,9 @@ test('Gerente acessa somente os módulos extras definidos', () => {
 test('backend e banco validam a permissão sem promover a ADM', () => {
   const edge = read('supabase/functions/system-health/index.ts');
   const migration = read('supabase/migrations/20260817123000_ecommerce_manager_production_inventory_access.sql');
-  assert.match(edge, /role,status,is_ecommerce_manager/);
-  assert.match(edge, /caller.role !== "admin" && caller.is_ecommerce_manager !== true/);
-  assert.match(migration, /coalesce(p.is_ecommerce_manager,false)/);
-  assert.match(migration, /p.role in ('admin','receiver')/);
-  assert.match(migration, /p.status='active'/);
+  assert.ok(edge.includes('role,status,is_ecommerce_manager'));
+  assert.ok(edge.includes('caller.role !== \"admin\" && caller.is_ecommerce_manager !== true'));
+  assert.ok(migration.includes('coalesce(p.is_ecommerce_manager,false)'));
+  assert.ok(migration.includes("p.role in ('admin','receiver')"));
+  assert.ok(migration.includes("p.status='active'"));
 });
