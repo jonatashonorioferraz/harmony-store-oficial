@@ -4,9 +4,10 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
-const [ui,css,migration,reactivation,edge,html,worker,backup,recovery]=await Promise.all([
+const [ui,css,migration,reactivation,correction,edge,html,worker,backup,recovery]=await Promise.all([
   read('bills.js'),read('bills.css'),read('supabase/migrations/20260725212141_admin_bills.sql'),
   read('supabase/migrations/20260727160000_bill_reactivation.sql'),
+  read('supabase/migrations/20260819190000_bill_due_date_correction_reactivation.sql'),
   read('supabase/functions/analyze-bill/index.ts'),read('index.html'),read('service-worker.js'),
   read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs')
 ]);
@@ -63,13 +64,11 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(html,/bills\.css\?v=25\.49/);
-  assert.match(html,/bills\.js\?v=25\.66/);
-  assert.match(worker,/bills\.js\?v=25\.66/);
+  assert.match(html,/bills\.js\?v=25\.96/);
+  assert.match(worker,/bills\.js\?v=25\.96/);
 });
 
 test('cancelled bills can be safely reactivated without bypassing duplicate protection',()=>{
-  assert.match(ui,/admin_reactivate_bill/);
-  assert.match(ui,/Reativar boleto/);
   assert.match(ui,/existing\.status==='cancelled'/);
   assert.match(ui,/return detail\(existing\)/);
   assert.match(reactivation,/^begin;/m);
@@ -83,6 +82,27 @@ test('cancelled bills can be safely reactivated without bypassing duplicate prot
   assert.match(reactivation,/revoke all on function public\.admin_reactivate_bill\(uuid\) from public, anon, authenticated/);
   assert.match(reactivation,/grant execute on function public\.admin_reactivate_bill\(uuid\) to authenticated, service_role/);
   assert.doesNotMatch(reactivation,/delete from public\.bills/i);
+});
+
+test('cancelled bill due date is corrected and reactivated atomically with an audit trail',()=>{
+  assert.match(ui,/Corrigir vencimento e reativar/);
+  assert.match(ui,/billDueDateCorrectionForm/);
+  assert.match(ui,/admin_correct_bill_due_date_and_reactivate/);
+  assert.match(ui,/p_due_date:dueDate/);
+  assert.match(ui,/histórico será preservado/i);
+  assert.match(correction,/^begin;/m);
+  assert.match(correction,/^commit;/m);
+  assert.match(correction,/private\.is_admin\(\)/);
+  assert.match(correction,/for update/);
+  assert.match(correction,/v_bill\.status <> 'cancelled'/);
+  assert.match(correction,/set due_date = p_due_date,\s+status = 'pending'/);
+  assert.match(correction,/cancelled_at = null/);
+  assert.match(correction,/bill\.due_date_corrected_and_reactivated/);
+  assert.match(correction,/'previous_due_date', v_bill\.due_date/);
+  assert.match(correction,/'new_due_date', p_due_date/);
+  assert.match(correction,/revoke all on function public\.admin_correct_bill_due_date_and_reactivate\(uuid, date\) from public, anon, authenticated/);
+  assert.match(correction,/grant execute on function public\.admin_correct_bill_due_date_and_reactivate\(uuid, date\) to authenticated, service_role/);
+  assert.doesNotMatch(correction,/delete from public\.bills/i);
 });
 
 test('bill dashboard summarizes counts and amounts and uses every total as a filter',()=>{
