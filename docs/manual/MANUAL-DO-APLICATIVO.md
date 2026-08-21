@@ -268,12 +268,16 @@ A mesma caixa não pode participar de duas reservas ativas. Todas as reservas, l
 
 A **Central de Transferências** organiza toda movimentação de caixas completas entre o Inventário de Produção e o estoque do e-commerce. Ela não tenta calcular o saldo diário do e-commerce: controla a demanda, a reserva das caixas físicas e a confirmação da entrega.
 
+O **ADM principal**, o **ADM normal** e a **Gerente de e-commerce** podem criar uma solicitação direta. A reserva e a escolha das caixas permanecem exclusivas da Gerente de e-commerce e do ADM principal. ADM e Recebimento continuam responsáveis pela conferência e pelo despacho físico. Colaboradoras não recebem acesso à Central.
+
 ### Solicitação direta
 
 1. Abra **Central de Transferências** e selecione **Nova solicitação**.
 2. Informe título, finalidade, prioridade, data necessária e observação.
 3. Adicione um ou mais modelos, cores e quantidades necessárias usando o mesmo catálogo oficial do Inventário.
 4. Salve a solicitação. Nenhuma caixa é baixada ou reservada nesta etapa.
+
+Quando a solicitação for criada por um ADM normal, ela ficará visível na Central aguardando a Gerente de e-commerce ou o ADM principal selecionar as caixas compatíveis.
 5. Abra a solicitação e escolha as caixas físicas exatas. O sistema sugere primeiro as caixas mais antigas para favorecer o giro do estoque.
 6. Uma reserva parcial permanece sinalizada até que todos os itens tenham quantidade suficiente. Toda caixa selecionada sai imediatamente da lista de disponibilidade.
 

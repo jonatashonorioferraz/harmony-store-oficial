@@ -32,6 +32,8 @@ Data: 16/08/2026
 ## Critérios de aceite
 
 - criar solicitação direta com múltiplos itens;
+- exibir **Nova solicitação** para ADM principal, ADM normal e Gerente de e-commerce;
+- impedir colaboradora de criar solicitações e impedir ADM normal de usar a origem Planejamento FULL;
 - criar/abrir solicitação por item FULL, inclusive kit composto;
 - sugerir somente caixas correspondentes ao modelo e à cor;
 - ordenar opções mais antigas primeiro;
@@ -41,6 +43,16 @@ Data: 16/08/2026
 - cancelar antes do despacho e devolver a disponibilidade;
 - manter histórico recolhido por padrão;
 - exportar CSV sem dados pessoais sensíveis.
+
+## Matriz de autorização v25.97
+
+| Ação | ADM principal | ADM normal | Gerente de e-commerce | Recebimento | Colaboradora |
+|---|---:|---:|---:|---:|---:|
+| Criar solicitação direta | Sim | Sim | Sim | Não | Não |
+| Criar pelo Planejamento FULL | Sim | Não | Sim | Não | Não |
+| Selecionar ou liberar caixas | Sim | Não | Sim | Não | Não |
+| Despachar caixas | Sim | Sim | Sim | Sim | Não |
+| Confirmar recebimento | Sim | Sim | Sim | Sim | Não |
 
 O resultado final deve ser registrado após a bateria automatizada, os consultores de segurança do Supabase e a validação visual responsiva.
 

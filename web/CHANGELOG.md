@@ -1,5 +1,16 @@
 # Changelog
 
+## [v25.97] - 2026-08-20
+
+### Solicitações da Central liberadas com permissão específica
+
+- O botão **Nova solicitação** passa a aparecer para ADM principal, ADM normal e Gerente de e-commerce.
+- O banco valida a mesma regra, evitando que a liberação exista somente na interface.
+- A permissão do Planejamento de Envios permanece intacta: ADM normal pode solicitar, mas não recebe acesso ao planejamento nem à reserva de caixas.
+- Após criar, o ADM normal visualiza a solicitação registrada; Gerente de e-commerce e ADM principal seguem diretamente para a seleção de caixas.
+- Colaboradoras e perfis não autorizados continuam sem acesso à criação.
+- Cache do PWA atualizado para distribuir a correção em computador, tablet e celular.
+
 ## [v25.96] - 2026-08-16
 
 ### Menu principal da Inteligência organizado no celular

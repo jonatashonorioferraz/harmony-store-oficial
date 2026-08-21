@@ -26,11 +26,11 @@ const [backup,recovery] = await Promise.all([
 test('módulo está carregado, versionado e disponível offline',()=>{
   assert.match(html,/shipping-planning\.css\?v=25\.83/);
   assert.match(html,/shipping-planning\.js\?v=25\.83/);
-  assert.match(html,/transfer-center\.js\?v=25\.94/);
+  assert.match(html,/transfer-center\.js\?v=25\.97/);
   assert.match(html,/shipping-inventory-integration\.js\?v=25\.92/);
   assert.match(sw,/shipping-planning\.css\?v=25\.83/);
   assert.match(sw,/shipping-planning\.js\?v=25\.83/);
-  assert.match(sw,/transfer-center\.js\?v=25\.94/);
+  assert.match(sw,/transfer-center\.js\?v=25\.97/);
   assert.match(sw,/shipping-inventory-integration\.js\?v=25\.92/);
 });
 test('acesso é restrito à gerente de e-commerce e ADM principal',()=>{

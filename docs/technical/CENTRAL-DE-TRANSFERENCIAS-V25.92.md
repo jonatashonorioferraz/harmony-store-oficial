@@ -29,10 +29,13 @@ O índice parcial por `inventory_entry_id` impede que uma caixa esteja simultane
 
 ## Permissões
 
-- Gerente de e-commerce e ADM principal: criar demanda e reservar caixas.
+- ADM principal, ADM normal e Gerente de e-commerce: criar solicitação direta.
+- Gerente de e-commerce e ADM principal: criar demanda vinculada ao Planejamento FULL, reservar caixas e corrigir reservas.
 - ADM e Recebimento: consultar, despachar e confirmar recebimento.
 - Colaboradora de produção: sem acesso.
 - A aplicação usa somente RPCs `security definer` com `search_path=''`; tabelas operacionais permanecem sem escrita direta por `authenticated`.
+
+Desde a v25.97, `private.can_request_transfer_center()` separa a criação direta das permissões de Planejamento. A função `create_transfer_center_request` avalia a origem: solicitações manuais aceitam ADM ativo ou Gerente de e-commerce; solicitações com `plan_item_id` continuam exigindo `private.can_manage_shipping_planning()`. Portanto, o ADM normal não ganha acesso ao Planejamento de Envios nem à seleção de caixas.
 
 ## Compatibilidade
 

@@ -3,9 +3,10 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,corrections,indexes,foundation,ui,css,integration,icons,index,worker,backup,recovery,help,manual,technical,audit,pkg]=await Promise.all([
+const [sql,corrections,requestPermissions,indexes,foundation,ui,css,integration,icons,index,worker,backup,recovery,help,manual,technical,audit,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260816012000_transfer_center.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260816092801_transfer_center_granular_corrections.sql',root),'utf8'),
+  readFile(new URL('supabase/migrations/20260820143000_transfer_center_request_permissions.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260816014500_transfer_center_fk_indexes.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260814170000_shipping_composite_kits_inventory_reservations.sql',root),'utf8'),
   readFile(new URL('transfer-center.js',root),'utf8'),
@@ -77,6 +78,24 @@ test('roles remain separated and collaborators do not gain inventory access',()=
   assert.match(ui,/is_ecommerce_manager\|\|S\?\.profile\?\.is_primary_admin/);
   assert.match(ui,/role==='admin'\|\|S\?\.profile\?\.role==='receiver'/);
   assert.match(icons,/'transfer-center':'transfer'/);
+});
+
+test('normal ADM and ecommerce manager can request without gaining planning permissions',()=>{
+  assert.match(ui,/const canRequest=\(\)=>Boolean\(S\?\.profile\?\.role==='admin'\|\|S\?\.profile\?\.is_ecommerce_manager\)/);
+  assert.match(ui,/if\(canRequest\(\)\)tasks\.push\(rpc\('list_transfer_center_catalog'/);
+  assert.match(ui,/\$\{canRequest\(\)\?'<button class="primary" id="newTransferRequest">/);
+  assert.match(ui,/if\(!canRequest\(\)\)return alert/);
+  assert.match(ui,/if\(canPlan\(\)\)await openReservation\(id\);else openDetail\(id\)/);
+  assert.match(requestPermissions,/create or replace function private\.can_request_transfer_center\(\)/);
+  assert.match(requestPermissions,/p\.role='admin'/);
+  assert.match(requestPermissions,/p\.id=\(select auth\.uid\(\)\)/);
+  assert.match(requestPermissions,/coalesce\(p\.is_ecommerce_manager,false\)/);
+  assert.match(requestPermissions,/if p_plan_item_id is null then/);
+  assert.match(requestPermissions,/private\.can_request_transfer_center\(\)/);
+  assert.match(requestPermissions,/elsif not \(select private\.can_manage_shipping_planning\(\)\)/);
+  assert.match(requestPermissions,/revoke all on function public\.create_transfer_center_request/);
+  assert.match(requestPermissions,/grant execute on function public\.create_transfer_center_request/);
+  assert.doesNotMatch(requestPermissions,/create or replace function private\.can_manage_shipping_planning/);
 });
 
 test('responsive interface keeps movements collapsed and exposes reports',()=>{
