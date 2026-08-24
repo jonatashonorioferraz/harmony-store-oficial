@@ -43,7 +43,17 @@ const QUICK={
   health:['Os indicadores são resumidos e não expõem informações sensíveis.','Atualize o diagnóstico antes de tomar uma decisão.'],
   profile:['Aqui você altera sua foto e seus próprios dados permitidos.','Use Sair do sistema para trocar de conta com segurança.'],
 };
-const allowedTopics=()=>HELP_TOPICS.filter(topic=>{const manager=Boolean(S.profile?.is_ecommerce_manager||S.profile?.is_primary_admin);if(topic.id==='shipping-planning')return manager;if(manager&&['transfer-center','production-inventory','health'].includes(topic.id))return true;return topic.roles.includes(S.profile?.role)});
+const allowedTopics=()=>HELP_TOPICS.filter(topic=>{
+  const ecommerceManager=Boolean(S.profile?.is_ecommerce_manager);
+  const primaryAdmin=Boolean(S.profile?.is_primary_admin);
+  if(primaryAdmin)return true;
+  if(ecommerceManager){
+    if(['shipping-planning','transfer-center','production-inventory','health'].includes(topic.id))return true;
+    if(topic.id==='payments')return false;
+    return topic.roles.includes('collaborator')||topic.roles.includes('receiver');
+  }
+  return topic.roles.includes(S.profile?.role);
+});
 function helpNav(){
   if(!S?.profile)return;const root=document.querySelector('.sidebar nav'),profile=root?.querySelector('[data-view="profile"]');if(!root||!profile||root.querySelector('[data-view="help"]'))return;
   const button=document.createElement('button');button.className='nav';button.dataset.view='help';button.innerHTML='<i>💡</i>Central de ajuda';button.onclick=()=>{S.view='help';renderApp()};profile.parentNode.insertBefore(button,profile);

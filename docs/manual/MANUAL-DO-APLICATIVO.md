@@ -8,6 +8,7 @@
 
 - **Colaboradora:** solicita matéria-prima, edita pedidos pendentes, acompanha sua produção conferida e vê pagamentos semanais já consolidados.
 - **Recebimento:** solicita suprimentos do e-commerce e registra conferências de produção, sem acesso aos valores.
+- **Gerente de e-commerce:** reúne as rotinas operacionais de Produção e Recebimento. Pode solicitar matérias-primas e suprimentos do e-commerce, conferir produção, usar Suprimentos e Compras, Inventário de Produção, Planejamento de Envios, Central de Transferências e Saúde do Sistema. Não recebe funções administrativas, gestão de usuários nem acesso aos valores de produção e pagamentos.
 - **ADM:** administra produtos, solicitações, colaboradores, recebimentos, pagamentos, fornecedores, relatórios e Saúde do Sistema.
 - **ADM principal:** além das funções de ADM, protege as operações sensíveis envolvendo outros administradores.
 
@@ -74,7 +75,7 @@ Colaboradoras não veem valores ainda em conferência em **Minha produção**. D
 
 O **Inventário de Produção** controla exclusivamente mini sabonetes acabados que ficam no estoque interno. Ele reutiliza os modelos, as fotos e as cores já cadastrados no módulo de Produção; não cadastre novamente esses itens e não use o catálogo de matérias-primas ou de suprimentos internos.
 
-O acesso é permitido somente a **ADM principal**, **ADM normal** e **Recebimento**. Colaboradoras de produção não visualizam o menu, o botão da tela inicial, saldos, lotes ou relatórios.
+O acesso é permitido somente a **ADM principal**, **ADM normal**, **Recebimento** e **Gerente de e-commerce**. Colaboradoras de produção não visualizam o menu, o botão da tela inicial, saldos, lotes ou relatórios.
 
 ### Registrar uma nova caixa
 

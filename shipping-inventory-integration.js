@@ -5,7 +5,7 @@ const state={requests:[],loading:null};
 const ACTIVE=['requested','partially_reserved','reserved','in_transit'];
 const LABEL={requested:'Solicitada',partially_reserved:'Reserva parcial',reserved:'Pronta para retirada',in_transit:'Em transferência',received:'Recebida',transferred:'Concluída',cancelled:'Cancelada'};
 const canPlan=()=>Boolean(S?.profile?.is_ecommerce_manager||S?.profile?.is_primary_admin);
-const canConfirm=()=>Boolean(S?.profile?.role==='admin'||S?.profile?.role==='receiver');
+const canConfirm=()=>Boolean(S?.profile?.role==='admin'||S?.profile?.role==='receiver'||S?.profile?.is_ecommerce_manager);
 const canAccess=()=>canPlan()||canConfirm();
 const number=value=>Number(value||0);
 const quantity=value=>number(value).toLocaleString('pt-BR')+' un.';

@@ -11,7 +11,7 @@ const PURPOSE={full_shipping:'Envio FULL',routine_restock:'Abastecimento de roti
 const PRIORITY={low:'Baixa',normal:'Normal',high:'Alta',urgent:'Urgente'};
 const canPlan=()=>Boolean(S?.profile?.is_ecommerce_manager||S?.profile?.is_primary_admin);
 const canRequest=()=>Boolean(S?.profile?.role==='admin'||S?.profile?.is_ecommerce_manager);
-const canDispatch=()=>Boolean(S?.profile?.role==='admin'||S?.profile?.role==='receiver');
+const canDispatch=()=>Boolean(S?.profile?.role==='admin'||S?.profile?.role==='receiver'||S?.profile?.is_ecommerce_manager);
 const canAccess=()=>canPlan()||canDispatch();
 const num=value=>Number(value||0);
 const code=value=>'#'+String(value||0).padStart(4,'0');

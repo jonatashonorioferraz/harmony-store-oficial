@@ -3,9 +3,13 @@
   const isEcommerceCatalog=product=>['ecommerce','shared'].includes(product?.usage_scope);
   const isSharedCatalog=product=>product?.usage_scope==='shared';
   const isManagedCatalog=product=>isProductionCatalog(product)||isEcommerceCatalog(product);
-  const requestScopes=()=>S.profile?.role==='receiver'?['ecommerce','shared']:['production','shared'];
+  const requestScopes=()=>S.profile?.is_ecommerce_manager
+    ?['production','ecommerce','shared']
+    :S.profile?.role==='receiver'?['ecommerce','shared']:['production','shared'];
   const isInRequestCatalog=product=>requestScopes().includes(product?.usage_scope);
-  const visibleForRequests=product=>product.active&&isInRequestCatalog(product)&&(S.profile?.role!=='collaborator'||product.hidden_from_collaborators!==true);
+  const visibleForRequests=product=>product.active&&isInRequestCatalog(product)&&(
+    S.profile?.role!=='collaborator'||S.profile?.is_ecommerce_manager||product.hidden_from_collaborators!==true
+  );
   const isRequestAvailable=product=>!product?.availability_status||product.availability_status==='available';
   const availabilityLabels={
     available:'Disponível para solicitar',

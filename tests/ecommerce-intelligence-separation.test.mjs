@@ -40,7 +40,7 @@ test('product form lets admins classify production, ecommerce and shared product
   assert.match(productVisibility,/p_usage_scope/);
   assert.match(productVisibility,/isManagedCatalog/);
   assert.match(productVisibility,/name='admin_save_product_v5'/);
-  assert.match(app,/requestProductScopes=.*receiver.*\['ecommerce','shared'\].*\['production','shared'\]/);
+  assert.match(app,/requestProductScopes=.*is_ecommerce_manager.*\['production','ecommerce','shared'\].*receiver.*\['ecommerce','shared'\].*\['production','shared'\]/s);
 });
 
 test('intelligence separates ecommerce reports, planning and exports',()=>{

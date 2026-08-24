@@ -88,6 +88,6 @@ test("report keeps model, color and collaborator separated", async () => {
 test("receipt values are admin-only while weekly payment values remain available", async () => {
   const source = await readFile(new URL("../web/production-receipts.js", import.meta.url), "utf8");
   assert.match(source, /const canSeeReceiptValues=\(\)=>isAdmin\(\)/);
-  assert.match(source, /const canSeePaymentValues=\(\)=>role\(\)!=='receiver'/);
+  assert.match(source, /const canSeePaymentValues=\(\)=>!isReceiverOperator\(\)/);
   assert.match(source, /PR\.tab==='weeks'\?canSeePaymentValues\(\):canSeeReceiptValues\(\)/);
 });
