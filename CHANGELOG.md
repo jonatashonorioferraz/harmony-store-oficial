@@ -1,5 +1,16 @@
 # Changelog
 
+## [v25.98] - 2026-08-24
+
+### Gerente de e-commerce com acesso operacional completo e seguro
+
+- A Gerente de e-commerce passa a reunir as rotinas de colaboradora de produção e colaboradora de recebimento.
+- O catálogo de solicitação combina matérias-primas, suprimentos do e-commerce e itens compartilhados sem duplicar produtos.
+- Foram liberados recebimento de produção, Suprimentos e Compras, Inventário de Produção, Planejamento de Envios, Central de Transferências e Saúde do Sistema.
+- Valores de produção, agenda de pagamentos e funções exclusivas de ADM continuam bloqueados.
+- O perfil permanece tecnicamente como colaboradora com permissão específica; nenhuma promoção para ADM foi realizada.
+- As mesmas regras foram aplicadas na interface e no Supabase, com auditoria e testes de negação.
+
 ## [v25.97] - 2026-08-20
 
 ### Solicitações da Central liberadas com permissão específica

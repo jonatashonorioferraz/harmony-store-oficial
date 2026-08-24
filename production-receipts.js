@@ -12,9 +12,11 @@ const paymentFor=(quantity,rate=2.5)=>pn(quantity)*pn(rate)/100;
 const differenceFor=item=>pn(item?.quantity)-pn(item?.declared_quantity??item?.quantity);
 const role=()=>S.profile?.role||'';
 const isAdmin=()=>role()==='admin';
-const canReceive=()=>isAdmin()||role()==='receiver';
+const isEcommerceManager=()=>Boolean(S.profile?.is_ecommerce_manager);
+const isReceiverOperator=()=>role()==='receiver'||isEcommerceManager();
+const canReceive=()=>isAdmin()||isReceiverOperator();
 const canSeeReceiptValues=()=>isAdmin();
-const canSeePaymentValues=()=>role()!=='receiver';
+const canSeePaymentValues=()=>!isReceiverOperator();
 const canSeeValues=()=>PR.tab==='weeks'?canSeePaymentValues():canSeeReceiptValues();
 const modelImageUrl=model=>model?.image_path?API+'/storage/v1/object/public/product-images/'+model.image_path:'';
 const productionColor=name=>PR.colors.find(color=>color.name.toLocaleLowerCase('pt-BR')===String(name||'').toLocaleLowerCase('pt-BR'));
@@ -78,7 +80,7 @@ function productionNav(){
   if(!button){
     const marker=document.createElement('small');marker.dataset.productionMarker='true';marker.textContent='PRODUÇÃO RECEBIDA';
     button=document.createElement('button');button.className='nav';button.dataset.view='production';
-    button.innerHTML=`<i>📦</i>${isAdmin()?'Produção e pagamentos':role()==='receiver'?'Receber produção':'Minha produção'}`;
+    button.innerHTML=`<i>📦</i>${isAdmin()?'Produção e pagamentos':isReceiverOperator()?'Receber produção':'Minha produção'}`;
     profileButton.parentNode.insertBefore(marker,profileButton);profileButton.parentNode.insertBefore(button,profileButton);
     button.onclick=()=>{S.view='production';renderApp()};
   }
@@ -100,8 +102,8 @@ function productionNav(){
 }
 
 function tabs(){
-  const items=[['receipts',role()==='receiver'?'Conferências':'Recebimentos']];
-  if(role()!=='receiver')items.push(['weeks',isAdmin()?'Agenda de pagamentos':'Meus pagamentos']);
+  const items=[['receipts',isReceiverOperator()?'Conferências':'Recebimentos']];
+  if(!isReceiverOperator())items.push(['weeks',isAdmin()?'Agenda de pagamentos':'Meus pagamentos']);
   if(isAdmin())items.push(['models','Modelos'],['colors','Cores']);
   return `<div class="production-tabs">${items.map(([id,label])=>`<button data-production-tab="${id}" class="${PR.tab===id?'active':''}">${label}</button>`).join('')}</div>`;
 }
@@ -124,7 +126,7 @@ function differenceBadge(item){
 function receiptTable(){
   const collections=groupedCollections();
   return `<div class="receipt-collections">${collections.map(collection=>{
-    const closingId=collection.items.find(item=>item.closing_id)?.closing_id||null,closing=PR.closings.find(item=>item.id===closingId),closed=Boolean(closingId),paid=closing?.status==='paid',correctable=canReceive()&&!paid,deletable=!closed&&(isAdmin()||role()==='receiver'&&collection.received_by===S.profile.id),total=collection.items.reduce((sum,item)=>sum+pn(item.amount),0),paymentLabel=paid?'Pagamento realizado':closed?'Pagamento fechado':collection.planned_payment_on?'Previsto para '+dateBr(collection.planned_payment_on):'Agenda não configurada',collapsed=!PR.expandedCollections.has(collection.id);
+    const closingId=collection.items.find(item=>item.closing_id)?.closing_id||null,closing=PR.closings.find(item=>item.id===closingId),closed=Boolean(closingId),paid=closing?.status==='paid',correctable=canReceive()&&!paid,deletable=!closed&&(isAdmin()||isReceiverOperator()&&collection.received_by===S.profile.id),total=collection.items.reduce((sum,item)=>sum+pn(item.amount),0),paymentLabel=paid?'Pagamento realizado':closed?'Pagamento fechado':collection.planned_payment_on?'Previsto para '+dateBr(collection.planned_payment_on):'Agenda não configurada',collapsed=!PR.expandedCollections.has(collection.id);
     return `<article class="collection-card ${collapsed?'is-collapsed':''}" data-collection-card="${collection.id}"><header><div><small>DATA</small><b>${dateBr(collection.received_on)}</b></div><div><small>COLABORADORA</small><b>${esc(collection.worker_name)}</b></div><div><small>COLETA / CAIXA</small><b>${esc(collection.box_reference||'Não informada')}</b></div><div><small>ITENS</small><b>${collection.items.length}</b></div>${canSeeValues()?`<div><small>VALOR</small><b>${preciseMoney(total)}</b></div>`:''}<span class="badge ${paid?'production-paid':closed?'production-closed':'production-open'}">${paymentLabel}</span><div class="actions"><button class="collection-collapse-button outline compact-action" data-toggle-collection="${collection.id}" aria-expanded="${!collapsed}" aria-label="${collapsed?'Mostrar':'Recolher'} itens da coleta de ${esc(collection.worker_name)}">${collapsed?'⌄ Ver itens':'⌃ Recolher lista'}</button>${canReceive()&&correctable?`<button class="ghost compact-action" data-edit-collection="${collection.id}">${closed?'Reabrir e editar':'Editar coleta'}</button>`:''}${canReceive()&&isAdmin()&&!closed?`<button class="outline compact-action" data-move-payment="${collection.id}">Mover pagamento</button>`:''}${canReceive()&&deletable?`<button class="danger compact-action" data-delete-collection="${collection.id}">Excluir coleta</button>`:''}${canReceive()&&paid?'<small class="locked-receipt">Pagamento protegido</small>':''}</div></header><div class="table-wrap"><table class="production-table collection-items-table"><thead><tr><th>Modelo</th><th>Cor</th><th>Informada</th><th>Oficial</th><th>Diferença</th>${canSeeValues()?'<th>Valor</th>':''}</tr></thead><tbody>${collection.items.map(item=>`<tr><td><b>${esc(item.model_name)}</b></td><td>${colorChip(item.color)}</td><td>${units(item.declared_quantity??item.quantity)}</td><td><strong>${units(item.quantity)}</strong></td><td>${differenceBadge(item)}</td>${canSeeValues()?`<td>${preciseMoney(item.amount)}</td>`:''}</tr>`).join('')}</tbody></table></div><footer><span>Conferido por <b>${esc(collection.receiver_name)}</b></span>${collection.notes?`<span>Observação: ${esc(collection.notes)}</span>`:''}</footer></article>`;
   }).join('')||'<div class="empty">Nenhuma produção recebida nesta semana.</div>'}</div>`;
 }
@@ -136,7 +138,7 @@ function reportTable(){
 }
 
 function receiptsView(){
-  return `${receiptMetrics()}<section class="card production-section"><div class="card-head"><div><p class="eyebrow">PRODUTOS ACABADOS</p><h2>${role()==='receiver'?'Conferências realizadas':'Recebimentos da semana'}</h2></div>${canReceive()?'<button class="primary" id="newReceipt">＋ Novo recebimento</button>':''}</div>${receiptTable()}</section>${reportTable()}`;
+  return `${receiptMetrics()}<section class="card production-section"><div class="card-head"><div><p class="eyebrow">PRODUTOS ACABADOS</p><h2>${isReceiverOperator()?'Conferências realizadas':'Recebimentos da semana'}</h2></div>${canReceive()?'<button class="primary" id="newReceipt">＋ Novo recebimento</button>':''}</div>${receiptTable()}</section>${reportTable()}`;
 }
 
 function weeksView(){
@@ -172,7 +174,7 @@ async function renderProduction(){
   page.dataset.production='true';page.innerHTML='<div class="loading-inline">Preparando recebimentos…</div>';
   await loadProduction();if(S.view!=='production')return;
   if(PR.error){page.innerHTML=`<div class="page">${head('PRODUÇÃO RECEBIDA','Atualização necessária','O restante do aplicativo continua funcionando normalmente.')}<section class="card intelligence-error"><h2>Execute a atualização 009 no Supabase</h2><p>O módulo de recebimentos só será liberado após a atualização do banco.</p><small>${esc(PR.error)}</small></section></div>`;return}
-  page.innerHTML=`<div class="page production-page">${head('PRODUÇÃO RECEBIDA',isAdmin()?'Controle de produção e pagamentos':role()==='receiver'?'Conferência de produtos acabados':'Minha produção recebida',isAdmin()?'Registre recebimentos e feche cada pagamento conforme a agenda individual.':role()==='receiver'?'Confira modelo, cor, quantidade e data sem acesso a valores.':'Acompanhe o que foi recebido e os pagamentos já fechados.')} ${tabs()} ${weekFilter()} <div id="productionContent">${PR.tab==='weeks'?weeksView():PR.tab==='models'&&isAdmin()?modelsView():PR.tab==='colors'&&isAdmin()?colorsView():receiptsView()}</div></div>`;
+  page.innerHTML=`<div class="page production-page">${head('PRODUÇÃO RECEBIDA',isAdmin()?'Controle de produção e pagamentos':isReceiverOperator()?'Conferência de produtos acabados':'Minha produção recebida',isAdmin()?'Registre recebimentos e feche cada pagamento conforme a agenda individual.':isReceiverOperator()?'Confira modelo, cor, quantidade e data sem acesso a valores.':'Acompanhe o que foi recebido e os pagamentos já fechados.')} ${tabs()} ${weekFilter()} <div id="productionContent">${PR.tab==='weeks'?weeksView():PR.tab==='models'&&isAdmin()?modelsView():PR.tab==='colors'&&isAdmin()?colorsView():receiptsView()}</div></div>`;
   bindProduction();
 }
 
@@ -258,5 +260,5 @@ async function printStatement(id){
 
 new MutationObserver(productionNav).observe(document.body,{childList:true,subtree:true});
 productionNav();
-window.HarmonyProduction=Object.freeze({state:PR,paymentFor,differenceFor,weekBounds,groupReport,groupedCollections,canSeeReceiptValues,canSeePaymentValues});
+window.HarmonyProduction=Object.freeze({state:PR,paymentFor,differenceFor,weekBounds,groupReport,groupedCollections,canSeeReceiptValues,canSeePaymentValues,isReceiverOperator});
 })();

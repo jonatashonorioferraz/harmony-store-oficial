@@ -1,6 +1,7 @@
 (()=>{
 const IS={loaded:false,loading:false,error:'',tab:'dashboard',products:[],requests:[],requestItems:[],receipts:[],receiptItems:[],fulfillments:[],suppliers:[],aiRuns:[],cart:{},from:'',to:''};
-const allowed=()=>['admin','receiver'].includes(S.profile?.role);
+const isEcommerceManager=()=>Boolean(S.profile?.is_ecommerce_manager);
+const allowed=()=>['admin','receiver'].includes(S.profile?.role)||isEcommerceManager();
 const isAdmin=()=>S.profile?.role==='admin';
 const num=value=>Number(value||0);
 const money=value=>num(value).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
