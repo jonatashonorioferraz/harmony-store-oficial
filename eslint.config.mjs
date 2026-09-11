@@ -19,6 +19,10 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     ".pnpm-store/**",
     "supabase/.temp/**",
+    // Cópias de publicação e bibliotecas externas são validadas pelos testes
+    // próprios e não devem duplicar os avisos do código-fonte oficial.
+    "web/**",
+    "vendor/**",
     "next-env.d.ts",
   ]),
 ]);

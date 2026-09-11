@@ -22,6 +22,7 @@ for (const filename of [
   "shipping-planning.js",
   "shopee-intelligence.css",
   "shopee-intelligence.js",
+  "system-health.js",
   "transfer-center.css",
   "transfer-center.js",
 ]) {

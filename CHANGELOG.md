@@ -1,5 +1,15 @@
 # Changelog
 
+## [v25.99] - 2026-09-11
+
+### Manutenção preventiva e consistência da publicação
+
+- A versão do pacote, do cache offline e dos testes foi alinhada à versão funcional do aplicativo.
+- O espelho oficial em `web/` passou a incluir corretamente o ícone da Central de Transferências.
+- A inserção do menu de Saúde do Sistema foi tornada explícita, eliminando um aviso técnico sem alterar permissões ou comportamento.
+- O cache do PWA foi renovado para distribuir a manutenção em computador, tablet e celular.
+- Banco de dados, autenticação, pagamentos, RLS e regras de negócio permaneceram inalterados.
+
 ## [v25.98] - 2026-08-24
 
 ### Gerente de e-commerce com acesso operacional completo e seguro

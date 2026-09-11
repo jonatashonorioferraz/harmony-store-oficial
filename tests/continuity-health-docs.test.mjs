@@ -19,6 +19,10 @@ const monitorWorkflow = await readFile(new URL('../.github/workflows/monitor.yml
 const monitorScript = await readFile(new URL('../scripts/monitor-production.mjs', import.meta.url), 'utf8');
 const recoveryWorkflow = await readFile(new URL('../.github/workflows/recovery-drill.yml', import.meta.url), 'utf8');
 const recoveryScript = await readFile(new URL('../scripts/execute-api-recovery.mjs', import.meta.url), 'utf8');
+const buildScript = await readFile(new URL('../scripts/build-static.mjs', import.meta.url), 'utf8');
+const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const serviceWorker = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
+const changelog = await readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
 
 test('CI validates the complete build, test suite and synchronized official files', () => {
   assert.match(quality, /actions\/checkout@v7/);
@@ -28,8 +32,17 @@ test('CI validates the complete build, test suite and synchronized official file
   assert.match(quality, /npm test/);
   assert.match(quality, /npm run lint/);
   assert.match(quality, /npm run verify:mirrors/);
+  assert.ok(quality.indexOf('Confirmar fontes oficiais sincronizadas antes do build') < quality.indexOf('- run: npm test'));
+  assert.match(quality, /git diff --exit-code/);
+  assert.match(buildScript, /"system-health\.js"/);
   assert.match(quality, /cmp app\.js web\/app\.js/);
   assert.match(quality, /Bloquear segredos conhecidos/);
+});
+
+test('package, offline cache and changelog expose one coherent release version', () => {
+  const [major, minor] = packageJson.version.split('.');
+  assert.match(serviceWorker, new RegExp(`harmony-store-v${major}-${minor}-r\\d+`));
+  assert.match(changelog, new RegExp(`## \\[v${major}\\.${minor}\\]`));
 });
 
 test('daily backup exports data, Auth and Storage before encryption', () => {

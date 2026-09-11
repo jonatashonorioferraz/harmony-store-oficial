@@ -26,6 +26,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Auditar vulnerabilidades de produção
         run: npm audit --omit=dev --audit-level=high
+      - name: Confirmar fontes oficiais sincronizadas antes do build
+        run: npm run verify:mirrors
       - run: npm test
       - name: Verificar qualidade estática do código
         run: npm run lint
@@ -40,6 +42,7 @@ jobs:
           cmp service-worker.js web/service-worker.js
           cmp help-center.js web/help-center.js
           cmp system-health.js web/system-health.js
+          git diff --exit-code
       - name: Bloquear segredos conhecidos no repositório
         shell: bash
         run: |
