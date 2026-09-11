@@ -8,6 +8,7 @@
 - O espelho oficial em `web/` passou a incluir corretamente o ícone da Central de Transferências.
 - A inserção do menu de Saúde do Sistema foi tornada explícita, eliminando um aviso técnico sem alterar permissões ou comportamento.
 - O cache do PWA foi renovado para distribuir a manutenção em computador, tablet e celular.
+- Next.js, Sharp e o mapeamento de compatibilidade dos navegadores foram atualizados para versões corrigidas após a auditoria de segurança do GitHub.
 - Banco de dados, autenticação, pagamentos, RLS e regras de negócio permaneceram inalterados.
 
 ## [v25.98] - 2026-08-24
