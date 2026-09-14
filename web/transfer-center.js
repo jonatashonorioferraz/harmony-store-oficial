@@ -18,7 +18,7 @@ const code=value=>'#'+String(value||0).padStart(4,'0');
 const qty=value=>num(value).toLocaleString('pt-BR')+' un.';
 const date=value=>value?new Date(String(value).length===10?value+'T12:00:00':value).toLocaleDateString('pt-BR'):'Sem prazo';
 const datetime=value=>value?new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';
-const image=path=>path?`${API}/storage/v1/object/public/product-images/${encodedStoragePath(path)}`:'assets/shipping-product-placeholder.svg';
+const image=path=>path?(window.HarmonyMedia?window.HarmonyMedia.productUrl(path,1024):`${API}/storage/v1/object/public/product-images/${encodedStoragePath(path)}`):'assets/shipping-product-placeholder.svg';
 const statusInfo=status=>STATUS[status]||[status,'requested'];
 const active=request=>ACTIVE.includes(request.status);
 

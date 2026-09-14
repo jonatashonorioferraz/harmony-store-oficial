@@ -25,9 +25,9 @@ test('interface observer cannot observe mutations produced by its own enhancemen
 test('fixed assets are mirrored and force a fresh PWA cache',()=>{
   assert.equal(webEnhancements,enhancements);
   assert.equal(webIndex,index);
-  assert.match(index,/app\.js\?v=25\.98/);
+  assert.match(index,/app\.js\?v=25\.100/);
   assert.match(index,/enhancements\.js\?v=25\.69/);
-  assert.match(worker,/harmony-store-v25-99-r1/);
+  assert.match(worker,/harmony-store-v25-99-r2/);
   assert.match(worker,/enhancements\.js\?v=25\.69/);
   assert.equal(JSON.parse(pkg).version,'25.99.0');
 });

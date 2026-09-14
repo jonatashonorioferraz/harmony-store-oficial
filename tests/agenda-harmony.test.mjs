@@ -134,7 +134,7 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
   assert.match(index,/agenda-harmony\.css\?v=25\.91/);
   assert.match(index,/agenda-harmony\.js\?v=25\.91/);
-  assert.match(worker,/harmony-store-v25-99-r1/);
+  assert.match(worker,/harmony-store-v25-99-r2/);
   assert.match(worker,/agenda-harmony\.css\?v=25\.91/);
   assert.match(worker,/agenda-harmony\.js\?v=25\.91/);
   assert.match(help,/id:'agenda-harmony'/);

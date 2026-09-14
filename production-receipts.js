@@ -18,7 +18,7 @@ const canReceive=()=>isAdmin()||isReceiverOperator();
 const canSeeReceiptValues=()=>isAdmin();
 const canSeePaymentValues=()=>!isReceiverOperator();
 const canSeeValues=()=>PR.tab==='weeks'?canSeePaymentValues():canSeeReceiptValues();
-const modelImageUrl=model=>model?.image_path?API+'/storage/v1/object/public/product-images/'+model.image_path:'';
+const modelImageUrl=model=>model?.image_path?(window.HarmonyMedia?window.HarmonyMedia.productUrl(model.image_path,1024):API+'/storage/v1/object/public/product-images/'+model.image_path):'';
 const productionColor=name=>PR.colors.find(color=>color.name.toLocaleLowerCase('pt-BR')===String(name||'').toLocaleLowerCase('pt-BR'));
 const productionColorHex=name=>productionColor(name)?.hex_code||'#D9A3BE';
 const colorChip=name=>`<span class="color-pill visual-color-pill"><i style="--production-color:${esc(productionColorHex(name))}"></i>${esc(name)}</span>`;

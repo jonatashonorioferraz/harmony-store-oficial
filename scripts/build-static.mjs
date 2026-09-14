@@ -16,6 +16,7 @@ for (const filename of [
   "harmony-icons.css",
   "harmony-icons.js",
   "index.html",
+  "media-optimization.js",
   "service-worker.js",
   "shipping-inventory-integration.js",
   "shipping-planning.css",
