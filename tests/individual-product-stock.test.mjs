@@ -65,7 +65,7 @@ test('admin UI manages physical stock while reserved stock stays system controll
   assert.match(css,/@media\(max-width:430px\)/);
   assert.match(html,/individual-product-stock\.js\?v=25\.63/);
   assert.match(html,/individual-product-stock\.css\?v=25\.63/);
-  assert.match(worker,/harmony-store-v25-99-r1/);
+  assert.match(worker,/harmony-store-v25-99-r2/);
   assert.match(worker,/SHELL\.push\('\.\/individual-product-stock\.css\?v=25\.63','\.\/individual-product-stock\.js\?v=25\.63'\)/);
 });
 

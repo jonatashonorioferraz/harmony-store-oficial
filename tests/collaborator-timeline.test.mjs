@@ -53,7 +53,7 @@ test('timeline assets are mirrored, versioned, cached and responsive',async()=>{
     assert.match(html,/collaborator-timeline\.js\?v=25\.54/);
   }
   for(const worker of [rootWorker,webWorker]){
-    assert.match(worker,/harmony-store-v25-99-r1/);
+    assert.match(worker,/harmony-store-v25-99-r2/);
     assert.match(worker,/collaborator-timeline\.css\?v=25\.50/);
     assert.match(worker,/collaborator-timeline\.js\?v=25\.54/);
   }

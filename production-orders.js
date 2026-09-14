@@ -2,7 +2,7 @@
 'use strict';
 const PO={loaded:false,loading:null,ownerId:null,orders:[],models:[],colors:[],workers:[],filter:'active'};
 const isAdmin=()=>S?.profile?.role==='admin';
-const img=path=>path?`${API}/storage/v1/object/public/product-images/${String(path).split('/').map(encodeURIComponent).join('/')}`:'';
+const img=path=>path?(window.HarmonyMedia?window.HarmonyMedia.productUrl(path,1024):`${API}/storage/v1/object/public/product-images/${String(path).split('/').map(encodeURIComponent).join('/')}`):'';
 const date=value=>value?new Date(value+'T12:00:00').toLocaleDateString('pt-BR'):'—';
 const dateTime=value=>value?new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';
 const today=()=>new Date().toISOString().slice(0,10);

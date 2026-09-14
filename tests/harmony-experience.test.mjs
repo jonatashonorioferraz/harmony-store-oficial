@@ -19,7 +19,7 @@ test('carregamento Harmony é tardio, concorrente e acessível',async()=>{
   assert.match(index,/harmony-experience\.css\?v=25\.62/);
   assert.match(index,/harmony-experience\.js\?v=25\.61/);
   assert.ok(index.indexOf('collaborator-timeline.js')<index.indexOf('harmony-experience.js'),'o interceptador deve ser carregado por último');
-  assert.match(worker,/harmony-store-v25-99-r1/);
+  assert.match(worker,/harmony-store-v25-99-r2/);
   assert.match(worker,/harmony-experience\.js\?v=25\.61/);
   assert.match(worker,/harmony-experience\.css\?v=25\.62/);
 });
