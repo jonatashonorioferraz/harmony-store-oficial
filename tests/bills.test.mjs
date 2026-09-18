@@ -4,10 +4,11 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
-const [ui,css,migration,reactivation,correction,edge,html,worker,backup,recovery]=await Promise.all([
+const [ui,css,migration,reactivation,correction,pendingCorrection,edge,html,worker,backup,recovery]=await Promise.all([
   read('bills.js'),read('bills.css'),read('supabase/migrations/20260725212141_admin_bills.sql'),
   read('supabase/migrations/20260727160000_bill_reactivation.sql'),
   read('supabase/migrations/20260819190000_bill_due_date_correction_reactivation.sql'),
+  read('supabase/migrations/20260918193547_correct_pending_bill_due_date.sql'),
   read('supabase/functions/analyze-bill/index.ts'),read('index.html'),read('service-worker.js'),
   read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs')
 ]);
@@ -64,8 +65,8 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(html,/bills\.css\?v=25\.49/);
-  assert.match(html,/bills\.js\?v=25\.100/);
-  assert.match(worker,/bills\.js\?v=25\.100/);
+  assert.match(html,/bills\.js\?v=25\.101/);
+  assert.match(worker,/bills\.js\?v=25\.101/);
 });
 
 test('cancelled bills can be safely reactivated without bypassing duplicate protection',()=>{
@@ -103,6 +104,30 @@ test('cancelled bill due date is corrected and reactivated atomically with an au
   assert.match(correction,/revoke all on function public\.admin_correct_bill_due_date_and_reactivate\(uuid, date\) from public, anon, authenticated/);
   assert.match(correction,/grant execute on function public\.admin_correct_bill_due_date_and_reactivate\(uuid, date\) to authenticated, service_role/);
   assert.doesNotMatch(correction,/delete from public\.bills/i);
+});
+
+test('pending and overdue bills can correct only the due date with locking and audit',()=>{
+  assert.match(ui,/pendingDueDateCorrectionModal/);
+  assert.match(ui,/correctPendingBillDueDate/);
+  assert.match(ui,/Somente a data será alterada/);
+  assert.match(ui,/admin_correct_pending_bill_due_date/);
+  assert.match(ui,/item\?\.status!=='pending'/);
+  assert.match(ui,/dueDate===item\.due_date/);
+  assert.match(pendingCorrection,/^begin;/m);
+  assert.match(pendingCorrection,/^commit;/m);
+  assert.match(pendingCorrection,/private\.is_admin\(\)/);
+  assert.match(pendingCorrection,/for update/);
+  assert.match(pendingCorrection,/v_bill\.status <> 'pending'/);
+  assert.match(pendingCorrection,/set due_date = p_due_date,\s+updated_by = v_actor/);
+  assert.match(pendingCorrection,/bill\.pending_due_date_corrected/);
+  assert.match(pendingCorrection,/'previous_due_date', v_bill\.due_date/);
+  assert.match(pendingCorrection,/'new_due_date', p_due_date/);
+  assert.match(pendingCorrection,/revoke all on function public\.admin_correct_pending_bill_due_date\(uuid, date\) from public, anon, authenticated/);
+  assert.match(pendingCorrection,/grant execute on function public\.admin_correct_pending_bill_due_date\(uuid, date\) to authenticated, service_role/);
+  const updateClause=pendingCorrection.match(/update public\.bills([\s\S]*?)where id/)?.[1]||'';
+  assert.doesNotMatch(updateClause,/amount\s*=/i);
+  assert.doesNotMatch(updateClause,/digit_line\s*=/i);
+  assert.doesNotMatch(updateClause,/status\s*=/i);
 });
 
 test('bill dashboard summarizes counts and amounts and uses every total as a filter',()=>{

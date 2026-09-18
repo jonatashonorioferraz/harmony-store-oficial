@@ -35,6 +35,7 @@ test('CI validates the complete build, test suite and synchronized official file
   assert.ok(quality.indexOf('Confirmar fontes oficiais sincronizadas antes do build') < quality.indexOf('- run: npm test'));
   assert.match(quality, /git diff --exit-code/);
   assert.match(buildScript, /"system-health\.js"/);
+  assert.match(buildScript, /"bills\.js"/);
   assert.match(quality, /cmp app\.js web\/app\.js/);
   assert.match(quality, /Bloquear segredos conhecidos/);
 });

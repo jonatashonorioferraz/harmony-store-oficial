@@ -34,6 +34,40 @@ function close(){document.querySelector('#modal').innerHTML=''}
 const previousRenderApp=renderApp;renderApp=function(){const result=previousRenderApp();addNavigation();return result};
 const previousRenderPage=renderPage;renderPage=async function(){if(S.view==='bills'&&isAdmin())return renderBills(document.querySelector('#page'));return previousRenderPage()};
 async function openNew(){if(!isAdmin())return;S.view='bills';renderApp();await load();uploadModal()}
+
+function pendingDueDateCorrectionModal(item){
+  document.querySelector('#modal').innerHTML=`<div class="modal"><form class="modal-box compact-modal" id="pendingBillDueDateCorrectionForm"><div class="modal-head"><div><p class="eyebrow">CORREÇÃO SEGURA</p><h2>Corrigir vencimento</h2></div><button type="button" data-close>×</button></div><div class="bill-payment-confirm"><b>Boleto #${String(item.protocol).padStart(4,'0')}</b><span>Vencimento cadastrado: ${date(item.due_date)}</span></div><div class="form"><label class="wide">Novo vencimento<input name="due_date" type="date" value="${esc(item.due_date)}" required></label></div><div class="bill-security"><b>Somente a data será alterada</b><span>Beneficiário, valor, linha digitável, documento, status e histórico permanecerão exatamente como estão.</span></div><div class="form-actions"><button type="button" class="outline" data-close>Voltar</button><button type="submit" class="primary" id="savePendingBillDueDate">Salvar nova data</button></div></form></div>`;
+  document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>detail(item));
+  document.querySelector('#pendingBillDueDateCorrectionForm').onsubmit=async event=>{
+    event.preventDefault();
+    const button=document.querySelector('#savePendingBillDueDate');
+    if(button.disabled)return;
+    const dueDate=new FormData(event.currentTarget).get('due_date');
+    if(!dueDate)return alert('Informe o vencimento correto.');
+    if(dueDate===item.due_date)return alert('Informe uma data diferente do vencimento atual.');
+    button.disabled=true;
+    try{
+      await rpc('admin_correct_pending_bill_due_date',{p_bill_id:item.id,p_due_date:dueDate});
+      await refresh('Vencimento corrigido com segurança.');
+    }catch(error){alert(error.message);button.disabled=false}
+  };
+}
+
+const renderBillDetail=detail;
+detail=function(item){
+  renderBillDetail(item);
+  if(item?.status!=='pending')return;
+  const actions=document.querySelector('.bill-detail .form-actions'),paymentButton=document.querySelector('#markBillPaid');
+  if(!actions||document.querySelector('#correctPendingBillDueDate'))return;
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='outline';
+  button.id='correctPendingBillDueDate';
+  button.textContent='Corrigir vencimento';
+  button.onclick=()=>pendingDueDateCorrectionModal(item);
+  actions.insertBefore(button,paymentButton||null);
+};
+
 window.HarmonyBills=Object.freeze({state:BS,load,validDigitLine,dueState,open:id=>{S.view='bills';renderApp();setTimeout(()=>detail(BS.items.find(item=>item.id===id)),0)},openNew});
 
 uploadModal=function(){

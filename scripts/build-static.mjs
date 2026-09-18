@@ -12,6 +12,7 @@ for (const filename of [
   "CHANGELOG.md",
   "agenda-harmony.css",
   "agenda-harmony.js",
+  "bills.js",
   "help-center.js",
   "harmony-icons.css",
   "harmony-icons.js",

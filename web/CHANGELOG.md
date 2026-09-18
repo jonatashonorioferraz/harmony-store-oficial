@@ -1,5 +1,18 @@
 # Changelog
 
+## [v25.101] - 2026-09-18
+
+### Correção segura do vencimento de boletos pendentes e atrasados
+
+Migração `20260918193547_correct_pending_bill_due_date.sql` aplicada e validada no Supabase oficial com teste transacional e rollback, sem alterações em boletos reais.
+
+- Boletos pendentes, inclusive os exibidos como atrasados, agora possuem a ação **Corrigir vencimento**.
+- A correção altera exclusivamente a data, preservando valor, beneficiário, linha digitável, documento, status e histórico.
+- A operação é exclusiva para ADMs, trava o registro durante a alteração e registra a data anterior e a nova na auditoria.
+- Boletos pagos continuam imutáveis; boletos cancelados permanecem no fluxo separado de correção e reativação.
+- Nenhum estoque, pagamento confirmado, autenticação ou permissão existente foi alterado.
+- Pacote e cache offline alinhados à versão 25.101; testes de submissão por teclado, prevenção de envio repetido e falha recuperável adicionados.
+
 ## [v25.99] - 2026-09-11
 
 ### Manutenção preventiva e consistência da publicação
