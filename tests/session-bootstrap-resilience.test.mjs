@@ -34,7 +34,7 @@ test('official mirrors and PWA assets publish the recovery patch together',()=>{
   assert.equal(webApp,app);
   assert.equal(webIndex,index);
   assert.match(index,/app\.js\?v=25\.100/);
-  assert.match(worker,/harmony-store-v25-101-r1/);
+  assert.match(worker,/harmony-store-v25-101-r2/);
   assert.match(worker,/app\.js\?v=25\.100/);
   assert.equal(JSON.parse(pkg).version,'25.101.0');
 });

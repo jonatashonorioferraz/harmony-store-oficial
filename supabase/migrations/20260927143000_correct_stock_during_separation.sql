@@ -1,7 +1,7 @@
 begin;
 
 -- Corrige a contagem fisica sem perder a solicitacao aberta nem alterar reservas.
-create function public.admin_correct_stock_during_separation(
+create or replace function public.admin_correct_stock_during_separation(
   p_request_id uuid,
   p_request_item_id uuid,
   p_counted_stock numeric,
@@ -130,7 +130,9 @@ $$;
 revoke all on function public.admin_correct_stock_during_separation(uuid,uuid,numeric,numeric,text)
   from public, anon, authenticated;
 grant execute on function public.admin_correct_stock_during_separation(uuid,uuid,numeric,numeric,text)
-  to authenticated, service_role;
+  to authenticated;
+grant execute on function public.admin_correct_stock_during_separation(uuid,uuid,numeric,numeric,text)
+  to service_role;
 
 notify pgrst, 'reload schema';
 commit;
