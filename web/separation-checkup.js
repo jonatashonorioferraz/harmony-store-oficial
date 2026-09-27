@@ -54,7 +54,7 @@ async function enhanceRequestModal(){
   };
 
   rows.forEach(row=>{
-    const controls=document.createElement('div');controls.className='separation-controls';controls.innerHTML=`<span class="separation-state" data-check-state></span><label class="separation-check"><input type="checkbox" data-check-separated> <b>Separado</b></label><button type="button" class="separation-shortage" data-check-out>Sem estoque</button><button type="button" class="separation-discrepancy" data-check-divergence>⚖ Divergência</button>`;
+    const controls=document.createElement('div');controls.className='separation-controls';controls.innerHTML=`<span class="separation-state" data-check-state></span><label class="separation-check"><input type="checkbox" data-check-separated> <b>Separado</b></label><button type="button" class="separation-shortage" data-check-out>Sem estoque</button><button type="button" class="separation-discrepancy" data-check-divergence>⚖ Divergência</button><button type="button" class="separation-correct" data-correct-stock>Corrigir estoque</button>`;
     row.appendChild(controls);
     controls.querySelector('[data-check-separated]').onchange=event=>setState(row,event.currentTarget.checked?'separated':'pending');
     controls.querySelector('[data-check-out]').onclick=async()=>{
@@ -68,6 +68,45 @@ async function enhanceRequestModal(){
       const reason=prompt('Explique a divergência encontrada:');if(reason===null)return;
       try{await rpc('admin_record_stock_discrepancy',{p_request_id:requestId,p_request_item_id:row.dataset.item,p_counted_stock:counted,p_reason:reason});toast('Divergência registrada para verificação.')}
       catch(error){alert(error.message)}
+    };
+    controls.querySelector('[data-correct-stock]').onclick=async()=>{
+      if(CHECK.busy)return;
+      if(itemState(row)==='out_of_stock')return alert('Este item já foi marcado como sem estoque. Revise a ocorrência antes de corrigir o saldo.');
+      const existing=row.querySelector('[data-stock-correction]');
+      if(existing){existing.remove();return}
+      CHECK.busy=true;
+      try{
+        const [item]=await rest(`request_items?id=eq.${row.dataset.item}&select=product_id,stock_owner_id`);
+        if(!item)throw Error('Item da solicitação não localizado.');
+        const [currentProduct]=await rest(`products?id=eq.${item.product_id}&select=id,name,unit,stock_control_mode,physical_stock,reserved_stock`);
+        if(!currentProduct)throw Error('Produto não localizado.');
+        const individual=currentProduct.stock_control_mode==='collaborator';
+        if(individual&&!item.stock_owner_id)throw Error('A colaboradora responsável pelo estoque não foi identificada.');
+        const [balance]=individual?await rest(`product_collaborator_stocks?product_id=eq.${item.product_id}&collaborator_id=eq.${item.stock_owner_id}&select=physical_stock,reserved_stock`):[currentProduct];
+        if(!balance)throw Error('Estoque individual não localizado.');
+        const physical=number(balance.physical_stock),reserved=number(balance.reserved_stock);
+        const owner=S.team.find(person=>person.id===item.stock_owner_id)?.full_name;
+        const panel=document.createElement('form');panel.className='separation-stock-correction';panel.dataset.stockCorrection='';
+        panel.innerHTML=`<strong>Corrigir saldo físico · ${safe(currentProduct.name)}</strong>${individual?`<small>Estoque individual de ${safe(owner||'colaboradora identificada no pedido')}</small>`:''}<p>Agora: <b>${quantity(physical,currentProduct.unit)}</b> · Reservado: <b>${quantity(reserved,currentProduct.unit)}</b> · Disponível: <b>${quantity(physical-reserved,currentProduct.unit)}</b></p><label>Total físico encontrado<input name="counted" type="number" min="${reserved}" step="0.001" value="${physical}" required></label><label>Motivo da correção<input name="reason" minlength="3" maxlength="500" placeholder="Ex.: saldo inicial lançado incorretamente" required></label><div class="separation-stock-actions"><button type="button" class="outline" data-cancel-correction>Cancelar</button><button type="submit" class="primary">Confirmar correção</button></div><small>Informe o total contado, não apenas a diferença. O saldo reservado será preservado.</small>`;
+        row.appendChild(panel);
+        panel.querySelector('[data-cancel-correction]').onclick=()=>panel.remove();
+        panel.onsubmit=async event=>{
+          event.preventDefault();if(CHECK.busy)return;
+          const counted=Number(panel.elements.counted.value),reason=panel.elements.reason.value.trim();
+          if(!Number.isFinite(counted)||counted<reserved||Math.abs(counted*1000-Math.round(counted*1000))>1e-7)return alert('Informe um total válido, com até três casas decimais e nunca abaixo do reservado.');
+          if(reason.length<3)return alert('Informe o motivo da correção.');
+          if(!confirm(`Confirmar saldo físico de ${quantity(counted,currentProduct.unit)} para ${currentProduct.name}?`))return;
+          CHECK.busy=true;const submit=panel.querySelector('[type="submit"]');submit.disabled=true;
+          try{
+            const result=await rpc('admin_correct_stock_during_separation',{p_request_id:requestId,p_request_item_id:row.dataset.item,p_counted_stock:counted,p_expected_stock:physical,p_reason:reason});
+            if(individual){const cached=S.personalizedStocks?.find(stock=>stock.product_id===item.product_id&&stock.collaborator_id===item.stock_owner_id);if(cached){cached.physical_stock=result.physical_stock;cached.reserved_stock=result.reserved_stock;cached.available_stock=result.physical_stock-result.reserved_stock}}
+            else{const cached=product(item.product_id);if(cached){cached.physical_stock=result.physical_stock;cached.reserved_stock=result.reserved_stock}}
+            panel.remove();toast('Estoque corrigido e registrado no histórico. Continue a separação.');
+          }catch(error){alert(error.message);submit.disabled=false}
+          finally{CHECK.busy=false}
+        };
+      }catch(error){alert(error.message)}
+      finally{CHECK.busy=false}
     };
   });
   summary.querySelector('[data-stock-control]').onclick=openStockControl;

@@ -43,11 +43,12 @@ test('final separation rejects forgotten items and preserves the official stock 
 });
 
 test('responsive checklist highlights outcomes and exposes reports',async()=>{
-  const [js,css,html,worker,webJs,webCss]=await Promise.all([
-    read('separation-checkup.js'),read('separation-checkup.css'),read('index.html'),read('service-worker.js'),read('web/separation-checkup.js'),read('web/separation-checkup.css')
+  const [js,css,html,worker,webJs,webCss,webWorker]=await Promise.all([
+    read('separation-checkup.js'),read('separation-checkup.css'),read('index.html'),read('service-worker.js'),read('web/separation-checkup.js'),read('web/separation-checkup.css'),read('web/service-worker.js')
   ]);
   assert.equal(js,webJs);
   assert.equal(css,webCss);
+  assert.equal(worker,webWorker);
   assert.match(js,/data-check-separated/);
   assert.match(js,/Sem estoque/);
   assert.match(js,/admin_finalize_material_separation/);
@@ -58,10 +59,31 @@ test('responsive checklist highlights outcomes and exposes reports',async()=>{
   assert.match(css,/check-separated/);
   assert.match(css,/check-out-of-stock/);
   assert.match(css,/@media\(max-width:720px\)/);
-  assert.match(html,/separation-checkup\.js\?v=25\.52/);
-  assert.match(html,/separation-checkup\.css\?v=25\.52/);
-  assert.match(worker,/harmony-store-v25-101-r1/);
-  assert.match(worker,/separation-checkup\.js\?v=25\.52/);
+  assert.match(html,/separation-checkup\.js\?v=25\.101\.1/);
+  assert.match(html,/separation-checkup\.css\?v=25\.101\.1/);
+  assert.match(worker,/harmony-store-v25-101-r2/);
+  assert.match(worker,/separation-checkup\.css\?v=25\.101\.1/);
+  assert.match(worker,/separation-checkup\.js\?v=25\.101\.1/);
+});
+
+
+test('inline stock correction is admin-only and keeps reserved stock intact',async()=>{
+  const [js,sql]=await Promise.all([
+    read('separation-checkup.js'),
+    read('supabase/migrations/20260927143000_correct_stock_during_separation.sql')
+  ]);
+  assert.match(js,/data-correct-stock/);
+  assert.match(js,/Total físico encontrado/);
+  assert.match(js,/p_expected_stock:physical/);
+  assert.match(js,/admin_correct_stock_during_separation/);
+  assert.match(sql,/private\.is_admin\(\)/);
+  assert.match(sql,/p_expected_stock is distinct from v_physical/);
+  assert.match(sql,/p_counted_stock < v_reserved/);
+  assert.match(sql,/product_collaborator_stocks/);
+  assert.match(sql,/stock_movements/);
+  assert.match(sql,/stock_discrepancies/);
+  assert.match(sql,/stock\.corrected_during_separation/);
+  assert.match(sql,/revoke all on function public\.admin_correct_stock_during_separation/);
 });
 
 test('product replenishment mode and continuity data are included',async()=>{
