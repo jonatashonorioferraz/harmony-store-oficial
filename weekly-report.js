@@ -9,7 +9,6 @@ const day=value=>value.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',y
 const stamp=value=>new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
 const rowDate=value=>new Date(value).toLocaleDateString('pt-BR');
 const empty=message=>`<p class="weekly-empty">${esc(message)}</p>`;
-const table=(headers,rows)=>`<div class="weekly-table-wrap"><table class="weekly-table"><thead><tr>${headers.map(label=>`<th>${esc(label)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
 
 function bounds(){
   const monday=new Date();
@@ -48,8 +47,8 @@ async function loadReport(start,end){
 }
 
 function reportHtml(data,start,end){
-  const byId=new Map(data.products.map(product=>[product.id,product]));
-  const inScope=id=>{const product=byId.get(id);return product&&product.usage_scope!=='ecommerce'};
+  const byId=new Map(data.products.map(product=>[String(product.id),product]));
+  const inScope=id=>{const product=byId.get(String(id));return product&&product.usage_scope!=='ecommerce'};
   const items=data.items.filter(item=>inScope(item.product_id));
   const requestIds=new Set(items.map(item=>item.request_id));
   const requests=data.requests.filter(request=>requestIds.has(request.id));
@@ -58,33 +57,96 @@ function reportHtml(data,start,end){
   const replenishments=data.replenishments.filter(item=>inScope(item.product_id));
   const low=data.products.filter(product=>product.active&&product.usage_scope!=='ecommerce'&&Number(product.physical_stock)-Number(product.reserved_stock)<=Number(product.minimum_stock));
   const demand=new Map();
-  for(const item of items)demand.set(item.product_id,(demand.get(item.product_id)||0)+Number(item.requested_quantity));
+  for(const item of items)demand.set(String(item.product_id),(demand.get(String(item.product_id))||0)+Number(item.requested_quantity));
   const missing=new Map();
-  for(const item of shortages)missing.set(item.product_id,(missing.get(item.product_id)||0)+1);
-  const ranked=[...demand].sort((a,b)=>b[1]-a[1]).slice(0,12);
+  for(const item of shortages)missing.set(String(item.product_id),(missing.get(String(item.product_id))||0)+1);
+  const ranked=[...demand].sort((a,b)=>b[1]-a[1]);
   const missingRanked=[...missing].sort((a,b)=>b[1]-a[1]);
   const paidTotal=data.bills.reduce((sum,item)=>sum+Number(item.amount),0);
   const purchaseTotal=data.receipts.reduce((sum,item)=>sum+Number(item.total_value),0);
   const movementCounts=new Map();
   for(const item of movements)movementCounts.set(item.movement_type,(movementCounts.get(item.movement_type)||0)+1);
   const endDay=new Date(end);endDay.setDate(endDay.getDate()-1);
-  const metric=(value,label,note)=>`<article class="weekly-metric"><strong>${esc(value)}</strong><span>${esc(label)}</span><small>${esc(note)}</small></article>`;
-  const productName=id=>byId.get(id)?.name||'Produto não encontrado';
-  return `<div class="page weekly-report">
-    <div class="weekly-hero"><div><p class="eyebrow">RELATÓRIO OPERACIONAL</p><h1>Uma semana, uma visão clara.</h1><p>De ${day(start)} a ${day(endDay)}. Dados consultados em ${stamp(Date.now())}.</p></div><div class="weekly-controls"><button class="outline" id="weeklyOlder">Semana anterior</button><button class="outline" id="weeklyNewer" ${weekOffset===0?'disabled':''}>Semana seguinte</button></div></div>
-    <div class="weekly-note">Somente dados administrativos de produção e suprimentos internos. Marketplace não integra este relatório. Estoque e pedidos de reposição refletem a situação atual, não uma fotografia histórica.</div>
-    <div class="weekly-metrics">${metric(number(requests.length),'Solicitações recebidas','Produção, inclusive canceladas')}${metric(number(missingRanked.length),'Produtos com falta','Ocorrências registradas na semana')}${metric(money(paidTotal),'Boletos pagos',`${data.bills.length} pagamento(s) confirmado(s)`)}${metric(money(purchaseTotal),'Compras internas',`${data.receipts.length} registro(s), não quitação`)}</div>
-    <div class="weekly-grid">
-      <section class="card weekly-panel"><div class="weekly-panel-head"><h2>Mais solicitados</h2><small>Quantidade pedida na semana</small></div>${ranked.length?table(['Produto','Quantidade','Faltas'],ranked.map(([id,qty])=>`<tr><td>${esc(productName(id))}</td><td>${number(qty)} ${esc(byId.get(id)?.unit||'')}</td><td>${number(missing.get(id)||0)}</td></tr>`)):empty('Nenhum material de produção solicitado nesta semana.')}</section>
-      <section class="card weekly-panel weekly-alert"><div class="weekly-panel-head"><h2>Solicitados e em falta</h2><small>Faltas registradas durante a separação</small></div>${missingRanked.length?table(['Produto','Ocorrências','Solicitado'],missingRanked.map(([id,count])=>`<tr><td>${esc(productName(id))}</td><td>${number(count)}</td><td>${number(demand.get(id)||0)} ${esc(byId.get(id)?.unit||'')}</td></tr>`)):empty('Nenhuma falta registrada nesta semana.')}</section>
-      <section class="card weekly-panel"><div class="weekly-panel-head"><h2>Estoque para repor</h2><small>Saldo disponível atual versus mínimo</small></div>${low.length?table(['Produto','Disponível','Mínimo'],low.sort((a,b)=>Number(a.physical_stock)-Number(a.reserved_stock)-Number(a.minimum_stock)-(Number(b.physical_stock)-Number(b.reserved_stock)-Number(b.minimum_stock))).map(product=>`<tr><td>${esc(product.name)}</td><td>${number(Number(product.physical_stock)-Number(product.reserved_stock))} ${esc(product.unit)}</td><td>${number(product.minimum_stock)}</td></tr>`)):empty('Nenhum produto abaixo do mínimo no momento.')}${replenishments.length?`<p class="weekly-footnote">${number(replenishments.length)} pedido(s) de reposição ainda aberto(s) ou em andamento.</p>`:''}</section>
-      <section class="card weekly-panel"><div class="weekly-panel-head"><h2>Movimentação de estoque</h2><small>Registros criados nesta semana</small></div>${movements.length?table(['Tipo','Registros'],[['entry','Entradas'],['reserve','Reservas'],['release','Liberações'],['delivery','Entregas'],['adjustment','Ajustes']].map(([key,label])=>`<tr><td>${label}</td><td>${number(movementCounts.get(key)||0)}</td></tr>`)):empty('Nenhuma movimentação registrada nesta semana.')}<p class="weekly-footnote">Contagens de eventos, não valores financeiros nem saldo histórico.</p></section>
-      <section class="card weekly-panel"><div class="weekly-panel-head"><h2>Solicitações da semana</h2><small>${number(requests.length)} registros de produção</small></div>${requests.length?table(['Solicitação','Data','Status','Itens'],requests.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).map(request=>`<tr><td>#${esc(String(request.protocol).padStart(4,'0'))}</td><td>${rowDate(request.created_at)}</td><td>${esc(labels[request.status]||request.status)}</td><td>${esc(items.filter(item=>item.request_id===request.id).map(item=>productName(item.product_id)).join(', '))}</td></tr>`)):empty('Nenhuma solicitação de produção nesta semana.')}</section>
-      <section class="card weekly-panel"><div class="weekly-panel-head"><h2>Boletos pagos</h2><small>Pagamento marcado como confirmado na semana</small></div>${data.bills.length?table(['Boleto','Beneficiário','Pago em','Valor'],data.bills.map(item=>`<tr><td>#${esc(String(item.protocol).padStart(4,'0'))}</td><td>${esc(item.beneficiary_name)}</td><td>${rowDate(item.paid_at)}</td><td>${money(item.amount)}</td></tr>`)):empty('Nenhum boleto pago nesta semana.')}</section>
-      <section class="card weekly-panel"><div class="weekly-panel-head"><h2>Compras internas registradas</h2><small>Cupons confirmados pela data da compra</small></div>${data.receipts.length?table(['Compra','Fornecedor','Data','Valor'],data.receipts.map(item=>`<tr><td>#${esc(String(item.protocol).padStart(4,'0'))}</td><td>${esc(item.merchant_name)}</td><td>${rowDate(item.purchased_at)}</td><td>${money(item.total_value)}</td></tr>`)):empty('Nenhuma compra interna registrada nesta semana.')}<p class="weekly-footnote">Cupom registrado não comprova que a compra foi paga. Este valor não é somado aos boletos para evitar dupla contagem.</p></section>
-      <section class="card weekly-panel weekly-pending"><div class="weekly-panel-head"><h2>Outras despesas</h2><small>Integração financeira pendente</small></div><p>O app ainda não possui um cadastro estruturado para demais gastos da empresa. Por isso, este relatório não os estima nem os apresenta como zero.</p></section>
+  const topDemand=ranked[0];
+  const topShortage=missingRanked[0];
+  const movementTypes=[['entry','Entradas'],['reserve','Reservas'],['release','Liberações'],['delivery','Entregas'],['adjustment','Ajustes']];
+  const productName=id=>byId.get(String(id))?.name||'Produto não encontrado';
+  const unit=id=>byId.get(String(id))?.unit||'';
+  return `<div class='page weekly-report'>
+    <header class='weekly-hero'><div class='weekly-hero-main'><p class='weekly-kicker'>HARMONY STORE · INTELIGÊNCIA OPERACIONAL</p><h1>Relatório da <em>semana.</em></h1><p class='weekly-period'>${day(start)} — ${day(endDay)}</p><p class='weekly-updated'>Leitura atualizada em ${stamp(Date.now())}</p></div><div class='weekly-hero-side'><div class='weekly-priority'><span>FOCO DA SEMANA</span><strong>${topShortage?esc(productName(topShortage[0])):low.length?`${number(low.length)} produtos para repor`:'Sem alertas de falta'}</strong><small>${topShortage?`${number(topShortage[1])} ocorrência(s) de falta registradas`:low.length?'Estoque abaixo do mínimo atual':'Nenhuma falta registrada na separação'}</small></div><div class='weekly-controls'><button class='outline' id='weeklyOlder'>← Semana anterior</button><button class='outline' id='weeklyNewer' ${weekOffset===0?'disabled':''}>Semana seguinte →</button></div></div></header>
+    <div class='weekly-section-heading'><div><p>PAINEL EXECUTIVO</p><h2>O que importa nesta semana</h2></div><span>Abra uma área para consultar os registros detalhados.</span></div>
+    <div class='weekly-dashboard-grid'>
+      <section class='weekly-group weekly-group--production' data-weekly-group='production' role='button' tabindex='0' aria-label='Abrir detalhes de produção e solicitações'><div class='weekly-group-head'><span>01 / PRODUÇÃO</span><span class='weekly-group-arrow'>↗</span></div><h3>Solicitações & demanda</h3><div class='weekly-group-focus'><strong>${number(requests.length)}</strong><span>solicitações na semana</span></div><div class='weekly-group-insight'><small>PRODUTO MAIS SOLICITADO</small><b>${topDemand?esc(productName(topDemand[0])):'Sem solicitações'}</b><span>${topDemand?`${number(topDemand[1])} ${esc(unit(topDemand[0]))} solicitada(s)`:'Nenhum produto de produção no período'}</span></div><div class='weekly-group-footer'>Abrir solicitações e produtos pedidos <span>↗</span></div></section>
+      <section class='weekly-group weekly-group--stock' data-weekly-group='stock' role='button' tabindex='0' aria-label='Abrir detalhes de estoque e faltas'><div class='weekly-group-head'><span>02 / ESTOQUE</span><span class='weekly-group-arrow'>↗</span></div><h3>Faltas & reposição</h3><div class='weekly-stock-metrics'><div><strong>${number(missingRanked.length)}</strong><span>produtos com falta na semana</span></div><div><strong>${number(low.length)}</strong><span>produtos para repor agora</span></div></div><div class='weekly-group-footer'>Abrir faltas, estoque e reposições <span>↗</span></div></section>
+      <section class='weekly-group weekly-group--movement' data-weekly-group='movement' role='button' tabindex='0' aria-label='Abrir detalhes das movimentações de estoque'><div class='weekly-group-head'><span>03 / FLUXO</span><span class='weekly-group-arrow'>↗</span></div><h3>Movimentações de estoque</h3><div class='weekly-group-focus'><strong>${number(movements.length)}</strong><span>eventos na semana</span></div><div class='weekly-flow-track'>${movementTypes.map(([key])=>`<i style='width:${movements.length?Math.round((movementCounts.get(key)||0)/movements.length*100):0}%'></i>`).join('')}</div><div class='weekly-flow-legend'>${movementTypes.map(([key,label])=>`<span>${label} <b>${number(movementCounts.get(key)||0)}</b></span>`).join('')}</div><div class='weekly-group-footer'>Abrir histórico de movimentos <span>↗</span></div></section>
+      <section class='weekly-group weekly-group--finance' data-weekly-group='finance' role='button' tabindex='0' aria-label='Abrir detalhes financeiros'><div class='weekly-group-head'><span>04 / FINANCEIRO</span><span class='weekly-group-arrow'>↗</span></div><h3>Pagamentos & compras</h3><div class='weekly-finance-summary'><div><small>BOLETOS PAGOS</small><strong>${money(paidTotal)}</strong><span>${number(data.bills.length)} pagamento(s)</span></div><div><small>COMPRAS REGISTRADAS</small><strong>${money(purchaseTotal)}</strong><span>${number(data.receipts.length)} cupom(ns)</span></div></div><p class='weekly-finance-caveat'>Compras registradas não comprovam quitação e não são somadas aos boletos.</p><div class='weekly-group-footer'>Abrir boletos e compras <span>↗</span></div></section>
     </div>
+    <div class='weekly-disclosure'><span>COMO LER ESTE PAINEL</span><p>Marketplace não integra o relatório. Estoque e reposição mostram a situação atual, não uma fotografia histórica. Outras despesas ainda não possuem cadastro estruturado no app e não são estimadas como zero.</p></div>
+    <dialog class='weekly-detail-dialog' id='weeklyDetail'><div class='weekly-detail-head'><div><span>VISÃO DETALHADA</span><h2 id='weeklyDetailTitle'></h2><p id='weeklyDetailNote'></p></div><button type='button' id='weeklyDetailClose' aria-label='Fechar detalhes'>×</button></div><div class='weekly-detail-tabs' id='weeklyDetailTabs' role='tablist'></div><div class='weekly-detail-body' id='weeklyDetailBody'></div></dialog>
   </div>`;
+}
+
+function weeklyDetailHtml(data,key){
+  const byId=new Map(data.products.map(product=>[String(product.id),product]));
+  const inScope=id=>{const product=byId.get(String(id));return product&&product.usage_scope!=='ecommerce'};
+  const productName=id=>byId.get(String(id))?.name||'Produto não encontrado';
+  const unit=id=>byId.get(String(id))?.unit||'';
+  const scopedItems=data.items.filter(item=>inScope(item.product_id));
+  const requestIds=new Set(scopedItems.map(item=>item.request_id));
+  const requests=data.requests.filter(item=>requestIds.has(item.id));
+  const text=value=>String(value??'');
+  const table=(headers,rows)=>`<div class='weekly-detail-scroll'><table class='weekly-detail-table'><thead><tr>${headers.map(header=>`<th>${esc(header)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.map(cells=>`<tr>${cells.map(cell=>`<td>${esc(text(cell))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan='${headers.length}'>Nenhum registro disponível neste período.</td></tr>`}</tbody></table></div>`;
+  let title='';
+  let note='';
+  let headers=[];
+  let rows=[];
+  if(key==='requests'){
+    title='Solicitações de produção';
+    note='Inclui canceladas; marketplace não integra esta visão.';
+    headers=['Solicitação','Data','Status','Produtos'];
+    rows=requests.map(request=>['#'+text(request.protocol).padStart(4,'0'),rowDate(request.created_at),labels[request.status]||request.status,scopedItems.filter(item=>item.request_id===request.id).map(item=>productName(item.product_id)).join(', ')]);
+  }else if(key==='demand'){
+    title='Produtos solicitados';
+    note='Quantidade solicitada por produto; unidades diferentes não são diretamente comparáveis.';
+    headers=['Produto','Quantidade pedida','Unidade','Ocorrências de falta'];
+    const totals=new Map();
+    for(const item of scopedItems)totals.set(String(item.product_id),(totals.get(String(item.product_id))||0)+Number(item.requested_quantity));
+    const missing=new Map();
+    for(const item of data.shortages.filter(item=>inScope(item.product_id)))missing.set(String(item.product_id),(missing.get(String(item.product_id))||0)+1);
+    rows=[...totals].sort((a,b)=>b[1]-a[1]).map(([id,qty])=>[productName(id),number(qty),unit(id),number(missing.get(id)||0)]);
+  }else if(key==='shortages'){
+    title='Faltas registradas';
+    note='Cada linha corresponde a uma ocorrência registrada durante a separação.';
+    headers=['Produto','Data da falta'];
+    rows=data.shortages.filter(item=>inScope(item.product_id)).map(item=>[productName(item.product_id),rowDate(item.recorded_at)]);
+  }else if(key==='stock'){
+    title='Estoque para repor';
+    note='Saldo disponível e mínimo consultados agora; não são dados históricos.';
+    headers=['Produto','Físico','Reservado','Disponível','Mínimo'];
+    rows=data.products.filter(product=>product.active&&product.usage_scope!=='ecommerce'&&Number(product.physical_stock)-Number(product.reserved_stock)<=Number(product.minimum_stock)).sort((a,b)=>Number(a.physical_stock)-Number(a.reserved_stock)-Number(a.minimum_stock)-(Number(b.physical_stock)-Number(b.reserved_stock)-Number(b.minimum_stock))).map(product=>[product.name,number(product.physical_stock)+' '+unit(product.id),number(product.reserved_stock)+' '+unit(product.id),number(Number(product.physical_stock)-Number(product.reserved_stock))+' '+unit(product.id),number(product.minimum_stock)+' '+unit(product.id)]);
+  }else if(key==='replenishments'){
+    title='Pedidos de reposição';
+    note='Solicitações ainda abertas ou em andamento, conforme situação atual.';
+    headers=['Produto','Quantidade pedida','Tipo','Status'];
+    rows=data.replenishments.filter(item=>inScope(item.product_id)).map(item=>[productName(item.product_id),number(item.requested_quantity)+' '+unit(item.product_id),item.replenishment_type,item.status]);
+  }else if(key==='movements'){
+    title='Movimentações de estoque';
+    note='Eventos registrados na semana; não representam valores financeiros.';
+    headers=['Data','Tipo','Produto','Quantidade'];
+    const names={entry:'Entrada',reserve:'Reserva',release:'Liberação',delivery:'Entrega',adjustment:'Ajuste'};
+    rows=data.movements.filter(item=>inScope(item.product_id)).map(item=>[rowDate(item.created_at),names[item.movement_type]||item.movement_type,productName(item.product_id),number(item.quantity)+' '+unit(item.product_id)]);
+  }else if(key==='bills'){
+    title='Boletos pagos';
+    note='Somente pagamentos marcados como confirmados na semana.';
+    headers=['Boleto','Beneficiário','Pago em','Valor'];
+    rows=data.bills.map(item=>['#'+text(item.protocol).padStart(4,'0'),item.beneficiary_name,rowDate(item.paid_at),money(item.amount)]);
+  }else if(key==='receipts'){
+    title='Compras internas registradas';
+    note='Cupom registrado não comprova pagamento.';
+    headers=['Compra','Fornecedor','Data','Valor'];
+    rows=data.receipts.map(item=>['#'+text(item.protocol).padStart(4,'0'),item.merchant_name,rowDate(item.purchased_at),money(item.total_value)]);
+  }
+  return {title,note,html:table(headers,rows)};
 }
 
 async function renderReport(page){
@@ -97,6 +159,32 @@ async function renderReport(page){
     page.innerHTML=reportHtml(data,start,end);
     page.querySelector('#weeklyOlder').onclick=()=>{weekOffset++;renderReport(page)};
     page.querySelector('#weeklyNewer').onclick=()=>{if(weekOffset>0){weekOffset--;renderReport(page)}};
+    const dialog=page.querySelector('#weeklyDetail');
+    const groups={
+      production:[['requests','Solicitações'],['demand','Produtos pedidos']],
+      stock:[['shortages','Faltas'],['stock','Estoque para repor'],['replenishments','Pedidos de reposição']],
+      movement:[['movements','Movimentações']],
+      finance:[['bills','Boletos pagos'],['receipts','Compras internas']]
+    };
+    const showDetail=(group,key)=>{
+      const detail=weeklyDetailHtml(data,key);
+      dialog.dataset.weeklyGroup=group;
+      dialog.querySelector('#weeklyDetailTitle').textContent=detail.title;
+      dialog.querySelector('#weeklyDetailNote').textContent=detail.note;
+      dialog.querySelector('#weeklyDetailTabs').innerHTML=groups[group].map(([id,label])=>`<button type='button' role='tab' data-weekly-tab='${id}' aria-selected='${id===key}'>${label}</button>`).join('');
+      dialog.querySelector('#weeklyDetailBody').innerHTML=detail.html;
+      if(!dialog.open)dialog.showModal();
+    };
+    page.onclick=event=>{
+      if(event.target.closest('#weeklyDetailClose')||event.target===dialog){dialog.close();return}
+      const tab=event.target.closest('[data-weekly-tab]');
+      if(tab){showDetail(dialog.dataset.weeklyGroup,tab.dataset.weeklyTab);return}
+      const card=event.target.closest('[data-weekly-group]');
+      if(card&&page.contains(card))showDetail(card.dataset.weeklyGroup,groups[card.dataset.weeklyGroup][0][0]);
+    };
+    page.onkeydown=event=>{
+      if((event.key==='Enter'||event.key===' ')&&event.target.matches('[data-weekly-group]')){event.preventDefault();event.target.click()}
+    };
   }catch(error){
     if(!page.isConnected||S.view!=='weekly-report')return;
     page.innerHTML=`<div class="page weekly-report"><p class="eyebrow">RELATÓRIO SEMANAL</p><h1>Não foi possível carregar</h1><div class="error">${esc(error.message)}</div><p>Nenhum dado foi interpretado como zero.</p><button class="outline" id="weeklyRetry">Tentar novamente</button></div>`;
