@@ -32,7 +32,7 @@ test('central is versioned, available offline and included in static build',()=>
   }
   assert.match(ui,/assets\/peugeot-expert-harmony\.png/);
   assert.match(worker,/assets\/peugeot-expert-harmony\.png/);
-  assert.match(worker,/harmony-store-v25-101-r2/);
+  assert.match(worker,/harmony-store-v25-101-r3/);
 });
 
 test('schema is additive, constrained and protected by row level security',()=>{

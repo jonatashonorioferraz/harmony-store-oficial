@@ -138,7 +138,7 @@ test('module loads before application and is included in PWA shell', async () =>
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const sw = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
   const mediaIndex = html.indexOf('media-optimization.js?v=25.100');
-  const appIndex = html.indexOf('app.js?v=25.100');
+  const appIndex = html.indexOf('app.js?v=25.100.1');
   assert.ok(mediaIndex >= 0 && appIndex > mediaIndex);
   assert.match(sw, /media-optimization\.js\?v=25\.100/);
 });

@@ -65,10 +65,29 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(html,/bills\.css\?v=25\.49/);
-  assert.match(html,/bills\.js\?v=25\.101/);
-  assert.match(worker,/bills\.js\?v=25\.101/);
+  assert.match(html,/bills\.js\?v=25\.101\.1/);
+  assert.match(worker,/bills\.js\?v=25\.101\.1/);
 });
 
+test('bill upload gets a longer timeout without changing ordinary API requests',async()=>{
+  const app=await read('app.js');
+  const apiSource=app.match(/^async function apiFetch\(url,opt=\{\}\)\{.*$/m)?.[0];
+  const uploadSource=ui.match(/^async function uploadDocument\(file,prefix='document'\)\{.*$/m)?.[0];
+  assert.ok(apiSource);
+  assert.ok(uploadSource);
+  const delays=[];
+  const apiContext={API_REQUEST_TIMEOUT_MS:15000,AbortController,fetch:async()=>({ok:true}),setTimeout:(_callback,delay)=>{delays.push(delay);return 1},clearTimeout:()=>{}};
+  vm.runInNewContext(apiSource+';globalThis.callApi=apiFetch',apiContext);
+  await apiContext.callApi('/ordinary');
+  await apiContext.callApi('/bill-upload',{timeoutMs:120000});
+  assert.deepEqual(delays,[15000,120000]);
+  const uploads=[];
+  const uploadContext={S:{profile:{id:'admin-id'}},crypto:{randomUUID:()=> 'test-id'},encodedStoragePath:path=>path,storageFetch:async(path,options)=>{uploads.push({path,options});return{ok:true}}};
+  vm.runInNewContext(uploadSource+';globalThis.uploadBill=uploadDocument',uploadContext);
+  await uploadContext.uploadBill({type:'image/webp',size:1024});
+  assert.equal(uploads[0].options.timeoutMs,120000);
+  assert.match(uploads[0].path,/bill-documents\/admin-id\/document-test-id\.webp$/);
+});
 test('cancelled bills can be safely reactivated without bypassing duplicate protection',()=>{
   assert.match(ui,/existing\.status==='cancelled'/);
   assert.match(ui,/return detail\(existing\)/);

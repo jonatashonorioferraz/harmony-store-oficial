@@ -61,7 +61,7 @@ test('responsive checklist highlights outcomes and exposes reports',async()=>{
   assert.match(css,/@media\(max-width:720px\)/);
   assert.match(html,/separation-checkup\.js\?v=25\.101\.1/);
   assert.match(html,/separation-checkup\.css\?v=25\.101\.1/);
-  assert.match(worker,/harmony-store-v25-101-r2/);
+  assert.match(worker,/harmony-store-v25-101-r3/);
   assert.match(worker,/separation-checkup\.css\?v=25\.101\.1/);
   assert.match(worker,/separation-checkup\.js\?v=25\.101\.1/);
 });
