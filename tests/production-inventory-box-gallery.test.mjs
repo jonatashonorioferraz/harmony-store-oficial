@@ -81,7 +81,7 @@ test('release assets, help and audit documentation are complete',()=>{
   assert.match(index,/production-inventory\.js\?v=25\.73/);
   assert.match(worker,/production-inventory\.css\?v=25\.72/);
   assert.match(worker,/production-inventory\.js\?v=25\.73/);
-  assert.match(worker,/harmony-store-v25-101-r3/);
+  assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
   assert.match(manual,/### Visualizar as caixas disponíveis/);
   assert.match(technical,/## Sincronização/);
   assert.match(audit,/## Riscos controlados/);

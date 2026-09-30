@@ -23,6 +23,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Impedir retorno de versoes antigas
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/verify-release-base.mjs
       - run: npm ci --ignore-scripts
       - name: Auditar vulnerabilidades de produção
         run: npm audit --omit=dev --audit-level=high

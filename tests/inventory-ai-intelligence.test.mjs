@@ -116,7 +116,7 @@ test('desktop, tablet, mobile and offline assets are complete', () => {
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(index, /intelligence-ai\.css\?v=25\.74/);
   assert.match(index, /intelligence-ai\.js\?v=25\.74/);
-  assert.match(worker, /harmony-store-v25-101-r3/);
+  assert.match(worker, /\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
   assert.match(worker, /intelligence-ai\.css\?v=25\.74/);
   assert.match(worker, /intelligence-ai\.js\?v=25\.74/);
   assert.equal(JSON.parse(pkg).version, '25.101.0');

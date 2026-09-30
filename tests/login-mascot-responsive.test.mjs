@@ -19,5 +19,5 @@ test('mobile composition remains available and reacts to viewport changes',()=>{
   assert.match(enhancements,/if\(box&&!box\.querySelector\('\.login-mascot-mobile'\)\)/);
   assert.match(enhancements,/addEventListener\('change',\(\)=>\{enhanceLoginMessage\(\);enhanceLoginMascot\(\)\}\)/);
   assert.match(css,/@media\(max-width:720px\)[\s\S]*\.login-mascot-mobile\{/);
-  assert.match(worker,/harmony-store-v25-101-r3/);
+  assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
 });
