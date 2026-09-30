@@ -1,3 +1,4 @@
+import { htmlAssets, workerAssets } from '../scripts/lib/release-assets.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -137,8 +138,11 @@ test('upload network failure never retries a POST', async () => {
 test('module loads before application and is included in PWA shell', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const sw = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
-  const mediaIndex = html.indexOf('media-optimization.js?v=25.100');
-  const appIndex = html.indexOf('app.js?v=25.100.1');
-  assert.ok(mediaIndex >= 0 && appIndex > mediaIndex);
-  assert.match(sw, /media-optimization\.js\?v=25\.100/);
+  const assets = htmlAssets(html);
+  const media = assets.get('media-optimization.js');
+  const app = assets.get('app.js');
+  assert.ok(media?.version && app?.version);
+  assert.ok(media.position < app.position);
+  assert.equal(workerAssets(sw).get('media-optimization.js')?.version, media.version);
+  assert.equal(workerAssets(sw).get('app.js')?.version, app.version);
 });

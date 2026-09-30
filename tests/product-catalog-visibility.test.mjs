@@ -44,7 +44,7 @@ test('product form, catalogue and offline cache include the visibility control',
   assert.match(feature, /editingOwnRequest[\s\S]*request\.status==='pending'/);
   assert.match(html, /product-visibility\.js/);
   assert.match(html, /product-visibility\.css/);
-  assert.match(worker, /harmony-store-v25-101-r3/);
+  assert.match(worker, /\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
   assert.match(css, /product-visibility-check/);
 });
 

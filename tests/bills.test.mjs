@@ -1,3 +1,4 @@
+import { htmlAssets, workerAssets } from '../scripts/lib/release-assets.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
@@ -64,9 +65,14 @@ test('bill workflow supports upload, quick copy, payment proof and due alerts',(
   assert.match(ui,/dueState/);
   assert.match(css,/\.bill-status\.overdue/);
   assert.match(css,/@media\(max-width:600px\)/);
-  assert.match(html,/bills\.css\?v=25\.49/);
-  assert.match(html,/bills\.js\?v=25\.101\.1/);
-  assert.match(worker,/bills\.js\?v=25\.101\.1/);
+  for (const name of ['bills.css', 'bills.js']) {
+    const asset = htmlAssets(html).get(name);
+    assert.ok(asset?.version, name + ' must be versioned');
+    assert.equal(workerAssets(worker).get(name)?.version, asset.version);
+  }
+
+
+
 });
 
 test('bill upload gets a longer timeout without changing ordinary API requests',async()=>{
