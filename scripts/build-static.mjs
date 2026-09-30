@@ -29,8 +29,6 @@ for (const filename of [
   "system-health.js",
   "transfer-center.css",
   "transfer-center.js",
-  "weekly-report.css",
-  "weekly-report.js",
 ]) {
   await cp(resolve(root, filename), resolve(web, filename));
 }

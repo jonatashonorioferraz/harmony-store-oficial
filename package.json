@@ -14,6 +14,7 @@
     "backup:restore:check": "node scripts/restore-api-backup.mjs",
     "backup:restore:isolated": "node scripts/execute-api-recovery.mjs",
     "verify:mirrors": "node scripts/verify-official-mirrors.mjs",
+    "verify:release": "node scripts/verify-release-base.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },
