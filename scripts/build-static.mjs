@@ -17,6 +17,8 @@ for (const filename of [
   "harmony-icons.css",
   "harmony-icons.js",
   "index.html",
+  "label-lots.css",
+  "label-lots.js",
   "media-optimization.js",
   "service-worker.js",
   "shipping-inventory-integration.js",
@@ -27,6 +29,8 @@ for (const filename of [
   "system-health.js",
   "transfer-center.css",
   "transfer-center.js",
+  "weekly-report.css",
+  "weekly-report.js",
 ]) {
   await cp(resolve(root, filename), resolve(web, filename));
 }
