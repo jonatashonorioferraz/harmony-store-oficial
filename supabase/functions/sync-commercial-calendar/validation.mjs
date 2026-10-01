@@ -9,6 +9,10 @@ export function sourceUrl(value,domains){
     const u=new URL(value);
     if(u.protocol!=='https:'||u.username||u.password||u.port||!domains.some(d=>u.hostname===d||u.hostname.endsWith('.'+d)))return null;
     u.hash='';
+    // The search provider appends this attribution marker to the consulted URL.
+    // Remove only that exact single marker; never discard content parameters.
+    const attribution=u.searchParams.getAll('utm_source');
+    if(attribution.length===1&&attribution[0]==='openai')u.searchParams.delete('utm_source');
     return u.href;
   }catch{return null}
 }
