@@ -275,7 +275,7 @@
           <div class="label-lots-output">
             <p><b>Fabricação:</b> ${dateBR(lot.manufactured_on)}<br><b>Validade:</b> ${dateBR(lot.expires_on)}<br><b>Etiquetas solicitadas:</b> ${lot.requested_label_count}<br><b>Saídas registradas:</b> ${outputCount} etiquetas, sem confirmação física.</p>
             ${lot.status==='active'?`<div class="label-lots-output-fields">
-              <label>Quantidade ${emitted?'para reimpressão':'original'}<input id="labelOutputCount" type="number" min="1" max="100000" step="1" value="${emitted?50:lot.requested_label_count}" ${emitted?'':'readonly'}></label>
+              <label>Quantidade ${emitted?'para reimpressão':'original'}<input id="labelOutputCount" type="number" min="1" max="100000" step="1" value="${lot.requested_label_count}" ${emitted?'':'readonly'}></label>
               <label>Impressora ZPL<select id="labelOutputDpi"><option value="203">203 DPI</option><option value="300">300 DPI</option></select></label>
               ${emitted?'<label class="wide">Motivo da reimpressão<input id="labelOutputReason" maxlength="500" placeholder="Ex.: etiqueta danificada" required></label>':''}
             </div>
