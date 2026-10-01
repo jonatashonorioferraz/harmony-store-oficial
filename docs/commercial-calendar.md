@@ -181,3 +181,18 @@ rejects every URL outside the channel allowlist or absent from actual search sou
 A search without an official consulted source is unavailable, never a successful zero.
 No fallback to unofficial proposals, automatic retries, budget increase or shared-key
 permission changes are introduced. Strict output schema remains enabled.
+
+## Provider citation evidence (2026-10-01)
+
+A completed web_search_call permits allowlisted URLs from provider url_citation
+annotations as well as action.sources. URLs merely written inside generated JSON
+are never evidence. Exact normalized URL matching still applies; arbitrary query
+parameters are not discarded. Missing actual search, unofficial citations, incomplete
+responses and unreferenced proposals continue to fail closed.
+
+Secret-authenticated research responses include bounded counts and allowlisted public
+source URLs for diagnosis, never raw provider prose, arbitrary external URLs or keys.
+Token usage remains available for failed validation after a successful provider response.
+The three independent requests, R$1 reservation, R$30 monthly ceiling and no-retry policy
+are unchanged. Source availability is not a guarantee of complete marketplace coverage.
+Reference: https://developers.openai.com/api/docs/guides/tools-web-search

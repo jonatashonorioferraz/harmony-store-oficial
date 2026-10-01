@@ -53,7 +53,7 @@ Deno.serve(async request=>{
     }
     const saved=await admin.rpc("finish_commercial_calendar_research",{p_run_id:runId,p_results:results});
     if(saved.error)throw new Error("save_failed");
-    return reply({...saved.data,diagnostics:results.filter(r=>r.status==="failed").map(({channel,error_code,http_status,provider_code,provider_param,hint})=>({channel,error_code,http_status,provider_code,provider_param,hint}))});
+    return reply({...saved.data,diagnostics:results.map(({channel,error_code,http_status,provider_code,provider_param,hint,evidence})=>({channel,error_code,http_status,provider_code,provider_param,hint,evidence}))});
   }catch(error){
     const allowed=new Set(["claim_failed","invalid_sources","provider_rate_limit","provider_error","incomplete_response","refused_response","invalid_response","invalid_proposal","unverified_source","invalid_date","invalid_publication_date","save_failed"]);
     const message=error instanceof Error?error.message:"";
