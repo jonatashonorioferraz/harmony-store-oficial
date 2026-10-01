@@ -48,3 +48,9 @@ A API não preserva o estado das sequências, as senhas Auth, configuração ext
 Se hashes, contagens, cobertura ou referências falharem, não registrar sucesso nem usar o pacote para promover um destino. Preservar evidências e investigar; voltar a um pacote anterior exige avaliar suas lacunas. Backup com mais de 30 horas demanda revisão; inexistente ou mais de 48 horas demanda correção da rotina. Não executar comandos de importação na produção.
 
 A restauração real depende do [procedimento de recuperação isolada](ENSAIO-RECUPERACAO-ISOLADA.md). Excluir cópias descriptografadas após o uso conforme a política administrativa.
+
+## Progresso e próximo ensaio — 01/10/2026
+
+O [plano de ensaio SQL no CI](PLANO-ENSAIO-SQL-CI.md) descreve uma próxima entrega viável com PostgreSQL efêmero e dados sintéticos, sem projeto Supabase remoto pago. É planejamento: não implementa importador ou workflow, não comprova restauração fiel e não muda `recovery_ready` ou `recovery_verified`. A fixture verificará mecanismos de identidade, constraints, gatilhos, seeds e reversão de linhas/eventos. Sequências exigem teste próprio: seus avanços não são desfeitos por ROLLBACK.
+
+O [piloto B0 da Central](CENTRAL-OBSERVACAO.md) é somente leitura e pode avançar sem um destino de restauração. Memória persistida e mudanças estruturais continuam dependentes da recuperação comprovada e de uma entrega explícita posterior. A cobertura do backup e o desenho desse ensaio não significam fundações concluídas.

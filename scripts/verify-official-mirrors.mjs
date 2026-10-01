@@ -31,6 +31,10 @@ for (const entry of await readdir(web, { withFileTypes: true })) {
   if (!contentsMatch(entry.name, rootContent, webContent)) mismatches.push(entry.name);
 }
 
+for (const filename of ['operational-central.js', 'operational-central.css']) {
+  if (!mirrored.includes(filename)) throw new Error(`Espelho oficial ausente: ${filename}`);
+}
+
 if (mirrored.length < 40) {
   throw new Error(`Inventário incompleto: somente ${mirrored.length} arquivos espelhados foram encontrados.`);
 }

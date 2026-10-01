@@ -128,11 +128,11 @@ test('frontend syntax and official mirrors are synchronized',async()=>{
 });
 test('PWA references the new assets with matching versions',async()=>{
   const index=await read('index.html'),sw=await read('service-worker.js'),build=await read('scripts/build-static.mjs');
-  for(const name of ['commercial-calendar-core.js','commercial-calendar.js','commercial-calendar.css']){
+  for(const name of ['commercial-calendar-core.js','commercial-calendar.js','commercial-calendar.css','bills.js']){
     const version=index.match(new RegExp(name.replaceAll('.','\\.')+'\\?v=([0-9.]+)'))?.[1];assert.ok(version);assert.ok(sw.includes(name+'?v='+version));assert.ok(build.includes('"'+name+'"'));
   }
   const appVersion=index.match(/app\.js\?v=([0-9.]+)/)?.[1];assert.ok(appVersion);assert.ok(sw.includes('app.js?v='+appVersion));
-  assert.match(index,/label-lots\.js\?v=3/);assert.match(index,/bills\.js\?v=25\.101\.1/);
+  assert.match(index,/label-lots\.js\?v=3/);
 });
 test('migration keeps research disabled and protects every new table',async()=>{
   const sql=await read('supabase/migrations/20261001013000_commercial_calendar.sql');

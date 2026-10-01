@@ -5,8 +5,8 @@ const isAdmin=()=>S?.profile?.role==='admin';
 const digits=value=>String(value||'').replace(/\D/g,'');
 const money=value=>Number(value||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const date=value=>value?new Date(value+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-const today=()=>new Date().toISOString().slice(0,10);
-const daysUntil=value=>Math.round((new Date(value+'T12:00:00')-new Date(today()+'T12:00:00'))/86400000);
+const today=()=>{const parts=new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=type=>parts.find(item=>item.type===type).value;return part('year')+'-'+part('month')+'-'+part('day')};
+const daysUntil=value=>Math.round((Date.parse(value+'T12:00:00Z')-Date.parse(today()+'T12:00:00Z'))/86400000);
 const dueState=item=>item.status!=='pending'?item.status:daysUntil(item.due_date)<0?'overdue':daysUntil(item.due_date)===0?'today':daysUntil(item.due_date)===1?'tomorrow':'pending';
 const stateLabel={pending:'A vencer',overdue:'Atrasado',today:'Vence hoje',tomorrow:'Vence amanhã',paid:'Pago',cancelled:'Cancelado'};
 function mod10(value){let sum=0,weight=2;for(let index=value.length-1;index>=0;index--){let product=Number(value[index])*weight;if(product>9)product=Math.floor(product/10)+product%10;sum+=product;weight=weight===2?1:2}return(10-sum%10)%10}

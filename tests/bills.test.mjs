@@ -183,3 +183,20 @@ test('Meu dia loads due bills only for admins',async()=>{
   assert.match(myDay,/HarmonyBills\.dueState\(item\)!=='pending'/);
   assert.match(myDay,/action:'bills'/);
 });
+
+// Execute the actual financial classifier with fixed instants around São Paulo midnight.
+test('bill due classification follows São Paulo date after 21h and midnight',()=>{
+  for(const [instant,expected] of [
+    ['2026-10-01T23:59:59Z','today'],
+    ['2026-10-02T00:00:00Z','today'],
+    ['2026-10-02T02:59:59Z','today'],
+    ['2026-10-02T03:00:00Z','overdue'],
+  ]){
+    class FixedDate extends Date{constructor(...args){super(...(args.length?args:[instant]))}static now(){return Date.parse(instant)}}
+    const context={S:{profile:{role:'admin'}},window:{},Date:FixedDate,Intl,renderApp(){},renderPage(){},document:{},setTimeout,clearTimeout};
+    context.window=context;vm.runInNewContext(ui,context);
+    assert.equal(context.HarmonyBills.dueState({status:'pending',due_date:'2026-10-01'}),expected,instant);
+    assert.equal(context.HarmonyBills.dueState({status:'paid',due_date:'2026-10-01'}),'paid');
+    assert.equal(context.HarmonyBills.dueState({status:'cancelled',due_date:'2026-10-01'}),'cancelled');
+  }
+});

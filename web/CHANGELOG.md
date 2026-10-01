@@ -1,5 +1,15 @@
 # Changelog
 
+## [v25.103] - 2026-10-01
+
+### Central operacional em observação
+
+- Consulta administrativa reúne vencimentos de boletos e solicitações abertas com regras determinísticas.
+- Fontes incompletas ou indisponíveis ficam explícitas, sem transformar falhas em ausência de pendências.
+- Avaliação usa o horário do servidor e a data de São Paulo; o financeiro também deixa de antecipar o dia após 21h.
+- Diagnóstico da Agenda diferencia execução recente de agendamento atrasado.
+- Primeira etapa somente de consulta, sem novas tabelas, memória histórica ou envio de mensagens.
+
 ## [v25.102.1] - 2026-10-01
 
 ### Isolamento de contas e verificacao de backup
