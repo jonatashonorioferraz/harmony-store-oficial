@@ -26,7 +26,7 @@ Deno.serve(async request=>{
     if(request.headers.get("x-calendar-diagnostic")==="preflight"){
       const diagnostic=await providerPreflight((path:string,options:RequestInit)=>fetch("https://api.openai.com"+path,{
         ...options,headers:{Authorization:"Bearer "+openai,"Content-Type":"application/json"},signal:AbortSignal.timeout(20000)
-      }));
+      }),[openai]);
       return reply(diagnostic);
     }
     const approval=request.headers.get("x-calendar-validation");
