@@ -81,7 +81,7 @@ test('backup, recovery, help and technical documentation cover individualized ba
   assert.match(manual,/Estoque individual por colaboradora/);
   assert.match(technical,/product_collaborator_stocks/);
   assert.match(help,/Cada mulher terá saldo próprio/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });
 
 test('individual stock assets are mirrored in the official deployable folder',async()=>{

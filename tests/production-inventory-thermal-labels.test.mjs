@@ -131,5 +131,5 @@ test('PWA, ajuda, documentação e continuidade incluem a nova função',()=>{
   assert.match(technical,/label_token/);
   assert.match(backup,/'production_inventory_label_prints'/);
   assert.match(recovery,/production_inventory_label_prints: \['protocol'\]/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

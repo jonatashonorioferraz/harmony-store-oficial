@@ -21,6 +21,7 @@ const recoveryWorkflow = await readFile(new URL('../.github/workflows/recovery-d
 const recoveryScript = await readFile(new URL('../scripts/execute-api-recovery.mjs', import.meta.url), 'utf8');
 const buildScript = await readFile(new URL('../scripts/build-static.mjs', import.meta.url), 'utf8');
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const packageLock = JSON.parse(await readFile(new URL('../package-lock.json', import.meta.url), 'utf8'));
 const serviceWorker = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
 const changelog = await readFile(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
 
@@ -41,6 +42,9 @@ test('CI validates the complete build, test suite and synchronized official file
 });
 
 test('package, offline cache and changelog expose one coherent release version', () => {
+  assert.match(packageJson.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(packageLock.version, packageJson.version);
+  assert.equal(packageLock.packages[''].version, packageJson.version);
   const [major, minor] = packageJson.version.split('.');
   assert.match(serviceWorker, new RegExp(`harmony-store-v${major}-${minor}-r\\d+`));
   assert.match(changelog, new RegExp(`## \\[v${major}\\.${minor}\\]`));

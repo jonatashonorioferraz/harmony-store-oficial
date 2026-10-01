@@ -8,6 +8,10 @@ const labelLots = await readFile(
   new URL('../supabase/migrations/20260930190000_label_lots_foundation.sql', import.meta.url),
   'utf8',
 );
+const commercialCalendar = await readFile(
+  new URL('../supabase/migrations/20261001013000_commercial_calendar.sql', import.meta.url),
+  'utf8',
+);
 const rollback = await readFile(
   new URL('../supabase/rollbacks/20260719053406_explicit_data_api_grants.sql', import.meta.url),
   'utf8',
@@ -183,19 +187,44 @@ test('future postgres objects are opt-in for the Data API', () => {
   assert.match(sql, /alter default privileges for role postgres in schema public[\s\S]*revoke execute on functions from public, anon, authenticated, service_role/i);
 });
 
+function authenticatedRpcNames(source) {
+  const names = new Set();
+  const statements = source.matchAll(/\bgrant\s+execute\s+on\s+function\s+([^;]+?)\s+to\s+([^;]+);/gi);
+  for (const [, functions, roles] of statements) {
+    if (!roles.split(',').some(role => role.trim().toLowerCase() === 'authenticated')) continue;
+    for (const match of functions.matchAll(/\bpublic\s*\.\s*([a-z_][a-z0-9_]*)\s*\(/gi)) {
+      names.add(match[1].toLowerCase());
+    }
+  }
+  return names;
+}
+
+test('RPC grant inventory handles grouped functions without accepting backend-only grants', () => {
+  const names = authenticatedRpcNames(`
+    grant execute on function public.first_rpc(date,date), public.second_rpc(jsonb) to authenticated, service_role;
+    grant execute on function public.backend_rpc() to service_role;
+    grant execute on function public.wrong_role_rpc() to unauthenticated;
+  `);
+  assert.deepEqual([...names], ['first_rpc', 'second_rpc']);
+});
+
+test('commercial calendar keeps research and internal authorization RPCs out of authenticated grants', () => {
+  const names = authenticatedRpcNames(commercialCalendar);
+  assert.deepEqual([...names].sort(), [
+    'commercial_calendar_dashboard', 'review_commercial_event', 'save_commercial_campaign',
+  ]);
+});
+
 test('every statically named RPC used by the web app remains granted', () => {
   const rpcNames = new Set();
   for (const match of webSource.matchAll(/\brpc\('([^']+)'/g)) rpcNames.add(match[1]);
   for (const match of webSource.matchAll(/\bchangePurchase\('([^']+)'/g)) rpcNames.add(match[1]);
 
   assert.ok(rpcNames.size >= 20, `RPC inventory unexpectedly small: ${rpcNames.size}`);
-  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}\n${productVisibility}\n${internalSupplies}\n${internalReceiptDeletion}\n${productionColors}\n${productionOrders}\n${directRequestCompletion}\n${primaryRequestEdit}\n${separatedCatalogs}\n${individualPaymentCycles}\n${appUsage}\n${bills}\n${billReactivation}\n${billDueDateCorrection}\n${pendingBillDueDateCorrection}\n${separationCheckup}\n${separationStockCorrection}\n${productionInventory}\n${productionInventoryBoxes}\n${productionInventoryTransfers}\n${productionInventoryGallery}\n${productionInventoryLabels}\n${individualProductStock}\n${internalReceiptReconciliation}\n${inventoryAiIntelligence}\n${adminAgendaHarmony}\n${adminAgendaProductionOrderState}\n${shippingPlanning}\n${shippingExclusiveProducts}\n${shippingColorCombinations}\n${shippingCompositeKits}\n${shippingAvailabilityProjection}\n${transferCenter}\n${transferCenterGranularCorrections}\n${shopeeIntelligence}\n${labelLots}`;
+  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}\n${productVisibility}\n${internalSupplies}\n${internalReceiptDeletion}\n${productionColors}\n${productionOrders}\n${directRequestCompletion}\n${primaryRequestEdit}\n${separatedCatalogs}\n${individualPaymentCycles}\n${appUsage}\n${bills}\n${billReactivation}\n${billDueDateCorrection}\n${pendingBillDueDateCorrection}\n${separationCheckup}\n${separationStockCorrection}\n${productionInventory}\n${productionInventoryBoxes}\n${productionInventoryTransfers}\n${productionInventoryGallery}\n${productionInventoryLabels}\n${individualProductStock}\n${internalReceiptReconciliation}\n${inventoryAiIntelligence}\n${adminAgendaHarmony}\n${adminAgendaProductionOrderState}\n${shippingPlanning}\n${shippingExclusiveProducts}\n${shippingColorCombinations}\n${shippingCompositeKits}\n${shippingAvailabilityProjection}\n${transferCenter}\n${transferCenterGranularCorrections}\n${shopeeIntelligence}\n${labelLots}\n${commercialCalendar}`;
+  const grantedRpcs = authenticatedRpcNames(effectiveGrants);
   for (const rpcName of rpcNames) {
-    assert.match(
-      effectiveGrants,
-      new RegExp(`grant execute on function public\\.${rpcName}\\(`, 'i'),
-      `Missing authenticated grant for web RPC ${rpcName}`,
-    );
+    assert.ok(grantedRpcs.has(rpcName), `Missing authenticated grant for web RPC ${rpcName}`);
   }
 });
 
