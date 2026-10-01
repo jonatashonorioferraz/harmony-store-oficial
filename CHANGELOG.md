@@ -1,5 +1,15 @@
 # Changelog
 
+## [v25.104] - 2026-10-01
+
+### Prévia do resumo da manhã e preparação da comunicação
+
+- A Central apresenta um resumo curto da consulta atual, com protocolos, data de São Paulo e fontes desconhecidas explícitas.
+- Um compositor determinístico compartilhado prepara o texto sem salvar avaliações, inventar histórico ou usar IA.
+- O horário de 07:30 aparece como previsto; WhatsApp e envio automático permanecem desativados, sem número ou credencial no app.
+- O transporte de WhatsApp e a conciliação de status ficam preparados como helpers de servidor, sem endpoint, scheduler ou envio ativado.
+- Um workflow de PostgreSQL descartável prepara o ensaio de recuperação com dados sintéticos; não substitui a recuperação fiel nem libera gravações de produção.
+
 ## [v25.103] - 2026-10-01
 
 ### Central operacional em observação

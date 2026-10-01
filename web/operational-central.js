@@ -4,7 +4,7 @@ const sourceNames={bills:'Boletos',requests:'Solicitações'};
 const classificationNames={attention:'Atenção',upcoming:'Próximo vencimento',observation:'Acompanhar',not_evaluated:'Não avaliado'};
 const sourceStatusNames={evaluated:'Consultada',unavailable:'Indisponível',invalid:'Dados não verificados',incomplete:'Consulta incompleta'};
 const countFields=[['overdue_bills','Boletos vencidos','bills'],['due_today_bills','Vencem hoje','bills'],['due_tomorrow_bills','Vencem amanhã','bills'],['open_requests','Solicitações abertas','requests'],['past_scheduled_requests','Agendamento ultrapassado','requests']];
-const state={generation:0,page:null,data:null,error:'',loading:false,family:'all',classification:'all',opening:false,originError:''};
+const state={generation:0,page:null,data:null,error:'',loading:false,family:'all',classification:'all',opening:false,originError:'',briefing:null,briefingError:''};
 const allowed=()=>S.profile?.role==='admin'&&S.profile.status==='active';
 const current=context=>context.generation===state.generation&&context.page===state.page&&context.page===document.querySelector('#page')&&S.view==='operational-central'&&allowed()&&window.HarmonySession.isCurrent(context.session);
 const capture=()=>({generation:state.generation,page:state.page,session:window.HarmonySession.capture()});
@@ -13,7 +13,7 @@ const dateTime=value=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Pau
 const validDate=value=>typeof value==='string'&&Number.isFinite(Date.parse(value));
 const sourceComplete=source=>source?.status==='evaluated'&&source.complete===true;
 
-function reset(){state.generation++;Object.assign(state,{page:null,data:null,error:'',loading:false,family:'all',classification:'all',opening:false,originError:''})}
+function reset(){state.generation++;Object.assign(state,{page:null,data:null,error:'',loading:false,family:'all',classification:'all',opening:false,originError:'',briefing:null,briefingError:''})}
 function validResponse(data){
   if(data?.schema_version!=='b0.1'||data.timezone!=='America/Sao_Paulo'||!validDate(data.evaluated_at)||!Array.isArray(data.sources)||data.sources.length!==2||!Array.isArray(data.conditions)||!Array.isArray(data.priorities)||!data.summary?.counts)throw Error('Resposta incompleta. Atualize a consulta.');
   for(const id of Object.keys(sourceNames)){
@@ -64,13 +64,18 @@ function coverage(data){
   const complete=data.sources.filter(sourceComplete).length;
   return `<section class="card oc-coverage" aria-labelledby="ocCoverageTitle"><div class="oc-section-title"><div><h2 id="ocCoverageTitle">Fontes desta consulta</h2><p>${complete} de 2 fontes consultadas por completo</p></div><span class="oc-pill">Horário de São Paulo</span></div><div class="oc-source-grid">${data.sources.map(source=>`<article class="oc-source ${sourceComplete(source)?'oc-source-complete':'oc-source-unavailable'}"><div><h3>${sourceNames[source.id]}</h3><span>${sourceStatusNames[source.status]}</span></div><p>${sourceComplete(source)?`${Number.isSafeInteger(source.row_count)?source.row_count+' registros consultados':'Consulta concluída'}.`:'Esta fonte não permite confirmar a situação atual.'}</p>${validDate(source.fetched_at)?`<small>Consultada em ${esc(dateTime(source.fetched_at))}</small>`:''}</article>`).join('')}</div><p class="oc-footnote">As fontes podem refletir instantes diferentes da consulta. Um registro pode mudar enquanto a consulta é realizada. A Central não guarda o histórico destas consultas.</p></section>`;
 }
+function morningBriefing(){
+  return `<section class="card oc-briefing" aria-labelledby="ocBriefingTitle"><div class="oc-section-title"><div><p class="oc-briefing-label">PRÉVIA DA CONSULTA ATUAL</p><h2 id="ocBriefingTitle">Resumo da manhã</h2><p>Horário previsto: 07:30 · São Paulo. A prévia abaixo usa a hora da consulta atual.</p></div><span class="oc-pill oc-channel-off">Envio automático não ativado</span></div>
+    ${state.briefing?`<pre class="oc-briefing-text" aria-label="Texto da prévia do resumo">${esc(state.briefing.plain_text)}</pre>`:`<p class="oc-briefing-error" role="status">${esc(state.briefingError||'Não foi possível preparar a prévia. Atualize a consulta.')}</p>`}
+    <p class="oc-footnote">WhatsApp não conectado. Nenhum envio ou agendamento foi ativado. Esta prévia não é salva; atualizar a consulta substitui o texto. O link abre o app, que exige uma sessão autorizada.</p></section>`;
+}
 function results(data){
   const complete=data.sources.filter(sourceComplete).length;
   const filtered=data.conditions.filter(item=>(state.family==='all'||item.family===state.family)&&(state.classification==='all'||item.classification===state.classification));
   const counts=countFields.map(([key,label,source])=>{const value=sourceComplete(data.sources.find(item=>item.id===source))?data.summary.counts[key]:null;return `<article class="oc-metric"><strong>${value===null?'—':value}</strong><span>${label}</span>${value===null?'<small>Indisponível nesta consulta</small>':''}</article>`}).join('');
   return `${complete<2?`<div class="oc-warning" role="status"><strong>${complete?'Consulta parcial':'Consulta indisponível'}</strong><p>${complete?'Uma das fontes não pôde ser avaliada por completo. Os números disponíveis se referem apenas à fonte consultada.':'Não foi possível avaliar as fontes nesta consulta. Atualize para tentar novamente.'}</p></div>`:''}
     <section class="oc-summary" aria-label="Resumo da consulta"><p>${esc(data.summary.text||'Confira as observações e a cobertura da consulta abaixo.')}</p><div class="oc-metrics">${counts}</div></section>
-    <section class="oc-priorities" aria-labelledby="ocPriorityTitle"><div class="oc-section-title"><div><h2 id="ocPriorityTitle">Comece por aqui</h2><p>Até três observações para conferir. Os botões abrem o módulo; localize o registro pelo número.</p></div></div>${data.priorities.length?`<div class="oc-priority-grid">${data.priorities.map((item,index)=>observation(data.conditions.find(condition=>condition.key===item.key),true,index)).join('')}</div>`:`<div class="oc-empty">${complete===2?'Nenhuma ocorrência encontrada nos dois módulos nesta consulta.':'Sem observações confirmadas. Confira as fontes abaixo.'}</div>`}</section>
+    ${morningBriefing()}<section class="oc-priorities" aria-labelledby="ocPriorityTitle"><div class="oc-section-title"><div><h2 id="ocPriorityTitle">Comece por aqui</h2><p>Até três observações para conferir. Os botões abrem o módulo; localize o registro pelo número.</p></div></div>${data.priorities.length?`<div class="oc-priority-grid">${data.priorities.map((item,index)=>observation(data.conditions.find(condition=>condition.key===item.key),true,index)).join('')}</div>`:`<div class="oc-empty">${complete===2?'Nenhuma ocorrência encontrada nos dois módulos nesta consulta.':'Sem observações confirmadas. Confira as fontes abaixo.'}</div>`}</section>
     <section class="oc-all" aria-labelledby="ocAllTitle"><div class="oc-section-title"><div><h2 id="ocAllTitle">Todas as observações</h2><p>Uma solicitação pode aparecer por tempo em aberto e por agendamento ultrapassado.</p></div></div><div class="oc-filters"><label>Fonte<select data-oc-family><option value="all">Todas as fontes</option><option value="financial">Boletos</option><option value="requests">Solicitações</option><option value="data">Fontes não avaliadas</option></select></label><label>Situação<select data-oc-classification><option value="all">Todas as situações</option>${Object.entries(classificationNames).map(([key,label])=>`<option value="${key}">${label}</option>`).join('')}</select></label><span role="status">${filtered.length} de ${data.conditions.length} observações</span></div><div class="oc-list">${filtered.map(item=>observation(item)).join('')||'<div class="oc-empty">Nenhuma observação neste filtro.</div>'}</div></section>${coverage(data)}`;
 }
 function paint(){
@@ -90,9 +95,13 @@ function paint(){
 }
 async function refresh(){
   if(!allowed()||!state.page||S.view!=='operational-central')return;
-  state.generation++;Object.assign(state,{data:null,error:'',loading:true,opening:false,originError:''});
+  state.generation++;Object.assign(state,{data:null,error:'',loading:true,opening:false,originError:'',briefing:null,briefingError:''});
   const context=capture();paint();
-  try{const data=await evaluate(context);assert(context);state.data=data}
+  try{
+    const data=await evaluate(context);assert(context);state.data=data;
+    try{const {buildDailyBriefing}=await import('./central-briefing.mjs?v=25.104.0');assert(context);state.briefing=buildDailyBriefing(data)}
+    catch(error){assert(context);state.briefingError=error.message||'Não foi possível preparar a prévia. Atualize a consulta.'}
+  }
   catch(error){if(!current(context))return;state.error=error?.code==='SESSION_CHANGED'?'Sua sessão mudou. Entre novamente.':error.message||'Não foi possível consultar os dados agora.'}
   finally{if(current(context)){state.loading=false;paint()}}
 }

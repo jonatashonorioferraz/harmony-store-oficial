@@ -5,7 +5,7 @@ const root = resolve(import.meta.dirname, '..');
 const web = resolve(root, 'web');
 const mirrored = [];
 const mismatches = [];
-const textExtensions = new Set(['.css', '.html', '.js', '.md', '.svg', '.webmanifest']);
+const textExtensions = new Set(['.css', '.html', '.js', '.mjs', '.md', '.svg', '.webmanifest']);
 
 function contentsMatch(filename, rootContent, webContent) {
   if (!textExtensions.has(extname(filename))) return rootContent.equals(webContent);
@@ -31,7 +31,7 @@ for (const entry of await readdir(web, { withFileTypes: true })) {
   if (!contentsMatch(entry.name, rootContent, webContent)) mismatches.push(entry.name);
 }
 
-for (const filename of ['operational-central.js', 'operational-central.css']) {
+for (const filename of ['central-briefing.mjs', 'operational-central.js', 'operational-central.css']) {
   if (!mirrored.includes(filename)) throw new Error(`Espelho oficial ausente: ${filename}`);
 }
 

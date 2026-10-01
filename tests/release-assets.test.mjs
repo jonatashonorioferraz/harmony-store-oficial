@@ -56,3 +56,12 @@ test('a missing main cache fails with an actionable error', () => {
   candidate.worker = candidate.worker.replace('const CACHE=', 'const OTHER=');
   assert.ok(releaseIssues(snapshot(), candidate).some(value => value.includes('identificar a versao do cache')));
 });
+
+
+test('versioned ESM module preload participates in asset release and cache synchronization', () => {
+  const candidate=snapshot({extra:'<link rel="modulepreload" href="central-briefing.mjs?v=1.2.0">'});
+  candidate.worker+="\nSHELL.push('./central-briefing.mjs?v=1.2.0');";
+  assert.equal(htmlAssets(candidate.html).get('central-briefing.mjs').version,'1.2.0');assert.deepEqual(releaseIssues(snapshot(),candidate),[]);
+  candidate.worker=candidate.worker.replace('central-briefing.mjs?v=1.2.0','central-briefing.mjs?v=1.1.0');
+  assert.ok(releaseIssues(snapshot(),candidate).some(value=>value.includes('central-briefing.mjs')&&value.includes('versoes diferentes')));
+});
