@@ -196,3 +196,12 @@ Token usage remains available for failed validation after a successful provider 
 The three independent requests, R$1 reservation, R$30 monthly ceiling and no-retry policy
 are unchanged. Source availability is not a guarantee of complete marketplace coverage.
 Reference: https://developers.openai.com/api/docs/guides/tools-web-search
+
+## Exact attribution normalization (2026-10-01)
+
+A live three-channel run demonstrated that official action.sources URLs contain
+utm_source=openai while the matching generated proposal uses the original URL.
+sourceUrl now removes ONLY one exact utm_source=openai marker before comparison.
+Other query parameters and ambiguous duplicate attribution parameters remain intact.
+Real public URLs from all three channels are regression fixtures; those offline tests
+perform no provider calls. Historical failed runs and their reservations are preserved.

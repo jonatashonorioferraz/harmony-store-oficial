@@ -49,3 +49,30 @@ test('failed source validation retains numeric usage and useful safe evidence',a
   assert.equal(results[0].input_tokens,1200);assert.equal(results[0].output_tokens,150);
   assert.equal(results[0].evidence.official_source_count,0);
 });
+
+test('actual public source URLs match the same page without provider attribution',()=>{
+  for(const page of [
+    'https://shopee.com.br/m/black-friday',
+    'https://mercadolivreexperience.mercadolivre.com.br/',
+    'https://br.shein.com/sale/black-friday-local-underwear-sc-0052060138.html'
+  ]){
+    const domain=new URL(page).hostname,data=fixture();
+    data.output[0].action.sources=[{url:page+'?utm_source=openai'}];
+    data.output[1].content[0].annotations=[];
+    data.output[1].content[0].text=JSON.stringify({events:[{...event,source_url:page}]});
+    assert.equal(parseProposals(data,[domain],'2026-10-01','2027-10-06')[0].source_url,page);
+  }
+});
+test('only the exact provider attribution is ignored; content and duplicate parameters remain significant',()=>{
+  for(const query of ['edition=2025&utm_source=openai','utm_source=another','utm_source=openai&utm_source=another','utm_source=openai&campaign=wrong']){
+    const data=fixture();data.output[0].action.sources=[{url:url+'?'+query}];data.output[1].content[0].annotations=[];
+    assert.throws(()=>parse(data),/unverified_source/);
+  }
+});
+test('provider attribution normalization is symmetric and preserves content parameters',()=>{
+  const data=fixture();data.output[0].action.sources=[{url:url+'?edition=2026&utm_source=openai'}];data.output[1].content[0].annotations=[];
+  data.output[1].content[0].text=JSON.stringify({events:[{...event,source_url:url+'?edition=2026'}]});
+  assert.equal(parse(data)[0].source_url,url+'?edition=2026');
+  data.output[0].action.sources=[{url}];data.output[1].content[0].text=JSON.stringify({events:[{...event,source_url:url+'?utm_source=openai'}]});
+  assert.equal(parse(data)[0].source_url,url);
+});
