@@ -13,14 +13,42 @@ export function sourceUrl(value,domains){
   }catch{return null}
 }
 export function consultedSources(response,domains){
-  const urls=new Set();
-  for(const item of response.output||[]){
-    if(item.type!=='web_search_call')continue;
+  const urls=new Set(),output=Array.isArray(response.output)?response.output:[];
+  const searches=output.filter(item=>item.type==='web_search_call');
+  for(const item of searches){
     for(const s of item.action?.sources||[]){
       const url=sourceUrl(s.url,domains);if(url)urls.add(url);
     }
   }
+  // Provider citation metadata is evidence; URLs inside generated JSON are not.
+  // A completed actual search must exist before citation-only evidence is accepted.
+  if(searches.some(item=>item.status==='completed')){
+    for(const item of output.filter(item=>item.type==='message')){
+      for(const part of item.content||[]){
+        if(part.type!=='output_text')continue;
+        for(const annotation of part.annotations||[]){
+          if(annotation.type!=='url_citation')continue;
+          const url=sourceUrl(annotation.url,domains);if(url)urls.add(url);
+        }
+      }
+    }
+  }
   return urls;
+}
+export function researchEvidence(response,domains){
+  const output=Array.isArray(response.output)?response.output:[],sources=consultedSources(response,domains);
+  const searches=output.filter(item=>item.type==='web_search_call');
+  const parts=output.filter(item=>item.type==='message').flatMap(item=>item.content||[]);
+  const text=parts.filter(part=>part.type==='output_text').map(part=>part.text).join('');
+  let proposals=[];try{const parsed=JSON.parse(text);if(Array.isArray(parsed.events))proposals=parsed.events.slice(0,6)}catch{/* Never copy raw model text into diagnostics. */}
+  return {
+    search_call_count:searches.length,
+    search_source_count:searches.reduce((n,item)=>n+(item.action?.sources?.length||0),0),
+    citation_count:parts.reduce((n,part)=>n+(part.annotations||[]).filter(a=>a.type==='url_citation').length,0),
+    official_source_count:sources.size,
+    official_sources:[...sources].slice(0,8),
+    proposal_sources:proposals.map(event=>{const url=sourceUrl(event?.source_url,domains);return {official_url:url,consulted:!!url&&sources.has(url)};})
+  };
 }
 export function proposalSchema(maxItems=20){
   const properties={
