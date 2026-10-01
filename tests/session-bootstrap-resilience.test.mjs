@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 
 const [app,webApp,index,webIndex,worker,pkg]=await Promise.all([
   readFile(new URL('../app.js',import.meta.url),'utf8'),
@@ -33,8 +34,9 @@ test('login gives immediate feedback and always restores its button after failur
 test('official mirrors and PWA assets publish the recovery patch together',()=>{
   assert.equal(webApp,app);
   assert.equal(webIndex,index);
-  assert.match(index,/app\.js\?v=25\.100/);
+  const appVersion=htmlAssets(index).get('app.js')?.version;
+  assert.match(appVersion||'',/^\d+\.\d+\.\d+$/);
+  assert.equal(workerAssets(worker).get('app.js')?.version,appVersion);
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
-  assert.match(worker,/app\.js\?v=25\.100/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

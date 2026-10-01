@@ -62,5 +62,5 @@ test('documentação da experiência acompanha a versão',async()=>{
   assert.match(technical,/Leitura pela IA — até 84%/);
   assert.match(audit,/Nenhuma permissão/);
   assert.match(changelog,/\[v25\.61\]/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

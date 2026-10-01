@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 
 const root=new URL('../',import.meta.url);
 const [app,styles,receiptCss,index,worker]=await Promise.all([
@@ -51,7 +52,8 @@ test('mobile PDF stays in the current page and desktop retains a separate print 
   assert.match(app,/printCurrentDocument\('request-list-printing',\(\)=>printRoot\.remove\(\)\)/);
   assert.match(app,/HarmonyPrint\.printCurrentDocument\('request-list-printing'/);
   assert.match(app,/window\.open\('about:blank','_blank'\)/);
-  assert.match(index,/app\.js\?v=25\.100/);
+  const appVersion=htmlAssets(index).get('app.js')?.version;
+  assert.match(appVersion||'',/^\d+\.\d+\.\d+$/);
+  assert.equal(workerAssets(worker).get('app.js')?.version,appVersion);
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
-  assert.match(worker,/app\.js\?v=25\.100/);
 });

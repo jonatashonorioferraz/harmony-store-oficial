@@ -144,7 +144,7 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
   assert.doesNotMatch(ui,/Ver agenda completa/);
   assert.match(css,/\.agenda-home-actions\{position:static;z-index:0;display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)/);
   assert.match(css,/\.agenda-week\{position:relative;z-index:0;clear:both\}/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });
 
 test('backup and isolated recovery include every Agenda table',()=>{

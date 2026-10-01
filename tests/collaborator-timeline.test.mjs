@@ -59,5 +59,5 @@ test('timeline assets are mirrored, versioned, cached and responsive',async()=>{
   }
   assert.match(rootCss,/@media\(max-width:820px\)/);
   assert.match(rootCss,/@media\(max-width:620px\)/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

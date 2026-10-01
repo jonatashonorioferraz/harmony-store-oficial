@@ -1,5 +1,18 @@
 # Changelog
 
+## [v25.102] - 2026-10-01
+
+### Agenda comercial com planejamento e revisao de fontes
+
+- Painel administrativo de oportunidades, datas recorrentes e planos de campanha.
+- Datas previstas de marketplaces diferenciadas de anuncios confirmados.
+- Responsavel, checklist, antecedencia e prazos estimados de producao e envio.
+- Pesquisa publica com IA preparada, mas desligada ate aprovacao final separada.
+- Propostas externas exigem revisao humana; permissoes de administrador ativo e auditoria no banco.
+- Reserva interna proposta de R$ 30 por mes nao representa garantia de teto da fatura do provedor.
+- Versoes do pacote, lockfile e cache alinhadas; testes de recursos validam formato e sincronizacao, sem fixar versoes antigas.
+- Nenhuma campanha, movimentacao de estoque ou migracao de producao e executada pela preparacao deste PR.
+
 ## [v25.101] - 2026-09-18
 
 ### Correção segura do vencimento de boletos pendentes e atrasados

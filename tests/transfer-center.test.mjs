@@ -25,7 +25,7 @@ const [sql,corrections,requestPermissions,indexes,foundation,ui,css,integration,
 ]);
 
 test('central is versioned, available offline and included in static build',()=>{
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
   for(const asset of ['transfer-center.css','transfer-center.js']){
     assert.match(index,new RegExp(asset.replaceAll('.','\\.')));
     assert.match(worker,new RegExp(asset.replaceAll('.','\\.')));

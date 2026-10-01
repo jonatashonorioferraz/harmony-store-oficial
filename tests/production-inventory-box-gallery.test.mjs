@@ -85,5 +85,5 @@ test('release assets, help and audit documentation are complete',()=>{
   assert.match(manual,/### Visualizar as caixas disponíveis/);
   assert.match(technical,/## Sincronização/);
   assert.match(audit,/## Riscos controlados/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

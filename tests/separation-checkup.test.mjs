@@ -98,5 +98,5 @@ test('product replenishment mode and continuity data are included',async()=>{
   assert.match(help,/Finalizar separação/);
   assert.match(manual,/Check-up da separação/);
   assert.match(technical,/Check-up transacional de separação e reposição/);
-  assert.equal(JSON.parse(pkg).version,'25.101.0');
+  assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });
