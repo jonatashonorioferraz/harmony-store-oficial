@@ -1,0 +1,70 @@
+name: Ensaio SQL com fixtures sintéticas
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/recovery-sql-fixtures.yml'
+      - 'scripts/recovery-sql/**'
+      - 'tests/recovery-sql-fixtures.test.mjs'
+      - 'docs/operations/PLANO-ENSAIO-SQL-CI.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/recovery-sql-fixtures.yml'
+      - 'scripts/recovery-sql/**'
+      - 'tests/recovery-sql-fixtures.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recovery-sql-fixtures-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16.15-bookworm@sha256:efedf3595f1d6f415c08568ba171029bf54052e754cc9f030e3f2412b21f3d67
+        env:
+          POSTGRES_DB: harmony_recovery_fixture
+          POSTGRES_USER: harmony_fixture
+          # Public, disposable fixture credential; never a production secret.
+          POSTGRES_PASSWORD: harmony_synthetic_only
+          POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+        ports:
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd "pg_isready -U harmony_fixture -d harmony_recovery_fixture"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RECOVERY_SQL_FIXTURE: synthetic-only-v1
+      RECOVERY_FIXTURE_PORT: '55432'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+      - name: Conferir cliente PostgreSQL existente no runner
+        run: |
+          command -v psql
+          psql --version
+      - name: Testar bloqueios do executor sem conexão
+        run: node --test tests/recovery-sql-fixtures.test.mjs
+      - name: Executar carga e falhas em bancos PostgreSQL descartáveis
+        run: node scripts/recovery-sql/run.mjs
+      - name: Publicar somente relatório sintético
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: recovery-sql-fixtures-${{ github.run_id }}
+          path: outputs/recovery-sql-fixtures/report.json
+          retention-days: 14
+          if-no-files-found: warn

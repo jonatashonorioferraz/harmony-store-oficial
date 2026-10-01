@@ -1,10 +1,10 @@
 # Plano de ensaio SQL no CI — dados sintéticos
 
-Planejamento registrado em 01/10/2026. **Não há importador SQL, workflow deste ensaio ou restauração real implementados por este documento.** O executor de recuperação atual permanece bloqueado antes de qualquer gravação remota.
+Implementação do nível 1 preparada em 01/10/2026. O workflow e o executor restrito a dados sintéticos estão versionados; a execução PostgreSQL no CI ainda precisa ser registrada abaixo. **Não há importador SQL de backups reais.** O executor de recuperação remota permanece bloqueado antes de qualquer gravação.
 
 ## Objetivo e alcance
 
-A próxima entrega pode provar mecanismos de carga e falha em PostgreSQL descartável dentro do GitHub Actions, sem projeto Supabase externo, credenciais de produção ou dados reais. Um serviço PostgreSQL no runner Linux fornece um banco isolado por execução. O consumo de minutos e armazenamento permanece sujeito ao plano e às cotas do repositório; não requer contratar um projeto Supabase pago. [GitHub: serviços PostgreSQL no Actions](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers).
+O ensaio verifica mecanismos de carga e falha em PostgreSQL descartável dentro do GitHub Actions, sem projeto Supabase externo, credenciais de produção ou dados reais. Um serviço PostgreSQL no runner Linux fornece bancos isolados por cenário. O consumo de minutos e armazenamento permanece sujeito ao plano e às cotas do repositório; não requer contratar um projeto Supabase pago. [GitHub: serviços PostgreSQL no Actions](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers).
 
 Há três níveis diferentes de evidência:
 
@@ -16,18 +16,20 @@ Há três níveis diferentes de evidência:
 
 A aprovação de um nível não aprova o seguinte. O nível 1 não cobre as 85 tabelas exportadas, as dependências externas ou os efeitos reais dos gatilhos da empresa. Nenhum resultado sintético autoriza marcar `recovery_ready` ou `recovery_verified` como verdadeiro em `system_backup_runs`, nem classificar a recuperação de produção como comprovada.
 
-## Entrega executável proposta para o nível 1
+## Implementação executável do nível 1
 
-Preparar em PR separado um workflow dedicado e três grupos de arquivos: schema/entrada sintéticos, executor SQL restrito à fixture e verificações independentes. Nomes sugeridos: `tests/fixtures/recovery-sql/`, `scripts/test-recovery-sql.mjs` e `.github/workflows/recovery-sql-fixture.yml`. Esses arquivos ainda não existem como resultado deste plano e não devem substituir o executor remoto bloqueado.
+O workflow [recovery-sql-fixtures.yml](../../.github/workflows/recovery-sql-fixtures.yml) roda automaticamente em PRs que alteram seus arquivos, também em pushes correspondentes à main e por acionamento manual. Usa PostgreSQL `16.15-bookworm` fixado por digest, Node 22 e ações fixadas por SHA. O cliente `psql` precisa existir no runner Ubuntu 24.04; a etapa inicial verifica essa dependência, sem instalação global. A versão do servidor e do cliente entram no relatório. Não se declara equivalência com a versão ou o schema de produção.
 
-1. Criar um serviço PostgreSQL num runner Linux limpo, com imagem e versão fixadas, healthcheck e porta somente no contexto isolado da execução. Registrar `server_version` e o digest da imagem; a versão principal da produção precisa ser verificada antes de declarar equivalência. O primeiro ensaio é de mecanismos SQL, sem essa alegação.
-2. Usar credencial descartável exclusiva do banco `harmony_recovery_fixture`. O executor deve aceitar somente o serviço local declarado pelo workflow, confirmar nome do banco e marcador da fixture, e falhar antes de escrever se faltar qualquer condição. Não carregar `.env`, aceitar URL arbitrária, conectar à produção, buscar backups remotos ou receber segredos do ambiente `recovery`.
-3. Conceder ao workflow apenas as permissões de repositório necessárias para ler código. Usar ações fixadas em revisões auditadas; não executar esta tarefa privilegiada em `pull_request_target` com código não confiável. Não fornecer credenciais de serviço, destinos reais, integrações ou saídas operacionais.
-4. Criar uma fixture reproduzível, carregar o caso de sucesso e verificar os invariantes descritos abaixo. Usar listas explícitas de colunas e tipos, uma conexão por transação e falha de SQL propagada ao processo (`psql -X -v ON_ERROR_STOP=1`, ou cliente com comportamento equivalente).
-5. Executar os cenários de erro em bancos descartáveis independentes. Depois de cada erro, verificar o estado por nova conexão, sem confiar apenas na exceção capturada pelo executor. Descartar o banco ao final, inclusive em falha.
-6. Publicar somente relatório sintético com SHA do commit, versões, hash da fixture, cenários, contagens esperadas/observadas, invariantes, configuração de gatilhos e estado de sequências. Não publicar DSN, senhas, dados pessoais ou artefato real. Registrar a duração como duração da fixture, nunca como RTO operacional.
+Os arquivos em [scripts/recovery-sql](../../scripts/recovery-sql/) são `schema.sql` (schema reduzido, seeds e evidência de sequência), `prepare.sql` (preflight/transação), `load.sql` (entrada literal sintética), `finish.sql` (reativação/avanço de sequências/commit), `observe.sql` (leitura independente) e `run.mjs` (orquestração e asserções). [recovery-sql-fixtures.test.mjs](../../tests/recovery-sql-fixtures.test.mjs) verifica as guardas sem conexão. O executor REST remoto não é chamado nem substituído.
 
-O executor desse nível deve ser deliberadamente incapaz de importar um pacote de produção. A evolução para schema real exige nova revisão, não apenas remover o teste do nome do banco.
+1. O serviço expõe somente `127.0.0.1:55432`, com healthcheck. Sua senha pública e descartável não é segredo operacional. O job possui somente `contents: read`, checkout sem credencial persistida e nenhum environment ou secret de produção.
+2. O runner exige `RECOVERY_SQL_FIXTURE=synthetic-only-v1` e `RECOVERY_FIXTURE_PORT=55432`. Rejeita argumentos, URLs, arquivos externos e bancos fora da lista fechada; não lê `.env`. Os subprocessos recebem ambiente de conexão fechado, ignorando `DATABASE_URL`, `PGHOST`, `PGSERVICE`, `PGPASSFILE` e variáveis Supabase herdadas.
+3. Antes do schema, o preflight confirma banco/role fixos, PostgreSQL 16 e ausência de relações ou schemas de usuário além de `public`. A rotina SQL exige marcador sintético, seeds exatos, destino vazio, gatilhos nomeados e evidência das três sequências. Nenhum dado real pode ser passado como entrada.
+4. Cada carga usa uma conexão e uma transação com timeouts, locks nas tabelas da fixture, listas explícitas de colunas e `psql -X -v ON_ERROR_STOP=1`. Apenas o gatilho `record_parent` é temporariamente desativado; o guard de catálogo, FKs e checks permanecem ativos.
+5. Os cenários de erro usam bancos independentes. O runner exige SQLSTATE esperado e saída de erro SQL, distinguindo falha de conexão. Observa as linhas, eventos, constraints, gatilhos e sequências por novo processo/conexão. O encerramento do serviço pelo Actions descarta todos os bancos, inclusive após falha.
+6. Somente `outputs/recovery-sql-fixtures/report.json` é publicado por 14 dias. Contém SHA, versões, hash dos cinco arquivos SQL, cenários, valores sintéticos esperados/observados, estado dos gatilhos/sequências e duração da fixture. Mantém `recovery_ready: false` e `recovery_verified: false`. Não contém DSN, ambiente, senha, stderr arbitrário ou pacote real. A duração não é RTO.
+
+O executor desse nível é deliberadamente incapaz de importar um pacote de produção. Seu helper de sequências aceita apenas três nomes sintéticos, incremento 1, cache 1 e ausência de ciclo. A evolução para schema real exige nova revisão, não apenas remover o teste do nome do banco; também precisa tratar concorrência, configurações de sequência e dependências reais.
 
 ## Fixture e critérios verificáveis
 
@@ -60,4 +62,8 @@ O nível 3 permanece condicionado ao [procedimento isolado](ENSAIO-RECUPERACAO-I
 
 ## Estado registrado
 
-O catálogo e a integridade do backup têm verificações automatizadas; o importador REST permanece desativado. Este documento torna concreta a próxima entrega de ensaio SQL sintético. **Ainda não comprova execução de SQL de restauração, ROLLBACK em PostgreSQL, recuperação fiel, RTO ou RPO.** Registrar a execução futura com seus artefatos e escopo antes de alterar esse estado.
+O catálogo e a integridade do backup têm verificações automatizadas; o importador REST permanece desativado. Nesta implementação, os cinco testes Node de guardas passaram e o lint dos arquivos JavaScript passou localmente. O computador de trabalho não dispõe de PostgreSQL/psql ou Docker para executar o ensaio; nenhuma dependência global foi instalada.
+
+**Execução SQL no CI: pendente de registro.** O workflow deverá produzir 15 resultados: gatilho normal, carga fiel da fixture, reexecução bloqueada, próximos números, dez falhas controladas e sequência já adiantada. A falha deliberada após inserir pai/filho/evento comprova rollback das linhas; nela, o avanço da sequência para 9000 precisa sobreviver e o próximo número ser 9001. O caso da caixa excluída preserva o maior número consumido 7777 apesar de o maior número visível ser 400.
+
+Após o CI, registrar aqui URL da execução, SHA ensaiado, versão observada, quantidade de cenários aprovados e artefato. Até essa evidência, não afirmar execução PostgreSQL aprovada. Mesmo com todos os casos verdes, **recuperação fiel das 85 tabelas, Auth, Storage, RLS e gatilhos de produção, RTO e RPO continuam não comprovados**.

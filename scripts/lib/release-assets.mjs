@@ -2,7 +2,7 @@ const origin = 'https://harmony.invalid';
 
 function asset(reference, position = 0) {
   const url = new URL(reference, origin);
-  if (url.origin !== origin || !/\.(?:js|css)$/.test(url.pathname)) return null;
+  if (url.origin !== origin || !/\.(?:m?js|css)$/.test(url.pathname)) return null;
   return { path: url.pathname.slice(1), version: url.searchParams.get('v'), position };
 }
 
@@ -18,7 +18,7 @@ export function htmlAssets(html) {
 
 export function workerAssets(worker) {
   const assets = new Map();
-  for (const match of worker.matchAll(/(["'])(\.\/[^"']+\.(?:js|css)(?:\?[^"']*)?)\1/g)) {
+  for (const match of worker.matchAll(/(["'])(\.\/[^"']+\.(?:m?js|css)(?:\?[^"']*)?)\1/g)) {
     const entry = asset(match[2], match.index);
     if (entry) assets.set(entry.path, entry);
   }
