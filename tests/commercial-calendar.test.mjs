@@ -149,7 +149,8 @@ test('UI escapes external text, limits route to admins and clears on logout',asy
   const ui=await read('commercial-calendar.js'),app=await read('app.js'),edge=await read('supabase/functions/sync-commercial-calendar/index.ts');
   assert.match(ui,/escape\(e\.source_excerpt\)/);assert.match(ui,/rel="noopener noreferrer"/);
   assert.match(ui,/S\.profile\?\.role==='admin'/);
-  assert.match(app,/function clearLocalSession\(\)\{window\.HarmonyCommercialCalendar\?\.reset\(\)/);
+  const teardown=app.slice(app.indexOf('function clearLocalSession('),app.indexOf("window.addEventListener('storage'"));
+  assert.match(teardown,/window\.HarmonyCommercialCalendar/);assert.match(teardown,/cacheModule\?\.reset\?\.\(\)/);
   assert.match(edge,/CALENDAR_RESEARCH_APPROVED/);assert.match(edge,/AbortSignal\.timeout\(65000\)/);
   assert.ok(!ui.includes('OPENAI_API_KEY'));assert.ok(!ui.includes('SERVICE_ROLE_KEY'));
 });

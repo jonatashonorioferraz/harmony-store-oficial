@@ -29,6 +29,7 @@ test('Android prints the production order in the current page without a temporar
       matchMedia:()=>({matches:true}),
       print(){prints++},
       open(){temporaryWindows++;return null},
+      HarmonySession:{capture:()=>({}),assert(){},trackPrintWindow:win=>win},
       HarmonyPrint:{printCurrentDocument(mode){printMode=mode;prints++;return Promise.resolve()}},
     },
   };

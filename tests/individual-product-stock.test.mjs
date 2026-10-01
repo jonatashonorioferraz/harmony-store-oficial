@@ -1,3 +1,4 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -70,13 +71,12 @@ test('admin UI manages physical stock while reserved stock stays system controll
 });
 
 test('backup, recovery, help and technical documentation cover individualized balances',async()=>{
-  const [backup,recovery,change,manual,technical,help,pkg]=await Promise.all([
-    read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs'),read('CHANGELOG.md'),
+  const [change,manual,technical,help,pkg]=await Promise.all([
+    read('CHANGELOG.md'),
     read('docs/manual/MANUAL-DO-APLICATIVO.md'),read('docs/technical/ARQUITETURA-E-OPERACAO.md'),
     read('help-center.js'),read('package.json')
   ]);
-  assert.match(backup,/products'.*'product_collaborator_stocks'.*'custom_field_definitions'/s);
-  assert.match(recovery,/products'.*'product_collaborator_stocks'.*'custom_field_definitions'/s);
+  assertCapturedAndPlannedTables(["products","product_collaborator_stocks","custom_field_definitions"]);
   assert.match(change,/\[v25\.63\]/);
   assert.match(manual,/Estoque individual por colaboradora/);
   assert.match(technical,/product_collaborator_stocks/);

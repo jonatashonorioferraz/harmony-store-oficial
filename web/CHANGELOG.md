@@ -1,5 +1,16 @@
 # Changelog
 
+## [v25.102.1] - 2026-10-01
+
+### Isolamento de contas e verificacao de backup
+
+- Encerramento local invalida respostas antigas e exige novo documento antes de trocar a conta.
+- Caches de recebimentos, notificacoes e ordens passam a respeitar a identidade da sessao.
+- Catalogo unico explicita a cobertura de dados permanentes e as exclusoes de credenciais temporarias.
+- Integridade do pacote, cobertura do schema e recuperacao fiel passam a ser verificacoes distintas.
+- Recuperacao por REST que nao preserve IDs, protocolos e eventos e bloqueada antes de gravar.
+- Nenhuma automacao de WhatsApp, migration de producao ou regra financeira foi adicionada.
+
 ## [v25.102-r2] - 2026-10-01
 
 - Cobertura explicita de Shopee, Mercado Livre e SHEIN na agenda comercial.

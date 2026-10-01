@@ -1,3 +1,4 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -6,8 +7,9 @@ const quality = await readFile(new URL('../.github/workflows/quality.yml', impor
 const backup = await readFile(new URL('../.github/workflows/backup.yml', import.meta.url), 'utf8');
 const release = await readFile(new URL('../.github/workflows/release.yml', import.meta.url), 'utf8');
 const createBackup = await readFile(new URL('../scripts/create-api-backup.mjs', import.meta.url), 'utf8');
-const verifyBackup = await readFile(new URL('../scripts/verify-api-backup.mjs', import.meta.url), 'utf8');
+const verifyBackup = await readFile(new URL('../scripts/backup-contract.mjs', import.meta.url), 'utf8');
 const migration = await readFile(new URL('../supabase/migrations/20260719071000_system_health_and_backup_status.sql', import.meta.url), 'utf8');
+const backupHealth = await readFile(new URL('../supabase/functions/system-health/backup-status.mjs', import.meta.url), 'utf8');
 const healthEdge = await readFile(new URL('../supabase/functions/system-health/index.ts', import.meta.url), 'utf8');
 const help = await readFile(new URL('../help-center.js', import.meta.url), 'utf8');
 const health = await readFile(new URL('../system-health.js', import.meta.url), 'utf8');
@@ -65,14 +67,9 @@ test('daily backup exports data, Auth and Storage before encryption', () => {
   assert.match(backup, /if: failure\(\)/);
   assert.match(createBackup, /auth\/v1\/admin\/users/);
   assert.match(createBackup, /storage\/v1\/object\/list/);
-  assert.match(createBackup, /'improvement_ideas', 'improvement_idea_events'/);
-  assert.match(createBackup, /'production_orders', 'production_order_items'/);
-  assert.match(createBackup, /'internal_supply_requests', 'internal_supply_request_items'/);
-  assert.match(createBackup, /'internal_purchase_receipts', 'internal_purchase_receipt_items'/);
-  assert.match(recoveryScript, /'improvement_ideas', 'improvement_idea_events'/);
-  assert.match(recoveryScript, /'production_orders', 'production_order_items'/);
   assert.match(backupGrantMigration, /grant select on table[\s\S]*public\.improvement_ideas[\s\S]*to service_role/i);
   assert.match(verifyBackup, /Falha de integridade/);
+  assertCapturedAndPlannedTables(['improvement_ideas','improvement_idea_events','production_orders','production_order_items','internal_supply_requests','internal_supply_request_items','internal_supply_request_item_fulfillments','internal_purchase_receipts','internal_purchase_receipt_items']);
 });
 
 test('version tags generate a validated automatic changelog release', () => {
@@ -88,15 +85,15 @@ test('health data is private, summarized and role protected', () => {
   assert.match(migration, /revoke all privileges on table public\.system_backup_runs, public\.system_events from public, anon, authenticated/i);
   assert.match(migration, /grant execute on function public\.service_record_backup_result[\s\S]*to service_role/i);
   assert.match(healthEdge, /caller\.role !== "admin"/);
-  assert.match(healthEdge, /Aguardando primeiro backup/);
-  assert.match(healthEdge, /Falha na última tentativa/);
+  assert.match(backupHealth, /Aguardando primeiro backup/);
+  assert.match(backupHealth, /Falha na última tentativa/);
   assert.match(healthEdge, /\.neq\("source", "backup"\)/);
   assert.match(healthEdge, /Nenhum aparelho cadastrado/);
   assert.match(healthEdge, /application\/json; charset=utf-8/);
   assert.match(healthEdge, /package\.json\?health_version=/);
   assert.match(healthEdge, /publishedVersionLabel/);
   assert.match(healthEdge, /mode: "live"/);
-  assert.match(healthEdge, /backupQueryError/);
+  assert.match(healthEdge, /queryError: backupResult.error \|\| backupAttemptResult.error/);
   assert.match(healthEdge, /errorCountError/);
   assert.match(healthEdge, /notificationQueryError/);
   assert.match(healthEdge, /monitorQueryError/);
@@ -121,17 +118,16 @@ test('external monitor checks the complete service chain and records sanitized s
   assert.match(healthEdge, /monitorAge > 12/);
 });
 
-test('full recovery drill is isolated, guarded and reconciles restored data', () => {
+test('recovery workflow fails its configuration gate before production reads', () => {
   assert.match(recoveryWorkflow, /workflow_dispatch/);
   assert.match(recoveryWorkflow, /environment: recovery/);
-  assert.match(recoveryWorkflow, /RECOVERY_PROJECT_REF: jwluqaycxoeyraxsleri/);
-  assert.match(recoveryWorkflow, /execute-api-recovery\.mjs/);
+  assert.match(recoveryWorkflow, /vars\.RECOVERY_PROJECT_REF/);
+  assert.doesNotMatch(recoveryWorkflow, /RECOVERY_PROJECT_REF: jwluqaycxoeyraxsleri/);
+  assert.ok(recoveryWorkflow.indexOf('--preflight-config') < recoveryWorkflow.indexOf('run: node scripts/create-api-backup.mjs'));
   assert.match(recoveryScript, /BLOQUEADO: restauração nunca pode usar o projeto de produção/);
   assert.match(recoveryScript, /RESTORE_ISOLATED_HARMONY/);
-  assert.match(recoveryScript, /O destino isolado não está vazio/);
-  assert.match(recoveryScript, /Contagem divergente/);
-  assert.match(recoveryScript, /storage\/v1\/object/);
-  assert.doesNotMatch(recoveryScript, /console\.log\([^\n]*(SECRET|password)/);
+  assert.match(recoveryScript, /writes_performed: 0/);
+  assert.doesNotMatch(recoveryScript, /fetch\(/);
 });
 
 test('help center offers contextual, module and technical documentation', () => {

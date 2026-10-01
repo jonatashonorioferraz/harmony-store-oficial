@@ -1,16 +1,17 @@
+import { CAPTURE_TABLES } from '../scripts/backup-catalog.mjs';
+import { assertPreservedIdentity } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,js,css,manual,technical,audit,recovery]=await Promise.all([
+const [sql,js,css,manual,technical,audit]=await Promise.all([
   readFile(new URL('supabase/migrations/20260809193000_production_inventory_unique_boxes.sql',root),'utf8'),
   readFile(new URL('production-inventory.js',root),'utf8'),
   readFile(new URL('production-inventory.css',root),'utf8'),
   readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
   readFile(new URL('docs/technical/CAIXAS-UNICAS-INVENTARIO-V25.58.md',root),'utf8'),
   readFile(new URL('docs/audit/RELATORIO-CAIXAS-UNICAS-INVENTARIO-V25.58.md',root),'utf8'),
-  readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),
 ]);
 
 test('database makes every physical box positive, unique and immutable',()=>{
@@ -58,8 +59,8 @@ test('generator is responsive and clearly distinguishes code from physical locat
 });
 
 test('backup recovery preserves the explicit box number',()=>{
-  assert.match(recovery,/production_inventory_entries: \['protocol'\]/);
-  assert.doesNotMatch(recovery,/production_inventory_entries: \[[^\]]*box_number/);
+  assertPreservedIdentity('production_inventory_entries', 'protocol');
+  assert.ok(!CAPTURE_TABLES.find(table => table.name === 'production_inventory_entries').generated.some(column => column.column === 'box_number'));
   assert.match(technical,/restauração preserva `box_number`/);
   assert.match(audit,/Backup e restauração preservam `box_number`/);
 });

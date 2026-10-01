@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 
 const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
 
@@ -28,11 +29,13 @@ test('offline, blocked permission and database failures receive distinct guidanc
 });
 
 test('activation refreshes the service worker and presents an in-app recovery guide',async()=>{
-  const [pwa,css,html]=await Promise.all([read('pwa.js'),read('notifications.css'),read('index.html')]);
+  const [pwa,css,html,worker]=await Promise.all([read('pwa.js'),read('notifications.css'),read('index.html'),read('service-worker.js')]);
   assert.match(pwa,/await registration\.update\(\)\.catch/);
   assert.match(pwa,/Configurações do site → Notificações/);
   assert.match(pwa,/Google Play Services/);
   assert.match(pwa,/Central de Notificações/);
   assert.match(css,/\.push-help/);
-  assert.match(html,/pwa\.js\?v=25\.27/);
+  const version=htmlAssets(html).get('pwa.js')?.version;
+  assert.match(version||'',/^\d+(?:\.\d+)+$/);
+  assert.equal(workerAssets(worker).get('pwa.js')?.version,version);
 });

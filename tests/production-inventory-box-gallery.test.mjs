@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 
 const root=new URL('../',import.meta.url);
 const [sql,validation,js,css,index,worker,help,manual,technical,audit,pkg]=await Promise.all([
@@ -78,9 +79,10 @@ test('gallery and counter are responsive and accessible',()=>{
 
 test('release assets, help and audit documentation are complete',()=>{
   assert.match(index,/production-inventory\.css\?v=25\.72/);
-  assert.match(index,/production-inventory\.js\?v=25\.73/);
+  const version=htmlAssets(index).get('production-inventory.js')?.version;assert.match(version||'',/^\d+(?:\.\d+)+$/);
+  assert.equal(workerAssets(worker).get('production-inventory.js')?.version,version);
   assert.match(worker,/production-inventory\.css\?v=25\.72/);
-  assert.match(worker,/production-inventory\.js\?v=25\.73/);
+
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
   assert.match(manual,/### Visualizar as caixas disponíveis/);
   assert.match(technical,/## Sincronização/);

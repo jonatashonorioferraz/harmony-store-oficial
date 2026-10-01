@@ -1,3 +1,4 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -55,13 +56,12 @@ test('notification center provides global, individual, unread and responsive flo
 });
 
 test('notification data participates in backup and documentation', async () => {
-  const [backup, manual, technical, changelog] = await Promise.all([
-    read('scripts/create-api-backup.mjs'),
+  const [ manual, technical, changelog] = await Promise.all([
     read('docs/manual/MANUAL-DO-APLICATIVO.md'),
     read('docs/technical/ARQUITETURA-E-OPERACAO.md'),
     read('CHANGELOG.md'),
   ]);
-  assert.match(backup, /'app_notifications', 'app_notification_recipients'/);
+  assertCapturedAndPlannedTables(["app_notifications","app_notification_recipients"]);
   assert.match(manual, /Central de Notificações/);
   assert.match(technical, /app_notification_recipients/);
   assert.match(changelog, /\[v25\.3\]/);

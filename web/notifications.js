@@ -1,5 +1,9 @@
 const HarmonyNotifications=(()=>{
-  const state={items:[],loaded:false,loading:null,filter:'all',lastLoaded:0};
+  const state={items:[],loaded:false,loading:null,ownerId:null,filter:'all',lastLoaded:0};
+  let generation=0;
+  function reset(){generation++;Object.assign(state,{items:[],loaded:false,loading:null,ownerId:null,filter:'all',lastLoaded:0})}
+  const capture=()=>({generation,ownerId:S.profile?.id,session:window.HarmonySession?.capture()});
+  const current=context=>context.generation===generation&&context.ownerId===S.profile?.id&&context.ownerId===state.ownerId&&(!context.session||window.HarmonySession.isCurrent(context.session));
   const priorityLabels={normal:'Informativo',important:'Importante',urgent:'Urgente'};
   const priorityIcons={normal:'🌷',important:'🔔',urgent:'🚨'};
   const isPrimary=()=>Boolean(S?.profile?.role==='admin'&&S.profile.is_primary_admin);
@@ -7,14 +11,17 @@ const HarmonyNotifications=(()=>{
   const date=value=>value?new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'';
 
   async function load(force=false){
-    if(!S?.profile)return[];
+    const ownerId=S?.profile?.id;if(!ownerId){reset();return[]}
+    if(state.ownerId!==ownerId){reset();state.ownerId=ownerId}
     if(state.loading)return state.loading;
     if(!force&&state.loaded&&Date.now()-state.lastLoaded<30000)return state.items;
-    state.loading=rpc('list_app_notifications',{p_limit:150}).then(items=>{
+    const context=capture();
+    const pending=rpc('list_app_notifications',{p_limit:150}).then(items=>{
+      if(!current(context))return[];
       state.items=Array.isArray(items)?items:[];
       state.loaded=true;state.lastLoaded=Date.now();updateBadge();return state.items;
-    }).finally(()=>state.loading=null);
-    return state.loading;
+    }).finally(()=>{if(state.loading===pending)state.loading=null});
+    state.loading=pending;return pending;
   }
 
   function updateBadge(){
@@ -54,14 +61,17 @@ const HarmonyNotifications=(()=>{
   }
 
   async function markRead(item,button){
-    if(!item||item.read_at||isPrimary())return;
+    if(!item||item.read_at||isPrimary()||!state.items.includes(item))return;
+    const context=capture();
     if(button)button.disabled=true;
     try{
-      item.read_at=await rpc('mark_app_notification_read',{p_notification_id:item.id});
+      const readAt=await rpc('mark_app_notification_read',{p_notification_id:item.id});
+      if(!current(context))return;item.read_at=readAt;
       updateBadge();
       if(S.view==='notifications')renderCenter();else refreshHomePanel();
       toast('Aviso marcado como lido. Ele continua disponível na Central de Notificações.');
     }catch(error){
+      if(!current(context))return;
       if(button)button.disabled=false;
       alert(error.message);
     }
@@ -78,9 +88,11 @@ const HarmonyNotifications=(()=>{
   }
 
   async function openDetail(item){
-    if(!item)return;
+    if(!item||!state.items.includes(item))return;
+    const context=capture();if(!current(context))return;
     if(!isPrimary()&&!item.read_at){
-      try{item.read_at=await rpc('mark_app_notification_read',{p_notification_id:item.id});updateBadge();refreshHomePanel()}catch{}
+      try{const readAt=await rpc('mark_app_notification_read',{p_notification_id:item.id});if(!current(context))return;item.read_at=readAt;updateBadge();refreshHomePanel()}catch{}
+      if(!current(context))return;
     }
     $('#modal').innerHTML=`<div class="modal"><div class="modal-box notification-detail priority-${esc(item.priority)}"><div class="modal-head"><div><p class="eyebrow">${priorityIcons[item.priority]||'🔔'} ${priorityLabels[item.priority]||'NOTIFICAÇÃO'}</p><h2>${esc(item.title)}</h2></div><button type="button" data-close aria-label="Fechar">×</button></div><p class="notification-detail-body">${esc(item.body)}</p>${item.due_at?`<div class="notification-deadline"><i>⏰</i><div><small>PRAZO INFORMADO</small><b>${date(item.due_at)}</b></div></div>`:''}<footer><span>Enviada em ${date(item.created_at)}</span><span>Por ${esc(item.sender_name||'Harmony Store')}</span></footer><button class="primary full" data-close>Entendi</button></div></div>`;
     document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{$('#modal').innerHTML='';if(S.view==='notifications')renderCenter()});
@@ -92,12 +104,12 @@ const HarmonyNotifications=(()=>{
   }
 
   function renderCenter(){
-    if(S.view!=='notifications')return;
+    if(S.view!=='notifications'||!S.profile||state.ownerId!==S.profile.id)return;
     const page=$('#page');if(!page)return;
     page.innerHTML=`<div class="page notifications-page">${head('COMUNICAÇÃO','Central de Notificações',isPrimary()?'Envie avisos e acompanhe a leitura da equipe.':'Confira os avisos importantes enviados pela Harmony Store.',isPrimary()?'<button class="primary" id="newGlobalNotification">＋ Notificação global</button>':'')}<section class="notification-hero card"><div><i>🔔</i><span><small>${isPrimary()?'PAINEL DE COMUNICAÇÃO':'SEUS AVISOS'}</small><b>${isPrimary()?state.items.length:unread()} ${isPrimary()?'envios registrados':'não lidas'}</b></span></div><p>${isPrimary()?'As mensagens ficam registradas no aplicativo mesmo quando o push do celular estiver desativado.':'Toque em cada aviso para abrir, ler os detalhes e confirmar a leitura.'}</p></section>${!isPrimary()?`<div class="notification-toolbar"><div class="segmented"><button class="${state.filter==='all'?'active':''}" data-notification-filter="all">Todas</button><button class="${state.filter==='unread'?'active':''}" data-notification-filter="unread">Não lidas</button></div>${unread()?'<button class="outline" id="markAllNotifications">Marcar todas como lidas</button>':''}</div>`:''}<section class="notification-list">${centerList()}</section></div>`;
     $('#newGlobalNotification')?.addEventListener('click',()=>openComposer());
     document.querySelectorAll('[data-notification-filter]').forEach(button=>button.onclick=()=>{state.filter=button.dataset.notificationFilter;renderCenter()});
-    $('#markAllNotifications')?.addEventListener('click',async event=>{event.currentTarget.disabled=true;try{await rpc('mark_all_app_notifications_read',{});state.items.forEach(item=>item.read_at=item.read_at||new Date().toISOString());updateBadge();renderCenter();toast('Notificações marcadas como lidas.')}catch(error){alert(error.message);event.currentTarget.disabled=false}});
+    $('#markAllNotifications')?.addEventListener('click',async event=>{const context=capture(),button=event.currentTarget;button.disabled=true;try{await rpc('mark_all_app_notifications_read',{});if(!current(context))return;state.items.forEach(item=>item.read_at=item.read_at||new Date().toISOString());updateBadge();renderCenter();toast('Notificações marcadas como lidas.')}catch(error){if(!current(context))return;alert(error.message);button.disabled=false}});
     bindCards(page);
     page.dataset.notificationsRendered=`${state.lastLoaded}-${state.filter}`;
   }
@@ -143,7 +155,7 @@ const HarmonyNotifications=(()=>{
 
   function openComposer(profile=null){
     if(!isPrimary())return;
-    const individual=Boolean(profile);
+    const context=capture(),individual=Boolean(profile);
     $('#modal').innerHTML=`<div class="modal"><form class="modal-box notification-compose" id="notificationForm"><div class="modal-head"><div><p class="eyebrow">🔔 COMUNICAÇÃO INTERNA</p><h2>${individual?'Notificar '+esc(profile.full_name):'Nova notificação global'}</h2></div><button type="button" data-close aria-label="Fechar">×</button></div><div class="notification-compose-guide"><i>✨</i><p>A mensagem ficará salva no aplicativo e também será enviada ao celular de quem ativou as notificações.</p></div><div class="form"><label class="wide">Modelo rápido<select name="template"><option value="">Escrever do zero</option><option value="request-reminder">Lembrete de solicitação</option><option value="collection">Informação de coleta</option><option value="general">Comunicado geral</option></select></label>${individual?`<input type="hidden" name="audience" value="individual"><input type="hidden" name="recipient_id" value="${profile.id}"><div class="notification-recipient wide"><i class="avatar">${initials(profile.full_name)}</i><div><small>DESTINATÁRIA</small><b>${esc(profile.full_name)}</b><span>${esc(profile.department||'Produção')}</span></div></div>`:'<input type="hidden" name="audience" value="global"><div class="notification-recipient global wide"><i>👥</i><div><small>DESTINATÁRIAS</small><b>Todas as colaboradoras ativas</b><span>Inclui colaboradoras de produção e recebimento</span></div></div>'}<label class="wide">Título<input name="title" maxlength="100" required placeholder="Ex.: Solicitação para a coleta de amanhã"></label><label>Prioridade<select name="priority"><option value="important">🔔 Importante</option><option value="urgent">🚨 Urgente</option><option value="normal">🌷 Informativo</option></select></label><label>Prazo (opcional)<input name="due_at" type="datetime-local"></label><label class="wide">Mensagem<textarea name="body" minlength="10" maxlength="1200" required placeholder="Escreva uma orientação clara e objetiva…"></textarea><small class="character-count">0 / 1200</small></label><div class="notification-preview wide" aria-live="polite"></div><div class="form-actions"><button type="button" class="outline" data-close>Cancelar</button><button class="primary">🔔 Enviar notificação</button></div></div></form></div>`;
     document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>$('#modal').innerHTML='');
     const form=$('#notificationForm'),preview=form.querySelector('.notification-preview'),counter=form.querySelector('.character-count');
@@ -151,17 +163,19 @@ const HarmonyNotifications=(()=>{
     form.template.onchange=()=>{applyTemplate(form,form.template.value);updatePreview()};form.title.oninput=updatePreview;form.body.oninput=updatePreview;form.priority.onchange=updatePreview;updatePreview();
     form.onsubmit=async event=>{event.preventDefault();const button=event.submitter;button.disabled=true;button.textContent='Enviando…';const values=new FormData(form);try{
       const result=await rpc('primary_admin_send_notification',{p_title:values.get('title'),p_body:values.get('body'),p_priority:values.get('priority'),p_audience:values.get('audience'),p_recipient_id:values.get('recipient_id')||null,p_due_at:values.get('due_at')?new Date(values.get('due_at')).toISOString():null});
+      if(!current(context))return;
       const saved=Array.isArray(result)?result[0]:result;let push={sent:0};
       try{push=await sendAdminPush(saved.notification_id)}catch{}
-      $('#modal').innerHTML='';await load(true);if(S.view==='notifications')renderCenter();else renderApp();
+      if(!current(context))return;
+      $('#modal').innerHTML='';await load(true);if(!current(context))return;if(S.view==='notifications')renderCenter();else renderApp();
       toast(`Notificação enviada para ${saved.recipient_count} pessoa${Number(saved.recipient_count)===1?'':'s'}${push.sent?` · ${push.sent} push`:''}.`);
-    }catch(error){alert(error.message);button.disabled=false;button.textContent='🔔 Enviar notificação'}};
+    }catch(error){if(!current(context))return;alert(error.message);button.disabled=false;button.textContent='🔔 Enviar notificação'}};
   }
 
   async function sendAdminPush(notificationId){
-    await ensureSession();
-    const response=await fetch(API+'/functions/v1/send-push',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+S.session.access_token,'Content-Type':'application/json'},body:JSON.stringify({event:'admin_message',notification_id:notificationId})});
-    return json(response);
+    const context=capture();await ensureSession();if(!current(context))throw sessionChangedError();
+    const response=await apiFetch(API+'/functions/v1/send-push',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+S.session.access_token,'Content-Type':'application/json'},body:JSON.stringify({event:'admin_message',notification_id:notificationId})});
+    const result=await json(response);if(!current(context))throw sessionChangedError();return result;
   }
 
   async function enhance(){
@@ -171,7 +185,8 @@ const HarmonyNotifications=(()=>{
       if(S.view!=='notifications'){S.view='notifications';renderApp();return}
     }
     addNavigation();
-    try{await load()}catch{return}
+    const ownerId=S.profile.id;try{await load()}catch{return}
+    if(!S.profile||ownerId!==S.profile.id)return;
     if(S.view==='notifications'){
       const page=$('#page'),version=`${state.lastLoaded}-${state.filter}`;
       if(page?.dataset.notificationsRendered!==version)renderCenter();
@@ -182,5 +197,7 @@ const HarmonyNotifications=(()=>{
   let initialViewHandled=false;
   new MutationObserver(()=>enhance()).observe(document.body,{childList:true,subtree:true});
   setInterval(()=>{if(S?.profile&&document.visibilityState==='visible')load(true).then(()=>{updateBadge();if(S.view==='home'){document.querySelector('.home-notifications')?.remove();addHomePanel()}}).catch(()=>{})},60000);
-  return Object.freeze({state,load,unread,openComposer,renderCenter});
+  return Object.freeze({state,load,reset,unread,openComposer,renderCenter});
 })();
+
+window.HarmonyNotifications=HarmonyNotifications;

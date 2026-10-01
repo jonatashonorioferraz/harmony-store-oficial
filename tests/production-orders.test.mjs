@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 
 const root=new URL('../',import.meta.url);
 const [sql,externalSql,js,css,confirmationCss,html,worker,receiptCss,pickerCss,help,manual]=await Promise.all([
@@ -139,7 +140,9 @@ test('catalog photos, colors, PDF and responsive UI are present',()=>{
   assert.match(css,/#modal,#modal>\.modal,#productionOrderPrint/);
   assert.match(css,/max-height:none!important/);
   assert.match(receiptCss,/html\.production-receipt-printing body>\*:not\(#productionPrint\)/);
-  assert.match(html,/production-orders\.js\?v=25\.100/);
+  const version=htmlAssets(html).get('production-orders.js')?.version;
+  assert.match(version||'',/^\d+(?:\.\d+)+$/);
+  assert.equal(workerAssets(worker).get('production-orders.js')?.version,version);
   assert.match(html,/production-orders\.css\?v=25\.49/);
   assert.match(worker,/production-orders\.js/);
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);

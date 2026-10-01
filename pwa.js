@@ -23,6 +23,7 @@ if(!installed){
   installButton.setAttribute('aria-label','Instalar Harmony Store neste aparelho');
   installButton.innerHTML='<img src="icon-192-v2.png" alt=""><span>Instalar aplicativo</span>';
   const placeInstallButton=()=>{
+    if(window.HarmonySession?.isClosed())return;
     const host=document.querySelector('.login-box')||document.body;
     if(installButton.parentElement!==host)host.appendChild(installButton);
   };
@@ -100,10 +101,12 @@ async function disablePushNotifications(){
   await subscription.unsubscribe();
 }
 
-async function cleanupPushSubscription(){
+async function cleanupPushSubscription(session){
+  if(!session?.access_token)return;
   const subscription=await currentPushSubscription();
   if(!subscription)return;
-  try{await rpc('remove_own_push_subscription',{p_endpoint:subscription.endpoint})}finally{await subscription.unsubscribe()}
+  // Logout already invalidated S; revoke only the captured account's registration.
+  try{await json(await apiFetch(API+'/rest/v1/rpc/remove_own_push_subscription',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},body:JSON.stringify({p_endpoint:subscription.endpoint})}))}finally{const owner=storedSessionUserId();if(!owner||owner===session.user?.id)await subscription.unsubscribe()}
 }
 
 async function sendNotificationEvent(event,requestId){

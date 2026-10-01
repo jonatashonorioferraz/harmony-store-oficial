@@ -47,6 +47,7 @@ test('the active mode remains visible during print and is cleaned afterwards',as
   const active=new Set(),seen=[];
   let afterPrint;
   const context={
+    captureSession:()=>({}),assertCurrentSession(){},
     document:{documentElement:{classList:{add:value=>active.add(value),remove:value=>active.delete(value)}}},
     requestAnimationFrame:callback=>callback(),
     setTimeout:()=>1,

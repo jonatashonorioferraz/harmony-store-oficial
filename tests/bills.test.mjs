@@ -1,3 +1,4 @@
+import { assertCapturedAndPlannedTables, assertPreservedIdentity } from './backup-assertions.mjs';
 import { htmlAssets, workerAssets } from '../scripts/lib/release-assets.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -5,13 +6,12 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
-const [ui,css,migration,reactivation,correction,pendingCorrection,edge,html,worker,backup,recovery]=await Promise.all([
+const [ui,css,migration,reactivation,correction,pendingCorrection,edge,html,worker]=await Promise.all([
   read('bills.js'),read('bills.css'),read('supabase/migrations/20260725212141_admin_bills.sql'),
   read('supabase/migrations/20260727160000_bill_reactivation.sql'),
   read('supabase/migrations/20260819190000_bill_due_date_correction_reactivation.sql'),
   read('supabase/migrations/20260918193547_correct_pending_bill_due_date.sql'),
   read('supabase/functions/analyze-bill/index.ts'),read('index.html'),read('service-worker.js'),
-  read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs')
 ]);
 
 test('bill data and documents are admin-only, private and audited',()=>{
@@ -171,10 +171,9 @@ test('bill dashboard summarizes counts and amounts and uses every total as a fil
 test('bill assets are mirrored and included in backup and recovery',async()=>{
   assert.equal(ui,await read('web/bills.js'));
   assert.equal(css,await read('web/bills.css'));
-  assert.match(backup,/'bills', 'bill_ai_runs'/);
-  assert.match(recovery,/'bills', 'bill_ai_runs'/);
-  assert.match(recovery,/bills: \['protocol'\]/);
-  assert.match(recovery,/bill_ai_runs: \['id'\]/);
+  assertCapturedAndPlannedTables(["bills","bill_ai_runs"]);
+  assertPreservedIdentity('bills', 'protocol');
+  assertPreservedIdentity('bill_ai_runs', 'id');
 });
 
 test('Meu dia loads due bills only for admins',async()=>{
