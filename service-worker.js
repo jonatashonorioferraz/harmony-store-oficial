@@ -1,4 +1,4 @@
-const CACHE='harmony-store-v25-102-r1';
+const CACHE='harmony-store-v25-102-r2';
 const PUBLIC_MEDIA_CACHE='harmony-public-media-v1';
 const PUBLIC_MEDIA_TTL=24*60*60*1000;
 const PUBLIC_MEDIA_MAX_BYTES=48*1024*1024;
@@ -10,7 +10,7 @@ const SHELL=['./','./index.html','./styles.css?v=25.67','./harmony-icons.css?v=2
 
 SHELL.push('./individual-product-stock.css?v=25.63','./individual-product-stock.js?v=25.63');
 SHELL.push('./label-lots.css?v=1','./label-lots.js?v=3');
-SHELL.push('./commercial-calendar.css?v=1','./commercial-calendar-core.js?v=1','./commercial-calendar.js?v=1');
+SHELL.push('./commercial-calendar.css?v=2','./commercial-calendar-core.js?v=2','./commercial-calendar.js?v=2');
 SHELL.push('./agenda-harmony.css?v=25.91','./agenda-harmony.js?v=25.91','./shipping-planning.css?v=25.83','./shipping-planning.js?v=25.100','./transfer-center.css?v=25.94','./transfer-center.js?v=25.100','./shipping-inventory-integration.js?v=25.98','./assets/platform-mercado-livre.svg','./assets/platform-shopee.svg','./assets/shipping-product-placeholder.svg','./assets/peugeot-expert-harmony.png');
 
 self.addEventListener('install',event=>{

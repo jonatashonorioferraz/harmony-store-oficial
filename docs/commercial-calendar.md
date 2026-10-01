@@ -118,3 +118,39 @@ harmony-commercial-calendar-daily. Do not remove other reminders.
 Failed/stale runs retain reservations and prior evidence. Investigate failure
 codes, credentials or source coverage; never silently reinterpret failure as zero
 new events. Refresh the UI before resolving an optimistic-write conflict.
+
+## Multi-marketplace activation (2026-10-01)
+
+The coverage update adds SHEIN to plans, proposals, schema checks and official
+sources. Shopee, Mercado Livre and SHEIN each receive one independent public
+research request per daily cycle. A failure in one channel does not erase valid
+proposals in another. The ledger records completed/partial/failed and each
+channel outcome. No accessible official sources means unavailable, not zero.
+
+Seasonal dates can be planned for each marketplace and are explicitly labelled
+as planning opportunities, never platform announcements. No invented double
+dates are seeded for Mercado Livre or SHEIN. Existing campaign plans keep their
+keys and no business records are sent to the provider.
+
+The original single-call preparation above is superseded by THREE bounded calls:
+one per marketplace, one web_search call each, max 3000 output tokens each,
+max 6 proposals per channel, no retries, max 6000 UTF-8 bytes per request body,
+65-second individual timeout, store:false. The SQL reservation remains atomic:
+R$1 per daily cycle and R$30 per Sao Paulo calendar month. Failed attempts retain
+their reservation. A 31st attempt in a month is blocked.
+
+Pricing consulted 2026-10-01:
+https://developers.openai.com/api/docs/pricing
+https://developers.openai.com/api/docs/models/gpt-4.1-mini
+Input USD0.40/M, output USD1.60/M, search USD0.01/call plus 8000 input tokens/call.
+Conservative planning assumption: 6000 prompt tokens per request plus search
+block and maximum output, 3 calls = USD0.0612; BRL8/USD and 50% margin = R$0.7344.
+These are planning assumptions, not exchange-rate forecasts or invoice guarantees.
+The R$1 reservation covers that assumption without raising the R$30 ceiling.
+Provider hard caps for the existing shared API project were NOT confirmed or
+changed: changing them might interrupt bills and other app AI features.
+
+Deploy the additive 20261001123000 migration, publish reviewed assets, deploy only
+sync-commercial-calendar with its dedicated secret authentication, then provision
+Vault/Edge secrets and enable the daily 10:00 UTC cron. The new finish RPC is
+service-only. No frontend credentials or direct table access are granted.

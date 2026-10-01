@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
-import { parseProposals, requestBody } from "./validation.mjs";
+import { researchChannels } from "./research.mjs";
 
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{
   status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}
@@ -30,24 +30,21 @@ Deno.serve(async request=>{
     if(!domains?.length||domains.length>20)throw new Error("invalid_sources");
     const until=new Date(from+"T12:00:00Z");until.setUTCDate(until.getUTCDate()+370);
     const to=until.toISOString().slice(0,10);
-    const response=await fetch("https://api.openai.com/v1/responses",{
+    const results=await researchChannels(from,to,domains,body=>fetch("https://api.openai.com/v1/responses",{
       method:"POST",headers:{Authorization:"Bearer "+openai,"Content-Type":"application/json"},
-      body:JSON.stringify(requestBody(from,to,domains)),signal:AbortSignal.timeout(65000)
-    });
-    if(!response.ok)throw new Error(response.status===429?"provider_rate_limit":"provider_error");
-    const result=await response.json();
-    const proposals=parseProposals(result,domains,from,to);
-    const events=[];
-    for(const proposal of proposals){
-      const {fingerprint_input,...event}=proposal;
-      events.push({...event,fingerprint:await sha256(fingerprint_input)});
+      body:JSON.stringify(body),signal:AbortSignal.timeout(65000)
+    }));
+    for(const result of results){
+      const events=[];
+      for(const proposal of result.events){
+        const {fingerprint_input,...event}=proposal;
+        events.push({...event,fingerprint:await sha256(fingerprint_input)});
+      }
+      result.events=events;
     }
-    const saved=await admin.rpc("finish_commercial_calendar_sync",{
-      p_run_id:runId,p_events:events,p_error_code:null,
-      p_input_tokens:result.usage?.input_tokens??null,p_output_tokens:result.usage?.output_tokens??null
-    });
+    const saved=await admin.rpc("finish_commercial_calendar_research",{p_run_id:runId,p_results:results});
     if(saved.error)throw new Error("save_failed");
-    return reply({status:"completed",proposals:events.length});
+    return reply(saved.data);
   }catch(error){
     const allowed=new Set(["claim_failed","invalid_sources","provider_rate_limit","provider_error","incomplete_response","refused_response","invalid_response","invalid_proposal","unverified_source","invalid_date","invalid_publication_date","save_failed"]);
     const message=error instanceof Error?error.message:"";

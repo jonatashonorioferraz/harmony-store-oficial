@@ -127,9 +127,9 @@ test('frontend syntax and official mirrors are synchronized',async()=>{
 test('PWA references the new assets with matching versions',async()=>{
   const index=await read('index.html'),sw=await read('service-worker.js'),build=await read('scripts/build-static.mjs');
   for(const name of ['commercial-calendar-core.js','commercial-calendar.js','commercial-calendar.css']){
-    assert.ok(index.includes(name+'?v=1'));assert.ok(sw.includes(name+'?v=1'));assert.ok(build.includes('"'+name+'"'));
+    const version=index.match(new RegExp(name.replaceAll('.','\\.')+'\\?v=([0-9.]+)'))?.[1];assert.ok(version);assert.ok(sw.includes(name+'?v='+version));assert.ok(build.includes('"'+name+'"'));
   }
-  assert.match(index,/app\.js\?v=25\.102\.0/);assert.match(sw,/app\.js\?v=25\.102\.0/);
+  const appVersion=index.match(/app\.js\?v=([0-9.]+)/)?.[1];assert.ok(appVersion);assert.ok(sw.includes('app.js?v='+appVersion));
   assert.match(index,/label-lots\.js\?v=3/);assert.match(index,/bills\.js\?v=25\.101\.1/);
 });
 test('migration keeps research disabled and protects every new table',async()=>{
@@ -171,4 +171,26 @@ test('hidden filters override flex and timeline uses validated inputs',async()=>
   assert.match(css,/\.commercial \[hidden\]\{display:none!important\}/);
   assert.match(ui,/\.hidden=!\['agenda','plans'\]\.includes\(tab\)/);
   assert.match(ui,/C\.previewMilestones\(date,/);
+});
+
+test('all marketplaces expose seasonal planning without inventing platform announcements',()=>{
+  assert.deepEqual(Array.from(C.MARKETPLACES),['Shopee','Mercado Livre','SHEIN']);
+  for(const channel of C.MARKETPLACES){
+    const items=C.channelEvents(C.baseline(2026),channel);
+    const bf=items.find(e=>e.key.endsWith('black-friday:2026-11-27'));
+    assert.ok(bf);assert.equal(bf.channel,channel);assert.equal(bf.status,'opportunity');assert.equal(bf.source_url,null);
+    assert.match(bf.rule,/Não é anúncio/);assert.equal(new Set(items.map(e=>e.key)).size,items.length);
+    const saved={...bf,status:'internal',plan:{status:'planning'}};
+    assert.equal(C.channelEvents([...C.baseline(2026),saved],channel).filter(e=>e.key===bf.key).length,1);
+  }
+  assert.equal(C.baseline(2026).filter(e=>e.channel==='SHEIN').length,0);
+});
+test('coverage never turns unavailable or unsearched channels into a successful empty search',()=>{
+  const now=new Date('2026-10-01T12:00:00Z'),base={settings:{enabled:true,pricing_approved:true},last_run:{status:'partial',finished_at:'2026-10-01T11:00:00Z',channel_results:[
+    {channel:'Shopee',status:'completed',result_count:2},{channel:'Mercado Livre',status:'completed',result_count:0},{channel:'SHEIN',status:'failed',result_count:0}
+  ]}};
+  assert.match(C.coverage('SHEIN',base,now).label,/indisponível/);
+  assert.match(C.coverage('Mercado Livre',base,now).label,/Sem novo anúncio verificável/);
+  assert.match(C.coverage('SHEIN',{settings:{enabled:true}},now).label,/Ainda não/);
+  assert.match(C.research(base.settings,base.last_run,null,now).label,/parcialmente/);
 });
