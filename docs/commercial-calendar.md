@@ -159,8 +159,9 @@ service-only. No frontend credentials or direct table access are granted.
 
 Authenticated server-only preflight checks model access and counts input tokens;
 it does not call response generation or run a search. Its result is NOT evidence
-of successful research. Only allowlisted HTTP/error metadata is returned, never
-upstream error messages, credentials or company documents.
+of successful research. Routine failures return only allowlisted metadata. Authenticated operator
+preflight may include a bounded description with credentials and identifiers
+redacted server-side; it never returns company documents.
 
 The 20261001140000 migration preserves every daily run and permits multiple
 attempt numbers only for an explicit expiring operator authorization. App users
@@ -168,3 +169,15 @@ and the Edge service cannot issue these authorizations. Each one can be consumed
 once, reserves the same R$1 inside the same R$30 monthly ceiling and never refunds
 a failed attempt. Normal cron still admits at most one daily attempt; it never
 uses the exceptional header or issues authorizations. No retry is automatic.
+
+## GPT-4.1 mini search compatibility (2026-10-01)
+
+Live preflight identified HTTP 400: hosted search filters are not supported by
+the configured GPT-4.1 mini snapshot. Keep the existing model and cost envelope.
+Use Responses web_search with low context and no unsupported filters or live-access
+flags. Queries explicitly include each channel's official domains and site: terms.
+This prompt is guidance, NOT a security boundary: parseProposals independently
+rejects every URL outside the channel allowlist or absent from actual search sources.
+A search without an official consulted source is unavailable, never a successful zero.
+No fallback to unofficial proposals, automatic retries, budget increase or shared-key
+permission changes are introduced. Strict output schema remains enabled.
