@@ -11,6 +11,7 @@ const db=new PGlite();
 const adminId='11111111-1111-4111-8111-111111111111',workerId='22222222-2222-4222-8222-222222222222',inactiveId='33333333-3333-4333-8333-333333333333';
 const migration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001013000_commercial_calendar.sql'),'utf8');
 const coverageMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001123000_commercial_calendar_marketplaces.sql'),'utf8');
+const validationMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001140000_commercial_calendar_validation.sql'),'utf8');
 let passed=0;
 const check=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const call=async(sql,args=[])=>{const r=await db.query(sql,args);return r.rows[0]?.result};
@@ -34,7 +35,7 @@ try{
       ('33333333-3333-4333-8333-333333333333','admin','inactive','Admin Inativo');
   `);
   await check('migration applies twice without enabling paid research',async()=>{
-    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);
+    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);await db.exec(validationMigration);await db.exec(validationMigration);
     const s=await call('select to_jsonb(s) result from public.commercial_calendar_settings s');
     assert.equal(s.enabled,false);assert.equal(s.pricing_approved,false);assert.equal(s.monthly_budget_cents,3000);
   });
@@ -159,6 +160,34 @@ try{
     await freshRun();const results=emptyResults();
     results[2].events=[{fingerprint:'c'.repeat(64),title:'Campanha teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://shopee.com.br/oficial',source_excerpt:'Anuncio de teste para esta edicao.',source_published_at:day}];
     await assert.rejects(()=>finishCoverage(results),/Fonte nao corresponde/);
+  });
+
+  await check('validation authorization cannot be issued or consumed by app users',async()=>{
+    await identity('authenticated',adminId);
+    await assert.rejects(()=>call("select public.claim_commercial_calendar_validation('44444444-4444-4444-8444-444444444444') result"),/permission denied/);
+    await identity('service_role');
+    await assert.rejects(()=>db.query('select * from public.commercial_calendar_validation_authorizations'),/permission denied/);
+  });
+  await check('one authorized validation preserves failed history and charges another reservation',async()=>{
+    await identity('service_role');await finishCoverage(channels.map(channel=>({channel,status:'failed',error_code:'provider_error',events:[]})));
+    await db.exec('reset role');
+    await db.query("insert into public.commercial_calendar_validation_authorizations(id,run_day,reason,expires_at) values('44444444-4444-4444-8444-444444444444',(now() at time zone 'America/Sao_Paulo')::date,'Explicit isolated validation approval',now()+interval '1 hour')");
+    await identity('service_role');
+    const claim=()=>call("select public.claim_commercial_calendar_validation('44444444-4444-4444-8444-444444444444') result");
+    const approved=await claim();assert.equal(approved.allowed,true);assert.notEqual(approved.run_id,run.run_id);
+    assert.equal((await claim()).reason,'validation_not_authorized');
+    assert.equal((await call('select public.claim_commercial_calendar_sync() result')).reason,'already_attempted');
+    assert.equal(await call('select sum(reserved_cents)::integer result from public.commercial_calendar_runs'),200);
+    assert.equal(await call("select count(*)::integer result from public.commercial_calendar_runs where status='failed'"),1);
+  });
+  await check('expired authorizations and monthly cap cannot be bypassed',async()=>{
+    await db.exec('reset role');
+    await db.query("insert into public.commercial_calendar_validation_authorizations(id,run_day,reason,created_at,expires_at) values('55555555-5555-4555-8555-555555555555',(now() at time zone 'America/Sao_Paulo')::date,'Expired isolated validation approval',now()-interval '2 hours',now()-interval '1 hour'),('66666666-6666-4666-8666-666666666666',(now() at time zone 'America/Sao_Paulo')::date,'Budget isolated validation approval',now(),now()+interval '1 hour')");
+    await identity('service_role');
+    assert.equal((await call("select public.claim_commercial_calendar_validation('55555555-5555-4555-8555-555555555555') result")).reason,'validation_not_authorized');
+    await db.query("update public.commercial_calendar_runs set status='failed' where status='running'");
+    await db.query('update public.commercial_calendar_settings set monthly_budget_cents=200');
+    assert.equal((await call("select public.claim_commercial_calendar_validation('66666666-6666-4666-8666-666666666666') result")).reason,'budget_blocked');
   });
   console.log('SQL isolated: '+passed+' scenarios passed; no remote connections.');
 } finally {await db.close()}

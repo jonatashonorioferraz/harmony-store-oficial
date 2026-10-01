@@ -1,4 +1,5 @@
 import {requestBody,parseProposals,consultedSources} from './validation.mjs';
+import {providerFailure} from './provider.mjs';
 
 export const RESEARCH_CHANNELS=[
   {channel:'Shopee',domains:['shopee.com.br']},
@@ -19,7 +20,7 @@ export async function researchChannels(from,to,allowedDomains,requestProvider){
       const body=requestBody(from,to,domains,spec.channel);
       if(new TextEncoder().encode(JSON.stringify(body)).length>6000)throw new Error('request_too_large');
       const response=await requestProvider(body);
-      if(!response.ok)throw new Error(response.status===429?'provider_rate_limit':'provider_error');
+      if(!response.ok)return {channel:spec.channel,status:'failed',events:[],...await providerFailure(response)};
       const data=await response.json(),events=parseProposals(data,domains,from,to);
       if(events.length>6)throw new Error('invalid_response');
       if(events.some(e=>e.channel!==spec.channel))throw new Error('wrong_channel');
