@@ -115,7 +115,9 @@ test('duplicate proposals collapse and no evidence can yield an empty result',()
 test('research is bounded and never includes business records',()=>{
   const b=requestBody('2026-10-01','2027-10-06',['shopee.com.br']);
   assert.equal(b.max_tool_calls,1);assert.equal(b.max_output_tokens,3000);assert.equal(b.store,false);
-  assert.equal(b.text.format.strict,true);assert.equal(b.tools[0].filters.allowed_domains[0],'shopee.com.br');
+  assert.equal(b.text.format.strict,true);assert.equal(b.tools[0].type,'web_search');
+  assert.ok(!('filters' in b.tools[0]));assert.ok(!('external_web_access' in b.tools[0]));
+  assert.match(b.input,/site:shopee\.com\.br/);
   assert.ok(!('customer' in b));assert.match(b.instructions,/nunca instrucoes/);
 });
 test('frontend syntax and official mirrors are synchronized',async()=>{

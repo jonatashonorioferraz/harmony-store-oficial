@@ -34,3 +34,21 @@ test('region restrictions are classified without copying provider content',async
   const r=await providerFailure({status:403,json:async()=>({error:{code:'unsupported_country_region_territory',message:'Country not supported: secret'}})});
   assert.equal(r.hint,'provider_region_restricted');assert.ok(!JSON.stringify(r).includes('secret'));
 });
+
+test('operator diagnostics redact credentials and identifiers before returning text',async()=>{
+  const r=await providerFailure({status:400,json:async()=>({error:{message:'Invalid secret-value sk-proj-abc123 Bearer abc.token test@example.com proj-123 value'}})},true,['secret-value']);
+  assert.ok(!r.description.includes('secret-value'));assert.ok(!r.description.includes('sk-proj-abc123'));
+  assert.ok(!r.description.includes('abc.token'));assert.ok(!r.description.includes('test@example.com'));
+  assert.ok(!r.description.includes('proj-123'));assert.ok(r.description.length<=600);
+});
+test('format compatibility probe never invokes generation',async()=>{
+  const calls=[];
+  const r=await providerPreflight(async(path,options)=>{
+    calls.push({path,options});
+    if(calls.length===2)return {ok:false,status:400,json:async()=>({error:{param:'tools',message:'Unsupported combination'}})};
+    return {ok:true,status:200,json:async()=>({input_tokens:1000})};
+  });
+  assert.equal(r.status,'preflight_completed_variant');assert.equal(r.recommended_format,'text');assert.equal(calls.length,3);
+  assert.ok(calls.every(c=>c.path!=='/v1/responses'));
+  assert.equal(JSON.parse(calls[2].options.body).text.format.type,'text');
+});
