@@ -1,5 +1,14 @@
 # Changelog
 
+## [v25.102-r2] - 2026-10-01
+
+- Cobertura explicita de Shopee, Mercado Livre e SHEIN na agenda comercial.
+- Planejamento sazonal por canal sem inventar anuncios ou datas de marketplaces.
+- Pesquisa independente por plataforma, fontes oficiais e falhas parciais visiveis.
+- SHEIN integrada aos planos, propostas e validacoes do banco.
+- Tres consultas limitadas por ciclo diario, preservando reserva interna de R$1 e R$30/mes.
+
+
 ## [v25.102] - 2026-10-01
 
 ### Agenda comercial com planejamento e revisao de fontes

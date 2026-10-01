@@ -10,6 +10,7 @@ const {PGlite}=require('@electric-sql/pglite');
 const db=new PGlite();
 const adminId='11111111-1111-4111-8111-111111111111',workerId='22222222-2222-4222-8222-222222222222',inactiveId='33333333-3333-4333-8333-333333333333';
 const migration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001013000_commercial_calendar.sql'),'utf8');
+const coverageMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001123000_commercial_calendar_marketplaces.sql'),'utf8');
 let passed=0;
 const check=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const call=async(sql,args=[])=>{const r=await db.query(sql,args);return r.rows[0]?.result};
@@ -33,7 +34,7 @@ try{
       ('33333333-3333-4333-8333-333333333333','admin','inactive','Admin Inativo');
   `);
   await check('migration applies twice without enabling paid research',async()=>{
-    await db.exec(migration);await db.exec(migration);
+    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);
     const s=await call('select to_jsonb(s) result from public.commercial_calendar_settings s');
     assert.equal(s.enabled,false);assert.equal(s.pricing_approved,false);assert.equal(s.monthly_budget_cents,3000);
   });
@@ -113,6 +114,51 @@ try{
     await finish([],'provider_timeout');
     const sum=await call('select sum(reserved_cents)::integer result from public.commercial_calendar_runs');assert.equal(sum,100);
     assert.equal((await call('select public.claim_commercial_calendar_sync() result')).reason,'already_attempted');
+  });
+  const finishCoverage=items=>call('select public.finish_commercial_calendar_research($1,$2::jsonb) result',[run.run_id,JSON.stringify(items)]);
+  const channels=['Shopee','Mercado Livre','SHEIN'];
+  const emptyResults=()=>channels.map(channel=>({channel,status:'completed',events:[]}));
+  async function freshRun(){
+    await identity('service_role');
+    await db.query('delete from public.commercial_calendar_events');
+    await db.query('delete from public.commercial_calendar_runs');
+    await db.query('update public.commercial_calendar_settings set monthly_budget_cents=3000');
+    run=await call('select public.claim_commercial_calendar_sync() result');day=run.run_day;
+  }
+  await check('SHEIN planning is available to active admins without changing stock',async()=>{
+    await identity('authenticated',adminId);
+    const saved=await save({...plan,event_key:'manual:shein',channel:'SHEIN'});
+    assert.equal(saved.channel,'SHEIN');
+    await assert.rejects(()=>finishCoverage(emptyResults()),/permission denied/);
+  });
+  await check('coverage requires exactly the three independent channels',async()=>{
+    await freshRun();
+    await assert.rejects(()=>finishCoverage(emptyResults().slice(0,2)),/Cobertura invalida/);
+    const duplicate=emptyResults();duplicate[2].channel='Shopee';
+    await assert.rejects(()=>finishCoverage(duplicate),/Canal invalido/);
+  });
+  await check('partial channel failure preserves SHEIN proposal and one daily reservation',async()=>{
+    const results=emptyResults();
+    results[0]={channel:'Shopee',status:'failed',error_code:'provider_timeout',events:[]};
+    results[2].events=[{fingerprint:'b'.repeat(64),title:'Campanha SHEIN teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://seller-br.shein.com/oficial',source_excerpt:'Anuncio de teste com data completa para esta edicao.',source_published_at:day}];
+    const result=await finishCoverage(results);assert.equal(result.status,'partial');assert.equal(result.proposals,1);
+    const saved=await call('select to_jsonb(r) result from public.commercial_calendar_runs r');
+    assert.equal(saved.reserved_cents,100);assert.equal(saved.channel_results.length,3);
+    assert.equal((await call('select to_jsonb(e) result from public.commercial_calendar_events e')).status,'pending');
+    assert.equal((await call('select public.claim_commercial_calendar_sync() result')).reason,'already_attempted');
+  });
+  await check('all channel failures are failures rather than successful empty coverage',async()=>{
+    await freshRun();
+    const result=await finishCoverage(channels.map(channel=>({channel,status:'failed',error_code:'provider_error',events:[]})));
+    assert.equal(result.status,'failed');
+  });
+  await check('complete coverage records independent empty outcomes',async()=>{
+    await freshRun();assert.equal((await finishCoverage(emptyResults())).status,'completed');
+  });
+  await check('cross-platform evidence is rejected in the database too',async()=>{
+    await freshRun();const results=emptyResults();
+    results[2].events=[{fingerprint:'c'.repeat(64),title:'Campanha teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://shopee.com.br/oficial',source_excerpt:'Anuncio de teste para esta edicao.',source_published_at:day}];
+    await assert.rejects(()=>finishCoverage(results),/Fonte nao corresponde/);
   });
   console.log('SQL isolated: '+passed+' scenarios passed; no remote connections.');
 } finally {await db.close()}

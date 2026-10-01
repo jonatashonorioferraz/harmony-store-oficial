@@ -1,7 +1,8 @@
 /* Shared date-only and campaign planning rules. No network or private data. */
 (function(root){
   'use strict';
-  const DAY=86400000, CHANNELS=['Geral','Shopee','Mercado Livre','Loja própria'];
+  const DAY=86400000, CHANNELS=['Geral','Shopee','Mercado Livre','SHEIN','Loja própria'];
+  const MARKETPLACES=['Shopee','Mercado Livre','SHEIN'], CHANNEL_IDS={'Shopee':'shopee','Mercado Livre':'mercado-livre','SHEIN':'shein','Loja própria':'loja'};
   const CHECKS={offer:'Oferta e margem revisadas',stock:'Estoque e capacidade conferidos',creative:'Fotos e peças aprovadas',logistics:'Prazo de envio validado'};
   function validDate(s){return typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T12:00:00Z'))&&new Date(s+'T12:00:00Z').toISOString().slice(0,10)===s}
   function date(s){if(!validDate(s))throw new Error('Data inválida.');return new Date(s+'T12:00:00Z')}
@@ -54,6 +55,28 @@
       map.get(p.event_key).plan=p;
     }
     return [...map.values()].sort((a,b)=>a.start_date.localeCompare(b.start_date)||a.title.localeCompare(b.title,'pt-BR'));
+  }
+  function channelEvents(items,channel){
+    if(!channel)return items;
+    const selected=items.filter(e=>e.channel===channel);
+    if(![...MARKETPLACES,'Loja própria'].includes(channel))return selected;
+    const keys=new Set(selected.map(e=>e.key));
+    const seasonal=items.filter(e=>e.channel==='Geral'&&e.status==='recurring').map(e=>({
+      ...e,key:'opportunity-'+CHANNEL_IDS[channel]+':'+e.key,channel,status:'opportunity',plan:undefined,
+      source_url:null,source_checked_at:null,
+      rule:'Data sazonal para planejamento em '+channel+'. Não é anúncio de campanha da plataforma; confirme condições e elegibilidade no portal do vendedor.'
+    })).filter(e=>!keys.has(e.key));
+    return [...selected,...seasonal].sort((a,b)=>a.start_date.localeCompare(b.start_date)||a.title.localeCompare(b.title,'pt-BR'));
+  }
+  function coverage(channel,d,now=new Date()){
+    if(d.unavailable)return {level:'urgent',label:'Consulta indisponível'};
+    if(!d.settings?.enabled)return {level:'muted',label:'Pesquisa desligada'};
+    const run=d.last_run,item=run?.channel_results?.find(r=>r.channel===channel);
+    if(run?.status==='running'&&now-new Date(run.started_at)<10*60000)return {level:'warm',label:'Pesquisando este canal'};
+    if(!item)return {level:'warm',label:'Ainda não pesquisado'};
+    if(item.status!=='completed')return {level:'urgent',label:'Pesquisa indisponível neste canal'};
+    if(!run.finished_at||now-new Date(run.finished_at)>36*3600000)return {level:'warm',label:'Pesquisa precisa de atualização'};
+    return {level:'good',label:item.result_count>0?'Propostas encontradas para revisão':'Sem novo anúncio verificável'};
   }
   function milestones(event){
     const p=event.plan||{},eventDate=event.start_date;
@@ -109,11 +132,12 @@
     if(!settings.enabled)return {level:'muted',label:'Pesquisa com IA desligada',detail:'Nenhuma busca paga é executada. As datas-base continuam disponíveis.'};
     if(!settings.pricing_approved)return {level:'warm',label:'Aguardando configuração aprovada',detail:'Modelo, preços e controle de consumo precisam de aprovação antes da ativação.'};
     if(settings.budget_blocked)return {level:'warm',label:'Pesquisa bloqueada pelo orçamento',detail:'Reserva mensal esgotada. Não houve nova consulta paga.'};
+    if(run?.status==='partial')return {level:'warm',label:'Pesquisa concluída parcialmente',detail:'Um ou mais canais ficaram indisponíveis. Consulte a situação de cada marketplace; resultados válidos foram preservados.'};
     if(run?.status==='failed')return {level:'urgent',label:'Última pesquisa falhou',detail:'As fontes existentes foram preservadas; novas campanhas podem estar ausentes.'};
     if(run?.status==='running'&&now-new Date(run.started_at)<10*60000)return {level:'warm',label:'Pesquisa em andamento',detail:'As propostas aparecerão após a conclusão e precisarão de revisão.'};
     if(!lastSuccess||now-new Date(lastSuccess)>36*3600000)return {level:'warm',label:'Pesquisa desatualizada',detail:'Sem pesquisa concluída nas últimas 36 horas. Não significa ausência de novidades.'};
     return {level:'good',label:'Pesquisa recente',detail:'Última conclusão: '+new Date(lastSuccess).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+'. Fontes podem mudar.'};
   }
   function safeSource(url){try{const u=new URL(url);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null}catch{return null}}
-  root.HarmonyCommercialCore={CHANNELS,CHECKS,validDate,add,between,today,format,nth,easter,baseline,merge,milestones,previewMilestones,readiness,signal,ideas,research,safeSource};
+  root.HarmonyCommercialCore={CHANNELS,MARKETPLACES,channelEvents,coverage,CHECKS,validDate,add,between,today,format,nth,easter,baseline,merge,milestones,previewMilestones,readiness,signal,ideas,research,safeSource};
 })(typeof window!=='undefined'?window:globalThis);

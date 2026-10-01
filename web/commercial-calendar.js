@@ -5,11 +5,11 @@
   const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const $=(root,selector)=>root.querySelector(selector);
   const money=value=>(value/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-  const labels={recurring:'Data recorrente',predicted:'Campanha prevista',confirmed:'Fonte revisada',internal:'Plano interno'};
+  const labels={recurring:'Data recorrente',predicted:'Campanha prevista',confirmed:'Fonte revisada',internal:'Plano interno',opportunity:'Planejamento sazonal'};
   const statuses={planning:'Em preparação',ready:'Pronta',live:'Em execução',completed:'Concluída',cancelled:'Cancelada'};
-  let cache=null,cacheAt=0,cacheOwner=null,dialog=null,epoch=0;
+  let cache=null,cacheAt=0,cacheOwner=null,dialog=null,epoch=0,preferredChannel='';
   function admin(){return typeof S!=='undefined'&&S.profile?.role==='admin'&&S.profile?.status!=='inactive'}
-  function reset(){epoch++;cache=null;cacheAt=0;cacheOwner=null;if(dialog){dialog.close();dialog.remove();dialog=null}}
+  function reset(){epoch++;preferredChannel='';cache=null;cacheAt=0;cacheOwner=null;if(dialog){dialog.close();dialog.remove();dialog=null}}
   function go(){S.view='commercial-calendar';renderApp()}
   async function data(force=false){
     if(!admin())throw new Error('Acesso administrativo necessário.');
@@ -46,6 +46,17 @@
   function bindRows(root,items,d,onChange){
     root.querySelectorAll('[data-event]').forEach(button=>button.onclick=()=>openEvent(items.find(e=>e.key===button.dataset.event),d,onChange));
   }
+  function channelOverview(d,all){
+    return '<section class="commercial-coverage" aria-label="Cobertura dos marketplaces">'+C.MARKETPLACES.map(channel=>{
+      const state=C.coverage(channel,d),items=C.channelEvents(all,channel).filter(e=>C.between(C.today(),e.start_date)>=0&&C.between(C.today(),e.start_date)<=90);
+      const confirmed=items.filter(e=>e.status==='confirmed').length;
+      const pending=(d.events||[]).filter(e=>e.channel===channel&&e.status==='pending').length;
+      return '<button class="commercial-channel is-'+state.level+'" data-channel-open="'+escape(channel)+'"><span class="commercial-row-title">'+escape(channel)+'</span><span class="commercial-channel-status">'+escape(state.label)+'</span><span class="commercial-muted">'+(d.unavailable?'Dados de pesquisa indisponíveis':confirmed+' fontes revisadas · '+pending+' para revisar')+'</span><span class="commercial-channel-link">Planejar '+items.length+' oportunidades nos próximos 90 dias</span></button>';
+    }).join('')+'</section><p class="commercial-notice">Oportunidades sazonais são ideias de planejamento, não campanhas anunciadas. Anúncios restritos ao portal do vendedor podem não estar acessíveis à pesquisa pública.</p>';
+  }
+  function bindChannels(root,onSelect){
+    root.querySelectorAll('[data-channel-open]').forEach(button=>button.onclick=()=>onSelect(button.dataset.channelOpen));
+  }
   async function renderHome(root){
     if(!root||!admin())return;
     const id=S.profile.id;
@@ -56,7 +67,8 @@
     const focus=upcoming.find(e=>C.readiness(e).done<4)||upcoming[0],urgent=upcoming.filter(e=>C.between(C.today(),e.start_date)<=30),pending=(d.events||[]).filter(e=>e.status==='pending').length;
     root.innerHTML='<section class="commercial commercial-home commercial-panel commercial-reveal"><div class="commercial-top"><div><p class="commercial-kicker">Antecipar para vender melhor</p><h2>Próximas oportunidades</h2></div><button class="commercial-btn" data-open>Ver agenda comercial</button></div><div class="commercial-home-grid"><div>'+
       (focus?'<div class="commercial-highlight"><span class="commercial-kicker">'+escape(C.signal(focus).label)+'</span><h3>'+escape(focus.title)+'</h3><p>'+escape(C.format(focus.start_date))+' · '+escape(focus.channel)+'</p>'+pill(focus)+'<p style="margin-top:10px">'+escape(C.ideas(focus)[0])+'.</p><button class="commercial-btn is-primary" data-event="'+escape(focus.key)+'">Preparar campanha</button></div>':'<p>Nenhuma data-base nesta janela.</p>')+
-      '<div style="margin-top:14px">'+research(d)+'</div></div><div class="commercial-list">'+upcoming.slice(0,3).map(row).join('')+'</div></div><div class="commercial-metrics"><span><b>'+urgent.length+'</b>datas nos próximos 30 dias</span><span><b>'+(d.unavailable?'Indisponível':pending)+'</b>propostas para revisar</span><span>Alertas de preparação: 60, 30, 15 e 7 dias</span></div></section>';
+      '<div style="margin-top:14px">'+research(d)+'</div></div><div class="commercial-list">'+upcoming.slice(0,3).map(row).join('')+'</div></div><div class="commercial-metrics"><span><b>'+urgent.length+'</b>datas nos próximos 30 dias</span><span><b>'+(d.unavailable?'Indisponível':pending)+'</b>propostas para revisar</span><span>Alertas de preparação: 60, 30, 15 e 7 dias</span></div>'+channelOverview(d,all)+'</section>';
+    bindChannels(root,channel=>{preferredChannel=channel;go()});
     $(root,'[data-open]').onclick=go;
     bindRows(root,all,d,()=>renderHome(root));
   }
@@ -68,16 +80,18 @@
     if(!root.isConnected||!admin()||S.profile.id!==id||S.view!=='commercial-calendar')return;
     const all=events(d),now=C.today();
     root.innerHTML='<div class="page commercial commercial-reveal"><header class="page-head"><div><p class="eyebrow">PLANEJAMENTO COMERCIAL</p><h1>Oportunidades à frente.</h1><span>Datas, preparação e fontes no mesmo lugar. Nenhuma campanha é publicada automaticamente.</span></div><div class="commercial-actions"><button class="commercial-btn" data-refresh>Atualizar dados</button><button class="commercial-btn is-primary" data-new '+(d.unavailable?'disabled':'')+'>Novo plano interno</button></div></header>'+
-      research(d)+'<div class="commercial-tabs" aria-label="Áreas da agenda"><button data-tab="agenda" aria-pressed="true">Agenda</button><button data-tab="plans" aria-pressed="false">Planos da equipe</button><button data-tab="review" aria-pressed="false">Revisar fontes ('+(d.unavailable?'?':(d.events||[]).filter(e=>e.status==='pending').length)+')</button><button data-tab="sources" aria-pressed="false">Pesquisa e orçamento</button></div>'+
+      research(d)+channelOverview(d,all)+'<div class="commercial-tabs" aria-label="Áreas da agenda"><button data-tab="agenda" aria-pressed="true">Agenda</button><button data-tab="plans" aria-pressed="false">Planos da equipe</button><button data-tab="review" aria-pressed="false">Revisar fontes ('+(d.unavailable?'?':(d.events||[]).filter(e=>e.status==='pending').length)+')</button><button data-tab="sources" aria-pressed="false">Pesquisa e orçamento</button></div>'+
       '<div class="commercial-toolbar"><label>Buscar oportunidade<input data-search type="search" placeholder="Nome da data ou campanha"></label><label>Canal<select data-channel><option value="">Todos</option>'+C.CHANNELS.map(v=>'<option>'+escape(v)+'</option>').join('')+'</select></label><label>Horizonte<select data-days><option value="30">Próximos 30 dias</option><option value="90" selected>Próximos 90 dias</option><option value="370">Próximos 12 meses</option><option value="past">Últimos 60 dias</option></select></label></div><section class="commercial-panel" data-content></section><p class="commercial-notice">Datas recorrentes seguem regras de calendário. Campanhas previstas não são anúncios confirmados. Prazos de produção e envio são estimativas em dias corridos; valide a operação antes de prometer entregas.</p></div>';
     let tab='agenda';
+    $(root,'[data-channel]').value=preferredChannel;
+    bindChannels(root,channel=>{preferredChannel=channel;$(root,'[data-channel]').value=channel;tab='agenda';root.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tab===tab)));draw()});
     const content=$(root,'[data-content]');
     function draw(){
       $(root,'.commercial-toolbar').hidden=!['agenda','plans'].includes(tab);
       if(tab==='review'){drawReview(content,d,()=>render(root,true));return}
       if(tab==='sources'){drawSources(content,d);return}
       const query=$(root,'[data-search]').value.trim().toLocaleLowerCase('pt-BR'),channel=$(root,'[data-channel]').value,horizon=$(root,'[data-days]').value;
-      const list=all.filter(e=>{
+      const list=C.channelEvents(all,channel).filter(e=>{
         const days=C.between(now,e.start_date);
         return (tab!=='plans'||e.plan)&&(horizon==='past'?days<0&&days>=-60:days>=0&&days<=Number(horizon))&&(!channel||e.channel===channel)&&(!query||e.title.toLocaleLowerCase('pt-BR').includes(query));
       });
@@ -88,7 +102,7 @@
       bindRows(content,list,d,()=>render(root,true));
     }
     root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;root.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));draw()});
-    $(root,'[data-search]').oninput=draw;$(root,'[data-channel]').onchange=draw;$(root,'[data-days]').onchange=draw;
+    $(root,'[data-search]').oninput=draw;$(root,'[data-channel]').onchange=()=>{preferredChannel=$(root,'[data-channel]').value;draw()};$(root,'[data-days]').onchange=draw;
     $(root,'[data-refresh]').onclick=()=>render(root,true);
     $(root,'[data-new]').onclick=()=>openEvent({key:'manual:'+crypto.randomUUID(),title:'',start_date:C.add(now,60),end_date:C.add(now,60),channel:'Loja própria',status:'internal',theme:'oferta'},d,()=>render(root,true),true);
     draw();
@@ -98,10 +112,10 @@
     const s=d.settings;
     root.innerHTML='<div class="commercial-grid"><div><p class="commercial-kicker">Transparência</p><h3>Como a agenda se mantém atualizada</h3><div class="commercial-list">'+[
       ['01','Calendário-base','Regras anuais recalculam as datas móveis. Isso não confirma edições de marketplace.'],
-      ['02','Pesquisa pública','Quando aprovada e ativada, uma consulta diária procura anúncios em fontes oficiais, sem dados privados da empresa.'],
+      ['02','Pesquisa pública','Quando aprovada e ativada, um ciclo diário pesquisa Shopee, Mercado Livre e SHEIN separadamente, com no máximo uma consulta por canal, sem dados privados da empresa.'],
       ['03','Revisão humana','Uma descoberta vira proposta. Um administrador confere a fonte e decide se ela entra na agenda.'],
       ['04','Planejamento','Responsável, checklist e prazos ficam registrados; nada cria anúncios ou movimenta estoque.']
-    ].map(x=>'<div class="commercial-row"><div class="commercial-date"><b>'+x[0]+'</b></div><div><b>'+x[1]+'</b><p class="commercial-muted">'+x[2]+'</p></div></div>').join('')+'</div><h3 style="margin-top:20px">Fontes autorizadas</h3><ul>'+(d.sources||[]).map(s=>'<li>'+escape(s.label)+' <small>('+escape(s.domain)+')</small></li>').join('')+'</ul><p class="commercial-notice">Busca pública tem cobertura limitada: anúncios atrás de login, regionais ou ainda não publicados podem não aparecer. Esta lista não garante que todos os eventos do e-commerce serão encontrados.</p></div><aside class="commercial-side"><p class="commercial-kicker">Pesquisa com controle</p><h3>'+money(s.monthly_budget_cents)+' / mês</h3><p>Orçamento interno proposto. Ativação depende de aprovação da configuração final.</p><dl><dt>Mês do controle</dt><dd>'+escape(String(s.budget_month).slice(0,7))+'</dd><dt>Reservado no mês</dt><dd>'+money(s.reserved_cents)+'</dd><dt>Reserva por tentativa</dt><dd>'+money(s.reserve_per_run_cents)+'</dd><dt>Programação preparada</dt><dd>Diária, 07h de Brasília</dd><dt>Última conclusão</dt><dd>'+escape(d.last_success_at?new Date(d.last_success_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Nenhuma registrada')+'</dd></dl><p>Reserva não é cobrança efetiva. Câmbio, impostos e preços do provedor podem alterar a fatura. Tentativas com falha também consomem a reserva para evitar repetições sem limite.</p><p>Sem chave no navegador, sem busca a cada abertura e sem ativação por este painel.</p></aside></div>';
+    ].map(x=>'<div class="commercial-row"><div class="commercial-date"><b>'+x[0]+'</b></div><div><b>'+x[1]+'</b><p class="commercial-muted">'+x[2]+'</p></div></div>').join('')+'</div><h3 style="margin-top:20px">Fontes autorizadas</h3><ul>'+(d.sources||[]).map(s=>'<li>'+escape(s.label)+' <small>('+escape(s.domain)+')</small></li>').join('')+'</ul><p class="commercial-notice">Busca pública tem cobertura limitada: anúncios atrás de login, regionais ou ainda não publicados podem não aparecer. Esta lista não garante que todos os eventos do e-commerce serão encontrados.</p></div><aside class="commercial-side"><p class="commercial-kicker">Pesquisa com controle</p><h3>'+money(s.monthly_budget_cents)+' / mês</h3><p>'+(s.enabled?'Controle interno ativo. Não é um limite garantido da fatura do provedor.':'Ativação desligada. Depende de configuração aprovada.')+'</p><dl><dt>Mês do controle</dt><dd>'+escape(String(s.budget_month).slice(0,7))+'</dd><dt>Reservado no mês</dt><dd>'+money(s.reserved_cents)+'</dd><dt>Reserva por tentativa</dt><dd>'+money(s.reserve_per_run_cents)+'</dd><dt>Programação do ciclo</dt><dd>Diária, 07h de Brasília; até 3 consultas, uma por marketplace</dd><dt>Última conclusão</dt><dd>'+escape(d.last_success_at?new Date(d.last_success_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Nenhuma registrada')+'</dd></dl><p>Reserva não é cobrança efetiva. Câmbio, impostos e preços do provedor podem alterar a fatura. Tentativas com falha também consomem a reserva para evitar repetições sem limite.</p><p>Sem chave no navegador, sem busca a cada abertura e sem ativação por este painel.</p></aside></div>';
   }
   function drawReview(root,d,onChange){
     if(d.unavailable){root.innerHTML='<div class="commercial-empty">Revisão indisponível. Atualize os dados para consultar propostas.</div>';return}
