@@ -1,3 +1,4 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -87,13 +88,12 @@ test('inline stock correction is admin-only and keeps reserved stock intact',asy
 });
 
 test('product replenishment mode and continuity data are included',async()=>{
-  const [app,backup,recovery,change,pkg,help,manual,technical]=await Promise.all([
-    read('app.js'),read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs'),read('CHANGELOG.md'),read('package.json'),read('help-center.js'),read('docs/manual/MANUAL-DO-APLICATIVO.md'),read('docs/technical/ARQUITETURA-E-OPERACAO.md')
+  const [app,change,pkg,help,manual,technical]=await Promise.all([
+    read('app.js'),read('CHANGELOG.md'),read('package.json'),read('help-center.js'),read('docs/manual/MANUAL-DO-APLICATIVO.md'),read('docs/technical/ARQUITETURA-E-OPERACAO.md')
   ]);
   assert.match(app,/name="replenishment_mode"/);
   assert.match(app,/admin_set_product_replenishment_mode/);
-  assert.match(backup,/separation_checkup_items.*stock_discrepancies.*stock_replenishment_requests/s);
-  assert.match(recovery,/separation_checkup_items.*stock_discrepancies.*stock_replenishment_requests/s);
+  assertCapturedAndPlannedTables(["separation_checkup_items","stock_discrepancies","stock_replenishment_requests"]);
   assert.match(change,/\[v25\.52\]/);
   assert.match(help,/Finalizar separação/);
   assert.match(manual,/Check-up da separação/);

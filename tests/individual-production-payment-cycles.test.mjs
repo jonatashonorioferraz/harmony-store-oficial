@@ -1,3 +1,4 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
@@ -48,7 +49,5 @@ test('receiver privacy and collaborator closed-payment privacy remain enforced',
 });
 
 test('backup and recovery include individualized schedules',async()=>{
-  const [backup,recovery]=await Promise.all([read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs')]);
-  assert.match(backup,/production_payment_schedules/);
-  assert.match(recovery,/production_payment_schedules/);
+  assertCapturedAndPlannedTables(["production_payment_schedules"]);
 });

@@ -1,9 +1,10 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const root = new URL('../', import.meta.url);
-const [sql, edge, ui, css, inventory, index, worker, help, manual, technical, audit, backup, recovery, pkg] = await Promise.all([
+const [sql, edge, ui, css, inventory, index, worker, help, manual, technical, audit, pkg] = await Promise.all([
   readFile(new URL('supabase/migrations/20260811230510_inventory_ai_intelligence.sql', root), 'utf8'),
   readFile(new URL('supabase/functions/analyze-inventory-intelligence/index.ts', root), 'utf8'),
   readFile(new URL('intelligence-ai.js', root), 'utf8'),
@@ -15,8 +16,6 @@ const [sql, edge, ui, css, inventory, index, worker, help, manual, technical, au
   readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md', root), 'utf8'),
   readFile(new URL('docs/technical/INTELIGENCIA-IA-INVENTARIO-V25.73.md', root), 'utf8'),
   readFile(new URL('docs/audit/AUDITORIA-INTELIGENCIA-IA-V25.73.md', root), 'utf8'),
-  readFile(new URL('scripts/create-api-backup.mjs', root), 'utf8'),
-  readFile(new URL('scripts/execute-api-recovery.mjs', root), 'utf8'),
   readFile(new URL('package.json', root), 'utf8'),
 ]);
 
@@ -123,11 +122,7 @@ test('desktop, tablet, mobile and offline assets are complete', () => {
 });
 
 test('backup, recovery, help and three documentation levels cover the feature', () => {
-  for (const source of [backup, recovery]) {
-    assert.match(source, /'inventory_ai_settings'/);
-    assert.match(source, /'inventory_ai_analyses'/);
-    assert.match(source, /'inventory_ai_insights'/);
-  }
+  assertCapturedAndPlannedTables(["inventory_ai_settings","inventory_ai_analyses","inventory_ai_insights"]);
   assert.match(help, /Inventário com IA/);
   assert.match(help, /A IA não altera estoque, ordens, pagamentos ou cadastros/);
   assert.match(manual, /### Central de Inteligência e Inventário com IA/);

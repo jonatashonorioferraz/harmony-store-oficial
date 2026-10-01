@@ -1,9 +1,11 @@
+import { assertCapturedAndPlannedTables, assertPreservedIdentity } from './backup-assertions.mjs';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const root=new URL('../',import.meta.url);
-const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,technical,pdfCorrection,reissueTechnical,backup,recovery,pkg,qrcode]=await Promise.all([
+const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,technical,pdfCorrection,reissueTechnical,pkg,qrcode]=await Promise.all([
   readFile(new URL('supabase/migrations/20260811133000_production_inventory_thermal_labels.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260811150000_production_inventory_label_print_actor_index.sql',root),'utf8'),
   readFile(new URL('supabase/validation/20260811133000_production_inventory_thermal_labels.sql',root),'utf8'),
@@ -17,8 +19,6 @@ const [sql,actorIndex,validation,js,pdfHelper,css,index,worker,help,manual,techn
   readFile(new URL('docs/technical/ETIQUETAS-TERMICAS-INVENTARIO-V25.70.md',root),'utf8'),
   readFile(new URL('docs/technical/CORRECAO-PDF-ETIQUETA-V25.71.md',root),'utf8'),
   readFile(new URL('docs/technical/REEMISSAO-ETIQUETAS-CAIXAS-V25.72.md',root),'utf8'),
-  readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
-  readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),
   readFile(new URL('package.json',root),'utf8'),
   readFile(new URL('vendor/qrcode-generator-2.0.4.js',root),'utf8'),
 ]);
@@ -123,13 +123,14 @@ test('pendências são retomáveis e não entram no contador',()=>{
 test('PWA, ajuda, documentação e continuidade incluem a nova função',()=>{
   assert.match(index,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
   assert.match(index,/production-inventory\.css\?v=25\.72/);
-  assert.match(index,/production-inventory\.js\?v=25\.73/);
+  const version=htmlAssets(index).get('production-inventory.js')?.version;assert.match(version||'',/^\d+(?:\.\d+)+$/);
+  assert.equal(workerAssets(worker).get('production-inventory.js')?.version,version);
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
   assert.match(worker,/vendor\/qrcode-generator-2\.0\.4\.js\?v=2\.0\.4/);
   assert.match(help,/Gerar etiqueta 150 × 100/);
   assert.match(manual,/Etiquetas pendentes/);
   assert.match(technical,/label_token/);
-  assert.match(backup,/'production_inventory_label_prints'/);
-  assert.match(recovery,/production_inventory_label_prints: \['protocol'\]/);
+  assertCapturedAndPlannedTables(["production_inventory_label_prints"]);
+  assertPreservedIdentity('production_inventory_label_prints', 'protocol');
   assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

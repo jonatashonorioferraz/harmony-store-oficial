@@ -1,9 +1,10 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
-const [sql,corrections,requestPermissions,indexes,foundation,ui,css,integration,icons,index,worker,backup,recovery,help,manual,technical,audit,pkg]=await Promise.all([
+const [sql,corrections,requestPermissions,indexes,foundation,ui,css,integration,icons,index,worker,help,manual,technical,audit,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260816012000_transfer_center.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260816092801_transfer_center_granular_corrections.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260820143000_transfer_center_request_permissions.sql',root),'utf8'),
@@ -15,8 +16,6 @@ const [sql,corrections,requestPermissions,indexes,foundation,ui,css,integration,
   readFile(new URL('harmony-icons.js',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),
   readFile(new URL('service-worker.js',root),'utf8'),
-  readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
-  readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),
   readFile(new URL('help-center.js',root),'utf8'),
   readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
   readFile(new URL('docs/technical/CENTRAL-DE-TRANSFERENCIAS-V25.92.md',root),'utf8'),
@@ -139,7 +138,7 @@ test('granular corrections undo selections, release one box and remove manual it
 });
 
 test('backup, help, manual and technical continuity cover the new table and lifecycle',()=>{
-  for(const source of [backup,recovery])assert.match(source,/'shipping_inventory_request_items'/);
+  assertCapturedAndPlannedTables(["shipping_inventory_request_items"]);
   assert.match(help,/Central de Transferências/);
   assert.match(manual,/## Central de Transferências/);
   assert.match(technical,/Compatibilidade/);

@@ -1,17 +1,18 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 
 const root=new URL('../',import.meta.url);
 const read=name=>readFile(new URL(name,root),'utf8');
-const [sql,stateSql,ui,css,edge,reminders,index,worker,help,backup,recovery,pkg]=await Promise.all([
+const [sql,stateSql,ui,css,edge,reminders,index,worker,help,pkg]=await Promise.all([
   read('supabase/migrations/20260812130000_admin_agenda_harmony.sql'),
   read('supabase/migrations/20260812183000_admin_agenda_production_order_state.sql'),
   read('agenda-harmony.js'),read('agenda-harmony.css'),
   read('supabase/functions/analyze-admin-agenda/index.ts'),
   read('supabase/functions/send-agenda-reminders/index.ts'),
   read('index.html'),read('service-worker.js'),read('help-center.js'),
-  read('scripts/create-api-backup.mjs'),read('scripts/execute-api-recovery.mjs'),read('package.json')
+  read('package.json')
 ]);
 
 test('Agenda database is additive, admin-only and audited',()=>{
@@ -148,5 +149,5 @@ test('desktop, tablet, mobile, offline and help assets are complete',()=>{
 });
 
 test('backup and isolated recovery include every Agenda table',()=>{
-  for(const source of [backup,recovery])for(const table of ['admin_agenda_tasks','admin_agenda_task_events','admin_agenda_reminder_deliveries','admin_agenda_ai_settings','admin_agenda_ai_runs','admin_agenda_production_order_states','admin_agenda_production_order_events'])assert.match(source,new RegExp(`'${table}'`));
+  assertCapturedAndPlannedTables(["admin_agenda_tasks","admin_agenda_task_events","admin_agenda_reminder_deliveries","admin_agenda_ai_settings","admin_agenda_ai_runs","admin_agenda_production_order_states","admin_agenda_production_order_events"]);
 });

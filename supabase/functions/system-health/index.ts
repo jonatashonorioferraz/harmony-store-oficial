@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
+import { backupHealthItem } from "./backup-status.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,6 @@ const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body)
 const ageHours = (value?: string | null) => value ? (Date.now() - new Date(value).getTime()) / 3600000 : Infinity;
 const worst = (items: Array<{ status: string }>) => items.some(item => item.status === "red") ? "red" : items.some(item => item.status === "yellow") ? "yellow" : "green";
 const quantityLabel = (quantity: number, singular: string, plural: string) => quantity === 1 ? `1 ${singular}` : `${quantity} ${plural}`;
-const elapsedLabel = (hours: number) => hours < 1 ? "há menos de 1 hora" : `há ${Math.floor(hours)} ${Math.floor(hours) === 1 ? "hora" : "horas"}`;
 const OFFICIAL_APP_URL = "https://app.harmonylembrancinhas.com.br";
 const fetchWithTimeout = async (input: string, init: RequestInit = {}, timeoutMs = 5000) => {
   const controller = new AbortController();
@@ -72,15 +72,7 @@ Deno.serve(async request => {
       admin.from("system_backup_runs").select("status,completed_at,byte_size,stats").eq("status", "success").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
       admin.from("system_backup_runs").select("status,completed_at,error_code").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    const backup = backupResult.data;
-    const backupAttempt = backupAttemptResult.data;
-    const backupQueryError = backupResult.error || backupAttemptResult.error;
-    const backupAge = ageHours(backup?.completed_at);
-    const latestBackupFailed = backupAttempt?.status === "failed";
-    const backupStatus = backupQueryError ? "red" : !backup ? "red" : latestBackupFailed ? "yellow" : backupAge > 48 ? "red" : backupAge > 30 ? "yellow" : "green";
-    const backupValue = backupQueryError ? "Sem resposta" : !backup ? "Aguardando primeiro backup" : latestBackupFailed ? "Falha na última tentativa" : `Concluído ${elapsedLabel(backupAge)}`;
-    const backupDetail = backupQueryError ? "O histórico de backups não respondeu ao diagnóstico." : !backup ? "A rotina de backup ainda não produziu uma cópia válida." : latestBackupFailed ? `O último backup válido foi concluído ${elapsedLabel(backupAge)}. A rotina automática precisa ser executada novamente.` : "Cópia criptografada, verificada por hash e pronta para recuperação.";
-    items.push({ key: "backup", label: "Backup externo", status: backupStatus, value: backupValue, detail: backupDetail, checked_at: backupAttempt?.completed_at || backup?.completed_at || null });
+    items.push(backupHealthItem({ backup: backupResult.data, attempt: backupAttemptResult.data, queryError: backupResult.error || backupAttemptResult.error }));
 
     const since = new Date(Date.now() - 86400000).toISOString();
     const { count: errorCount, error: errorCountError } = await admin.from("system_events").select("id", { count: "exact", head: true }).eq("level", "error").neq("source", "backup").gte("created_at", since);

@@ -17,7 +17,7 @@ function paginationSource(){
 
 test('REST pagination joins every page and preserves caller headers',async()=>{
   const calls=[],pages=[[{id:1},{id:2}],[{id:3},{id:4}],[{id:5}]];
-  const context={rest:async(path,options)=>{calls.push({path,options});return pages.shift()}};
+  const context={captureSession:()=>({}),assertCurrentSession:()=>{},rest:async(path,options)=>{calls.push({path,options});return pages.shift()}};
   vm.runInNewContext(paginationSource(),context);
   const rows=await context.restAll('records?select=*&order=id.asc',{headers:{Prefer:'count=exact'}},2);
   assert.equal(Array.from(rows,item=>item.id).join(','),'1,2,3,4,5');
@@ -26,7 +26,7 @@ test('REST pagination joins every page and preserves caller headers',async()=>{
 });
 
 test('REST pagination rejects an unexpected non-list response',async()=>{
-  const context={rest:async()=>({message:'unexpected'})};
+  const context={captureSession:()=>({}),assertCurrentSession:()=>{},rest:async()=>({message:'unexpected'})};
   vm.runInNewContext(paginationSource(),context);
   await assert.rejects(context.restAll('records?select=*'),/lista válida/);
 });

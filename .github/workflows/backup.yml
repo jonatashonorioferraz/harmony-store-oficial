@@ -13,6 +13,7 @@ on:
       - 'scripts/restore-api-backup.mjs'
       - 'scripts/record-backup-result.mjs'
       - 'scripts/record-backup-failure.mjs'
+      - 'scripts/backup-*.mjs'
       - 'supabase/migrations/**'
 
 permissions:
@@ -41,22 +42,22 @@ jobs:
       - name: Exportar banco lógico, usuários e Storage
         run: node scripts/create-api-backup.mjs
       - name: Verificar arquivos e hashes
-        run: node scripts/verify-api-backup.mjs "$BACKUP_DIR"
+        run: node scripts/verify-api-backup.mjs "$BACKUP_DIR" --require-current
       - name: Criptografar pacote
         run: |
           tar -C backups -czf harmony-backup.tar.gz current
           openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -in harmony-backup.tar.gz -out harmony-backup.tar.gz.enc -pass env:BACKUP_ENCRYPTION_PASSWORD
           sha256sum harmony-backup.tar.gz.enc > harmony-backup.tar.gz.enc.sha256
           rm harmony-backup.tar.gz
-      - name: Ensaiar descriptografia e recuperação segura
+      - name: Verificar descriptografia e cobertura (sem restauração)
         run: |
           umask 077
           trap 'rm -rf restore-drill restore-drill.tar.gz' EXIT
           mkdir restore-drill
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in harmony-backup.tar.gz.enc -out restore-drill.tar.gz -pass env:BACKUP_ENCRYPTION_PASSWORD
           tar -C restore-drill -xzf restore-drill.tar.gz
-          node scripts/verify-api-backup.mjs restore-drill/current
-          node scripts/restore-api-backup.mjs restore-drill/current
+          node scripts/verify-api-backup.mjs restore-drill/current --require-current
+          node scripts/restore-api-backup.mjs restore-drill/current --require-current
       - uses: actions/upload-artifact@v7
         with:
           name: harmony-backup-${{ github.run_id }}

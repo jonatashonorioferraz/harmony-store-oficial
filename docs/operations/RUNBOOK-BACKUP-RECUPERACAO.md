@@ -1,60 +1,50 @@
-# Runbook de backup e recuperação
+# Backup: cobertura, verificação e recuperação
 
-## Objetivos
+A cópia externa diária é uma exportação lógica por API. Sucesso significa arquivos íntegros, descriptografia verificada e cobertura do catálogo revisado. **Não significa restauração comprovada.** A captura usa leituras sequenciais, não um snapshot transacional do PostgreSQL.
 
-- **RPO:** até 24 horas de dados, conforme a execução diária.
-- **RTO operacional:** até 8 horas após disponibilizar um novo projeto Supabase e o domínio.
-- **Retenção:** 30 dias no artefato privado do GitHub Actions.
+## Cobertura e retenção
 
-O plano gratuito do Supabase não oferece backups agendados do banco. Esta rotina externa complementa a exportação manual já guardada pela empresa; não substitui um backup físico nativo do Postgres em planos superiores.
+O contrato único está em `scripts/backup-catalog.mjs`, auditado nos metadados de produção em 01/10/2026. Abrange 86 tabelas públicas: 85 exportadas e uma exclusão explícita. Inclui lotes e eventos, códigos de colaborador, calendário comercial, telemetria, transferências e `internal_supply_request_item_fulfillments`.
+
+`commercial_calendar_validation_authorizations` contém autorização temporária de execução. Não é exportada nem reproduzida. O destino deve receber autorização nova, com prazo novo, depois de ativado pelo procedimento próprio. A exclusão consta do manifesto; nenhuma permissão de produção é ampliada para exportá-la.
+
+`system_events` e `system_backup_runs` exportam todas as linhas retidas. `app_usage_sessions` exporta o que ainda existe após a retenção de 180 dias da aplicação. As demais tabelas exportam todas as linhas presentes. Esta entrega não elimina dados de produção. O artefato criptografado permanece 30 dias no GitHub Actions; retenção do artefato e retenção na origem são políticas diferentes.
+
+As 85 tabelas tinham SELECT para service_role na auditoria; o exportador falha se qualquer leitura/paginação falhar. Várias tabelas não permitem INSERT direto. Leitura autorizada não autoriza nem garante restauração pela Data API.
 
 ## Rotina automática
 
-1. GitHub Actions executa diariamente às 03:17 UTC.
-2. Exporta tabelas por Data API, inventário de usuários Auth e todos os arquivos do Storage.
-3. Gera manifesto com contagens, migrations e SHA-256 de cada arquivo.
-4. Revalida todos os hashes.
-5. Compacta e criptografa com AES-256-CBC/PBKDF2.
-6. Descriptografa uma cópia temporária, revalida os hashes e executa o ensaio de recuperação em modo somente leitura.
-7. Apaga imediatamente a cópia descriptografada do ambiente temporário.
-8. Guarda somente o artefato criptografado por 30 dias.
-9. Registra apenas status, tamanho, hash e estatísticas no Supabase.
+1. Executa às 03:17 UTC, sob demanda e após mudanças relevantes na main.
+2. Confere o catálogo contra os nomes e o conteúdo das migrations versionadas antes de qualquer leitura remota. Mudanças de schema exigem revisar metadados, políticas e digest no catálogo.
+3. Exporta por chave primária determinística, verifica a contagem exata em cada página e captura o inventário Auth e arquivos Storage. Inteiros sem precisão segura em JSON interrompem a captura.
+4. Inclui os SQL das migrations, contagens, janela de captura, política de exclusão e SHA-256 de cada arquivo no manifesto v2. Objetos Storage usam caminhos locais derivados por hash, preservando o nome original no manifesto.
+5. Verifica hashes, tamanhos, contagens, chaves primárias simples/compostas, IDs Auth, referências FK conhecidas e objetos Storage. Uma FK órfã interrompe o backup; aprovação destas verificações não prova consistência temporal ou regras de negócio.
+6. Compacta e criptografa com AES-256-CBC/PBKDF2, descriptografa uma cópia temporária e verifica novamente a cobertura atual.
+7. Guarda somente o artefato criptografado por 30 dias e registra estatísticas de cobertura, integridade e `recovery_ready: false`. O próprio registro desta execução ocorre após a captura e estará numa próxima cópia.
 
-O workflow só considera um backup válido depois que a descriptografia e o ensaio de recuperação terminam com sucesso. O ensaio nunca grava na produção e não restaura dados sobre o projeto ativo.
+Segredos necessários: `SUPABASE_BACKUP_SECRET_KEY` e `BACKUP_ENCRYPTION_PASSWORD`. Não são conteúdo de documentação, log ou commit. A troca desses segredos é uma operação separada. Não foi realizada exportação de produção durante os testes desta alteração.
 
-Segredos exigidos no repositório: `SUPABASE_BACKUP_SECRET_KEY`, uma chave `sb_secret_` exclusiva e revogável, e `BACKUP_ENCRYPTION_PASSWORD`, uma senha longa exclusiva. Nunca cole esses valores em arquivos, issues, logs ou commits.
+## Verificação local sem gravação remota
 
-## Verificação mensal
+Em pasta administrativa protegida, baixe o artefato, confira o hash e descriptografe. Execute:
 
-1. Baixe o artefato mais recente em ambiente administrativo seguro.
-2. Confira o SHA-256 registrado.
-3. Descriptografe para uma pasta temporária.
-4. Execute `node scripts/verify-api-backup.mjs PASTA`.
-5. Execute `node scripts/restore-api-backup.mjs PASTA`; o modo seguro apenas verifica a prontidão.
-6. Registre data, responsável e resultado do ensaio.
-7. Apague os arquivos descriptografados após o teste.
-
-## Recuperação real
-
-```mermaid
-flowchart TD
-  I["Incidente confirmado"] --> F["Congelar escritas e preservar evidências"]
-  F --> B["Escolher último backup válido"]
-  B --> N["Criar projeto Supabase isolado"]
-  N --> M["Aplicar migrations na ordem"]
-  M --> D["Restaurar tabelas respeitando dependências"]
-  D --> S["Restaurar buckets e objetos"]
-  S --> A["Recriar acessos Auth com troca obrigatória de senha"]
-  A --> T["Testes funcionais e reconciliação"]
-  T --> C["Trocar domínio/configuração com aprovação"]
+```text
+node scripts/verify-api-backup.mjs PASTA --require-current
+node scripts/restore-api-backup.mjs PASTA --require-current
 ```
 
-Nunca restaure diretamente sobre a produção existente. Crie um projeto isolado, aplique todas as migrations, confira o manifesto e só então importe os dados. O inventário de Auth não contém senhas recuperáveis; usuários precisam ser recriados com senha temporária e troca obrigatória. Dados JSON exportados devem ser importados em ordem de chaves estrangeiras e reconciliados antes da troca de tráfego.
+O primeiro comando valida os arquivos e o catálogo atual. O segundo gera um plano de leitura, dependências e bloqueios; não solicita credenciais, não usa rede e não altera o banco.
 
-## Incidentes e alertas
+Um pacote v1 pode ser examinado omitindo `--require-current`. Ele informa cobertura histórica/incompleta e nunca recebe prontidão de restauração. Migrations antigas listadas apenas pelo nome não demonstram a identidade do schema. Não complete um pacote antigo com tabelas vazias para fazê-lo passar como atual.
 
-- **Backup amarelo:** mais de 30 horas; conferir o workflow.
-- **Backup vermelho:** inexistente ou mais de 48 horas; executar manualmente e corrigir antes de outras mudanças.
-- **Hash inválido:** não usar o artefato; preservar para análise e voltar ao anterior.
-- **Chave possivelmente exposta:** revogar imediatamente, gerar outra exclusiva e atualizar o segredo do GitHub.
-- **Falha de restauração:** manter produção congelada, registrar a etapa e usar o backup válido anterior.
+A classificação separa `integrity_valid`, `coverage.complete_for_current_catalog` e `recovery_ready`. Nenhum verificador desta entrega informa restauração pronta. O workflow manual de recuperação falha no preflight antes de buscar dados da produção, até existir um caminho SQL isolado revisado.
+
+## Limites e resposta a incidentes
+
+A rotina diária tem objetivo de frequência de 24 horas, mas o RPO efetivo depende do último artefato válido e da consistência da captura. O antigo objetivo de RTO de oito horas não está comprovado: medir em ensaio real antes de assumir compromisso.
+
+A API não preserva o estado das sequências, as senhas Auth, configuração externa de Auth/Storage, secrets de Edge Functions, Vault, cron e integrações. Fontes SQL das migrations ajudam a reconstruir schema, mas não substituem backup nativo consistente nem provam que não houve mudança manual no banco. Avaliar um dump transacional administrado em procedimento separado.
+
+Se hashes, contagens, cobertura ou referências falharem, não registrar sucesso nem usar o pacote para promover um destino. Preservar evidências e investigar; voltar a um pacote anterior exige avaliar suas lacunas. Backup com mais de 30 horas demanda revisão; inexistente ou mais de 48 horas demanda correção da rotina. Não executar comandos de importação na produção.
+
+A restauração real depende do [procedimento de recuperação isolada](ENSAIO-RECUPERACAO-ISOLADA.md). Excluir cópias descriptografadas após o uso conforme a política administrativa.

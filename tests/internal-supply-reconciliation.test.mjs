@@ -1,12 +1,12 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const [ui, css, migration, backup] = await Promise.all([
+const [ui, css, migration] = await Promise.all([
   readFile(new URL('../internal-supplies.js', import.meta.url), 'utf8'),
   readFile(new URL('../internal-supplies.css', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/migrations/20260810204500_internal_supply_receipt_reconciliation.sql', import.meta.url), 'utf8'),
-  readFile(new URL('../scripts/create-api-backup.mjs', import.meta.url), 'utf8'),
 ]);
 
 test('manual receipt reconciliation is additive, restricted and audited', () => {
@@ -48,5 +48,5 @@ test('future AI suggestions prefer products from the linked request', () => {
 test('reconciliation is responsive and included in encrypted API backup inventory', () => {
   assert.match(css, /\.supply-match-modal/);
   assert.match(css, /@media\(max-width:640px\)/);
-  assert.match(backup, /internal_supply_request_item_fulfillments/);
+  assertCapturedAndPlannedTables(["internal_supply_request_item_fulfillments"]);
 });

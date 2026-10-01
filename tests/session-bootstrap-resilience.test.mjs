@@ -21,8 +21,8 @@ test('core requests abort instead of leaving login and startup pending forever',
   assert.equal((app.match(/\bfetch\(/g)||[]).length,1,'all core requests must pass through apiFetch');
 });
 
-test('startup always falls back to a usable login after an unexpected restore failure',()=>{
-  assert.match(app,/restore\(\)\.then\(ok=>ok\?renderApp\(\):renderLogin\(\)\)\.catch\(\(\)=>\{clearLocalSession\(\);renderLogin\(\)\}\)/);
+test('startup ignores obsolete restores and delegates other failures to the guarded login',()=>{
+  assert.match(app,/restore\(\)\.then\(ok=>ok\?renderApp\(\):renderLogin\(\)\)\.catch\(error=>\{if\(error\?\.code==='SESSION_CHANGED'\)return;clearLocalSession\(\);renderLogin\(\)\}\)/);
 });
 
 test('login gives immediate feedback and always restores its button after failure',()=>{

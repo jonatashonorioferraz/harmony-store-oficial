@@ -1,17 +1,18 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 
 const root=new URL('../',import.meta.url);
-const [baseSql,boxSql,transferSql,js,css,index,worker,app,help,manual,technical,backup,recovery,pkg]=await Promise.all([
+const [baseSql,boxSql,transferSql,js,css,index,worker,app,help,manual,technical,pkg]=await Promise.all([
   readFile(new URL('supabase/migrations/20260809103000_production_inventory.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260809193000_production_inventory_unique_boxes.sql',root),'utf8'),
   readFile(new URL('supabase/migrations/20260809223000_full_box_transfer_to_ecommerce.sql',root),'utf8'),
   readFile(new URL('production-inventory.js',root),'utf8'),readFile(new URL('production-inventory.css',root),'utf8'),
   readFile(new URL('index.html',root),'utf8'),readFile(new URL('service-worker.js',root),'utf8'),readFile(new URL('app.js',root),'utf8'),
   readFile(new URL('help-center.js',root),'utf8'),readFile(new URL('docs/manual/MANUAL-DO-APLICATIVO.md',root),'utf8'),
-  readFile(new URL('docs/technical/INVENTARIO-DE-PRODUCAO-V25.57.md',root),'utf8'),readFile(new URL('scripts/create-api-backup.mjs',root),'utf8'),
-  readFile(new URL('scripts/execute-api-recovery.mjs',root),'utf8'),readFile(new URL('package.json',root),'utf8'),
+  readFile(new URL('docs/technical/INVENTARIO-DE-PRODUCAO-V25.57.md',root),'utf8'),readFile(new URL('package.json',root),'utf8'),
 ]);
 const sql=`${baseSql}\n${boxSql}\n${transferSql}`;
 
@@ -64,8 +65,8 @@ test('layout covers desktop, tablet and mobile breakpoints',()=>{
 });
 
 test('assets, offline cache, backup, recovery and documentation are complete',()=>{
-  assert.match(index,/production-inventory\.css\?v=25\.72/);assert.match(index,/production-inventory\.js\?v=25\.73/);
-  assert.match(worker,/production-inventory\.css\?v=25\.72/);assert.match(worker,/production-inventory\.js\?v=25\.73/);assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
-  for(const source of [backup,recovery]){assert.match(source,/'production_inventory_entries'/);assert.match(source,/'production_inventory_movements'/)}
+  assert.match(index,/production-inventory\.css\?v=25\.72/);const version=htmlAssets(index).get('production-inventory.js')?.version;assert.match(version||'',/^\d+(?:\.\d+)+$/);
+  assert.match(worker,/production-inventory\.css\?v=25\.72/);assert.equal(workerAssets(worker).get('production-inventory.js')?.version,version);assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
+  assertCapturedAndPlannedTables(["production_inventory_entries","production_inventory_movements"]);
   assert.match(manual,/## Inventário de Produção/);assert.match(technical,/## Modelo de dados/);assert.match(JSON.parse(pkg).version,/^\d+\.\d+\.\d+$/);
 });

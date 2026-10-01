@@ -1,5 +1,5 @@
 (()=>{
-const PR={loaded:false,loading:false,error:'',models:[],colors:[],receipts:[],closings:[],workers:[],paymentOverview:[],expandedCollections:new Set(),tab:'receipts',weekStart:''};
+const PR={loaded:false,loading:null,ownerId:null,error:'',models:[],colors:[],receipts:[],closings:[],workers:[],paymentOverview:[],expandedCollections:new Set(),tab:'receipts',weekStart:''};
 const pn=value=>Number(value||0);
 const money=value=>pn(value).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});
 const preciseMoney=value=>'R$ '+pn(value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
@@ -30,6 +30,10 @@ function weekBounds(value=new Date()){
   return {start:localIso(base),end:localIso(end)};
 }
 PR.weekStart=weekBounds().start;
+let generation=0;
+function reset(){generation++;Object.assign(PR,{loaded:false,loading:null,ownerId:null,error:'',models:[],colors:[],receipts:[],closings:[],workers:[],paymentOverview:[],expandedCollections:new Set(),tab:'receipts',weekStart:weekBounds().start})}
+const capture=()=>({generation,ownerId:S.profile?.id,session:window.HarmonySession?.capture()});
+const current=context=>context.generation===generation&&context.ownerId===S.profile?.id&&context.ownerId===PR.ownerId&&(!context.session||window.HarmonySession.isCurrent(context.session));
 
 function groupReport(rows=PR.receipts){
   const grouped=new Map();
@@ -55,21 +59,26 @@ function groupedCollections(rows=PR.receipts){
 }
 
 async function loadProduction(force=false){
-  if(PR.loading||PR.loaded&&!force)return;
-  PR.loading=true;PR.error='';
-  const bounds=weekBounds(PR.weekStart);
-  try{
-    const [models,receipts,closings,colors,workers,paymentOverview]=await Promise.all([
-      rpc('list_finished_product_models',{}),
-      rpc('list_finished_production_receipts',{p_from:bounds.start,p_to:bounds.end,p_worker_id:null}),
-      rpc('list_production_payment_closings',{p_from:null,p_to:null,p_worker_id:null}),
-      rpc('list_finished_production_colors',{}),
-      canReceive()?rpc('list_production_workers',{}):Promise.resolve([S.profile]),
-      isAdmin()?rpc('list_production_payment_overview',{}):Promise.resolve([])
-    ]);
-    Object.assign(PR,{models,colors,receipts,closings,workers:workers||[S.profile],paymentOverview,loaded:true});
-  }catch(error){PR.error=error.message||'Não foi possível carregar a produção recebida.'}
-  finally{PR.loading=false}
+  const ownerId=S.profile?.id;if(!ownerId){reset();return}
+  if(PR.ownerId!==ownerId){reset();PR.ownerId=ownerId}
+  if(PR.loading)return PR.loading;if(PR.loaded&&!force)return;
+  const context=capture(),profile=S.profile,bounds=weekBounds(PR.weekStart);PR.error='';
+  const pending=(async()=>{
+    try{
+      const [models,receipts,closings,colors,workers,paymentOverview]=await Promise.all([
+        rpc('list_finished_product_models',{}),
+        rpc('list_finished_production_receipts',{p_from:bounds.start,p_to:bounds.end,p_worker_id:null}),
+        rpc('list_production_payment_closings',{p_from:null,p_to:null,p_worker_id:null}),
+        rpc('list_finished_production_colors',{}),
+        canReceive()?rpc('list_production_workers',{}):Promise.resolve([profile]),
+        isAdmin()?rpc('list_production_payment_overview',{}):Promise.resolve([])
+      ]);
+      if(!current(context))return;
+      Object.assign(PR,{models,colors,receipts,closings,workers:workers||[profile],paymentOverview,loaded:true});
+    }catch(error){if(current(context))PR.error=error.message||'Não foi possível carregar a produção recebida.'}
+    finally{if(PR.loading===pending)PR.loading=null}
+  })();
+  PR.loading=pending;return pending;
 }
 
 function productionNav(){
@@ -172,7 +181,7 @@ function colorsView(){
 async function renderProduction(){
   const page=document.querySelector('#page');if(!page||S.view!=='production')return;
   page.dataset.production='true';page.innerHTML='<div class="loading-inline">Preparando recebimentos…</div>';
-  await loadProduction();if(S.view!=='production')return;
+  const ownerId=S.profile?.id;await loadProduction();if(S.view!=='production'||ownerId!==S.profile?.id||!S.profile||document.querySelector('#page')!==page)return;
   if(PR.error){page.innerHTML=`<div class="page">${head('PRODUÇÃO RECEBIDA','Atualização necessária','O restante do aplicativo continua funcionando normalmente.')}<section class="card intelligence-error"><h2>Execute a atualização 009 no Supabase</h2><p>O módulo de recebimentos só será liberado após a atualização do banco.</p><small>${esc(PR.error)}</small></section></div>`;return}
   page.innerHTML=`<div class="page production-page">${head('PRODUÇÃO RECEBIDA',isAdmin()?'Controle de produção e pagamentos':isReceiverOperator()?'Conferência de produtos acabados':'Minha produção recebida',isAdmin()?'Registre recebimentos e feche cada pagamento conforme a agenda individual.':isReceiverOperator()?'Confira modelo, cor, quantidade e data sem acesso a valores.':'Acompanhe o que foi recebido e os pagamentos já fechados.')} ${tabs()} ${weekFilter()} <div id="productionContent">${PR.tab==='weeks'?weeksView():PR.tab==='models'&&isAdmin()?modelsView():PR.tab==='colors'&&isAdmin()?colorsView():receiptsView()}</div></div>`;
   bindProduction();
@@ -260,5 +269,5 @@ async function printStatement(id){
 
 new MutationObserver(productionNav).observe(document.body,{childList:true,subtree:true});
 productionNav();
-window.HarmonyProduction=Object.freeze({state:PR,paymentFor,differenceFor,weekBounds,groupReport,groupedCollections,canSeeReceiptValues,canSeePaymentValues,isReceiverOperator});
+window.HarmonyProduction=Object.freeze({state:PR,load:loadProduction,reset,paymentFor,differenceFor,weekBounds,groupReport,groupedCollections,canSeeReceiptValues,canSeePaymentValues,isReceiverOperator});
 })();

@@ -1,4 +1,6 @@
+import { assertCapturedAndPlannedTables } from './backup-assertions.mjs';
 import test from 'node:test';
+import {htmlAssets,workerAssets} from '../scripts/lib/release-assets.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -18,18 +20,15 @@ const [html,app,script,style,migration,catalogMigration,colorMigration,kitMigrat
   readFile(new URL('../supabase/functions/manage-user/index.ts', import.meta.url),'utf8'),
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
 ]);
-const [backup,recovery] = await Promise.all([
-  readFile(new URL('../scripts/create-api-backup.mjs', import.meta.url),'utf8'),
-  readFile(new URL('../scripts/execute-api-recovery.mjs', import.meta.url),'utf8'),
-]);
+
 
 test('módulo está carregado, versionado e disponível offline',()=>{
   assert.match(html,/shipping-planning\.css\?v=25\.83/);
-  assert.match(html,/shipping-planning\.js\?v=25\.100/);
+  const version=htmlAssets(html).get('shipping-planning.js')?.version;assert.match(version||'',/^\d+(?:\.\d+)+$/);
   assert.match(html,/transfer-center\.js\?v=25\.100/);
   assert.match(html,/shipping-inventory-integration\.js\?v=25\.98/);
   assert.match(sw,/shipping-planning\.css\?v=25\.83/);
-  assert.match(sw,/shipping-planning\.js\?v=25\.100/);
+  assert.equal(workerAssets(sw).get('shipping-planning.js')?.version,version);
   assert.match(sw,/transfer-center\.js\?v=25\.100/);
   assert.match(sw,/shipping-inventory-integration\.js\?v=25\.98/);
 });
@@ -75,7 +74,7 @@ test('produto exclusivo é salvo e reutilizado em catálogo isolado do módulo',
   assert.match(script,/save_shipping_exclusive_product/);
   assert.match(script,/Salvo somente no Planejamento de envios/);
   assert.match(script,/Criar novo produto exclusivo/);
-  for(const source of [backup,recovery])for(const table of ['shipping_exclusive_products','shipping_plans','shipping_plan_items'])assert.match(source,new RegExp(`'${table}'`));
+  assertCapturedAndPlannedTables(["shipping_exclusive_products","shipping_plans","shipping_plan_items"]);
 });
 
 test('combinações de 2 a 4 cores reutilizam apenas o catálogo oficial e ficam isoladas no módulo',()=>{
@@ -99,7 +98,7 @@ test('combinações de 2 a 4 cores reutilizam apenas o catálogo oficial e ficam
   assert.match(script,/save_shipping_plan_with_colors/);
   assert.match(script,/color_combination_id:selected\.combinationId/);
   assert.match(script,/colorDots\(item\.color_hex\)/);
-  for(const source of [backup,recovery])for(const table of ['shipping_color_combinations','shipping_color_combination_items'])assert.match(source,new RegExp(`'${table}'`));
+  assertCapturedAndPlannedTables(["shipping_color_combinations","shipping_color_combination_items"]);
 });
 
 test('nome da outra plataforma aparece somente quando Outra plataforma é selecionada',()=>{
@@ -171,5 +170,5 @@ test('novas estruturas usam RLS, RPC autenticada, backup e recuperação',()=>{
   assert.match(kitMigration,/revoke all privileges on table public\.shipping_kit_templates from public,anon,authenticated/);
   assert.match(kitMigration,/revoke all on function public\.save_shipping_kit_template/);
   assert.match(kitMigration,/grant execute on function public\.save_shipping_kit_template[\s\S]{0,200}authenticated,service_role/);
-  for(const source of [backup,recovery])for(const table of ['shipping_kit_templates','shipping_kit_template_components','shipping_plan_item_components','shipping_inventory_requests','shipping_inventory_request_boxes'])assert.match(source,new RegExp(`'${table}'`));
+  assertCapturedAndPlannedTables(["shipping_kit_templates","shipping_kit_template_components","shipping_plan_item_components","shipping_inventory_requests","shipping_inventory_request_boxes"]);
 });
