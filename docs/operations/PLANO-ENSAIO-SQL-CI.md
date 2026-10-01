@@ -1,6 +1,6 @@
 # Plano de ensaio SQL no CI — dados sintéticos
 
-Implementação do nível 1 preparada em 01/10/2026. O workflow e o executor restrito a dados sintéticos estão versionados; a execução PostgreSQL no CI ainda precisa ser registrada abaixo. **Não há importador SQL de backups reais.** O executor de recuperação remota permanece bloqueado antes de qualquer gravação.
+Nível 1 executado e aprovado em 01/10/2026: 15 cenários no PostgreSQL descartável do CI, com evidência registrada abaixo. O workflow e o executor são restritos a dados sintéticos. **Não há importador SQL de backups reais.** O executor de recuperação remota permanece bloqueado antes de qualquer gravação.
 
 ## Objetivo e alcance
 
@@ -64,6 +64,18 @@ O nível 3 permanece condicionado ao [procedimento isolado](ENSAIO-RECUPERACAO-I
 
 O catálogo e a integridade do backup têm verificações automatizadas; o importador REST permanece desativado. Nesta implementação, os cinco testes Node de guardas passaram e o lint dos arquivos JavaScript passou localmente. O computador de trabalho não dispõe de PostgreSQL/psql ou Docker para executar o ensaio; nenhuma dependência global foi instalada.
 
-**Execução SQL no CI: pendente de registro.** O workflow deverá produzir 15 resultados: gatilho normal, carga fiel da fixture, reexecução bloqueada, próximos números, dez falhas controladas e sequência já adiantada. A falha deliberada após inserir pai/filho/evento comprova rollback das linhas; nela, o avanço da sequência para 9000 precisa sobreviver e o próximo número ser 9001. O caso da caixa excluída preserva o maior número consumido 7777 apesar de o maior número visível ser 400.
+**Execução SQL aprovada:** [run 36933716057, job postgres-fixtures](https://github.com/jonatashonorioferraz/harmony-store-oficial/actions/runs/36933716057/job/110608913207), concluído em 01/10/2026 às 22:13 UTC. Os logs e o relatório confirmam 15 resultados aprovados: gatilho normal, carga fiel da fixture, reexecução bloqueada, próximos números, dez falhas controladas e sequência já adiantada. As cinco verificações Node também passaram no runner.
 
-Após o CI, registrar aqui URL da execução, SHA ensaiado, versão observada, quantidade de cenários aprovados e artefato. Até essa evidência, não afirmar execução PostgreSQL aprovada. Mesmo com todos os casos verdes, **recuperação fiel das 85 tabelas, Auth, Storage, RLS e gatilhos de produção, RTO e RPO continuam não comprovados**.
+| Evidência | Valor observado |
+| --- | --- |
+| PR e head de origem | PR #99, `c9165b69ef22f7bb5bc8d1156c16eefed21e272b` |
+| Commit efetivamente ensaiado | `4a9c467bc3e5801fbc3a37db89e4480e7e440c96`, merge temporário do PR sobre `80f516d8c80c8171267871ef303affcb88807bc3` |
+| Servidor | PostgreSQL `16.15 (Debian 16.15-1.pgdg12+2)` |
+| Cliente | `psql (PostgreSQL) 16.15 (Ubuntu 16.15-1.pgdg24.04+2)` |
+| SHA-256 dos cinco arquivos SQL normalizados | `da10fb304f5190dcb9cf880649eb1e8e4b68fbb749bc71a1a7519ef62811c47a` |
+| Relatório | [recovery-sql-fixtures-36933716057, artefato 11196204045](https://github.com/jonatashonorioferraz/harmony-store-oficial/actions/runs/36933716057/artifacts/11196204045), expiração prevista em 15/10/2026 |
+| Duração do executor sintético | 3263 ms; não representa RTO operacional |
+
+No caso `check_rollback`, a nova conexão confirmou reversão das linhas e eventos, restauração da configuração dos gatilhos e sequência ainda em 9000; a asserção do próximo número 9001 passou. No caso da caixa excluída, a captura preservou o maior número consumido 7777 apesar de o maior número visível ser 400, e o próximo número observado foi 7778. Uma sequência de destino já em 9500 permaneceu avançada e produziu 9501.
+
+Essa evidência aprova os mecanismos do nível 1 para os arquivos e o commit indicados. O relatório mantém `recovery_ready: false` e `recovery_verified: false`. **Recuperação fiel das 85 tabelas, Auth, Storage, RLS e gatilhos de produção, RTO e RPO continuam não comprovados**; novos commits precisam dos próprios checks, e este registro histórico não os substitui.

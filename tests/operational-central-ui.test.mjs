@@ -13,14 +13,24 @@ function fixture(){
   const item={key:'bill:synthetic',rule:'FIN-01',family:'financial',entity_type:'bill',entity_id:'synthetic',protocol:'37',facts:{due_date:'2026-09-30'},classification:'attention',title:'Boleto sintético vencido',message:'Vencimento em 30/09/2026.',origin:{view:'bills',id:'synthetic'},source_updated_at:'2026-10-01T10:00:00Z'};
   return{schema_version:'b0.1',rules_version:'b0.1',evaluation_id:'synthetic',evaluated_at:'2026-10-02T01:00:00Z',business_date:'2026-10-01',timezone:'America/Sao_Paulo',sources:[{id:'bills',status:'evaluated',complete:true,row_count:1,fetched_at:'2026-10-02T01:00:00Z'},{id:'requests',status:'evaluated',complete:true,row_count:0,fetched_at:'2026-10-02T01:00:00Z'}],conditions:[item],priorities:[item],summary:{text:'Resumo sintético da consulta.',evaluated_sources:2,counts:{overdue_bills:1,due_today_bills:0,due_tomorrow_bills:0,open_requests:0,past_scheduled_requests:0}}};
 }
-function harness(){
+function harness({loadBriefing}={}){
   let epoch=0,requestHandler=async()=>response(fixture()),page;const calls=[],routes=[],elements=new Map();
   const control=selector=>{if(!elements.has(selector))elements.set(selector,{dataset:{},focus(){}});return elements.get(selector)};
   page={innerHTML:'',querySelector:selector=>control(selector),querySelectorAll:selector=>selector==='[data-oc-origin]'?[...page.innerHTML.matchAll(/data-oc-origin="([^"]+)"/g)].map((match,index)=>{const element=control('origin:'+index);element.dataset.ocOrigin=match[1];return element}):[]};
   const S={profile:{id:'synthetic-admin',role:'admin',status:'active'},session:{access_token:'synthetic-token'},view:'operational-central',requests:[{id:'old'}]};
   const HarmonySession={capture:()=>({epoch}),isCurrent:value=>value.epoch===epoch,assert(value){if(!this.isCurrent(value))throw Object.assign(Error('session changed'),{code:'SESSION_CHANGED'})}};
   const context=vm.createContext({S,window:{HarmonySession},document:{querySelector:selector=>selector==='#page'?page:null},API:'https://synthetic.example.test',KEY:'synthetic-publishable',ensureSession:async()=>{},refreshSession:async()=>{S.session.access_token='renewed'},apiFetch:async(url,options)=>{calls.push({url,options});return requestHandler(url,options)},restAll:async()=>[{id:'fresh'}],renderApp:()=>routes.push(S.view),esc:value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])),Date,Intl,console});
-  vm.runInContext(source,context,{filename:fileURLToPath(new URL('../operational-central.js',import.meta.url)),importModuleDynamically:vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER});const api=context.window.HarmonyOperationalCentral;
+  let runnable=source;
+  if(loadBriefing){
+    // Native custom VM import callbacks require an extra Node flag. Substitute
+    // only the import expression for this controlled boundary; all session,
+    // state and rendering code stays intact. Default tests use the real import.
+    const expression=/\bimport\((['"])\.\/central-briefing\.mjs(?:\?[^'"]*)?\1\)/g;
+    assert.equal([...source.matchAll(expression)].length,1);
+    context.__loadBriefing=loadBriefing;
+    runnable=source.replace(expression,match=>match.replace(/^import/,'__loadBriefing'));
+  }
+  vm.runInContext(runnable,context,{filename:fileURLToPath(new URL('../operational-central.js',import.meta.url)),importModuleDynamically:vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER});const api=context.window.HarmonyOperationalCentral;
   return{context,api,S,page,calls,routes,control,setResponse:fn=>requestHandler=fn,invalidate:()=>epoch++,replacePage:()=>page={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]}};
 }
 
@@ -139,4 +149,18 @@ test('a finished preview is no longer retained after session reset and next-sess
   const h=harness();await h.api.render(h.page);assert.match(h.page.innerHTML,/Boleto #0037: vencido/);
   h.invalidate();h.api.reset();h.S.profile.id='next-admin';h.setResponse(async()=>response({},403));await h.api.render(h.page);
   assert.doesNotMatch(h.page.innerHTML,/oc-briefing-text|#0037/);assert.match(h.page.innerHTML,/Consulta não concluída/);
+});
+
+
+test('logout while the briefing import is pending cannot compose or repaint private facts in the next session',{timeout:5000},async()=>{
+  const composer=await import('../central-briefing.mjs'),started=deferred(),pending=deferred();let composed=0;
+  const h=harness({loadBriefing:specifier=>{assert.match(specifier,/^\.\/central-briefing\.mjs\?v=/);started.resolve();return pending.promise}});
+  const old=h.api.render(h.page);await started.promise;
+  assert.equal(h.calls.length,1);assert.match(h.page.innerHTML,/Consultando boletos/);assert.doesNotMatch(h.page.innerHTML,/#0037|oc-briefing-text/);
+  h.invalidate();h.api.reset();h.S.profile={id:'next-admin',role:'admin',status:'active'};h.S.session={access_token:'next-session-token'};
+  h.page.innerHTML='<main>Conteúdo da próxima sessão</main>';
+  pending.resolve({buildDailyBriefing:data=>{composed++;return composer.buildDailyBriefing(data)}});await old;
+  assert.equal(composed,0,'an obsolete evaluation must not reach the compositor after its import completes');
+  assert.equal(h.page.innerHTML,'<main>Conteúdo da próxima sessão</main>');assert.equal(h.S.profile.id,'next-admin');
+  assert.deepEqual(h.routes,[]);assert.equal(h.calls.length,1);
 });
