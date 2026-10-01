@@ -37,3 +37,11 @@ Este documento não é um importador SQL executável. Uma etapa futura deve prep
 Testes locais usam dados sintéticos e chamadas de API simuladas. Cobrem inclusão das tabelas novas, chaves compostas/singleton, hashes, paginação, FK órfã, paths Storage, pacotes históricos, regressão de schema e bloqueio antes de qualquer gravação. A análise seca independe de conexão ou credenciais.
 
 **Não houve restauração real, teste de ROLLBACK em PostgreSQL, medição de RTO, cópia de dados pessoais ou validação de um destino dedicado.** O teste de pacote anterior comprova rejeição de cobertura incompleta; não comprova rollback transacional. A base mantém esse limite explícito até a execução do procedimento isolado.
+
+## Próxima etapa planejada — fixture SQL em CI
+
+O [plano de ensaio SQL no CI](PLANO-ENSAIO-SQL-CI.md) separa três níveis: mecanismos em PostgreSQL sintético, stack Supabase local sintética e recuperação fiel autorizada. O primeiro pode rodar num serviço descartável do GitHub Actions sem projeto externo pago; não usa segredos ou dados da produção e não desbloqueia o executor atual.
+
+O teste de falha previsto no passo 5 deve comprovar reversão de linhas e eventos transacionais, não reversão de sequências: `nextval` e `setval` podem deixar o estado avançado após ROLLBACK. A aceitação exige não reutilizar números consumidos. O estado da sequência independente de caixas continua sendo uma lacuna do pacote API que precisa de evidência adicional antes de promoção real.
+
+Este acréscimo registra um plano concretamente executável em entrega posterior. Nenhum desses níveis foi realizado por este documento; permanecem válidos os limites da seção anterior. Uma eventual recuperação fiel em ambiente local dedicado também precisará de autorização, proteção dos dados, capacidade, configuração e reconciliação equivalentes; não é autorizada a importação de dados reais em CI.

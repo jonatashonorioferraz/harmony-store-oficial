@@ -1,3 +1,4 @@
+import { htmlAssets, workerAssets } from '../scripts/lib/release-assets.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import test from 'node:test';
@@ -37,7 +38,9 @@ test('capture interface is responsive, versioned, offline and mirrored',()=>{
   assert.match(styles,/@media\(max-width:620px\)/);
   assert.match(styles,/@media\(max-width:380px\)/);
   assert.match(index,/document-capture\.css\?v=25\.49/);
-  assert.match(index,/bills\.js\?v=25\.101/);
+  const billAsset=htmlAssets(index).get('bills.js');
+  assert.ok(billAsset?.version);
+  assert.equal(workerAssets(worker).get('bills.js')?.version,billAsset.version);
   assert.match(index,/internal-supplies\.js\?v=25\.98/);
   assert.match(worker,/document-capture\.css\?v=25\.49/);
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);

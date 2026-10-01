@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
 import { backupHealthItem } from "./backup-status.mjs";
+import { agendaHealthItem } from "./agenda-status.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -86,11 +87,7 @@ Deno.serve(async request => {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const agendaAge = ageHours(agendaAutomation?.created_at);
-    const agendaStatus = agendaAutomationError ? "red" : !agendaAutomation ? "yellow" : agendaAutomation.level === "error" || agendaAge > 1 ? "red" : agendaAutomation.level === "warning" || agendaAge > 0.5 ? "yellow" : "green";
-    const agendaValue = agendaAutomationError ? "Sem resposta" : !agendaAutomation ? "Aguardando verificação" : agendaAutomation.level === "error" ? "Falha detectada" : agendaAutomation.level === "warning" ? "Envio parcial" : "Operacional";
-    const agendaDetail = agendaAutomationError ? "O histórico da automação não respondeu ao diagnóstico." : !agendaAutomation ? "A rotina ainda não registrou sua primeira execução monitorada." : agendaAutomation.code === "agenda_reminder_idle" ? "A rotina está em dia; não havia lembretes pendentes na última verificação." : agendaAutomation.level === "error" ? "A rotina encontrou uma falha e exige verificação administrativa." : agendaAutomation.level === "warning" ? "Parte dos lembretes foi processada; há aparelhos ou entregas que precisam de acompanhamento." : "Os lembretes administrativos foram processados na última execução.";
-    items.push({ key: "agenda_automation", label: "Automação da Agenda", status: agendaStatus, value: agendaValue, detail: agendaDetail, checked_at: agendaAutomation?.created_at || null });
+    items.push(agendaHealthItem({ event: agendaAutomation, queryError: agendaAutomationError }));
 
     const [pushResult, subscriptionResult] = await Promise.all([
       admin.from("system_events").select("level,code,created_at,details").eq("source", "notification").order("created_at", { ascending: false }).limit(1).maybeSingle(),
