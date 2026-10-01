@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
 import { researchChannels } from "./research.mjs";
+import { providerPreflight } from "./provider.mjs";
 
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{
   status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}
@@ -22,7 +23,15 @@ Deno.serve(async request=>{
   const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
   let runId:string|null=null;
   try{
-    const claim=await admin.rpc("claim_commercial_calendar_sync");
+    if(request.headers.get("x-calendar-diagnostic")==="preflight"){
+      const diagnostic=await providerPreflight((path:string,options:RequestInit)=>fetch("https://api.openai.com"+path,{
+        ...options,headers:{Authorization:"Bearer "+openai,"Content-Type":"application/json"},signal:AbortSignal.timeout(20000)
+      }));
+      return reply(diagnostic);
+    }
+    const approval=request.headers.get("x-calendar-validation");
+    if(approval&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(approval))return reply({error:"invalid_validation"},400);
+    const claim=approval?await admin.rpc("claim_commercial_calendar_validation",{p_authorization:approval}):await admin.rpc("claim_commercial_calendar_sync");
     if(claim.error)throw new Error("claim_failed");
     if(!claim.data?.allowed)return reply({status:claim.data?.reason||"disabled"});
     runId=claim.data.run_id;
@@ -44,7 +53,7 @@ Deno.serve(async request=>{
     }
     const saved=await admin.rpc("finish_commercial_calendar_research",{p_run_id:runId,p_results:results});
     if(saved.error)throw new Error("save_failed");
-    return reply(saved.data);
+    return reply({...saved.data,diagnostics:results.filter(r=>r.status==="failed").map(({channel,error_code,http_status,provider_code,provider_param,hint})=>({channel,error_code,http_status,provider_code,provider_param,hint}))});
   }catch(error){
     const allowed=new Set(["claim_failed","invalid_sources","provider_rate_limit","provider_error","incomplete_response","refused_response","invalid_response","invalid_proposal","unverified_source","invalid_date","invalid_publication_date","save_failed"]);
     const message=error instanceof Error?error.message:"";

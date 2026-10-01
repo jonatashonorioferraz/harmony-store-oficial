@@ -154,3 +154,17 @@ Deploy the additive 20261001123000 migration, publish reviewed assets, deploy on
 sync-commercial-calendar with its dedicated secret authentication, then provision
 Vault/Edge secrets and enable the daily 10:00 UTC cron. The new finish RPC is
 service-only. No frontend credentials or direct table access are granted.
+
+## Provider diagnosis and approved validation
+
+Authenticated server-only preflight checks model access and counts input tokens;
+it does not call response generation or run a search. Its result is NOT evidence
+of successful research. Only allowlisted HTTP/error metadata is returned, never
+upstream error messages, credentials or company documents.
+
+The 20261001140000 migration preserves every daily run and permits multiple
+attempt numbers only for an explicit expiring operator authorization. App users
+and the Edge service cannot issue these authorizations. Each one can be consumed
+once, reserves the same R$1 inside the same R$30 monthly ceiling and never refunds
+a failed attempt. Normal cron still admits at most one daily attempt; it never
+uses the exceptional header or issues authorizations. No retry is automatic.
