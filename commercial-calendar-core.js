@@ -68,14 +68,32 @@
     })).filter(e=>!keys.has(e.key));
     return [...selected,...seasonal].sort((a,b)=>a.start_date.localeCompare(b.start_date)||a.title.localeCompare(b.title,'pt-BR'));
   }
+  const VALIDATION_ERRORS={invalid_date:'Datas inválidas ou fora da janela de pesquisa',unverified_source:'Fonte não autorizada ou não comprovada pela busca',invalid_publication_date:'Data da publicação não validada',wrong_channel:'Proposta pertence a outro marketplace',invalid_proposal:'Informações da proposta incompletas'};
+  const REJECTION_LABELS={date_format:'data inválida',inverted_dates:'datas invertidas',before_window:'data anterior à janela',after_window:'data posterior à janela',source_not_allowed:'fonte não autorizada',source_not_consulted:'link não comprovado',publication_date_invalid:'publicação sem data válida',wrong_channel:'canal diferente',invalid_proposal:'dados incompletos'};
+  function activation(settings={}){
+    if(!settings.enabled)return 'IA desligada';
+    return settings.pricing_approved?'IA habilitada':'IA aguardando configuração';
+  }
+  function rejectionDetail(item){
+    const reasons=Object.entries(item?.rejection_reasons||{}).filter(([key,count])=>REJECTION_LABELS[key]&&Number.isInteger(count)&&count>0);
+    return reasons.length?reasons.map(([key,count])=>count+' '+REJECTION_LABELS[key]).join(' · '):(VALIDATION_ERRORS[item?.error_code]||'');
+  }
   function coverage(channel,d,now=new Date()){
     if(d.unavailable)return {level:'urgent',label:'Consulta indisponível'};
     if(!d.settings?.enabled)return {level:'muted',label:'Pesquisa desligada'};
+    if(!d.settings.pricing_approved)return {level:'warm',label:'Aguardando configuração aprovada'};
     const run=d.last_run,item=run?.channel_results?.find(r=>r.channel===channel);
-    if(run?.status==='running'&&now-new Date(run.started_at)<10*60000)return {level:'warm',label:'Pesquisando este canal'};
+    if(run?.status==='running')return now-new Date(run.started_at)<10*60000
+      ?{level:'warm',label:'Pesquisando este canal'}:{level:'urgent',label:'Pesquisa sem confirmação de término'};
     if(!item)return {level:'warm',label:'Ainda não pesquisado'};
-    if(item.status!=='completed')return {level:'urgent',label:'Pesquisa indisponível neste canal'};
+    if(item.status==='failed'){
+      const detail=rejectionDetail(item);
+      return detail?{level:'warm',label:'Resposta recebida, mas não validada',detail:detail+'. Nenhuma proposta deste canal foi aceita.'}
+        :{level:'urgent',label:'Pesquisa indisponível neste canal'};
+    }
+    if(!['completed','partial'].includes(item.status))return {level:'urgent',label:'Resultado da pesquisa desconhecido'};
     if(!run.finished_at||now-new Date(run.finished_at)>36*3600000)return {level:'warm',label:'Pesquisa precisa de atualização'};
+    if(item.status==='partial')return {level:'warm',label:item.result_count+' proposta(s) válida(s) · '+item.rejected_count+' descartada(s)',detail:rejectionDetail(item)};
     return {level:'good',label:item.result_count>0?'Propostas encontradas para revisão':'Sem novo anúncio verificável'};
   }
   function milestones(event){
@@ -132,12 +150,13 @@
     if(!settings.enabled)return {level:'muted',label:'Pesquisa com IA desligada',detail:'Nenhuma busca paga é executada. As datas-base continuam disponíveis.'};
     if(!settings.pricing_approved)return {level:'warm',label:'Aguardando configuração aprovada',detail:'Modelo, preços e controle de consumo precisam de aprovação antes da ativação.'};
     if(settings.budget_blocked)return {level:'warm',label:'Pesquisa bloqueada pelo orçamento',detail:'Reserva mensal esgotada. Não houve nova consulta paga.'};
-    if(run?.status==='partial')return {level:'warm',label:'Pesquisa concluída parcialmente',detail:'Um ou mais canais ficaram indisponíveis. Consulte a situação de cada marketplace; resultados válidos foram preservados.'};
+    if(run?.status==='partial')return {level:'warm',label:'Pesquisa concluída parcialmente',detail:'Houve falhas ou propostas descartadas. Consulte cada marketplace; somente resultados válidos foram preservados.'};
+    if(run?.status==='failed'&&run.channel_results?.length===3&&run.channel_results.every(item=>VALIDATION_ERRORS[item.error_code]))return {level:'warm',label:'IA respondeu; propostas não validadas',detail:'Nenhuma proposta foi aceita. Os motivos aparecem por marketplace; isso não confirma ausência de campanhas.'};
     if(run?.status==='failed')return {level:'urgent',label:'Última pesquisa falhou',detail:'As fontes existentes foram preservadas; novas campanhas podem estar ausentes.'};
     if(run?.status==='running'&&now-new Date(run.started_at)<10*60000)return {level:'warm',label:'Pesquisa em andamento',detail:'As propostas aparecerão após a conclusão e precisarão de revisão.'};
     if(!lastSuccess||now-new Date(lastSuccess)>36*3600000)return {level:'warm',label:'Pesquisa desatualizada',detail:'Sem pesquisa concluída nas últimas 36 horas. Não significa ausência de novidades.'};
     return {level:'good',label:'Pesquisa recente',detail:'Última conclusão: '+new Date(lastSuccess).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+'. Fontes podem mudar.'};
   }
   function safeSource(url){try{const u=new URL(url);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null}catch{return null}}
-  root.HarmonyCommercialCore={CHANNELS,MARKETPLACES,channelEvents,coverage,CHECKS,validDate,add,between,today,format,nth,easter,baseline,merge,milestones,previewMilestones,readiness,signal,ideas,research,safeSource};
+  root.HarmonyCommercialCore={CHANNELS,MARKETPLACES,channelEvents,coverage,activation,rejectionDetail,CHECKS,validDate,add,between,today,format,nth,easter,baseline,merge,milestones,previewMilestones,readiness,signal,ideas,research,safeSource};
 })(typeof window!=='undefined'?window:globalThis);

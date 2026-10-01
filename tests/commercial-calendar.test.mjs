@@ -193,6 +193,7 @@ test('coverage never turns unavailable or unsearched channels into a successful 
   ]}};
   assert.match(C.coverage('SHEIN',base,now).label,/indisponível/);
   assert.match(C.coverage('Mercado Livre',base,now).label,/Sem novo anúncio verificável/);
-  assert.match(C.coverage('SHEIN',{settings:{enabled:true}},now).label,/Ainda não/);
+  assert.match(C.coverage('SHEIN',{settings:{enabled:true}},now).label,/Aguardando configuração aprovada/);
+  assert.match(C.coverage('SHEIN',{settings:{enabled:true,pricing_approved:true}},now).label,/Ainda não/);
   assert.match(C.research(base.settings,base.last_run,null,now).label,/parcialmente/);
 });
