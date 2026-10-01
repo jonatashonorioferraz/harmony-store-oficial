@@ -25,3 +25,12 @@ test('failed model access stops preflight without a second request',async()=>{
   let calls=0;const r=await providerPreflight(async()=>{calls++;return {ok:false,status:401,json:async()=>({error:{code:'invalid_api_key'}})}});
   assert.equal(calls,1);assert.equal(r.stage,'model_access');assert.equal(r.error_code,'provider_authentication');
 });
+
+test('catalog read denial does not imply response generation is denied',async()=>{
+  let calls=0;const r=await providerPreflight(async()=>{calls++;return calls===1?{ok:false,status:403,json:async()=>({error:{message:'Missing scopes: api.model.read'}})}:{ok:true,status:200,json:async()=>({input_tokens:1000})}});
+  assert.equal(calls,2);assert.equal(r.status,'preflight_completed');assert.deepEqual(r.model_access.missing_scopes,['api.model.read']);
+});
+test('region restrictions are classified without copying provider content',async()=>{
+  const r=await providerFailure({status:403,json:async()=>({error:{code:'unsupported_country_region_territory',message:'Country not supported: secret'}})});
+  assert.equal(r.hint,'provider_region_restricted');assert.ok(!JSON.stringify(r).includes('secret'));
+});
