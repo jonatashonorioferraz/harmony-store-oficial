@@ -131,12 +131,13 @@
 
   function codeForm(){
     if(S.profile?.role!=='admin')return'';
-    const available=workers().filter(person=>!codeFor(person.id));
-    return `<details class="label-lots-code-panel"><summary>Cadastrar código interno de colaboradora</summary>
-      <p>O código é permanente. Confira o cadastro antes de salvar: ele não poderá ser transferido para outra pessoa.</p>
+    const available=workers();
+    return `<details class="label-lots-code-panel"><summary>Cadastrar ou corrigir código de colaboradora</summary>
+      <p>A administração pode corrigir o código antes do primeiro lote. Após qualquer emissão, inclusive cancelada, o código fica protegido para preservar a rastreabilidade.</p>
       <form id="labelCodeForm" class="label-lots-code-form">
-        <label>Colaboradora<select name="collaborator" required><option value="">Selecione</option>${available.map(person=>`<option value="${esc(person.id)}">${esc(person.full_name)}</option>`).join('')}</select></label>
-        <label>Código<input name="code" placeholder="Ex.: P1" pattern="P[1-9][0-9]*" maxlength="12" required></label>
+        <label>Colaboradora<select name="collaborator" required><option value="">Selecione</option>${available.map(person=>`<option value="${esc(person.id)}">${esc(person.full_name)}${codeFor(person.id)?' · '+esc(codeFor(person.id)):''}</option>`).join('')}</select></label>
+        <label>Código<input name="code" placeholder="Ex.: D1 ou P1" pattern="[A-Z][1-9][0-9]*" maxlength="12" title="Uma letra maiúscula seguida de um número positivo, como D1 ou P1." required></label>
+        <p id="labelCodeHelp" class="label-lots-note" aria-live="polite">Selecione a colaboradora para cadastrar ou corrigir seu código.</p>
         <button class="outline" ${available.length?'':'disabled'}>Salvar código</button>
       </form>
     </details>`;
@@ -180,7 +181,7 @@
         </section>
       </div>
       <section class="card label-lots-history">
-        <div class="label-lots-heading"><div><small>HISTÓRICO</small><h2>Lotes recentes</h2></div><label>Buscar lote ou colaboradora<input id="labelLotSearch" type="search" placeholder="Número, nome ou P1"></label></div>
+        <div class="label-lots-heading"><div><small>HISTÓRICO</small><h2>Lotes recentes</h2></div><label>Buscar lote ou colaboradora<input id="labelLotSearch" type="search" placeholder="Número, nome ou D1"></label></div>
         <div id="labelLotRows">${historyRows()}</div>
         <p class="label-lots-note">Exibindo no máximo os 60 lotes mais recentes. A busca nesta tela considera esses registros carregados.</p>
       </section>
@@ -216,15 +217,41 @@
       }catch(error){alert(error.message);button.disabled=false}
     };
     const codeFormElement=page.querySelector('#labelCodeForm');
-    if(codeFormElement)codeFormElement.onsubmit=async event=>{
-      event.preventDefault();
-      const button=event.submitter;button.disabled=true;
-      try{
-        await rpc('assign_collaborator_label_code',{p_collaborator_id:codeFormElement.elements.collaborator.value,p_code:codeFormElement.elements.code.value.trim().toUpperCase()});
-        await render(page);
-        toast('Código da colaboradora cadastrado.');
-      }catch(error){alert(error.message);button.disabled=false}
-    };
+    if(codeFormElement){
+      const syncCode=()=>{
+        const previous=codeFor(codeFormElement.elements.collaborator.value);
+        codeFormElement.elements.code.value=previous;
+        page.querySelector('#labelCodeHelp').textContent=previous
+          ?'Código atual: '+previous+'. A correção só será aceita se ainda não houver nenhum lote desta colaboradora.'
+          :'Informe uma letra seguida de um número positivo, como D1 ou P1.';
+      };
+      codeFormElement.elements.collaborator.onchange=syncCode;
+      codeFormElement.elements.code.oninput=()=>{
+        codeFormElement.elements.code.value=codeFormElement.elements.code.value.toUpperCase();
+      };
+      codeFormElement.onsubmit=async event=>{
+        event.preventDefault();
+        const id=codeFormElement.elements.collaborator.value;
+        const nextCode=codeFormElement.elements.code.value.trim().toUpperCase(),previous=codeFor(id);
+        if(!id||!/^[A-Z][1-9][0-9]*$/.test(nextCode)||nextCode.length>12)return;
+        if(previous===nextCode){toast('Este já é o código da colaboradora.');return}
+        const name=workers().find(person=>person.id===id)?.full_name||'colaboradora';
+        if(previous&&!confirm('Corrigir o código de '+name+' de '+previous+' para '+nextCode+'? Nenhum lote será criado.'))return;
+        const button=event.submitter;button.disabled=true;
+        const draft={collaborator:form.elements.collaborator.value,manufactured:form.elements.manufactured.value,count:form.elements.count.value};
+        try{
+          const saved=await rpc('assign_collaborator_label_code',{p_collaborator_id:id,p_code:nextCode,p_expected_code:previous||null});
+          state.codes=[...state.codes.filter(item=>item.collaborator_id!==id),{collaborator_id:id,code:saved}];
+          if(S.view==='label-lots'){
+            drawPage(page);
+            const restored=page.querySelector('#labelLotForm');
+            for(const [key,value] of Object.entries(draft))restored.elements[key].value=value;
+            restored.elements.collaborator.onchange();
+          }
+          toast(previous?'Código corrigido de '+previous+' para '+saved+'.':'Código da colaboradora cadastrado.');
+        }catch(error){alert(error.message);button.disabled=false}
+      };
+    }
     const rows=page.querySelector('#labelLotRows');
     const bindRows=()=>rows.querySelectorAll('[data-lot-id]').forEach(button=>button.onclick=()=>openLot(button.dataset.lotId));
     bindRows();
