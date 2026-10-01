@@ -1,4 +1,4 @@
-import {requestBody,parseProposals,consultedSources,researchEvidence} from './validation.mjs';
+import {requestBody,partitionProposals,consultedSources,researchEvidence} from './validation.mjs';
 import {providerFailure} from './provider.mjs';
 
 export const RESEARCH_CHANNELS=[
@@ -25,11 +25,14 @@ export async function researchChannels(from,to,allowedDomains,requestProvider){
       const data=await response.json();
       evidence=researchEvidence(data,domains);
       for(const key of Object.keys(usage))if(Number.isSafeInteger(data.usage?.[key])&&data.usage[key]>=0)usage[key]=data.usage[key];
-      const events=parseProposals(data,domains,from,to);
-      if(events.length>6)throw new Error('invalid_response');
-      if(events.some(e=>e.channel!==spec.channel))throw new Error('wrong_channel');
+      const {events,rejections}=partitionProposals(data,domains,from,to,spec.channel);
+      const rejection_reasons={};
+      for(const item of rejections)rejection_reasons[item.reason]=(rejection_reasons[item.reason]||0)+1;
+      evidence={...evidence,validation_rejections:rejections};
+      const validation={rejected_count:rejections.length,rejection_reasons};
+      if(rejections.length&&!events.length)return {channel:spec.channel,status:'failed',error_code:rejections[0].code,events:[],evidence,...validation,...usage};
       if(!consultedSources(data,domains).size)throw new Error('no_consulted_sources');
-      return {channel:spec.channel,status:'completed',events,evidence,...usage};
+      return {channel:spec.channel,status:rejections.length?'partial':'completed',error_code:rejections[0]?.code,events,evidence,...validation,...usage};
     }catch(error){return {channel:spec.channel,status:'failed',error_code:safeError(error),events:[],evidence,...usage};}
   }));
 }

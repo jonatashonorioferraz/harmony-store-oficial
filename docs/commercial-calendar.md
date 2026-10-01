@@ -205,3 +205,23 @@ sourceUrl now removes ONLY one exact utm_source=openai marker before comparison.
 Other query parameters and ambiguous duplicate attribution parameters remain intact.
 Real public URLs from all three channels are regression fixtures; those offline tests
 perform no provider calls. Historical failed runs and their reservations are preserved.
+
+## Per-proposal processing and honest availability (2026-10-01)
+
+The latest live attempt reached the provider in all channels. Shopee and Mercado
+Livre then failed date validation; SHEIN candidates failed the source allowlist.
+The original implementation aborted an entire channel on its first invalid item.
+This update validates up to six candidates separately, keeps only valid proposals,
+and persists bounded rejection counts/reasons. Mixed output is partial, all rejected
+output remains failed, and missing official sources can never become a successful zero.
+Historical attempts are not reclassified and dates/years are never silently rewritten.
+
+The request now constrains date shape and channel and explicitly allows zero proposals,
+excludes old editions/product pages, and requires future dates and exact official URLs.
+This improves guidance, not a guarantee of model correctness. Runtime and SQL validation
+remain mandatory; proposals remain pending until human review.
+
+The UI separates IA habilitada from the last run outcome, explains validation failures,
+and displays partial accepted/rejected counts without marking degraded results green.
+The migration replaces only the service-only finish RPC, with the same grants and budget.
+No extra research, model change, retry, cron change, or shared-key change is included.

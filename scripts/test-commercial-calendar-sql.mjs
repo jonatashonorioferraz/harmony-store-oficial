@@ -12,6 +12,7 @@ const adminId='11111111-1111-4111-8111-111111111111',workerId='22222222-2222-422
 const migration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001013000_commercial_calendar.sql'),'utf8');
 const coverageMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001123000_commercial_calendar_marketplaces.sql'),'utf8');
 const validationMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001140000_commercial_calendar_validation.sql'),'utf8');
+const processingMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001160000_commercial_calendar_processing.sql'),'utf8');
 let passed=0;
 const check=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const call=async(sql,args=[])=>{const r=await db.query(sql,args);return r.rows[0]?.result};
@@ -35,7 +36,7 @@ try{
       ('33333333-3333-4333-8333-333333333333','admin','inactive','Admin Inativo');
   `);
   await check('migration applies twice without enabling paid research',async()=>{
-    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);await db.exec(validationMigration);await db.exec(validationMigration);
+    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);await db.exec(validationMigration);await db.exec(validationMigration);await db.exec(processingMigration);await db.exec(processingMigration);
     const s=await call('select to_jsonb(s) result from public.commercial_calendar_settings s');
     assert.equal(s.enabled,false);assert.equal(s.pricing_approved,false);assert.equal(s.monthly_budget_cents,3000);
   });
@@ -155,6 +156,30 @@ try{
   });
   await check('complete coverage records independent empty outcomes',async()=>{
     await freshRun();assert.equal((await finishCoverage(emptyResults())).status,'completed');
+  });
+  await check('valid proposals survive partial validation with rejection reasons and usage',async()=>{
+    await freshRun();const results=emptyResults();
+    results[0]={channel:'Shopee',status:'partial',events:[{fingerprint:'d'.repeat(64),title:'Proposta valida de teste',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br/m/test',source_excerpt:'Anuncio de teste com data completa da edicao.',source_published_at:day}],rejected_count:1,rejection_reasons:{before_window:1},input_tokens:1000,output_tokens:100};
+    results[2]={channel:'SHEIN',status:'failed',events:[],error_code:'unverified_source',rejected_count:1,rejection_reasons:{source_not_allowed:1},input_tokens:500,output_tokens:50};
+    const result=await finishCoverage(results);assert.equal(result.status,'partial');assert.equal(result.proposals,1);
+    const saved=await call('select to_jsonb(r) result from public.commercial_calendar_runs r');
+    assert.equal(saved.channel_results[0].rejected_count,1);assert.equal(saved.channel_results[0].rejection_reasons.before_window,1);
+    assert.equal(saved.input_tokens,1500);assert.equal(saved.output_tokens,150);
+    assert.equal((await call('select to_jsonb(e) result from public.commercial_calendar_events e')).status,'pending');
+  });
+  await check('all rejected candidates remain failed rather than an empty success',async()=>{
+    await freshRun();
+    const result=await finishCoverage(channels.map(channel=>({channel,status:'failed',events:[],error_code:'invalid_date',rejected_count:2,rejection_reasons:{before_window:1,date_format:1}})));
+    assert.equal(result.status,'failed');assert.equal(result.proposals,0);
+  });
+  await check('partial and rejection summaries cannot contradict their accepted payload',async()=>{
+    await freshRun();const results=emptyResults();
+    results[0]={channel:'Shopee',status:'partial',events:[],rejected_count:1,rejection_reasons:{before_window:1}};
+    await assert.rejects(()=>finishCoverage(results),/Resumo de validacao/);
+    results[0]={channel:'Shopee',status:'failed',events:[],rejected_count:2,rejection_reasons:{before_window:1}};
+    await assert.rejects(()=>finishCoverage(results),/Resumo de validacao/);
+    results[0]={channel:'Shopee',status:'failed',events:[],rejected_count:1,rejection_reasons:{secret_unknown:1}};
+    await assert.rejects(()=>finishCoverage(results),/Motivo de descarte/);
   });
   await check('cross-platform evidence is rejected in the database too',async()=>{
     await freshRun();const results=emptyResults();
