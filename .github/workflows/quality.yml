@@ -33,6 +33,12 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
       - name: Confirmar fontes oficiais sincronizadas antes do build
         run: npm run verify:mirrors
+      - name: Validar SQL do calendario em banco isolado
+        env:
+          PGLITE_ROOT: ${{ runner.temp }}/harmony-calendar-sql
+        run: |
+          npm install --prefix "$PGLITE_ROOT" --no-save --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.3.14
+          node scripts/test-commercial-calendar-sql.mjs
       - run: npm test
       - name: Verificar qualidade estática do código
         run: npm run lint

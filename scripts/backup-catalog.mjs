@@ -1,6 +1,8 @@
 // Shared contract audited against public metadata on 2026-10-01. No production data.
-export const CATALOG_VERSION = 'harmony-public-2026-10-01-v1';
-export const MIGRATIONS_SHA256 = 'fb15e1d6429c506ec9b90df5580976960b6913e667c85479f9b6154581a64f3c';
+// Reviewed 2026-10-08: source_evidence JSONB adds no keys, grants, triggers or tables.
+// All retained event fields, including source evidence, remain in encrypted capture.
+export const CATALOG_VERSION = 'harmony-public-2026-10-08-v2';
+export const MIGRATIONS_SHA256 = '13202ce5480433c724f0475d4617b33f7d5d8ca2877111fa720336beec763599';
 export const TABLE_CATALOG = [
   {
     "name": "admin_agenda_ai_runs",

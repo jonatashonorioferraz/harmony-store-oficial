@@ -13,6 +13,8 @@ const migration=await readFile(resolve(import.meta.dirname,'../supabase/migratio
 const coverageMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001123000_commercial_calendar_marketplaces.sql'),'utf8');
 const validationMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001140000_commercial_calendar_validation.sql'),'utf8');
 const processingMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261001160000_commercial_calendar_processing.sql'),'utf8');
+const evidenceMigration=await readFile(resolve(import.meta.dirname,'../supabase/migrations/20261008174444_commercial_calendar_source_evidence.sql'),'utf8');
+const proof=()=>({version:1,kind:'campaign',document_sha256:'a'.repeat(64),checked_at:new Date().toISOString()});
 let passed=0;
 const check=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const call=async(sql,args=[])=>{const r=await db.query(sql,args);return r.rows[0]?.result};
@@ -36,7 +38,7 @@ try{
       ('33333333-3333-4333-8333-333333333333','admin','inactive','Admin Inativo');
   `);
   await check('migration applies twice without enabling paid research',async()=>{
-    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);await db.exec(validationMigration);await db.exec(validationMigration);await db.exec(processingMigration);await db.exec(processingMigration);
+    await db.exec(migration);await db.exec(migration);await db.exec(coverageMigration);await db.exec(coverageMigration);await db.exec(validationMigration);await db.exec(validationMigration);await db.exec(processingMigration);await db.exec(processingMigration);await db.exec(evidenceMigration);await db.exec(evidenceMigration);
     const s=await call('select to_jsonb(s) result from public.commercial_calendar_settings s');
     assert.equal(s.enabled,false);assert.equal(s.pricing_approved,false);assert.equal(s.monthly_budget_cents,3000);
   });
@@ -80,7 +82,7 @@ try{
   });
   const finish=(events,error=null)=>call('select public.finish_commercial_calendar_sync($1,$2::jsonb,$3,null,null) result',[run.run_id,JSON.stringify(events),error]);
   await check('untrusted sources cannot be ingested',async()=>{
-    event={fingerprint:'a'.repeat(64),title:'Campanha futura',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br.evil.test/offer',source_excerpt:'Publicacao com data informada para a edicao atual.',source_published_at:day};
+    event={fingerprint:'a'.repeat(64),title:'Campanha futura',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br.evil.test/offer',source_excerpt:'Publicacao com data informada para a edicao atual.',source_published_at:day,source_evidence:proof()};
     await assert.rejects(()=>finish([event]),/Fonte nao autorizada/);
   });
   await check('ingestion only creates pending proposals and a completed ledger entry',async()=>{
@@ -121,6 +123,9 @@ try{
   const channels=['Shopee','Mercado Livre','SHEIN'];
   const emptyResults=()=>channels.map(channel=>({channel,status:'completed',events:[]}));
   async function freshRun(){
+    // In-memory fixtures only: remove child authorizations before their runs.
+    await db.exec('reset role');
+    await db.query('delete from public.commercial_calendar_validation_authorizations');
     await identity('service_role');
     await db.query('delete from public.commercial_calendar_events');
     await db.query('delete from public.commercial_calendar_runs');
@@ -142,7 +147,7 @@ try{
   await check('partial channel failure preserves SHEIN proposal and one daily reservation',async()=>{
     const results=emptyResults();
     results[0]={channel:'Shopee',status:'failed',error_code:'provider_timeout',events:[]};
-    results[2].events=[{fingerprint:'b'.repeat(64),title:'Campanha SHEIN teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://seller-br.shein.com/oficial',source_excerpt:'Anuncio de teste com data completa para esta edicao.',source_published_at:day}];
+    results[2].events=[{fingerprint:'b'.repeat(64),title:'Campanha SHEIN teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://seller-br.shein.com/oficial',source_excerpt:'Anuncio de teste com data completa para esta edicao.',source_published_at:day,source_evidence:proof()}];
     const result=await finishCoverage(results);assert.equal(result.status,'partial');assert.equal(result.proposals,1);
     const saved=await call('select to_jsonb(r) result from public.commercial_calendar_runs r');
     assert.equal(saved.reserved_cents,100);assert.equal(saved.channel_results.length,3);
@@ -159,7 +164,7 @@ try{
   });
   await check('valid proposals survive partial validation with rejection reasons and usage',async()=>{
     await freshRun();const results=emptyResults();
-    results[0]={channel:'Shopee',status:'partial',events:[{fingerprint:'d'.repeat(64),title:'Proposta valida de teste',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br/m/test',source_excerpt:'Anuncio de teste com data completa da edicao.',source_published_at:day}],rejected_count:1,rejection_reasons:{before_window:1},input_tokens:1000,output_tokens:100};
+    results[0]={channel:'Shopee',status:'partial',events:[{fingerprint:'d'.repeat(64),title:'Proposta valida de teste',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br/m/test',source_excerpt:'Anuncio de teste com data completa da edicao.',source_published_at:day,source_evidence:proof()}],rejected_count:1,rejection_reasons:{before_window:1},input_tokens:1000,output_tokens:100};
     results[2]={channel:'SHEIN',status:'failed',events:[],error_code:'unverified_source',rejected_count:1,rejection_reasons:{source_not_allowed:1},input_tokens:500,output_tokens:50};
     const result=await finishCoverage(results);assert.equal(result.status,'partial');assert.equal(result.proposals,1);
     const saved=await call('select to_jsonb(r) result from public.commercial_calendar_runs r');
@@ -183,7 +188,7 @@ try{
   });
   await check('cross-platform evidence is rejected in the database too',async()=>{
     await freshRun();const results=emptyResults();
-    results[2].events=[{fingerprint:'c'.repeat(64),title:'Campanha teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://shopee.com.br/oficial',source_excerpt:'Anuncio de teste para esta edicao.',source_published_at:day}];
+    results[2].events=[{fingerprint:'c'.repeat(64),title:'Campanha teste',start_date:day,end_date:day,channel:'SHEIN',source_url:'https://shopee.com.br/oficial',source_excerpt:'Anuncio de teste para esta edicao.',source_published_at:day,source_evidence:proof()}];
     await assert.rejects(()=>finishCoverage(results),/Fonte nao corresponde/);
   });
 
@@ -214,5 +219,45 @@ try{
     await db.query('update public.commercial_calendar_settings set monthly_budget_cents=200');
     assert.equal((await call("select public.claim_commercial_calendar_validation('66666666-6666-4666-8666-666666666666') result")).reason,'budget_blocked');
   });
+
+  await check('legacy evidence cannot be confirmed, but remains auditable and discardable',async()=>{
+    await freshRun();
+    const legacy=await call("insert into public.commercial_calendar_events(fingerprint,title,start_date,end_date,channel,source_url,source_excerpt,run_id) values($1,'Cadastro antigo',$2,$2,'SHEIN','https://seller-br.shein.com/','Texto antigo sem data comprovada.',$3) returning to_jsonb(commercial_calendar_events) result",['e'.repeat(64),day,run.run_id]);
+    await identity('authenticated',adminId);
+    await assert.rejects(()=>call("select public.review_commercial_event($1,1,'confirmed',null) result",[legacy.id]),/Evidencia da data/);
+    const rejected=await call("select public.review_commercial_event($1,1,'rejected',null) result",[legacy.id]);
+    assert.equal(rejected.status,'rejected');assert.equal(rejected.source_excerpt,legacy.source_excerpt);
+  });
+  await check('new ingestion requires server evidence, without spending or confirming automatically',async()=>{
+    await freshRun();
+    const candidate={fingerprint:'f'.repeat(64),title:'Campanha fonte',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br/m/evidence',source_excerpt:'Campanha fonte com data completa '+day+'.',source_published_at:day};
+    await assert.rejects(()=>finish([candidate]),/Evidencia da fonte/);
+    await assert.rejects(()=>finish([{...candidate,source_evidence:{...proof(),document_sha256:'bad'}}]),/Evidencia da fonte/);
+    const accepted=await finish([{...candidate,source_evidence:proof()}]);assert.equal(accepted.result_count,1);
+    const row=await call('select to_jsonb(e) result from public.commercial_calendar_events e');
+    assert.equal(row.status,'pending');assert.equal(row.source_evidence.version,1);
+  });
+  await check('legacy matches are revalidated without duplicating or erasing original wording',async()=>{
+    await freshRun();
+    const candidate={fingerprint:'1'.repeat(64),title:'Campanha original',start_date:day,end_date:day,channel:'Shopee',source_url:'https://shopee.com.br/m/evidence',source_excerpt:'Texto antigo da proposta.',source_published_at:day};
+    const old=await call("insert into public.commercial_calendar_events(fingerprint,title,start_date,end_date,channel,source_url,source_excerpt,run_id) values($1,$2,$3,$3,$4,$5,$6,$7) returning to_jsonb(commercial_calendar_events) result",[candidate.fingerprint,candidate.title,day,candidate.channel,candidate.source_url,candidate.source_excerpt,run.run_id]);
+    await finish([{...candidate,fingerprint:'2'.repeat(64),title:'Campanha com evidencia',source_excerpt:'Campanha com evidencia na data '+day+'.',source_evidence:proof()}]);
+    assert.equal(await call('select count(*)::integer result from public.commercial_calendar_events'),1);
+    const saved=await call('select to_jsonb(e) result from public.commercial_calendar_events e');
+    assert.equal(saved.id,old.id);assert.equal(saved.revision,2);assert.equal(saved.source_evidence.previous_source_excerpt,candidate.source_excerpt);
+    await identity('authenticated',adminId);
+    await assert.rejects(()=>call("select public.review_commercial_event($1,1,'confirmed',null) result",[saved.id]),/Esta proposta mudou/);
+    assert.equal((await call("select public.review_commercial_event($1,2,'confirmed',null) result",[saved.id])).status,'confirmed');
+  });
+  await check('quality rejection counts are saved by channel without a false successful zero',async()=>{
+    await freshRun();const results=emptyResults();
+    results[0]={channel:'Shopee',status:'failed',events:[],error_code:'date_evidence_missing',rejected_count:2,rejection_reasons:{date_evidence_missing:1,content_not_campaign:1}};
+    results[2]={channel:'SHEIN',status:'failed',events:[],error_code:'source_unavailable',rejected_count:1,rejection_reasons:{source_unavailable:1}};
+    const saved=await finishCoverage(results);assert.equal(saved.status,'partial');
+    const ledger=await call('select to_jsonb(r) result from public.commercial_calendar_runs r');
+    assert.equal(ledger.channel_results[0].rejection_reasons.content_not_campaign,1);
+    assert.equal(ledger.reserved_cents,100);
+  });
+
   console.log('SQL isolated: '+passed+' scenarios passed; no remote connections.');
 } finally {await db.close()}
