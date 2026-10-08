@@ -225,3 +225,43 @@ The UI separates IA habilitada from the last run outcome, explains validation fa
 and displays partial accepted/rejected counts without marking degraded results green.
 The migration replaces only the service-only finish RPC, with the same grants and budget.
 No extra research, model change, retry, cron change, or shared-key change is included.
+
+
+## Source content evidence (2026-10-08)
+
+Official URL provenance alone is no longer accepted as proof of a campaign date.
+The AI must provide the literal campaign name, a continuous public-source quotation
+(maximum 420 characters), the full year and the exact event or enrollment period.
+The server checks that quotation against fetched public text, including both
+period endpoints. Publication/update/copyright dates are not event dates.
+Educational material, ad tutorials, generic seller registration and root portals
+are excluded, even when the model describes them as campaigns.
+
+Only an explicit set of official HTTPS hosts is fetched, without cookies or
+authorization, with an 8-second timeout, a 384-KiB streamed cap and at most one
+same-origin redirect. Scripts, metadata and navigation do not supply evidence.
+Each source URL is read once per run (maximum 18 proposals across three channels).
+Blocked, login-only, oversized or unsupported pages fail closed, not as proof that
+no campaigns exist. JavaScript-only/PDF announcements may require human research.
+No extra AI calls, model change, automatic retries, schedule change or budget
+increase is introduced. The existing THREE bounded daily requests are unchanged.
+
+Accepted proposals retain a source-text checksum, check timestamp and event kind;
+they still require administrative review. Identity excludes generated titles,
+summaries and known tracking parameters, while retaining edition parameters,
+channel, period and event kind. The database also matches legacy source/period
+identities, preserving old wording on revalidation. Confirmed or rejected records
+are never silently rewritten or reopened.
+
+The additive evidence migration does not delete, approve or reject old proposals.
+Unverified legacy pending proposals are separated in the UI and cannot be confirmed
+until evidence is revalidated. Discard remains an explicit administrative action;
+independent internal plans and previously reviewed announcements remain available.
+All service-only grants, administrator checks, optimistic revisions and reservations
+remain intact. Run the isolated SQL harness and the commercial-calendar Node tests;
+neither contacts production or performs paid research.
+
+Deployment requires this migration, the sync-commercial-calendar Edge Function
+(including evidence.mjs), and matching frontend/PWA assets. Publishing the frontend
+alone does not install the server filter. The next scheduled run, not unit tests,
+establishes real marketplace coverage after deployment.

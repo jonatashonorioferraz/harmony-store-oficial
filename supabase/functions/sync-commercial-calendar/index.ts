@@ -42,7 +42,7 @@ Deno.serve(async request=>{
     const results=await researchChannels(from,to,domains,body=>fetch("https://api.openai.com/v1/responses",{
       method:"POST",headers:{Authorization:"Bearer "+openai,"Content-Type":"application/json"},
       body:JSON.stringify(body),signal:AbortSignal.timeout(65000)
-    }));
+    }),fetch);
     for(const result of results){
       const events=[];
       for(const proposal of result.events){

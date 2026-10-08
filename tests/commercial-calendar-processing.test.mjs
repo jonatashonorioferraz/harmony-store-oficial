@@ -5,12 +5,13 @@ import vm from 'node:vm';
 import {partitionProposals,requestBody} from '../supabase/functions/sync-commercial-calendar/validation.mjs';
 import {researchChannels} from '../supabase/functions/sync-commercial-calendar/research.mjs';
 const from='2026-10-01',to='2027-10-06',url='https://shopee.com.br/m/black-friday';
-const event={title:'Campanha de teste',start_date:'2026-11-27',end_date:'2026-11-27',channel:'Shopee',source_url:url,source_excerpt:'Anuncio de teste da edicao de 27 de novembro de 2026.',source_published_at:from};
+const event={event_kind:'campaign',title:'Campanha de teste',start_date:'2026-11-27',end_date:'2026-11-27',channel:'Shopee',source_url:url,source_excerpt:'Campanha de teste acontece em 27 de novembro de 2026.',source_published_at:from};
 const response=events=>({status:'completed',usage:{input_tokens:900,output_tokens:100},output:[
   {type:'web_search_call',status:'completed',action:{sources:[{url:url+'?utm_source=openai'}]}},
   {type:'message',content:[{type:'output_text',text:JSON.stringify({events})}]}
 ]});
 const split=events=>partitionProposals(response(events),['shopee.com.br'],from,to,'Shopee');
+const sourceFixture=async()=>new Response('<main>'+event.source_excerpt+'</main>',{headers:{'content-type':'text/html'}});
 test('one past proposal does not discard a valid future proposal or change its year',()=>{
   const out=split([{...event,start_date:'2025-11-28',end_date:'2025-11-28'},event]);
   assert.equal(out.events.length,1);assert.equal(out.events[0].start_date,'2026-11-27');
@@ -34,7 +35,7 @@ test('duplicates collapse without converting malformed envelopes into success',(
   assert.throws(()=>partitionProposals({...response([]),status:'incomplete'},['shopee.com.br'],from,to,'Shopee'),/incomplete_response/);
 });
 test('mixed candidates preserve partial status, counts and failure details',async()=>{
-  const out=await researchChannels(from,to,['shopee.com.br'],async()=>({ok:true,json:async()=>response([event,{...event,start_date:'2025-11-28',end_date:'2025-11-28'}])}));
+  const out=await researchChannels(from,to,['shopee.com.br'],async()=>({ok:true,json:async()=>response([event,{...event,start_date:'2025-11-28',end_date:'2025-11-28'}])}),sourceFixture);
   assert.equal(out[0].status,'partial');assert.equal(out[0].events.length,1);assert.equal(out[0].rejected_count,1);
   assert.deepEqual(out[0].rejection_reasons,{before_window:1});
 });
