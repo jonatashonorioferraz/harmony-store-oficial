@@ -80,10 +80,11 @@ function run(script, args, env = {}) {
 
 test('catalog covers actual schema and new business tables, with one explicit ephemeral exclusion', () => {
   assertCatalogMatchesMigrations(migrations);
-  assert.equal(TABLE_CATALOG.length, 86);
-  assert.equal(CAPTURE_TABLES.length, 85);
+  const declaredTables = new Set(migrations.flatMap(file => [...file.content.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?public\.([a-z_0-9]+)/gi)].map(match => match[1])));
+  assert.deepEqual(TABLE_CATALOG.map(table => table.name).sort(), [...declaredTables].sort());
+  assert.equal(CAPTURE_TABLES.length + EXCLUDED_TABLES.length, TABLE_CATALOG.length);
   assert.deepEqual(EXCLUDED_TABLES.map(table => table.name), ['commercial_calendar_validation_authorizations']);
-  for (const name of ['label_lots', 'label_lot_events', 'collaborator_label_codes', 'collaborator_label_code_events', 'commercial_calendar_events', 'commercial_calendar_plans', 'commercial_calendar_runs', 'commercial_calendar_audit', 'shipping_inventory_request_items', 'internal_supply_request_item_fulfillments', 'system_events', 'system_backup_runs']) {
+  for (const name of ['label_lots', 'label_lot_events', 'collaborator_label_codes', 'collaborator_label_code_events', 'commercial_calendar_events', 'commercial_calendar_plans', 'commercial_calendar_runs', 'commercial_calendar_audit', 'shipping_inventory_request_items', 'internal_supply_request_item_fulfillments', 'system_events', 'system_backup_runs', 'financial_entities', 'financial_permissions', 'financial_contracts', 'contract_schedule_versions', 'contract_installments', 'contract_payments', 'contract_payment_allocations', 'contract_payment_reversals', 'contract_audit_events']) {
     assert.ok(CAPTURE_TABLES.some(table => table.name === name), name);
   }
   assert.ok(CAPTURE_TABLES.every(table => table.serviceSelect && table.primaryKey.length));
@@ -257,7 +258,8 @@ test('exporter consumes one catalog and paginates through server limits with det
   assert.equal(result.rows, 2);
   assert.equal(result.recovery_ready, false);
   assert.ok(!requests.some(item => item.path.includes('validation_authorizations')));
-  assert.equal(new Set(requests.filter(item => item.path.startsWith('/rest/v1/')).map(item => item.path)).size, 85);
+  const exportedPaths = [...new Set(requests.filter(item => item.path.startsWith('/rest/v1/')).map(item => item.path))].sort();
+  assert.deepEqual(exportedPaths, CAPTURE_TABLES.map(table => '/rest/v1/' + table.name).sort());
   assert.deepEqual(requests.filter(item => item.path.endsWith('/system_backup_runs')).map(item => item.range), ['0-999', '1-1000']);
   for (const table of CAPTURE_TABLES) assert.equal(requests.find(item => item.path === '/rest/v1/' + table.name).order, table.primaryKey.map(key => key + '.asc').join(','));
   let calls = 0;
