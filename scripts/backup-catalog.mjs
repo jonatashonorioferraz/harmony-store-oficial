@@ -2,9 +2,190 @@
 // Shared contract audited against public metadata on 2026-10-01. No production data.
 // Reviewed 2026-10-08: source_evidence JSONB adds no keys, grants, triggers or tables.
 // All retained event fields, including source evidence, remain in encrypted capture.
-export const CATALOG_VERSION = 'harmony-public-2026-10-09-v1';
-export const MIGRATIONS_SHA256 = '5a66f0f2b614aa47a246597ee7d1f7272c1e732b3bd8ef89be2aac71abde9600';
+export const CATALOG_VERSION = 'harmony-public-2026-10-09-v2';
+export const MIGRATIONS_SHA256 = 'bff3f796f0103a682c72b69a37f90bccb312f6b1f1bf80a5b18cd8b8592ed519';
 export const TABLE_CATALOG = [
+{
+  "name": "financial_ai_settings",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture retained financial AI originals metadata, budget reservations, results and human review links. Originals are private Storage objects; long-term recovery is not certified."
+},
+{
+  "name": "financial_ai_intakes",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "contract_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "financial_contracts",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "entity_id"
+      ]
+    },
+    {
+      "columns": [
+        "created_by"
+      ],
+      "schema": "public",
+      "table": "profiles",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "financial_entities",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [
+    "financial_ai_intakes_immutable",
+    "financial_ai_intakes_no_truncate"
+  ],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture retained financial AI originals metadata, budget reservations, results and human review links. Originals are private Storage objects; long-term recovery is not certified."
+},
+{
+  "name": "financial_ai_runs",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "created_by"
+      ],
+      "schema": "public",
+      "table": "profiles",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "intake_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "financial_ai_intakes",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "entity_id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [
+    "financial_ai_runs_no_delete",
+    "financial_ai_runs_no_truncate"
+  ],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture retained financial AI originals metadata, budget reservations, results and human review links. Originals are private Storage objects; long-term recovery is not certified."
+},
+{
+  "name": "financial_ai_links",
+  "primaryKey": [
+    "intake_id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "confirmed_by"
+      ],
+      "schema": "public",
+      "table": "profiles",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "contract_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "financial_contracts",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "entity_id"
+      ]
+    },
+    {
+      "columns": [
+        "payment_id",
+        "contract_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "contract_payments",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "contract_id",
+        "entity_id"
+      ]
+    },
+    {
+      "columns": [
+        "run_id",
+        "intake_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "financial_ai_runs",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "intake_id",
+        "entity_id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [
+    "financial_ai_links_immutable",
+    "financial_ai_links_no_truncate"
+  ],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture retained financial AI originals metadata, budget reservations, results and human review links. Originals are private Storage objects; long-term recovery is not certified."
+},
 {
   "name": "contract_documents",
   "primaryKey": [

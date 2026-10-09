@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.106] - 2026-10-09
+
+- Originais privados preservados antes da IA, com retomada de leituras e conferencia humana obrigatoria.
+- Sugestoes de contratos e comprovantes, sem baixa automatica e sem confundir boletos ou agendamentos com pagamento.
+- Orcamento preventivo proprio de ate R$ 30/mes; falhas de custo incerto preservam reserva, sem repeticao paga automatica.
+- Isolamento por empresa, historico imutavel de revisao e testes sinteticos, sem registros financeiros reais.
+
 ## [v25.105] - 2026-10-09
 
 - Central administrativa de emprestimos e contratos, com empresas e acessos separados.
