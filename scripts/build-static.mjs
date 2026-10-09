@@ -22,6 +22,8 @@ for (const filename of [
   "commercial-calendar.css",
   "financial-contracts-core.js",
   "financial-contracts.js",
+  "financial-contracts-ai.js",
+  "financial-contracts-ai.css",
   "financial-contracts.css",
   "help-center.js",
   "harmony-icons.css",
