@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.105] - 2026-10-09
+
+- Central administrativa de emprestimos e contratos, com empresas e acessos separados.
+- Cronograma original, pagamentos manuais parciais, estornos e auditoria protegida.
+- Contratos e comprovantes privados, hash de integridade no servidor e resumo PDF.
+- Sem transferencias bancarias, renegociacao automatica ou extracao por IA nesta versao.
+
+
 ## [v25.104] - 2026-10-01
 
 ### Prévia do resumo da manhã e preparação da comunicação

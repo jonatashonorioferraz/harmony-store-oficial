@@ -1,9 +1,67 @@
+// Reviewed 2026-10-08: nine financial tables, composite FKs, immutable ledger and SELECT-only backup grants.
 // Shared contract audited against public metadata on 2026-10-01. No production data.
 // Reviewed 2026-10-08: source_evidence JSONB adds no keys, grants, triggers or tables.
 // All retained event fields, including source evidence, remain in encrypted capture.
-export const CATALOG_VERSION = 'harmony-public-2026-10-08-v2';
-export const MIGRATIONS_SHA256 = '13202ce5480433c724f0475d4617b33f7d5d8ca2877111fa720336beec763599';
+export const CATALOG_VERSION = 'harmony-public-2026-10-09-v1';
+export const MIGRATIONS_SHA256 = '5a66f0f2b614aa47a246597ee7d1f7272c1e732b3bd8ef89be2aac71abde9600';
 export const TABLE_CATALOG = [
+{
+  "name": "contract_documents",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "created_by"
+      ],
+      "schema": "public",
+      "table": "profiles",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "contract_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "financial_contracts",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "entity_id"
+      ]
+    },
+    {
+      "columns": [
+        "payment_id",
+        "contract_id",
+        "entity_id"
+      ],
+      "schema": "public",
+      "table": "contract_payments",
+      "deferrable": false,
+      "targetColumns": [
+        "id",
+        "contract_id",
+        "entity_id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [
+    "contract_documents_immutable",
+    "contract_documents_no_truncate"
+  ],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture immutable private document metadata; originals belong to the private financial-contract-documents bucket. Long-term recovery is not certified."
+},
   {
     "name": "admin_agenda_ai_runs",
     "primaryKey": [
@@ -3699,6 +3757,380 @@ export const TABLE_CATALOG = [
     "capture": true,
     "classification": "telemetry",
     "retention": "Capture all currently retained rows; this change does not purge production telemetry."
+  },
+  {
+    "name": "financial_entities",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "created_by"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "financial_permissions",
+    "primaryKey": [
+      "entity_id",
+      "profile_id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "financial_entities",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "profile_id"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "granted_by"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "financial_contracts",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "financial_entities",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "created_by"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "contract_schedule_versions",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "created_by"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "financial_contracts",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "entity_id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [
+      "contract_schedule_versions_immutable",
+      "contract_schedule_versions_no_truncate"
+    ],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "contract_installments",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "schedule_id",
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "contract_schedule_versions",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "contract_id",
+          "entity_id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [
+      "contract_installments_immutable",
+      "contract_installments_no_truncate"
+    ],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "contract_payments",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "created_by"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "financial_contracts",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "entity_id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [
+      "contract_payments_immutable",
+      "contract_payments_no_truncate"
+    ],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "contract_payment_allocations",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "payment_id",
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "contract_payments",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "contract_id",
+          "entity_id"
+        ]
+      },
+      {
+        "columns": [
+          "installment_id",
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "contract_installments",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "contract_id",
+          "entity_id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [
+      "contract_payment_allocations_immutable",
+      "contract_payment_allocations_no_truncate"
+    ],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "contract_payment_reversals",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "created_by"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "payment_id",
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "contract_payments",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "contract_id",
+          "entity_id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [
+      "contract_payment_reversals_immutable",
+      "contract_payment_reversals_no_truncate"
+    ],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
+  },
+  {
+    "name": "contract_audit_events",
+    "primaryKey": [
+      "id"
+    ],
+    "foreignKeys": [
+      {
+        "columns": [
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "financial_entities",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "actor_id"
+        ],
+        "schema": "public",
+        "table": "profiles",
+        "deferrable": false,
+        "targetColumns": [
+          "id"
+        ]
+      },
+      {
+        "columns": [
+          "contract_id",
+          "entity_id"
+        ],
+        "schema": "public",
+        "table": "financial_contracts",
+        "deferrable": false,
+        "targetColumns": [
+          "id",
+          "entity_id"
+        ]
+      }
+    ],
+    "generated": [],
+    "triggers": [
+      "contract_audit_events_immutable",
+      "contract_audit_events_no_truncate"
+    ],
+    "serviceSelect": true,
+    "serviceInsert": false,
+    "capture": true,
+    "classification": "business",
+    "retention": "Capture all retained financial rows, including reversals and audit; encrypted artifact retention is currently 30 days. Long-term recovery is not yet certified."
   }
 ];
 export const CAPTURE_TABLES = TABLE_CATALOG.filter(table => table.capture);
