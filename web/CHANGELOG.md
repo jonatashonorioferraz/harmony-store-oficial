@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.107] - 2026-10-09
+
+- Tema exclusivo dos ADMs: azul profundo, pink e detalhes dourados, com tipografia Sora local.
+- Foco na solicitacao mais antiga, resumo por etapas reais e atalhos do atelie.
+- Layout responsivo; fila livre, colaboradoras, recebimento e documentos impressos preservados.
+- Sem alteracoes de banco, permissoes, estoque ou pesquisas de IA.
+
 ## [v25.106] - 2026-10-09
 
 - Originais privados preservados antes da IA, com retomada de leituras e conferencia humana obrigatoria.
