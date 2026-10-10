@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.109] - 2026-10-09
+
+- Restaurado, a pedido do usuario, o layout anterior as duas atualizacoes visuais dos ADMs.
+- Removidas apenas as camadas de apresentacao das versoes 25.107 e 25.108; funcionalidades, permissoes e dados preservados.
+- Cache avancado para propagar a restauracao sem retroceder versoes dos demais recursos.
+
+
 ## [v25.108] - 2026-10-09
 
 - Reconstrucao da interface exclusiva dos ADMs com a composicao aprovada: marca lateral, barra de acoes, tres indicadores sobrepostos, fila tabular e calendario horizontal.
