@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.108] - 2026-10-09
+
+- Reconstrucao da interface exclusiva dos ADMs com a composicao aprovada: marca lateral, barra de acoes, tres indicadores sobrepostos, fila tabular e calendario horizontal.
+- Pesquisa de modulos, personalizacao da home na sessao e atalhos conectados aos fluxos existentes.
+- Indicadores derivados de dados existentes; ordens e confirmacao de recebimento nao representam conclusao fisica da producao.
+- Preservados os modulos adicionais, permissoes, interface das colaboradoras e documentos de impressao.
+
+
 ## [v25.107] - 2026-10-09
 
 - Tema exclusivo dos ADMs: azul profundo, pink e detalhes dourados, com tipografia Sora local.

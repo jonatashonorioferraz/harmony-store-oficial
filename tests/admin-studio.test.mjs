@@ -58,7 +58,7 @@ test('every style selector is ADM-scoped and screen-only; print and all other ro
 });
 test('home additions are read-only, use actual queue states and keep existing navigation and free choice',()=>{
   assert.doesNotMatch(source,/\bfetch\s*\(|apiFetch|restAll|localStorage|sessionStorage|setInterval|access_token/);
-  assert.match(source,/state\.items/);assert.match(source,/!state\.loading&&!state\.error/);assert.match(source,/focusOldest/);assert.match(source,/data-hub-filter="all"/);assert.match(source,/sort\.dispatchEvent/);assert.match(source,/Dados ainda n&atilde;o confirmados/);assert.match(source,/n&atilde;o de unidades produzidas/);
+  assert.match(source,/state\.items/);assert.match(source,/!state\.loading&&!state\.error/);assert.match(source,/focusOldest/);assert.match(source,/data-hub-filter="all"/);assert.match(source,/sort\.dispatchEvent/);assert.match(source,/Dados ainda n&atilde;o confirmados/);assert.match(source,/Confirma&ccedil;&atilde;o n&atilde;o significa produ&ccedil;&atilde;o conclu&iacute;da/);
 });
 test('new assets are mirrored, offline-ready and loaded after existing UI modules without version regressions',async()=>{
   const html=await read('index.html'),worker=await read('service-worker.js');
