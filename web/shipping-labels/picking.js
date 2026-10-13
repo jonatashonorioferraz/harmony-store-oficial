@@ -112,7 +112,9 @@
      :p.description;
     const width=W-2*MARGIN,description=wrap(title,bold,size,width);
     const variantSize=p.variation?Math.min(11,size-1):8.5,variantFont=p.variation?bold:regular;
-    const variant=wrap('COR / VAR.: '+(p.variation||'Não informada na NF; conferir no pedido'),variantFont,variantSize,width);
+    const variantText=match&&match[1].trim()===p.variation
+     ?match[0].trim():'COR / VAR.: '+(p.variation||'Não informada na NF; conferir no pedido');
+    const variant=wrap(variantText,variantFont,variantSize,width);
     const sku=wrap('CÓDIGO: '+p.code,regular,7,width);
     const quantity=p.quantity+' '+p.unit.toUpperCase();
     const quantitySize=Math.min(size+3,16,110/bold.widthOfTextAtSize(quantity,1));

@@ -140,6 +140,18 @@ test('a ten-item order stays together before the next shipping label and page re
   assert.equal((await PDFLib.PDFDocument.load(result.bytes)).getPageCount(),6);
 });
 
+test('moving the variation preserves whether it is color, fragrance or size', async () => {
+  for(const suffix of ['COR: AZUL','AROMA: LAVANDA','TAMANHO: GRANDE','CORES E AROMAS PADRAO: BRANCO - DOVE']){
+    const note=invoice(1),product=note.pages[0].products[0];
+    product.description='Sabonete personalizado - '+suffix;
+    product.variation=LocalPicking.variation(product.description);
+    const layout=await LocalPicking.plan([note],await PDFLib.PDFDocument.create());
+    const card=layout.layouts.get(note.key).sheets[0][0];
+    assert.equal(card.description.join(' '),'Sabonete personalizado');
+    assert.equal(card.variant.join(' '),suffix);
+  }
+});
+
 test('long descriptions use fewer items instead of tiny type, clipped text or a split item', async () => {
   const note=multiItemInvoice(4);
   note.pages[0].products[0].description=('Descrição completa com detalhes do produto. ').repeat(22).trim();
