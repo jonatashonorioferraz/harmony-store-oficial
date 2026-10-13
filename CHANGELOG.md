@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.115] - 2026-10-13
+
+- Solucoes em cada pendencia da central de etiquetas, com acao indicada e escopo explicito.
+- Substituicao local do arquivo selecionado, preservando os demais, com nova conferencia automatica e sem gerar PDF automaticamente.
+- Troca de ZIP inteiro, cancelamento, formatos, tamanho e sessao tratados sem alterar originais; nomes ambiguos exigem localizar a selecao.
+- Ficha impressa, correspondencia fiscal, consentimento para PDF parcial e processamento sem nuvem preservados.
+
+
 ## [v25.114] - 2026-10-13
 
 - Central de etiquetas: zoom e expansao da previa, sem modificar o PDF nem a ficha impressa.

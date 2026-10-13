@@ -3,6 +3,7 @@
 if(!globalThis.HarmonyConverterAccess?.allowed())return;
 const $=id=>document.getElementById(id);
 let selected=[],invoiceFiles=[],sequence=[],page=0,url=null,pdfReader=null,renderTask=null,revision=0,busy=false,disposed=false,prepared=null;
+const resolutionControls=[];
 function ensureActive(){if(disposed||!globalThis.HarmonyConverterAccess.allowed())throw Error('Conversão encerrada.');}
 function clearResult(keepReview=false){
   revision++;renderTask?.cancel();renderTask=null;
@@ -11,7 +12,7 @@ function clearResult(keepReview=false){
   $('actions').hidden=true;$('download').removeAttribute('href');$('navigation').hidden=true;
   $('preview').replaceChildren();const p=document.createElement('p');p.textContent='Sua prévia aparecerá após a conversão.';$('preview').append(p);
   $('preview-caption').textContent='';$('result-title').textContent='Sua prévia aparece aqui';
-  if(!keepReview){prepared=null;$('partial-consent').checked=false;
+  if(!keepReview){prepared=null;resolutionControls.length=0;$('partial-consent').checked=false;
     for(const id of ['review-labels','review-invoices','review-products','review-pages'])$(id).textContent='Não calculado';
     for(const id of ['resolution-summary','partial-label','partial-safety','review-summary'])$(id).textContent='';
     for(const id of ['batch-review','pairing-report','resolution-panel'])$(id).hidden=true;
@@ -21,6 +22,7 @@ function clearResult(keepReview=false){
 }
 function canGenerate(){return !!prepared&&(prepared.report.ready||prepared.report.partialReady&&$('partial-consent').checked);}
 function syncControls(){
+  for(const control of resolutionControls)control.disabled=busy;
   for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
   $('size').disabled=busy||!!invoiceFiles.length;$('paired-size').hidden=!invoiceFiles.length;
   $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. Até 4 produtos/variações por ficha, com cor quando informada e quantidade da nota. Descrições extensas podem ocupar mais espaço. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
@@ -104,14 +106,65 @@ function showReport(rows,generated=false){
 }
 function listMessages(id,messages){$(id).replaceChildren();for(const message of messages){const li=document.createElement('li');li.textContent=message;$(id).append(li);}$(id).hidden=!messages.length;}
 function showSolutions(report){
-  $('resolution-panel').hidden=report.ready;$('resolution-items').replaceChildren();
+  $('resolution-panel').hidden=report.ready;$('resolution-items').replaceChildren();resolutionControls.length=0;
   $('resolution-summary').textContent=`${report.confirmedCount} de ${report.counts.labels} etiqueta(s) com vínculo conferido · ${report.pendingCount} etiqueta(s) pendente(s) · ${report.unmatchedInvoices.length} nota(s) fora dos pedidos conferidos.`;
-  const card=(title,message,details=[])=>{const article=document.createElement('article'),h=document.createElement('h3'),p=document.createElement('p');h.textContent=title;p.textContent=message;article.append(h,p);
-    for(const text of details){const detail=document.createElement('p');detail.className='resolution-compare';detail.textContent=text;article.append(detail);}$('resolution-items').append(article);};
-  for(const item of report.items.filter(i=>!i.ready))card(`Etiqueta ${item.labelIndex+1}${item.shipmentId?' · Envio '+item.shipmentId:''}${item.invoiceNumber?' · NF '+item.invoiceNumber:''}`,item.message,[`Etiqueta: CEP ${item.labelPostcode||'não identificado'} · ${item.source}`,...(item.candidates||[]).map(n=>`Nota: NF ${n.number} · série ${n.series} · emitente ${n.issuer} · CEP ${n.postcode||'não identificado'} · ${n.source}`)]);
-  for(const p of [...report.invoiceProblems,...report.sourceProblems])card(`${p.source}${p.page?' · página '+p.page:''}`,p.message,['O documento original não foi alterado. Tente outra leitura, adicione o original da plataforma ou remova este arquivo da seleção.']);
-  for(const duplicate of report.duplicates)card('Cópia idêntica encontrada',`${duplicate.name} tem o mesmo conteúdo de ${duplicate.original}. A remoção mantém a primeira cópia e não apaga arquivos do computador.`);
-  for(const invoice of report.unmatchedInvoices.filter(n=>!report.items.some(i=>!i.ready&&i.invoiceNumber===n.invoiceNumber)))card(`NF ${invoice.invoiceNumber} · série ${invoice.series}`, 'Esta nota não tem etiqueta entre os pedidos conferidos. Adicione as etiquetas correspondentes ou deixe esta nota explicitamente pendente.',invoice.pages.map(p=>`${p.source} · página ${p.pageIndex+1}`));
+  const current=()=>!busy&&!disposed&&globalThis.HarmonyConverterAccess.allowed()&&prepared?.report===report;
+  const next=document.createElement('p');next.className='resolution-next-step';
+  next.textContent=report.duplicates.length?'Comece pelas cópias idênticas. Depois da remoção da seleção, o lote será conferido novamente.':report.uncertain?'Comece pelos arquivos sem leitura segura. Use a ação do cartão correspondente; nenhuma nota será associada por tentativa.':report.partialReady?'Você pode resolver as pendências abaixo ou escolher, ao final, gerar somente os pedidos já conferidos.':'Cada cartão mostra o próximo passo. Não é necessário editar o documento recebido da plataforma.';
+  $('resolution-items').append(next);
+  const button=(article,label,handler)=>{const control=document.createElement('button');control.type='button';control.className='secondary resolution-action';control.textContent=label;control.addEventListener('click',()=>{if(current())handler();});resolutionControls.push(control);article.append(control);return control;};
+  const card=(title,message,details=[],guidance='')=>{const article=document.createElement('article'),h=document.createElement('h3'),p=document.createElement('p');h.textContent=title;p.textContent=message;article.append(h,p);
+    if(guidance){const help=document.createElement('p');help.className='resolution-guidance';help.textContent='Como resolver: '+guidance;article.append(help);}
+    for(const text of details){const detail=document.createElement('p');detail.className='resolution-compare';detail.textContent=text;article.append(detail);}$('resolution-items').append(article);return article;};
+  const locateFiles=kind=>{const list=$(kind==='labels'?'file-list':'invoice-list');list.tabIndex=-1;list.focus?.();list.scrollIntoView?.({behavior:'smooth',block:'center'});};
+  function replacementAction(article,source,kind){
+    const files=kind==='labels'?selected:invoiceFiles;
+    const matches=files.filter(file=>file.name===source||source.startsWith(file.name+' / '));
+    if(matches.length!==1){button(article,'Localizar na seleção',()=>locateFiles(kind));return;}
+    const original=matches[0],zip=/\.zip$/i.test(original.name);
+    const explanation=document.createElement('p');explanation.className='resolution-replace-note';
+    explanation.textContent=(zip?'A troca substitui o ZIP inteiro: ': 'A troca substitui este arquivo inteiro: ')+original.name+'. Os demais arquivos permanecem. Cancelar a escolha mantém a seleção atual; os originais no computador não são apagados.';
+    article.append(explanation);
+    const input=document.createElement('input');input.type='file';input.accept=kind==='labels'?'.zip,.zpl,.txt':'.pdf,application/pdf';input.hidden=true;article.append(input);
+    const notice=document.createElement('p');notice.className='resolution-replace-status';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');article.append(notice);
+    button(article,zip?'Substituir este ZIP…':'Substituir este arquivo…',()=>{input.value='';input.click();});
+    input.addEventListener('change',()=>{
+      const replacement=input.files?.[0];input.value='';if(!replacement||!current())return;
+      const activeFiles=kind==='labels'?selected:invoiceFiles,index=activeFiles.indexOf(original);if(index<0)return;
+      if(!(kind==='labels'?/\.(zip|zpl|txt)$/i:/\.pdf$/i).test(replacement.name)){notice.textContent=kind==='labels'?'Escolha ZIP, ZPL ou TXT exportado pela plataforma. A seleção anterior foi mantida.':'Escolha o DANFE em PDF. A seleção anterior foi mantida.';return;}
+      const updated=activeFiles.map((file,i)=>i===index?replacement:file);
+      try{LocalBatchRecovery.guardSize(kind==='labels'?[...updated,...invoiceFiles]:[...selected,...updated]);}
+      catch(error){notice.textContent=(error.message||'Não foi possível usar este arquivo.')+' A seleção anterior foi mantida.';return;}
+      if(kind==='labels')selected=updated;else invoiceFiles=updated;
+      clearResult();refreshFiles();$('status').className='';$('status').textContent='Arquivo substituído somente na seleção. Conferindo o lote novamente, sem alterar os originais…';
+      checkBatch();
+    });
+  }
+  const guidance={
+    missing:'Baixe o DANFE deste pedido na plataforma e adicione-o ao lote. Se já estiver selecionado, tente a leitura alternativa.',
+    products:'Tente a leitura alternativa. Se a tabela continuar incompatível, você pode escolher DANFE completo; essa escolha troca o formato de TODOS os pedidos deste lote, não apenas desta nota.',
+    metadata:'Obtenha o ZPL original que contenha NF, CEP e envio em texto. Troque o arquivo abaixo; o sistema não inventará esses campos.',
+    'duplicate-label':'Se houver cópias idênticas indicadas, remova-as pelo botão próprio. Caso contrário, obtenha um lote sem repetir o envio e substitua o arquivo.',
+    volumes:'Confira os volumes na plataforma e exporte o conjunto correto. A central não escolherá uma etiqueta no lugar de outra.',
+    'invoice-read':'Localize abaixo o cartão da nota com problema. Substitua o PDF pelo original completo ou tente a leitura alternativa.',
+    ambiguous:'Compare série, emitente e origem abaixo. Em arquivos separados, remova apenas o que não pertence ao lote. Se as lojas estiverem no mesmo PDF, exporte novamente o lote da loja correta.',
+    mismatch:'Compare os CEPs abaixo e obtenha os documentos do mesmo pedido na plataforma. Troque o arquivo incorreto; não altere o CEP para fazer a conferência passar.'
+  };
+  for(const item of report.items.filter(i=>!i.ready)){
+    const article=card(`Etiqueta ${item.labelIndex+1}${item.shipmentId?' · Envio '+item.shipmentId:''}${item.invoiceNumber?' · NF '+item.invoiceNumber:''}`,item.message,[`Etiqueta: CEP ${item.labelPostcode||'não identificado'} · ${item.source}`,...(item.candidates||[]).map(n=>`Nota: NF ${n.number} · série ${n.series} · emitente ${n.issuer} · CEP ${n.postcode||'não identificado'} · ${n.source}`)],guidance[item.code]||'Confira a origem dos documentos e use os arquivos do mesmo pedido.');
+    if(item.code==='missing')button(article,'Adicionar o DANFE faltante',()=>$('invoice-files').click());
+    if(['missing','products','invoice-read'].includes(item.code))button(article,'Tentar leitura alternativa',()=>checkBatch(true));
+    if(item.code==='products')button(article,'Usar DANFE completo neste lote',()=>{$('document-mode').value='danfe';checkBatch(true);});
+    if(['metadata','duplicate-label','volumes','mismatch'].includes(item.code))replacementAction(article,item.source,'labels');
+    if(['ambiguous','mismatch','invoice-read'].includes(item.code))button(article,'Localizar os PDFs selecionados',()=>locateFiles('invoices'));
+  }
+  for(const p of report.invoiceProblems){
+    const article=card(`${p.source}${p.page?' · página '+p.page:''}`,p.message,['O documento original não foi alterado.'],p.code==='sheets'?'Baixe novamente a nota completa, com todas as folhas, e substitua o PDF abaixo. A troca mantém os demais arquivos do lote.':'Tente a leitura alternativa ou substitua pelo DANFE original, pesquisável e sem senha, exportado pela plataforma. PDF digitalizado não recebe OCR nesta ferramenta.');
+    button(article,'Tentar leitura alternativa',()=>checkBatch(true));replacementAction(article,p.source,'invoices');
+  }
+  for(const p of report.sourceProblems){const article=card(p.source,p.message,[],'Baixe novamente as etiquetas em ZIP, ZPL ou TXT na plataforma e substitua o arquivo. Renomear um PDF não o transforma em ZPL.');replacementAction(article,p.fileName||p.source,'labels');}
+  for(const duplicate of report.duplicates){const article=card('Cópia idêntica encontrada',`${duplicate.name} tem o mesmo conteúdo de ${duplicate.original}. A remoção mantém a primeira cópia e não apaga arquivos do computador.`,[],'Remova as cópias idênticas já identificadas. Essa ação vale para todas as cópias idênticas deste lote e faz uma nova conferência.');button(article,'Remover cópias idênticas do lote',()=>$('remove-duplicates').click());}
+  for(const invoice of report.unmatchedInvoices.filter(n=>!report.items.some(i=>!i.ready&&i.invoiceNumber===n.invoiceNumber))){const article=card(`NF ${invoice.invoiceNumber} · série ${invoice.series}`,'Esta nota não tem etiqueta entre os pedidos conferidos.',invoice.pages.map(p=>`${p.source} · página ${p.pageIndex+1}`),'Adicione as etiquetas correspondentes. Se a nota não pertence a este lote, localize o arquivo na seleção; se houver outros pedidos no mesmo PDF, não remova o arquivo sem conferir.');button(article,'Adicionar etiquetas deste pedido',()=>$('files').click());button(article,'Localizar o PDF selecionado',()=>locateFiles('invoices'));}
   $('remove-duplicates').hidden=!report.duplicates.length;$('use-danfe').hidden=report.mode!=='picking'||!report.items.some(i=>i.code==='products');
   $('retry-reading').hidden=!report.invoiceProblems.length&&!report.items.some(i=>['products','invoice-read','missing'].includes(i.code));
   $('partial-choice').hidden=!report.partialReady;
@@ -145,14 +198,14 @@ async function checkBatch(alternative=false){
         else if(/\.(zpl|txt)$/i.test(f.name))entries=[{name:f.name,text:await f.text()}];
         else throw Error('Selecione ZIP, ZPL ou TXT exportado pela plataforma. Não renomeie um PDF para ZPL.');
         ensureActive();ignored.push(...(entries.ignoredFiles||[]));
-      }catch(error){ensureActive();sourceProblems.push({source:f.name,message:error.message});continue;}
+      }catch(error){ensureActive();sourceProblems.push({source:f.name,fileName:f.name,message:error.message});continue;}
       for(const entry of entries){
         textSize+=entry.text.length;if(textSize>100*1024*1024)throw Error('O lote ZPL descomprimido ultrapassa 100 MB. Selecione um lote menor.');
         try{
           const parsed=await LocalZpl.parseZpl(entry.text,{onProgress:(n,total)=>{ensureActive();$('progress').value=n/total;}});ensureActive();
           if(batch.length+parsed.length>1000)throw Object.assign(Error('Limite de 1.000 etiquetas excedido. Selecione um lote menor.'),{fatal:true});
           batch.push(...parsed.map(label=>({...label,source:f.name===entry.name?f.name:f.name+' / '+entry.name})));
-        }catch(error){ensureActive();if(error.fatal)throw error;sourceProblems.push({source:entry.name,message:error.message});}
+        }catch(error){ensureActive();if(error.fatal)throw error;sourceProblems.push({source:f.name===entry.name?f.name:f.name+' / '+entry.name,fileName:f.name,message:error.message});}
       }
     }
     const read=invoiceFiles.length?await LocalBatchRecovery.readInvoices(invoiceFiles,(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):null;

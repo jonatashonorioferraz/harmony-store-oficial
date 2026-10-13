@@ -88,8 +88,8 @@ test('composition still refuses stale reviewed rows if the actual invoice batch 
 });
 
 const controller=await read('app.js');
-function element(){
-  return {children:[],events:{},classList:{toggle(){}},value:'',hidden:false,textContent:'',
+function element(tag='div'){
+  return {tagName:tag.toUpperCase(),click(){if(this.disabled)return;this.clicked=(this.clicked||0)+1;if(this.events.click)return this.events.click();return this.onclick?.();},children:[],events:{},classList:{toggle(){}},value:'',hidden:false,textContent:'',
     addEventListener(type,fn){this.events[type]=fn;},setAttribute(key,value){this[key]=value;},removeAttribute(key){delete this[key];},
     append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},focus(){this.focused=true;},scrollIntoView(){},getContext(){return {};},
     set innerHTML(value){throw Error('Unsafe HTML insertion: '+value);}};
@@ -179,7 +179,7 @@ test('partial PDF requires explicit consent and preserves named pending orders a
   await env.get('convert').onclick();assert.equal(env.calls.generate,0);
   env.get('partial-consent').checked=true;env.get('partial-consent').events.change();assert.equal(env.get('convert').disabled,false);
   await env.get('convert').onclick();assert.equal(env.calls.generate,1);assert.match(env.get('download').download,/-PARCIAL-1-de-2\.pdf$/);
-  assert.equal(env.get('resolution-panel').hidden,false);assert.equal(env.get('resolution-items').children.length,1);assert.match(env.get('resolution-items').children[0].children[0].textContent,/NF 2/);
+  assert.equal(env.get('resolution-panel').hidden,false);const pendingCards=env.get('resolution-items').children.filter(node=>node.tagName==='ARTICLE');assert.equal(pendingCards.length,1);assert.match(pendingCards[0].children[0].textContent,/NF 2/);
   assert.match(env.get('review-summary').textContent,/NÃO estão neste PDF/);
   env.select();assert.equal(env.get('partial-consent').checked,false);assert.equal(env.get('convert').disabled,true);assert.equal(env.get('actions').hidden,true);assert.equal(env.calls.revoked,1);
 });
@@ -197,4 +197,80 @@ test('an explicit duplicate-removal action keeps the original selection entry',a
   const env=environment();env.report.ready=false;env.report.duplicates=[{kind:'labels',index:1,name:'copy.zpl',original:'synthetic.zpl'}];env.report.issues=['Copias identicas'];
   env.select([syntheticFile(),{...syntheticFile(),name:'copy.zpl'}]);await env.get('check').onclick();assert.equal(env.get('remove-duplicates').hidden,false);assert.equal(env.get('convert').disabled,true);
   await env.get('remove-duplicates').onclick();assert.equal(env.get('file-list').children.length,1);assert.match(env.get('file-list').children[0].children[0].textContent,/synthetic.zpl/);
+});
+
+
+const cards=env=>env.get('resolution-items').children.filter(node=>node.tagName==='ARTICLE');
+const cardAction=(card,label)=>{const control=card.children.find(node=>node.tagName==='BUTTON'&&node.textContent===label);assert.ok(control,'Expected action: '+label);return control;};
+const picker=card=>{const input=card.children.find(node=>node.tagName==='INPUT');assert.ok(input,'Expected replacement picker');return input;};
+const settle=async()=>{for(let i=0;i<8;i++)await new Promise(resolve=>setImmediate(resolve));};
+async function problemEnvironment(code='metadata',files=[syntheticFile()]){
+ const env=environment();Object.assign(env.report,{ready:false,items:[{labelIndex:0,ready:false,code,source:files[0].name,invoiceNumber:'1',shipmentId:'10000000001',message:'Synthetic problem',candidates:[]}],pendingCount:1,issues:['Synthetic problem']});
+ env.select(files);await env.get('check').onclick();return env;
+}
+test('contextual missing-note action opens the existing additive picker without changing selection',async()=>{
+ const env=await problemEnvironment('missing');cardAction(cards(env)[0],'Adicionar o DANFE faltante').click();
+ assert.equal(env.get('invoice-files').clicked,1);assert.equal(env.get('file-list').children.length,1);assert.equal(env.calls.generate,0);
+});
+test('cancelling file replacement keeps all selected files and the review intact',async()=>{
+ const env=await problemEnvironment(),card=cards(env)[0],before=env.calls.parse;
+ cardAction(card,'Substituir este arquivo…').click();const input=picker(card);assert.equal(input.clicked,1);
+ input.files=[];input.events.change();await settle();assert.equal(env.calls.parse,before);assert.equal(env.get('resolution-panel').hidden,false);assert.match(env.get('file-list').children[0].children[0].textContent,/synthetic.zpl/);
+});
+test('replacement rejects wrong formats and oversized files without losing the old selection',async()=>{
+ const env=await problemEnvironment(),card=cards(env)[0],input=picker(card),before=env.calls.parse;
+ for(const file of [{name:'not-a-label.pdf',size:10},{name:'oversized.zpl',size:101*1024*1024}]){
+  input.files=[file];input.events.change();assert.match(card.children.find(node=>node.className==='resolution-replace-status').textContent,/seleção anterior foi mantida/);
+ }
+ assert.equal(env.calls.parse,before);assert.match(env.get('file-list').children[0].children[0].textContent,/synthetic.zpl/);
+});
+test('replacing one label file automatically rechecks and preserves the other original objects',async()=>{
+ const first=syntheticFile(),other={...syntheticFile(),name:'other.zpl'},env=await problemEnvironment('metadata',[first,other]);const input=picker(cards(env)[0]);
+ const replacement={...syntheticFile(),name:'corrected.zpl'};input.files=[replacement];input.events.change();
+ assert.equal(env.get('convert').disabled,true);await settle();assert.equal(env.calls.parse,4);assert.equal(env.calls.generate,0);
+ assert.match(env.get('file-list').children[0].children[0].textContent,/corrected.zpl/);assert.match(env.get('file-list').children[1].children[0].textContent,/other.zpl/);assert.equal(first.name,'synthetic.zpl');assert.equal(other.name,'other.zpl');
+ assert.equal(env.get('partial-consent').checked,false);
+});
+test('replacing one damaged PDF preserves other PDFs and triggers a fresh local invoice read',async()=>{
+ const env=environment();Object.assign(env.report,{ready:false,invoiceProblems:[{source:'damaged.pdf',code:'read',message:'Synthetic read failure',uncertain:true}],uncertain:true,issues:['Read failure']});
+ const old={name:'damaged.pdf',size:10},other={name:'keep.pdf',size:10};let seen;
+ env.context.LocalInvoices.readInvoices=async files=>{seen=files;return {invoices:[]};};env.select();env.get('invoice-files').events.change({target:{files:[old,other]}});await env.get('check').onclick();
+ const replacement={name:'corrected.pdf',size:10};const input=picker(cards(env)[0]);input.files=[replacement];input.events.change();await settle();
+ assert.equal(seen[0],replacement);assert.equal(seen[1],other);assert.equal(old.name,'damaged.pdf');assert.equal(env.get('file-list').children.length,1);assert.equal(env.calls.generate,0);
+});
+test('same-named files cannot be silently selected for replacement',async()=>{
+ const env=await problemEnvironment('metadata',[syntheticFile(),syntheticFile()]),card=cards(env)[0];
+ assert.equal(card.children.some(node=>node.tagName==='INPUT'),false);cardAction(card,'Localizar na seleção').click();assert.equal(env.get('file-list').focused,true);
+});
+test('archive-entry failure targets its owning ZIP and explicitly warns about whole-archive replacement',async()=>{
+ const env=environment();Object.assign(env.report,{ready:false,sourceProblems:[{source:'batch.zip / nested/broken.zpl',fileName:'batch.zip',message:'Synthetic ZIP entry failure'}],issues:['Entry failure']});
+ env.context.LocalZpl.unzip=async()=>[{name:'nested/broken.zpl',text:'^XA^XZ'}];env.select([{name:'batch.zip',size:10,arrayBuffer:async()=>new ArrayBuffer(1)}]);await env.get('check').onclick();const card=cards(env)[0];
+ assert.match(card.children.find(node=>node.className==='resolution-replace-note').textContent,/ZIP inteiro/);cardAction(card,'Substituir este ZIP…').click();assert.equal(picker(card).clicked,1);
+});
+test('revoked access, a stale report and closing prevent late replacement',async()=>{
+ for(const revoke of [env=>{env.context.HarmonyConverterAccess.allowed=()=>false;},env=>env.select([{...syntheticFile(),name:'new-session.zpl'}]),env=>env.context.HarmonyConverterLifecycle.dispose()]){
+  const env=await problemEnvironment(),input=picker(cards(env)[0]),before=env.calls.parse;revoke(env);input.files=[{...syntheticFile(),name:'late.zpl'}];input.events.change();await settle();
+  assert.equal(env.calls.parse,before);assert.ok(env.get('file-list').children.every(node=>!node.children[0].textContent.includes('late.zpl')));
+ }
+});
+test('a running recheck prevents other contextual actions and duplicate replacement',async()=>{
+ const env=await problemEnvironment(),card=cards(env)[0],input=picker(card);let finish;const reading=new Promise(resolve=>{finish=resolve;});
+ input.files=[{name:'corrected.zpl',size:10,text:()=>reading}];input.events.change();await settle();
+ input.files=[{...syntheticFile(),name:'second-replacement.zpl'}];input.events.change();cardAction(card,'Substituir este arquivo…').click();
+ assert.match(env.get('file-list').children[0].children[0].textContent,/corrected.zpl/);assert.equal(input.clicked,undefined);finish('^XA^XZ');await settle();assert.equal(env.calls.parse,2);
+});
+test('full-DANFE contextual action warns of whole-lot scope and never generates automatically',async()=>{
+ const env=await problemEnvironment('products'),card=cards(env)[0];
+ assert.match(card.children.find(node=>node.className==='resolution-guidance').textContent,/TODOS os pedidos/);
+ cardAction(card,'Usar DANFE completo neste lote').click();await settle();assert.equal(env.get('document-mode').value,'danfe');assert.equal(env.calls.generate,0);assert.equal(env.calls.paired,0);assert.equal(env.get('partial-consent').checked,false);
+});
+test('mismatch and ambiguous-note cards do not offer identity overrides or a full-DANFE bypass',async()=>{
+ for(const code of ['mismatch','ambiguous']){
+  const env=await problemEnvironment(code),card=cards(env)[0];assert.ok(card.children.filter(node=>node.tagName==='BUTTON').every(node=>!node.textContent.includes('DANFE completo')));
+  cardAction(card,'Localizar os PDFs selecionados').click();assert.equal(env.get('invoice-list').focused,true);assert.equal(env.get('convert').disabled,true);
+ }
+});
+test('untrusted problem text and filenames are rendered as text rather than markup',async()=>{
+ const env=await problemEnvironment('metadata',[{...syntheticFile(),name:'<img src=x onerror=alert(1)>.zpl'}]);
+ assert.equal(env.get('resolution-panel').hidden,false);assert.ok(cards(env)[0].children.some(node=>node.textContent.includes('<img src=x onerror=alert(1)>')));
 });
