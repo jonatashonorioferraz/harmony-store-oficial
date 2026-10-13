@@ -134,7 +134,7 @@ test('closing the converter during a pending file read cannot restore private re
     LocalZpl: {parseZpl() {throw Error('No parsing after disposal');}}});
   context.window = context; vm.runInContext(controller, context);
   get('files').events.change({target: {files: [{name: 'synthetic.zpl', size: 10, text: () => pending}]}});
-  const conversion = get('convert').onclick();
+  const conversion = get('check').onclick();
   context.HarmonyConverterLifecycle.dispose(); context.HarmonyConverterLifecycle.dispose();
   context.document.getElementById = () => null;
   finish('^XA^XZ'); await conversion;
@@ -153,7 +153,7 @@ test('converter packages only local assets and blocks network connections', asyn
   for (const file of await readdir(new URL('../shipping-labels/', import.meta.url))) {
     assert.doesNotMatch(file, /\.(pdf|zip|zpl)$/i);
   }
-  for (const name of ['engine.js','invoices.js','picking.js','app.js']) {
+  for (const name of ['engine.js','invoices.js','picking.js','batch-review.js','app.js']) {
     assert.doesNotMatch(await read('shipping-labels/' + name), /\b(?:localStorage|sessionStorage|indexedDB|XMLHttpRequest|sendBeacon)\b/);
   }
 });

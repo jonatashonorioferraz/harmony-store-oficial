@@ -27,6 +27,10 @@ A ficha apresenta a descrição, a quantidade comercial da NF e a cor/variação
 
 Cada folha de 10 × 15 cm acomoda **até 4 produtos/variações**, sem juntar linhas iguais ou códigos repetidos. Por exemplo, 10 itens de tamanho usual ficam em 3 fichas (4 + 4 + 2), sempre após a etiqueta do pedido. Descrições extensas podem exigir menos itens por folha para manter a letra legível e o conteúdo completo. As fichas mostram número da NF, envio, paginação, intervalo de itens e caixas para marcar a conferência.
 
+Antes de gerar, use **Conferir lote**. O resumo mostra etiquetas lidas, notas identificadas, linhas de produtos e páginas previstas. Pendências de vínculo ou de leitura bloqueiam a geração; avisos, como variação não informada ou anexos ignorados no ZIP, exigem conferência humana e não são dados deduzidos. No modo somente etiquetas, notas e produtos não são conferidos. Dados não calculados são apresentados como tal, nunca como zero.
+
+Depois de revisar o resumo, use **Gerar PDF conferido** e confira a prévia. Alterar arquivos, resolução, tamanho ou tipo de documento invalida a conferência e o PDF anterior. Os vínculos são verificados novamente na geração. Gerar ou baixar o PDF não confirma impressão física. O formato da ficha impressa permanece o mesmo.
+
 O vínculo usa número da NF e CEP do destinatário, independentemente da ordem dos PDFs. Ausências, duplicidades, notas ambíguas e CEPs divergentes impedem a geração. Use PDFs pesquisáveis; digitalizações não são reconhecidas. Tabelas de produtos não reconhecidas podem ser impressas pela alternativa **DANFE completo**, reduzido por inteiro para 10 × 15 cm, com textos menores.
 
 O processamento ocorre no navegador, sem upload de pedidos. Os arquivos são descartados ao sair da tela ou encerrar a sessão. O PDF baixado permanece no computador. Os recursos são carregados no primeiro acesso à ferramenta. Limites: 100 MB de entrada, 100 MB de ZPL descomprimido e 1.000 páginas finais; lotes de 50 ou 100 pedidos são aceitos dentro desses limites.
