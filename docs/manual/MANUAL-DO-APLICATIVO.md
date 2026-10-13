@@ -408,3 +408,10 @@ Depois da conferencia, a busca por NF ou envio localiza vinculos e pendencias. D
 Use +, - ou Ajustar a tela na previa; o zoom altera apenas a tela. Expandir previa aumenta a area de conferencia sem mudar o lote. O campo Ir para a pagina permite navegar diretamente no PDF. Para imprimir, mantenha escala 100% na impressora e confira a primeira folha. Nenhum controle confirma impressao fisica.
 
 Nao ha armazenamento dos arquivos ou historico na nuvem. Fechar, recarregar ou encerrar a central descarta a selecao da sessao; os arquivos originais e PDFs baixados continuam no computador. A ficha impressa permanece inalterada.
+
+
+### Solucoes por pendencia na central de etiquetas (25.115)
+
+Cada cartao explica o proximo passo e oferece a acao apropriada: adicionar o DANFE faltante, tentar leitura local, localizar os PDFs ou substituir um arquivo. A troca substitui o arquivo inteiro na selecao; em ZIP, substitui o pacote inteiro. Os demais arquivos permanecem. Cancelar a escolha, escolher formato invalido ou ultrapassar o limite de tamanho mantem a selecao anterior. Nomes iguais nao sao usados para escolher um arquivo automaticamente.
+
+Depois de uma troca valida, a central confere novamente o lote. A previa anterior e a autorizacao de PDF parcial sao invalidadas; gerar e imprimir continuam sendo escolhas separadas. DANFE completo muda o formato de todos os pedidos deste lote e nao resolve divergencias de NF ou CEP. A ficha impressa nao mudou. Nenhum original e alterado, apagado ou armazenado na nuvem.
