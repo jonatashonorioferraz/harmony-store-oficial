@@ -16,7 +16,7 @@ function clearResult(){
 function syncControls(){
   for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode'])$(id).disabled=busy;
   $('size').disabled=busy||!!invoiceFiles.length;$('paired-size').hidden=!invoiceFiles.length;
-  $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. A ficha destaca os produtos, a cor/variação quando informada e a quantidade comercial da nota. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
+  $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. Até 4 produtos/variações por ficha, com cor quando informada e quantidade da nota. Descrições extensas podem ocupar mais espaço. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
   $('convert').disabled=busy||!selected.length;$('clear-invoices').hidden=!invoiceFiles.length;
   $('convert').textContent=invoiceFiles.length?'Vincular notas e gerar PDF →':'Gerar PDF para impressão →';
 }
