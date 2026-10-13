@@ -66,6 +66,29 @@ async function preview(){
     const p=document.createElement('p');p.textContent='Não foi possível mostrar esta prévia. Use “Abrir para imprimir” para conferir o PDF.';$('preview').replaceChildren(p);
   }
 }
+// Read-only session metadata for the local workspace UI. No file bytes leave this frame.
+window.addEventListener('harmony-labels:workspace-request',()=>{
+  if(disposed||!globalThis.HarmonyConverterAccess?.allowed())return;
+  const available=Boolean(!busy&&pdfReader&&sequence.length&&!$('navigation').hidden&&!$('actions').hidden);
+  const describe=files=>files.map(file=>({name:file.name,size:file.size}));
+  window.dispatchEvent(new CustomEvent('harmony-labels:workspace-state',{detail:{
+    files:{labels:describe(selected),invoices:describe(invoiceFiles)},busy,
+    preview:available?{
+      page:page+1,partial:/-PARCIAL-\d+-de-\d+\.pdf$/i.test($('download').download),
+      pages:sequence.map((item,index)=>({
+        page:index+1,kind:item.kind,invoiceNumber:item.row?.invoice?.invoiceNumber||'',
+        shipmentId:item.row?.shipmentId||'',sheet:item.sheet||1,totalSheets:item.totalSheets||1
+      }))
+    }:null
+  }}));
+});
+window.addEventListener('harmony-labels:preview-page',event=>{
+  if(disposed||busy||!globalThis.HarmonyConverterAccess?.allowed()||!pdfReader||!sequence.length||$('navigation').hidden||$('actions').hidden)return;
+  const requested=event.detail?.page;
+  if(!Number.isInteger(requested)||requested<1||requested>sequence.length)return;
+  page=requested-1;preview();
+});
+
 $('previous').onclick=()=>{if(page>0){page--;preview();}};
 $('next').onclick=()=>{if(page<sequence.length-1){page++;preview();}};
 $('open').onclick=()=>{if(globalThis.HarmonyConverterAccess.allowed()&&url)window.open(url,'_blank','noopener');};
