@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.112] - 2026-10-13
+
+- Conferência do lote antes de gerar o PDF: contagens de etiquetas, notas, itens e páginas previstas, com pendências separadas dos avisos.
+- Geração liberada somente após conferência válida; alterações nos arquivos ou configurações invalidam a conferência e o PDF anterior.
+- Vínculos e paginação conferidos novamente na geração, sem PDF parcial, uploads ou gravação de dados.
+- Formato e tipografia da ficha impressa preservados, com até quatro itens por folha quando houver espaço.
+
 ## [v25.111] - 2026-10-13
 
 - Fichas de separação com até 4 produtos/variações por folha de 10 × 15 cm, na ordem da nota e sem juntar itens com o mesmo código.
