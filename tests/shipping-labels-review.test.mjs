@@ -99,11 +99,12 @@ function environment(){
   const nodes=new Map(),calls={parse:0,generate:0,paired:0,urls:0,revoked:0};
   const get=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
   get('dpi').value='203';get('size').value='100x150';get('document-mode').value='picking';
-  const report={ready:true,paired:false,mode:'labels',rows:[],issues:[],warnings:[],counts:{labels:1,invoices:0,products:null,pages:1}};
+  const report={ready:true,partialReady:false,paired:false,mode:'labels',rows:[],issues:[],warnings:[],counts:{labels:1,invoices:0,products:null,pages:1},confirmedCount:1,pendingCount:0,items:[],unmatchedInvoices:[],invoiceProblems:[],sourceProblems:[],duplicates:[],uncertain:false};
   const context=vm.createContext({Uint8Array,Blob,CompressionStream,DecompressionStream,
     document:{getElementById:get,createElement:element},addEventListener(){},HarmonyConverterAccess:{allowed:()=>true},
     URL:{createObjectURL(){calls.urls++;return 'blob:synthetic';},revokeObjectURL(){calls.revoked++;}},
-    LocalBatchReview:{inspect:async()=>report},
+    LocalBatchReview:{inspect:async()=>report.partialReady?report.subset.report:report},
+    LocalBatchRecovery:{guardSize(files){if(files.reduce((n,f)=>n+f.size,0)>100*1024*1024)throw Error('Limite de 100 MB');},duplicateFiles:async()=>[],readInvoices:(...args)=>context.LocalInvoices.readInvoices(...args),analyze:async()=>report},
     LocalZpl:{parseZpl:async()=>{calls.parse++;return [label(1)];},createPdf:async()=>{calls.generate++;return new Blob(['synthetic']);},dimensions:()=>({pw:283,ph:425})},
     LocalInvoices:{readInvoices:async()=>({invoices:[invoice(1)]}),
       createPairedPdf:async(batch,read,rows)=>{calls.paired++;return {blob:new Blob(['synthetic']),rows,sequence:[{kind:'label',row:rows[0]},{kind:'picking',row:rows[0],sheet:1,totalSheets:1}]};},
@@ -119,7 +120,7 @@ test('UI requires a separate successful review before it creates any PDF',async(
   await env.get('convert').onclick();assert.equal(env.calls.generate,0);
   await env.get('check').onclick();assert.equal(env.calls.parse,1);assert.equal(env.calls.generate,0);assert.equal(env.calls.urls,0);
   assert.equal(env.get('convert').disabled,false);assert.equal(env.get('review-generate').disabled,false);assert.match(env.get('review-summary').textContent,/somente etiquetas/);
-  await env.get('review-generate').onclick();assert.equal(env.calls.generate,1);assert.equal(env.calls.urls,1);assert.equal(env.get('review-badge').textContent,'PDF GERADO');
+  await env.get('review-generate').onclick();assert.equal(env.calls.generate,1);assert.equal(env.calls.urls,1);assert.equal(env.get('review-state').textContent,'PDF GERADO');
 });
 
 test('each print configuration change invalidates review and hides a previously generated PDF',async()=>{
@@ -166,4 +167,34 @@ test('paired review shows predicted page ranges and generation uses the reviewed
   assert.match(env.get('pairing-rows').children[0].children[4].textContent,/Previsto/);assert.equal(env.calls.paired,0);
   await env.get('convert').onclick();assert.equal(env.calls.paired,1);assert.match(env.get('pairing-rows').children[0].children[4].textContent,/PDF/);
   assert.match(env.get('download').download,/fichas-de-separacao/);assert.equal(env.get('actions').hidden,false);
+});
+
+
+test('partial PDF requires explicit consent and preserves named pending orders after generation',async()=>{
+  const env=environment(),safe={ready:true,paired:false,mode:'labels',rows:[],issues:[],warnings:[],counts:{labels:1,invoices:0,products:null,pages:1}};
+  env.context.LocalZpl.parseZpl=async()=>[label(1),label(2)];
+  Object.assign(env.report,{ready:false,partialReady:true,confirmedCount:1,pendingCount:1,counts:{labels:2,invoices:0,products:null,pages:null},items:[{labelIndex:0,ready:true},{labelIndex:1,ready:false,invoiceNumber:'2',shipmentId:'10000000002',source:'synthetic.zpl',message:'Nota faltante'}],issues:['NF 2 pendente'],subset:{labels:[label(1)],read:null,report:safe}});
+  env.select();await env.get('check').onclick();
+  assert.equal(env.get('partial-consent').checked,false);assert.equal(env.get('partial-choice').hidden,false);assert.equal(env.get('convert').disabled,true);
+  await env.get('convert').onclick();assert.equal(env.calls.generate,0);
+  env.get('partial-consent').checked=true;env.get('partial-consent').events.change();assert.equal(env.get('convert').disabled,false);
+  await env.get('convert').onclick();assert.equal(env.calls.generate,1);assert.match(env.get('download').download,/-PARCIAL-1-de-2\.pdf$/);
+  assert.equal(env.get('resolution-panel').hidden,false);assert.equal(env.get('resolution-items').children.length,1);assert.match(env.get('resolution-items').children[0].children[0].textContent,/NF 2/);
+  assert.match(env.get('review-summary').textContent,/NÃO estão neste PDF/);
+  env.select();assert.equal(env.get('partial-consent').checked,false);assert.equal(env.get('convert').disabled,true);assert.equal(env.get('actions').hidden,true);assert.equal(env.calls.revoked,1);
+});
+
+test('adding missing files preserves previous selection and each file can be removed without editing it',async()=>{
+  const env=environment(),first=syntheticFile(),second={...syntheticFile(),name:'second.zpl'};
+  env.select([first]);env.select([second]);assert.equal(env.get('file-list').children.length,2);
+  await env.get('check').onclick();assert.equal(env.calls.parse,2);
+  env.get('file-list').children[0].children[1].events.click();assert.equal(env.get('file-list').children.length,1);assert.match(env.get('file-list').children[0].children[0].textContent,/second.zpl/);assert.equal(env.get('convert').disabled,true);
+  env.get('invoice-files').events.change({target:{files:[{name:'first.pdf',size:10}]}});env.get('invoice-files').events.change({target:{files:[{name:'second.pdf',size:10}]}});
+  assert.equal(env.get('invoice-list').children.length,2);assert.equal(first.name,'synthetic.zpl');
+});
+
+test('an explicit duplicate-removal action keeps the original selection entry',async()=>{
+  const env=environment();env.report.ready=false;env.report.duplicates=[{kind:'labels',index:1,name:'copy.zpl',original:'synthetic.zpl'}];env.report.issues=['Copias identicas'];
+  env.select([syntheticFile(),{...syntheticFile(),name:'copy.zpl'}]);await env.get('check').onclick();assert.equal(env.get('remove-duplicates').hidden,false);assert.equal(env.get('convert').disabled,true);
+  await env.get('remove-duplicates').onclick();assert.equal(env.get('file-list').children.length,1);assert.match(env.get('file-list').children[0].children[0].textContent,/synthetic.zpl/);
 });

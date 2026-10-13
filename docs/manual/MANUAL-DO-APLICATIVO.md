@@ -388,3 +388,12 @@ O sistema identifica arquivos iguais pelo hash e também controla uma única fon
 Os números e gráficos são calculados no banco e não consomem créditos da OpenAI. O botão **Analisar agora com IA** é opcional: ele envia apenas o consolidado do período ao serviço protegido, recebe uma resposta estruturada em português e apresenta recomendações com evidências. A IA não altera planilhas, produtos, campanhas, estoque, pedidos ou pagamentos.
 
 O ADM principal pode configurar orçamento e intervalo entre análises. Se a IA estiver indisponível ou o limite for atingido, todos os dados e gráficos continuam funcionando normalmente.
+
+
+### Resolver pendencias na central de etiquetas
+
+Nao edite os arquivos exportados pela plataforma. Adicione notas ou etiquetas faltantes sem perder a selecao anterior; cada arquivo pode ser removido apenas da selecao. A acao de remover copias identicas compara o conteudo, nao apenas o nome, e preserva os originais.
+
+A central mostra os CEPs e a origem dos documentos divergentes lado a lado. A leitura alternativa e local, sem OCR remoto ou IA paga, e so reagrupa campos explicitamente presentes no PDF. Ela nao reconhece imagens digitalizadas nem inventa dados. Se apenas a tabela de produtos nao puder ser interpretada, use DANFE completo. O formato da ficha impressa permanece inalterado.
+
+Quando houver um subconjunto seguro, marque a confirmacao explicita para gerar somente os pedidos conferidos. O nome do PDF indica PARCIAL, e a lista de pendencias pode ser baixada separadamente. Nenhum item fica de fora silenciosamente. Arquivos ou configuracoes alterados invalidam a autorizacao e o PDF anterior. Paginas de notas sem identidade verificavel podem impedir a geracao vinculada, pois podem esconder outra nota com o mesmo numero. Nenhum vinculo e forcado por nome, ordem ou edicao de CEP.
