@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.113] - 2026-10-13
+
+- Central de etiquetas com acoes para adicionar arquivos faltantes, remover copias identicas e comparar divergencias sem editar os originais.
+- Leitura local alternativa de campos fragmentados; opcao explicita de DANFE completo quando a tabela de produtos nao puder ser interpretada.
+- Geracao parcial somente com confirmacao explicita, subconjunto revalidado, PDF identificado e lista de pendencias preservada. Paginas sem identidade fiscal segura continuam bloqueando vinculos.
+- Ficha impressa, regras fiscais de correspondencia e dados reais preservados.
+
 ## [v25.112] - 2026-10-13
 
 - Conferência do lote antes de gerar o PDF: contagens de etiquetas, notas, itens e páginas previstas, com pendências separadas dos avisos.
