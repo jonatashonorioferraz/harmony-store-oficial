@@ -31,7 +31,25 @@ for (const entry of await readdir(web, { withFileTypes: true })) {
   if (!contentsMatch(entry.name, rootContent, webContent)) mismatches.push(entry.name);
 }
 
-for (const filename of ['central-briefing.mjs', 'operational-central.js', 'operational-central.css']) {
+async function compareDirectory(directory) {
+  const [source, target] = await Promise.all([
+    readdir(resolve(root, directory), { withFileTypes: true }),
+    readdir(resolve(web, directory), { withFileTypes: true }),
+  ]);
+  if (source.map(e => e.name).sort().join('\n') !== target.map(e => e.name).sort().join('\n')) {
+    mismatches.push(directory + ' (inventário)');
+  }
+  for (const entry of source) {
+    const filename = directory + '/' + entry.name;
+    if (entry.isDirectory()) { await compareDirectory(filename); continue; }
+    const [a, b] = await Promise.all([readFile(resolve(root, filename)), readFile(resolve(web, filename))]);
+    mirrored.push(filename);
+    if (!contentsMatch(filename, a, b)) mismatches.push(filename);
+  }
+}
+await compareDirectory('shipping-labels');
+
+for (const filename of ['central-briefing.mjs', 'operational-central.js', 'operational-central.css', 'shipping-labels.js', 'shipping-labels.css']) {
   if (!mirrored.includes(filename)) throw new Error(`Espelho oficial ausente: ${filename}`);
 }
 

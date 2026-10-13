@@ -14,6 +14,21 @@
 
 Cada pessoa deve usar sua própria conta. Senhas temporárias precisam ser trocadas no primeiro acesso. O menu **Perfil** permite atualizar dados, foto, senha e encerrar a sessão.
 
+## Conversor de etiquetas (ADM)
+
+Abra **Etiquetas → Conversor de etiquetas**. Essa opção é independente de **Lotes e etiquetas**.
+
+1. Selecione os ZIPs, ZPLs ou TXTs de etiquetas da Shopee ou Mercado Livre.
+2. Para separar produtos do Mercado Livre, selecione também os PDFs originais de DANFE do mesmo lote e mantenha **Ficha de separação**.
+3. Clique em **Vincular notas e gerar PDF** e confira o relatório de correspondências.
+4. Baixe ou abra o PDF: cada etiqueta vem seguida da ficha daquele pedido, em páginas de **10 × 15 cm**. Imprima em tamanho real, escala 100%.
+
+A ficha apresenta a descrição, a quantidade comercial da NF e a cor/variação quando explicitamente informada. Composição de kits permanece na descrição. Uma nota com quantidade 1 de um kit continua como 1; não calculamos peças a partir do título. Quando a cor não consta, confira no pedido.
+
+O vínculo usa número da NF e CEP do destinatário, independentemente da ordem dos PDFs. Ausências, duplicidades, notas ambíguas e CEPs divergentes impedem a geração. Use PDFs pesquisáveis; digitalizações não são reconhecidas. Tabelas de produtos não reconhecidas podem ser impressas pela alternativa **DANFE completo**, reduzido por inteiro para 10 × 15 cm, com textos menores.
+
+O processamento ocorre no navegador, sem upload de pedidos. Os arquivos são descartados ao sair da tela ou encerrar a sessão. O PDF baixado permanece no computador. Os recursos são carregados no primeiro acesso à ferramenta. Limites: 100 MB de entrada, 100 MB de ZPL descomprimido e 1.000 páginas finais; lotes de 50 ou 100 pedidos são aceitos dentro desses limites.
+
 ## Solicitações de matéria-prima
 
 1. Abra **Nova solicitação**.

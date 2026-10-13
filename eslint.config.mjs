@@ -23,6 +23,7 @@ const eslintConfig = defineConfig([
     // próprios e não devem duplicar os avisos do código-fonte oficial.
     "web/**",
     "vendor/**",
+    "shipping-labels/vendor/**",
     "next-env.d.ts",
   ]),
 ]);

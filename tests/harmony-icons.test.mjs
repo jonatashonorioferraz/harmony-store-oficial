@@ -32,9 +32,10 @@ test('ícones possuem estados profissionais e responsivos',()=>{
 });
 
 test('ativos vetoriais atuais são carregados e mantidos offline',()=>{
-  assert.match(index,/harmony-icons\.css\?v=25\.92/);
-  assert.match(index,/harmony-icons\.js\?v=25\.92/);
+  for(const extension of ['css','js']){
+    const resource=index.match(new RegExp('harmony-icons\\.'+extension+'\\?v=\\d+(?:\\.\\d+)*'))?.[0];
+    assert.ok(resource,'recurso vetorial versionado ausente');
+    assert.ok(worker.includes(resource),'cache e HTML devem carregar a mesma versão');
+  }
   assert.match(worker,/\bconst\s+CACHE\s*=\s*['"]harmony-store-v\d+(?:-\d+)*-r\d+['"]/);
-  assert.match(worker,/harmony-icons\.css\?v=25\.92/);
-  assert.match(worker,/harmony-icons\.js\?v=25\.92/);
 });
