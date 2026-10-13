@@ -1,0 +1,19 @@
+/* Screen-only inspection: the original PDF and physical print scale are untouched. */
+.preview-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(125deg,#fff8fc,#f2f7ff)}
+.preview-tools-zoom{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1 1 180px}
+.preview-tools .preview-tool{padding:9px 12px;min-height:42px;font-size:11px}
+.preview-tools-zoom .preview-tool{min-width:42px;font-size:19px;line-height:1}
+.preview-tools-value{flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--rose2);white-space:nowrap}
+.preview-tools [aria-pressed="true"]{background:#edf4ff;border-color:#b6cfee;color:#345f91}
+.preview-tools-help{margin:10px 0 4px;font-size:11px;line-height:1.65;color:var(--muted)}
+.preview-document-caption{padding:12px 14px;margin:0 0 12px;border:1px solid #edc9dc;border-left:4px solid var(--rose);border-radius:10px;background:#fff4f9;color:var(--rose2);text-align:left;font-size:12px;font-weight:700;line-height:1.65;overflow-wrap:anywhere}
+.preview-document-caption:empty{display:none}
+.preview-document-caption[data-document-kind="picking"]{background:#f1f7ff;border-color:#c6daf4;border-left-color:var(--blue);color:#345f91}
+.preview-document-caption[data-document-kind="danfe"]{background:#fffbf1;border-color:#e9d9b7;border-left-color:#b58a3c;color:#765621}
+#preview.preview-inspect{display:block;flex:0 0 auto;height:clamp(320px,60vh,650px);min-height:0;padding:16px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-x pan-y;background:repeating-linear-gradient(135deg,#f7f4f8 0,#f7f4f8 10px,#faf8fb 10px,#faf8fb 20px)}
+#preview.preview-inspect canvas{display:block;max-width:none;max-height:none;height:auto;object-fit:initial;margin:0 auto;background:#fff;box-shadow:0 3px 15px #392c3520}
+.embedded .layout.preview-expanded{grid-template-columns:minmax(0,1fr)}
+.layout.preview-expanded>.result{grid-column:1/-1;grid-row:1;scroll-margin-top:20px}
+.layout.preview-expanded>.panel:not(.result){grid-column:1/-1}
+.layout.preview-expanded #preview.preview-inspect{height:clamp(360px,72vh,900px)}
+@media(max-width:560px){.preview-tools-zoom{flex-basis:100%}.preview-tools>button{flex:1}.preview-document-caption{font-size:11px}.preview-tools-help{font-size:10px}#preview.preview-inspect{height:clamp(300px,58vh,560px)}}

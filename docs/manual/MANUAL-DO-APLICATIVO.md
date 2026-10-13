@@ -397,3 +397,14 @@ Nao edite os arquivos exportados pela plataforma. Adicione notas ou etiquetas fa
 A central mostra os CEPs e a origem dos documentos divergentes lado a lado. A leitura alternativa e local, sem OCR remoto ou IA paga, e so reagrupa campos explicitamente presentes no PDF. Ela nao reconhece imagens digitalizadas nem inventa dados. Se apenas a tabela de produtos nao puder ser interpretada, use DANFE completo. O formato da ficha impressa permanece inalterado.
 
 Quando houver um subconjunto seguro, marque a confirmacao explicita para gerar somente os pedidos conferidos. O nome do PDF indica PARCIAL, e a lista de pendencias pode ser baixada separadamente. Nenhum item fica de fora silenciosamente. Arquivos ou configuracoes alterados invalidam a autorizacao e o PDF anterior. Paginas de notas sem identidade verificavel podem impedir a geracao vinculada, pois podem esconder outra nota com o mesmo numero. Nenhum vinculo e forcado por nome, ordem ou edicao de CEP.
+
+
+### Central de etiquetas: localizacao e previa (25.114.0)
+
+O resumo conta arquivos de etiquetas e PDFs de notas, nao pedidos. Adicionar arquivos mantem os anteriores; Gerenciar selecao leva aos controles originais.
+
+Depois da conferencia, a busca por NF ou envio localiza vinculos e pendencias. Depois da geracao do PDF, permite abrir diretamente cada pagina de etiqueta, ficha ou DANFE. No PDF parcial, somente as paginas incluidas podem ser abertas; pendencias continuam listadas separadamente. Os filtros nao removem documentos nem aprovam vinculos.
+
+Use +, - ou Ajustar a tela na previa; o zoom altera apenas a tela. Expandir previa aumenta a area de conferencia sem mudar o lote. O campo Ir para a pagina permite navegar diretamente no PDF. Para imprimir, mantenha escala 100% na impressora e confira a primeira folha. Nenhum controle confirma impressao fisica.
+
+Nao ha armazenamento dos arquivos ou historico na nuvem. Fechar, recarregar ou encerrar a central descarta a selecao da sessao; os arquivos originais e PDFs baixados continuam no computador. A ficha impressa permanece inalterada.

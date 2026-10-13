@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.114] - 2026-10-13
+
+- Central de etiquetas: zoom e expansao da previa, sem modificar o PDF nem a ficha impressa.
+- Busca local por NF/envio, filtros por documento e acesso direto a paginas ou pendencias.
+- Resumo da selecao com quantidade de arquivos, tamanho total e atalhos de inclusao.
+- Arquivos e indice permanecem apenas na sessao; sem historico ou armazenamento na nuvem.
+
+
 ## [v25.113] - 2026-10-13
 
 - Central de etiquetas com acoes para adicionar arquivos faltantes, remover copias identicas e comparar divergencias sem editar os originais.
