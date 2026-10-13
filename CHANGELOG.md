@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.110] - 2026-10-13
+
+- Nova opção exclusiva dos ADMs: Etiquetas → Conversor de etiquetas, separada de Lotes e etiquetas.
+- Conversão local de ZIP, ZPL e TXT da Shopee e Mercado Livre em PDF, sem envio dos arquivos ao servidor.
+- DANFEs opcionais vinculados por número da NF e CEP, com etiqueta seguida da ficha de produtos em 10 × 15 cm; alternativa de DANFE completo reduzido.
+- Conferência de correspondências únicas, quantidade comercial da nota e cor/variação quando informada. Pendências impedem a geração parcial.
+- Arquivos e prévias descartados ao sair da tela ou encerrar a sessão; recursos do conversor carregados sob demanda.
+
 ## [v25.109] - 2026-10-09
 
 - Restaurado, a pedido do usuario, o layout anterior as duas atualizacoes visuais dos ADMs.

@@ -36,6 +36,8 @@ for (const filename of [
   "shipping-inventory-integration.js",
   "shipping-planning.css",
   "shipping-planning.js",
+  "shipping-labels.js",
+  "shipping-labels.css",
   "shopee-intelligence.css",
   "shopee-intelligence.js",
   "system-health.js",
@@ -44,6 +46,7 @@ for (const filename of [
 ]) {
   await cp(resolve(root, filename), resolve(web, filename));
 }
+await cp(resolve(root, "shipping-labels"), resolve(web, "shipping-labels"), { recursive: true });
 await mkdir(resolve(web, "assets"), { recursive: true });
 await cp(resolve(root, "assets", "peugeot-expert-harmony.png"), resolve(web, "assets", "peugeot-expert-harmony.png"));
 try {
