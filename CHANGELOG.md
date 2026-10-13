@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.111] - 2026-10-13
+
+- Fichas de separação com até 4 produtos/variações por folha de 10 × 15 cm, na ordem da nota e sem juntar itens com o mesmo código.
+- Descrição completa, quantidade da NF, cor/variação e código preservados; itens longos recebem mais espaço sem letra menor que 10 pt na descrição.
+- Cabeçalho compacto com NF, envio, número da ficha e intervalo de itens; caixas de conferência por produto.
+- Todas as fichas de cada pedido continuam imediatamente após sua etiqueta. Conversão local e DANFE completo preservados.
+
 ## [v25.110] - 2026-10-13
 
 - Nova opção exclusiva dos ADMs: Etiquetas → Conversor de etiquetas, separada de Lotes e etiquetas.

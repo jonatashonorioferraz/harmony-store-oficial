@@ -98,3 +98,68 @@ test('unrecognized product tables cannot silently yield empty picking sheets', a
     /Tabela não reconhecida/,
   );
 });
+
+function multiItemInvoice(count) {
+  const note=invoice(1),colors=['AZUL','ROSA','BRANCO','VERDE'];
+  note.pages[0].products=Array.from({length:count},(_,i)=>({
+    code:'MESMO-SKU', quantity:String(i+1), unit:'UN',
+    description:'Kit 50 Mini Sabonetes Coracao + 50 Letra Cubo + 50 Mini Rosa - COR: '+colors[i%4],
+    variation:colors[i%4],
+  }));
+  return note;
+}
+
+test('compact picking groups up to four distinct variations per page without merging same-SKU items', async () => {
+  for(const count of [1,2,4,5,7,10,11]){
+    const note=multiItemInvoice(count),before=clone(note);
+    const layout=await LocalPicking.plan([note],await PDFLib.PDFDocument.create());
+    const sheets=layout.layouts.get(note.key).sheets;
+    assert.equal(sheets.length,Math.ceil(count/4));
+    assert.deepEqual(clone(sheets.map(s=>s.length)),Array.from({length:Math.ceil(count/4)},(_,i)=>Math.min(4,count-i*4)));
+    const cards=sheets.flat();
+    assert.deepEqual(clone(cards.map(c=>c.index)),Array.from({length:count},(_,i)=>i));
+    assert.deepEqual(clone(cards.map(c=>c.product.quantity)),before.pages[0].products.map(p=>p.quantity));
+    assert.deepEqual(clone(cards.map(c=>c.product.variation)),before.pages[0].products.map(p=>p.variation));
+    assert.deepEqual(clone(note),before);
+    for(const card of cards){
+      assert.ok(card.size>=10);
+      assert.equal(card.description.join(' '),'Kit 50 Mini Sabonetes Coracao + 50 Letra Cubo + 50 Mini Rosa');
+      assert.ok(card.variant.join(' ').endsWith(card.product.variation));
+    }
+  }
+});
+
+test('a ten-item order stays together before the next shipping label and page report uses the compact count', async () => {
+  const first=multiItemInvoice(10),second=invoice(2);
+  // Products across original DANFE pages belong to one order and one packing plan.
+  first.pages.push({...first.pages[0],pageIndex:1,products:first.pages[0].products.splice(6)});
+  const result=await LocalInvoices.createPairedPdf([label(1),label(2)],{invoices:[second,first]},[],203,()=>{},'picking');
+  assert.deepEqual(clone(result.sequence.map(p=>p.kind)),['label','picking','picking','picking','label','picking']);
+  assert.deepEqual(clone(result.rows.map(r=>[r.labelPage,r.invoiceStart,r.invoiceEnd])),[[1,2,4],[5,6,6]]);
+  assert.deepEqual(clone(result.sequence.slice(1,4).map(p=>[p.sheet,p.totalSheets])),[[1,3],[2,3],[3,3]]);
+  assert.equal((await PDFLib.PDFDocument.load(result.bytes)).getPageCount(),6);
+});
+
+test('long descriptions use fewer items instead of tiny type, clipped text or a split item', async () => {
+  const note=multiItemInvoice(4);
+  note.pages[0].products[0].description=('Descrição completa com detalhes do produto. ').repeat(22).trim();
+  note.pages[0].products[0].variation=null;
+  note.pages[0].products[1].code='CODIGO_SEM_ESPACOS_'.repeat(12);
+  note.pages[0].products[2].variation='AZUL CLARO - PERFUME SUAVE - EMBALAGEM INDIVIDUAL';
+  const layout=await LocalPicking.plan([note],await PDFLib.PDFDocument.create());
+  const sheets=layout.layouts.get(note.key).sheets;
+  assert.ok(sheets.length>1);
+  assert.equal(sheets.flat().length,4);
+  assert.equal(sheets[0][0].description.join(' '),note.pages[0].products[0].description);
+  const pages=[];
+  LocalPicking.draw({addPage(size){
+    const calls=[];pages.push({size,calls});
+    return {drawText(text,options){calls.push({text,...options});},drawLine(){},drawRectangle(){}};
+  }},{invoice:note,shipmentId:'10000000001'},layout);
+  for(const page of pages)for(const t of page.calls){
+    assert.ok(t.x>=12-0.001 && t.x+t.font.widthOfTextAtSize(t.text,t.size)<=page.size[0]-12+0.001,t.text);
+    assert.ok(t.y>=10 && t.y+t.font.heightAtSize(t.size,{descender:false})<page.size[1],t.text);
+  }
+  note.pages[0].products[0].description='Texto '.repeat(2000);
+  await assert.rejects(LocalPicking.plan([note],await PDFLib.PDFDocument.create()),/longa demais/);
+});

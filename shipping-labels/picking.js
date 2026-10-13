@@ -32,8 +32,9 @@
   }
   return lines;
  }
+ const variantMatch=description=>description.match(/(?:COR(?:ES)?\s+E\s+AROMAS?(?:\s+PADR[ÃA]O)?|COR(?:ES)?|VARIA[ÇC][ÃA]O|AROMA|TAMANHO)\s*:\s*(.+)$/i);
  function variation(description){
-  const match=description.match(/(?:COR(?:ES)?\s+E\s+AROMAS?(?:\s+PADR[ÃA]O)?|COR(?:ES)?|VARIA[ÇC][ÃA]O|AROMA|TAMANHO)\s*:\s*(.+)$/i);
+  const match=variantMatch(description);
   return match?match[1].trim():null;
  }
  function extract(items,operators){
@@ -92,6 +93,9 @@
   }
   if(line)lines.push(line);return lines;
  }
+ const W=100/25.4*72,H=150/25.4*72,MARGIN=12;
+ const CONTENT_TOP=H-65,CONTENT_BOTTOM=30,CONTENT_HEIGHT=CONTENT_TOP-CONTENT_BOTTOM;
+ const MAX_ITEMS=4,MIN_DESCRIPTION_SIZE=10;
  async function plan(invoices,output){
   const {StandardFonts}=root.PDFLib,regular=await output.embedFont(StandardFonts.Helvetica),bold=await output.embedFont(StandardFonts.HelveticaBold);
   const layouts=new Map();
@@ -99,47 +103,76 @@
    const errors=invoice.pages.filter(p=>p.productError);
    if(errors.length)fail(`NF ${invoice.invoiceNumber}: ${errors[0].productError} Use o DANFE completo ou envie um PDF com a tabela de produtos reconhecível.`);
    const products=invoice.pages.flatMap(p=>p.products||[]);if(!products.length)fail(`NF ${invoice.invoiceNumber}: nenhum produto encontrado.`);
-   const cards=products.map((p,index)=>{
-    const description=wrap(p.description,bold,13,251),sku=wrap('CÓDIGO: '+p.code,regular,8,251);
-    const variant=wrap(p.variation||'Não informada na nota — conferir no pedido',bold,11,251);
-    const height=20+description.length*16+7+sku.length*10+19+variant.length*14+45;
-    if(height>278)fail(`NF ${invoice.invoiceNumber}, item ${index+1}: descrição longa demais para uma ficha legível. Use o DANFE completo para este pedido.`);
-    return {product:p,index,description,sku,variant,height};
-   });
-   const sheets=[];let sheet=[],used=0;
-   for(const card of cards){if(sheet.length&&used+card.height+12>278){sheets.push(sheet);sheet=[];used=0;}sheet.push(card);used+=card.height+12;}
-   if(sheet.length)sheets.push(sheet);layouts.set(invoice.key,{products,sheets});
+   function cardAt(index,size){
+    const p=products[index],match=variantMatch(p.description);
+    // Move an explicit variation to its own line without printing it twice.
+    // Keep the source product intact, including quantity, SKU and kit contents.
+    const title=match&&match[1].trim()===p.variation
+     ?p.description.slice(0,match.index).replace(/\s*[-·|:]\s*$/,'').trim()||p.description
+     :p.description;
+    const width=W-2*MARGIN,description=wrap(title,bold,size,width);
+    const variantSize=p.variation?Math.min(11,size-1):8.5,variantFont=p.variation?bold:regular;
+    const variant=wrap('COR / VAR.: '+(p.variation||'Não informada na NF; conferir no pedido'),variantFont,variantSize,width);
+    const sku=wrap('CÓDIGO: '+p.code,regular,7,width);
+    const quantity=p.quantity+' '+p.unit.toUpperCase();
+    const quantitySize=Math.min(size+3,16,110/bold.widthOfTextAtSize(quantity,1));
+    if(quantitySize<10)fail(`NF ${invoice.invoiceNumber}: quantidade ou unidade extensa demais para a ficha.`);
+    const height=29+description.length*(size+1)+variant.length*(variantSize+1)+sku.length*8+2;
+    return {product:p,index,description,variant,variantSize,variantFont,sku,quantity,quantitySize,size,height};
+   }
+   const sheets=[];
+   for(let start=0;start<products.length;){
+    let count=Math.min(MAX_ITEMS,products.length-start),sheet;
+    // Prefer more whole items per sheet. Never shrink product text below 10 pt,
+    // truncate a description, merge variations or split one item across pages.
+    for(;count>0;count--){
+     sheet=Array.from({length:count},(_,i)=>cardAt(start+i,MIN_DESCRIPTION_SIZE));
+     if(sheet.reduce((sum,card)=>sum+card.height,0)<=CONTENT_HEIGHT)break;
+    }
+    if(!count)fail(`NF ${invoice.invoiceNumber}, item ${start+1}: descrição longa demais para uma ficha legível. Use o DANFE completo para este pedido.`);
+    const largest=count<=2?14:count===3?13:12;
+    for(let size=largest;size>MIN_DESCRIPTION_SIZE;size--){
+     const candidate=Array.from({length:count},(_,i)=>cardAt(start+i,size));
+     if(candidate.reduce((sum,card)=>sum+card.height,0)<=CONTENT_HEIGHT){sheet=candidate;break;}
+    }
+    sheets.push(sheet);start+=count;
+   }
+   layouts.set(invoice.key,{products,sheets});
   }
   return {regular,bold,layouts};
  }
  function draw(output,row,layout){
-  const {rgb}=root.PDFLib,W=100/25.4*72,H=150/25.4*72,black=rgb(0,0,0),{regular,bold}=layout;
+  const {rgb}=root.PDFLib,black=rgb(0,0,0),{regular,bold}=layout;
   const invoiceLayout=layout.layouts.get(row.invoice.key),pages=[];
   for(let si=0;si<invoiceLayout.sheets.length;si++){
    const page=output.addPage([W,H]);pages.push(page);
    const text=(value,x,y,size,font=regular)=>page.drawText(value,{x,y,size,font,color:black});
-   text('HARMONY STORE OFICIAL · EXPEDIÇÃO',16,H-20,8,bold);
-   text('FICHA DE SEPARAÇÃO',16,H-44,18,bold);
-   text('NF '+row.invoice.invoiceNumber,16,H-64,13,bold);
-   const counter=`${si+1}/${invoiceLayout.sheets.length}`;text(counter,W-16-regular.widthOfTextAtSize(counter,10),H-64,10);
-   text('ENVIO '+row.shipmentId,16,H-82,10,bold);
-   page.drawLine({start:{x:16,y:H-93},end:{x:W-16,y:H-93},thickness:1,color:black});
-   let y=H-105;
-   for(const card of invoiceLayout.sheets[si]){
-    text(`ITEM ${card.index+1} DE ${invoiceLayout.products.length}`,16,y-8,8,bold);y-=27;
-    for(const line of card.description){text(line,16,y,13,bold);y-=16;}
-    y-=2;for(const line of card.sku){text(line,16,y,8);y-=10;}
-    y-=9;text('COR / VARIAÇÃO NA DESCRIÇÃO',16,y,8,bold);y-=16;
-    for(const line of card.variant){text(line,16,y,11,bold);y-=14;}
-    y-=8;text('QTD. NA NOTA',16,y-5,9,bold);
-    const quantity=card.product.quantity+' '+card.product.unit.toUpperCase();
-    const size=Math.min(22,140/bold.widthOfTextAtSize(quantity,1));
-    if(size<10)fail(`NF ${row.invoice.invoiceNumber}: quantidade ou unidade extensa demais para a ficha.`);
-    text(quantity,112,y-8,size,bold);y-=29;
-    page.drawLine({start:{x:16,y},end:{x:W-16,y},thickness:0.6,color:black});y-=12;
+   const sheet=invoiceLayout.sheets[si];
+   const right=(value,y,size,font=regular)=>text(value,W-MARGIN-font.widthOfTextAtSize(value,size),y,size,font);
+   text('HARMONY STORE OFICIAL - EXPEDIÇÃO',MARGIN,H-13,7,bold);
+   text('FICHA DE SEPARAÇÃO',MARGIN,H-30,13,bold);
+   right('NF '+row.invoice.invoiceNumber,H-30,10.5,bold);
+   text('ENVIO '+row.shipmentId,MARGIN,H-43,9,bold);
+   right(`FICHA ${si+1}/${invoiceLayout.sheets.length}`,H-43,8,bold);
+   text(`ITENS ${sheet[0].index+1} A ${sheet.at(-1).index+1} DE ${invoiceLayout.products.length}`,MARGIN,H-55,7.5,bold);
+   page.drawLine({start:{x:MARGIN,y:H-61},end:{x:W-MARGIN,y:H-61},thickness:0.8,color:black});
+   const extra=Math.min(16,(CONTENT_HEIGHT-sheet.reduce((sum,c)=>sum+c.height,0))/sheet.length);
+   let top=CONTENT_TOP;
+   for(const card of sheet){
+    page.drawRectangle({x:MARGIN,y:top-14,width:8,height:8,borderWidth:0.6,borderColor:black});
+    text('ITEM '+(card.index+1),MARGIN+14,top-13,8.5,bold);
+    const quantityX=W-MARGIN-bold.widthOfTextAtSize(card.quantity,card.quantitySize);
+    text('QTD. NA NOTA',quantityX-6-bold.widthOfTextAtSize('QTD. NA NOTA',7),top-12,7,bold);
+    text(card.quantity,quantityX,top-14,card.quantitySize,bold);
+    let y=top-29;
+    for(const line of card.description){text(line,MARGIN,y,card.size,bold);y-=card.size+1;}
+    for(const line of card.variant){text(line,MARGIN,y,card.variantSize,card.variantFont);y-=card.variantSize+1;}
+    for(const line of card.sku){text(line,MARGIN,y,7);y-=8;}
+    top-=card.height+extra;
+    page.drawLine({start:{x:MARGIN,y:top},end:{x:W-MARGIN,y:top},thickness:0.5,color:black});
    }
-   text('Quantidade conforme a NF. Composição na descrição.',16,29,7.5);
-   text('USO INTERNO · NÃO É DOCUMENTO FISCAL',16,15,7.5,bold);
+   text('Quantidade da NF. Peças dos kits permanecem na descrição.',MARGIN,20,7);
+   text('USO INTERNO - NÃO É DOCUMENTO FISCAL',MARGIN,10,7,bold);
   }
   return pages;
  }

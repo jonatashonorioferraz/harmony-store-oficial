@@ -25,6 +25,8 @@ Abra **Etiquetas → Conversor de etiquetas**. Essa opção é independente de *
 
 A ficha apresenta a descrição, a quantidade comercial da NF e a cor/variação quando explicitamente informada. Composição de kits permanece na descrição. Uma nota com quantidade 1 de um kit continua como 1; não calculamos peças a partir do título. Quando a cor não consta, confira no pedido.
 
+Cada folha de 10 × 15 cm acomoda **até 4 produtos/variações**, sem juntar linhas iguais ou códigos repetidos. Por exemplo, 10 itens de tamanho usual ficam em 3 fichas (4 + 4 + 2), sempre após a etiqueta do pedido. Descrições extensas podem exigir menos itens por folha para manter a letra legível e o conteúdo completo. As fichas mostram número da NF, envio, paginação, intervalo de itens e caixas para marcar a conferência.
+
 O vínculo usa número da NF e CEP do destinatário, independentemente da ordem dos PDFs. Ausências, duplicidades, notas ambíguas e CEPs divergentes impedem a geração. Use PDFs pesquisáveis; digitalizações não são reconhecidas. Tabelas de produtos não reconhecidas podem ser impressas pela alternativa **DANFE completo**, reduzido por inteiro para 10 × 15 cm, com textos menores.
 
 O processamento ocorre no navegador, sem upload de pedidos. Os arquivos são descartados ao sair da tela ou encerrar a sessão. O PDF baixado permanece no computador. Os recursos são carregados no primeiro acesso à ferramenta. Limites: 100 MB de entrada, 100 MB de ZPL descomprimido e 1.000 páginas finais; lotes de 50 ou 100 pedidos são aceitos dentro desses limites.
