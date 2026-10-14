@@ -1,5 +1,11 @@
 # Changelog
 
+## [v25.121.1] - 2026-10-14
+
+- Logo do Mercado Livre com transparencia real, sem o fundo quadriculado da imagem anterior.
+- Referencia versionada na escolha da plataforma e nas etapas seguintes para renovar o cache.
+- Fluxos, ficha impressa e demais melhorias da versao atual preservados.
+
 ## [v25.121] - 2026-10-14
 
 - Conversor Mercado Livre: upload local do relatório de vendas `.xlsx` junto ao ZPL e aos DANFEs para preencher cores e aromas nas fichas de separação.
