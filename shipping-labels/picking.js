@@ -96,13 +96,14 @@
  const W=100/25.4*72,H=150/25.4*72,MARGIN=12;
  const CONTENT_TOP=H-65,CONTENT_BOTTOM=30,CONTENT_HEIGHT=CONTENT_TOP-CONTENT_BOTTOM;
  const MAX_ITEMS=4,MIN_DESCRIPTION_SIZE=10;
- async function plan(invoices,output){
+ async function plan(invoices,output,rows=[]){
   const {StandardFonts}=root.PDFLib,regular=await output.embedFont(StandardFonts.Helvetica),bold=await output.embedFont(StandardFonts.HelveticaBold);
   const layouts=new Map();
   for(const invoice of invoices){
    const errors=invoice.pages.filter(p=>p.productError);
    if(errors.length)fail(`NF ${invoice.invoiceNumber}: ${errors[0].productError} Use o DANFE completo ou envie um PDF com a tabela de produtos reconhecível.`);
-   const products=invoice.pages.flatMap(p=>p.products||[]);if(!products.length)fail(`NF ${invoice.invoiceNumber}: nenhum produto encontrado.`);
+   const sales=rows.find(row=>row.invoice.key===invoice.key)?.sales;
+   const products=sales?sales.products:invoice.pages.flatMap(p=>p.products||[]);if(!products.length)fail(`NF ${invoice.invoiceNumber}: nenhum produto encontrado.`);
    function cardAt(index,size){
     const p=products[index],match=variantMatch(p.description);
     // Move an explicit variation to its own line without printing it twice.
@@ -112,7 +113,7 @@
      :p.description;
     const width=W-2*MARGIN,description=wrap(title,bold,size,width);
     const variantSize=p.variation?Math.min(11,size-1):8.5,variantFont=p.variation?bold:regular;
-    const variantText=match&&match[1].trim()===p.variation
+    const variantText=p.variationSource==='sales'?(p.variation?'COR / AROMA: '+p.variation:'Conferir personalização no pedido'):match&&match[1].trim()===p.variation
      ?match[0].trim():'COR / VAR.: '+(p.variation||'Não informada na NF; conferir no pedido');
     const variant=wrap(variantText,variantFont,variantSize,width);
     const sku=wrap('CÓDIGO: '+p.code,regular,7,width);
@@ -139,7 +140,7 @@
     }
     sheets.push(sheet);start+=count;
    }
-   layouts.set(invoice.key,{products,sheets});
+   layouts.set(invoice.key,{products,sheets,sales:Boolean(sales)});
   }
   return {regular,bold,layouts};
  }
@@ -164,7 +165,8 @@
     page.drawRectangle({x:MARGIN,y:top-14,width:8,height:8,borderWidth:0.6,borderColor:black});
     text('ITEM '+(card.index+1),MARGIN+14,top-13,8.5,bold);
     const quantityX=W-MARGIN-bold.widthOfTextAtSize(card.quantity,card.quantitySize);
-    text('QTD. NA NOTA',quantityX-6-bold.widthOfTextAtSize('QTD. NA NOTA',7),top-12,7,bold);
+    const quantityLabel=invoiceLayout.sales?'QTD. CONFERIDA':'QTD. NA NOTA';
+    text(quantityLabel,quantityX-6-bold.widthOfTextAtSize(quantityLabel,7),top-12,7,bold);
     text(card.quantity,quantityX,top-14,card.quantitySize,bold);
     let y=top-29;
     for(const line of card.description){text(line,MARGIN,y,card.size,bold);y-=card.size+1;}
@@ -173,7 +175,7 @@
     top-=card.height+extra;
     page.drawLine({start:{x:MARGIN,y:top},end:{x:W-MARGIN,y:top},thickness:0.5,color:black});
    }
-   text('Quantidade da NF. Peças dos kits permanecem na descrição.',MARGIN,20,7);
+   text(invoiceLayout.sales?'Variações do Excel. Quantidades conferidas com a NF.':'Quantidade da NF. Peças dos kits permanecem na descrição.',MARGIN,20,7);
    text('USO INTERNO - NÃO É DOCUMENTO FISCAL',MARGIN,10,7,bold);
   }
   return pages;

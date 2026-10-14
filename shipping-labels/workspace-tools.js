@@ -268,7 +268,8 @@
   function render() {
     const labels = state.files.labels;
     const invoices = state.files.invoices;
-    const all = [...labels, ...invoices];
+    const sales = state.files.sales || [];
+    const all = [...labels, ...invoices, ...sales];
     labelCount.textContent = String(labels.length);
     invoiceCount.textContent = String(invoices.length);
     sizeCount.textContent = bytes(all.reduce((sum, file) => sum + file.size, 0));
@@ -280,7 +281,7 @@
     inventory.hidden = !all.length;
     inventoryTitle.textContent = 'Arquivos desta sess\u00e3o (' + all.length + ')';
     inventoryList.replaceChildren();
-    for (const [files, kind] of [[labels, 'Etiqueta'], [invoices, 'Nota']]) {
+    for (const [files, kind] of [[labels, 'Etiqueta'], [invoices, 'Nota'], [sales, 'Vendas']]) {
       for (const file of files) {
         const item = make('li', 'workspace-file');
         item.append(make('span', 'workspace-file-kind', kind), make('span', 'workspace-file-name', file.name), make('span', 'workspace-file-size', bytes(file.size)));
@@ -325,7 +326,7 @@
     frame = requestAnimationFrame(requestState);
   }
   const observer = new MutationObserver(scheduleState);
-  for (const node of [byId('file-list'), byId('invoice-list'), rows, pending, byId('preview-caption')]) {
+  for (const node of [byId('file-list'), byId('invoice-list'), byId('sales-name'), rows, pending, byId('preview-caption')]) {
     if (node) observer.observe(node, { childList: true, subtree: true, characterData: true });
   }
   for (const node of [navigation, byId('actions'), pairing, resolution]) {

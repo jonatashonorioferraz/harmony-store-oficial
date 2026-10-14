@@ -30,13 +30,16 @@ test('initial wizard shows explicit platform choices, not invented sample orders
   assert.match(html,/Shopee/);assert.match(html,/Mercado Livre/);assert.match(html,/ZPL \+ PDF/);
   assert.equal((html.match(/id="files"/g)||[]).length,1);assert.equal((html.match(/id="invoice-files"/g)||[]).length,1);
 });
-test('platform-specific instructions show one Shopee input or both Mercado Livre inputs',async()=>{
+test('platform-specific instructions show Shopee labels or Mercado Livre labels, notes and sales',async()=>{
   const h=await setup();h.query('#guide-shopee').click();assert.equal(h.guide.platform,'shopee');
   assert.equal(h.query('.invoice-upload').hidden,true);assert.equal(h.query('#files').disabled,false);
   assert.match(h.query('#guide-platform-note').textContent,/não cria uma lista ausente/);
   h.query('#guide-ml').click();assert.equal(h.guide.platform,'mercado-livre');
   assert.equal(h.query('.invoice-upload').hidden,false);assert.equal(h.query('#invoice-files').disabled,false);
+  assert.equal(h.query('#sales-file').disabled,false);
   h.update({labels:1});assert.match(h.query('#guide-next-hint').textContent,/notas em PDF/);
+  h.update({labels:1,invoices:1});assert.match(h.query('#guide-next-hint').textContent,/Excel de vendas/);
+  h.update({labels:1,invoices:1,sales:1});assert.match(h.query('#guide-next-hint').textContent,/conferir/);
 });
 test('review, generation and back navigation preserve original selection and do not auto-generate',async()=>{
   const h=await setup();h.query('#guide-shopee').click();h.update({labels:1,review:true,ready:true});

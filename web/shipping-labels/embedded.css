@@ -7,3 +7,5 @@ body.embedded{min-width:280px;background:#fffaf6}.embedded .page{max-width:none;
 
 /* Contextual recovery actions: screen only; printed documents are unchanged. */
 .resolution-next-step{grid-column:1/-1;margin:0;padding:14px 16px;border:1px solid #cddff1;border-radius:10px;background:linear-gradient(110deg,#f1f7ff,#fff8fc);color:#34506c;line-height:1.7}.resolution-items .resolution-guidance{padding:12px;border-left:3px solid #cb4384;background:#fff0f7;border-radius:0 8px 8px 0;font-weight:600}.resolution-items .resolution-action{display:inline-block;width:auto;margin:8px 8px 0 0;padding:10px 13px;white-space:normal;line-height:1.5;text-align:left}.resolution-items .resolution-replace-note{font-size:12px;color:#655663}.resolution-items .resolution-replace-status{font-size:12px;color:#9e235b;font-weight:600}.resolution-replace-status:empty{display:none}@media(max-width:600px){.resolution-items .resolution-action{display:block;width:100%;margin-right:0;text-align:center}}
+
+.sales-upload{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.sales-upload h3{margin:0 0 8px}.sales-upload p{line-height:1.7}#sales-name{overflow-wrap:anywhere}
