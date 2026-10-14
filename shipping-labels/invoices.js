@@ -53,6 +53,39 @@
     const remainder=sum%11,digit=remainder<2?0:11-remainder;
     return digit===Number(key[43]);
   }
+  function sectionPostcode(items,pattern,name){
+    // Read only the CEP cell of an explicitly named section. Stop at the next
+    // section so issuer, carrier and pickup addresses cannot become delivery.
+    const sections=/^(?:DESTINATARIO\s*\/\s*REMETENTE|(?:INFORMACOES|IDENTIFICACAO)\b|LOCAL DE\b|FATURA\b|DUPLICATAS?\b|CALCULO\b|TRANSPORTADOR\b|DADOS (?:DO|DOS|ADICIONAIS)\b)/;
+    const postcodes=[];
+    for(const header of items.filter(i=>pattern.test(fold(i.str||'')))){
+      const y=header.transform[5];
+      const next=items.filter(i=>i.transform[5]<y-2&&sections.test(fold(i.str||''))).map(i=>i.transform[5]);
+      const bottom=Math.max(y-130,...next);
+      for(const anchor of items.filter(i=>fold(i.str||'')==='CEP'&&i.transform[5]<=y+2&&i.transform[5]>bottom)){
+        const values=items.filter(value=>{
+          const dy=anchor.transform[5]-value.transform[5],dx=value.transform[4]-anchor.transform[4];
+          // The next row's small field caption can sit less than 22 pt below
+          // an empty CEP (for example FONE/FAX); it is not a malformed value.
+          return value.str?.trim()&&!/^(?:FONE\s*\/\s*FAX|TELEFONE|MUNICIPIO|UF|INSCRICAO ESTADUAL)$/.test(fold(value.str))&&dy>0&&dy<22&&value.transform[5]>bottom&&dx>=-5&&dx<35;
+        });
+        const valid=values.map(value=>value.str.trim().match(/^(\d{5})-?(\d{3})$/)).filter(Boolean);
+        if(values.length&&!valid.length)fail(`CEP ${name} ilegível. Confira o DANFE original.`);
+        postcodes.push(...valid.map(match=>match[1]+match[2]));
+      }
+    }
+    const ceps=unique(postcodes);
+    if(ceps.length>1)fail(`Mais de um CEP ${name} encontrado nesta página.`);
+    return ceps[0]||null;
+  }
+  function invoiceDestination(pages){
+    const recipient=unique(pages.map(p=>Object.hasOwn(p,'recipientPostcode')?p.recipientPostcode:p.postcode).filter(Boolean));
+    const delivery=unique(pages.map(p=>p.deliveryPostcode).filter(Boolean));
+    if(recipient.length>1||delivery.length>1)fail('CEPs de destinatário ou de entrega divergentes entre as folhas da nota.');
+    const postcode=delivery[0]||recipient[0];
+    if(!postcode)fail('Não foi possível confirmar um único CEP de entrega ou do destinatário.');
+    return {postcode,recipientPostcode:recipient[0]||null,deliveryPostcode:delivery[0]||null,postcodeSource:delivery.length?'delivery':'recipient'};
+  }
   function pageInfo(items){
     const strings=items.filter(i=>typeof i.str==='string').map(i=>i.str);
     const text=strings.join(' ');
@@ -62,28 +95,14 @@
     const key=candidates[0];if(!validKey(key))fail('Chave de acesso de NF-e inválida: confira o DANFE original.');
     const invoiceNumber=key.slice(25,34).replace(/^0+/,'');
     if(!invoiceNumber)fail('Número da nota inválido.');
-    // Match the CEP cell inside DESTINATÁRIO/REMETENTE. The issuer and the
-    // separate delivery-address section may also contain a CEP; exclude both.
-    const headers=items.filter(i=>/^DESTINATARIO\s*\/\s*REMETENTE$/.test(fold(i.str||'')));
-    const postcodes=[];
-    for(const header of headers){
-      const y=header.transform[5];
-      for(const anchor of items.filter(i=>fold(i.str||'')==='CEP'&&y-i.transform[5]>=-2&&y-i.transform[5]<130)){
-        for(const value of items){
-          const dy=anchor.transform[5]-value.transform[5],dx=value.transform[4]-anchor.transform[4];
-          const match=value.str?.trim().match(/^(\d{5})-?(\d{3})$/);
-          if(match&&dy>0&&dy<22&&dx>=-5&&dx<35)postcodes.push(match[1]+match[2]);
-        }
-      }
-    }
-    const ceps=unique(postcodes);
-    if(ceps.length>1)fail('Mais de um CEP de destinatário encontrado nesta página.');
+    const recipientPostcode=sectionPostcode(items,/^DESTINATARIO\s*\/\s*REMETENTE$/,'do destinatário');
+    const deliveryPostcode=sectionPostcode(items,/^(?:(?:INFORMACOES|IDENTIFICACAO) DO )?LOCAL DE ENTREGA(?:\s*\/\s*RETIRADA)?$/,'do local de entrega');
     const counters=unique(strings.map(s=>s.trim()).filter(s=>/^\d+\s*(?:d(?:e)?|\/)\s*\d+$/i.test(s)));
     if(counters.length>1)fail('Numeração de folhas ambígua no DANFE.');
     const counter=counters[0]?.match(/^(\d+)\s*(?:d(?:e)?|\/)\s*(\d+)$/i);
     const sheet=counter?Number(counter[1]):null,totalSheets=counter?Number(counter[2]):null;
     if(counter&&(!sheet||sheet>totalSheets||totalSheets>MAX_PAGES))fail('Numeração de folhas inválida no DANFE.');
-    return {key,invoiceNumber,series:String(Number(key.slice(22,25))),issuer:key.slice(6,20),postcode:ceps[0]||null,sheet,totalSheets};
+    return {key,invoiceNumber,series:String(Number(key.slice(22,25))),issuer:key.slice(6,20),recipientPostcode,deliveryPostcode,postcode:deliveryPostcode||recipientPostcode,postcodeSource:deliveryPostcode?'delivery':'recipient',sheet,totalSheets};
   }
   async function readInvoices(files,onProgress=()=>{}){
     const documents=[],groups=new Map();let total=0;
@@ -119,9 +138,8 @@
         fail(`NF ${pages[0].invoiceNumber}: nota duplicada, folhas faltantes ou numeração de folhas inconsistente. Confira os PDFs selecionados.`);
       }
       pages.sort((a,b)=>(a.sheet||1)-(b.sheet||1));
-      const ceps=unique(pages.map(p=>p.postcode).filter(Boolean));
-      if(ceps.length!==1)fail(`NF ${pages[0].invoiceNumber}: não foi possível confirmar um único CEP do destinatário.`);
-      invoices.push({key,invoiceNumber:pages[0].invoiceNumber,series:pages[0].series,issuer:pages[0].issuer,postcode:ceps[0],pages});
+      const destination=invoiceDestination(pages);
+      invoices.push({key,invoiceNumber:pages[0].invoiceNumber,series:pages[0].series,issuer:pages[0].issuer,...destination,pages});
     }
     if(!invoices.length)fail('Nenhuma nota fiscal identificada.');
     return {documents,invoices};
@@ -223,5 +241,5 @@
     const bytes=await output.save();
     return {blob:new Blob([bytes],{type:'application/pdf'}),bytes,sequence,rows};
   }
-  root.LocalInvoices={openPdf,validKey,pageInfo,readInvoices,pair,createPairedPdf,labelIdentity,missingInvoiceOptions,confirmMissingInvoice};
+  root.LocalInvoices={openPdf,validKey,pageInfo,invoiceDestination,readInvoices,pair,createPairedPdf,labelIdentity,missingInvoiceOptions,confirmMissingInvoice};
 })(globalThis);

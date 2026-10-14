@@ -136,7 +136,7 @@
   const matches=(read.invoices||[]).filter(n=>n.invoiceNumber===m.invoiceNumber);
   if(matches.length!==1)return `NF ${m.invoiceNumber}: ${matches.length?'número ambíguo nos PDFs':'não encontrada nos PDFs'}. Ficha baseada no Excel.`;
   if(matches[0].postcode!==m.postcode)return `NF ${m.invoiceNumber}: CEP diferente da etiqueta. A nota não foi vinculada; ficha baseada no Excel.`;
-  try{productsFor(label,matches[0],read.sales);return `NF ${m.invoiceNumber}: produtos e quantidades também conferidos com o DANFE.`;}
+  try{productsFor(label,matches[0],read.sales);return `NF ${m.invoiceNumber}: produtos e quantidades também conferidos com o DANFE.${matches[0].postcodeSource==='delivery'?' CEP do local de entrega conferido.':''}`;}
   catch(error){return `NF ${m.invoiceNumber}: conferência complementar: ${error.message} A ficha usa os dados do Excel.`;}
  }
  function pair(labels,read){
@@ -178,7 +178,7 @@
   }
   const matched=new Set(rows.map(r=>r.order.id)),scope={total:read.sales.groups.length,matched:matched.size,ignored:read.sales.groups.filter(g=>!matched.has(g.id)).length};
   const products=rows.reduce((n,r)=>n+r.order.products.length,0),missing=rows.reduce((n,r)=>n+r.order.products.filter(p=>!p.variation).length,0);
-  if(missing)warnings.push(`${missing} item(ns) sem variação no Excel: conferir personalização no pedido. Nenhuma cor ou aroma foi deduzido.`);
+  if(missing)warnings.push(`${missing} item(ns) sem variação no Excel. ${root.LocalPicking.missingSalesVariation} Nenhuma cor ou aroma foi deduzido.`);
   if(read.invoices?.length||read.problems?.length){
    warnings.push('DANFEs usados apenas para conferência complementar. As fichas seguem produtos, quantidades e variações do Excel.');
    warnings.push(...rows.filter(r=>!r.fiscalCheck.includes('também conferidos')).map(r=>'Envio '+r.shipmentId+' — '+r.fiscalCheck));

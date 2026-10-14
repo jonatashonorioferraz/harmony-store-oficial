@@ -37,6 +37,7 @@
   const match=variantMatch(description);
   return match?match[1].trim():null;
  }
+ const missingSalesVariation='Siga a descrição. Se personalizado, confira o pedido.';
  function extract(items,operators){
   const texts=items.filter(i=>i.str?.trim()).map(i=>({...i,str:i.str.trim()}));
   const heads=texts.filter(i=>/^DADOS DO[S]? PRODUTO[S]?\s*\//.test(fold(i.str)));
@@ -122,7 +123,7 @@
      :p.description;
     const width=W-2*MARGIN,description=wrap(title,bold,size,width);
     const variantSize=p.variation?Math.min(11,size-1):8.5,variantFont=p.variation?bold:regular;
-    const variantText=p.variationSource==='sales'?(p.variation?'COR / AROMA: '+p.variation:'Conferir personalização no pedido'):match&&match[1].trim()===p.variation
+    const variantText=p.variationSource==='sales'?(p.variation?'COR / AROMA: '+p.variation:missingSalesVariation):match&&match[1].trim()===p.variation
      ?match[0].trim():'COR / VAR.: '+(p.variation||'Não informada na NF; conferir no pedido');
     const variant=wrap(variantText,variantFont,variantSize,width);
     const sku=wrap('CÓDIGO: '+p.code,regular,7,width);
@@ -191,5 +192,5 @@
   }
   return pages;
  }
- root.LocalPicking={extract,variation,plan,planOrders,draw};
+ root.LocalPicking={extract,variation,missingSalesVariation,plan,planOrders,draw};
 })(globalThis);

@@ -82,11 +82,23 @@ test('checks explicit fiscal variations without reusing the first color in all p
 
 test('blank variation prints the personalization instruction without blocking and all four variations fit on one sheet',async()=>{
  const c=env(),sales=c.LocalSales.parse([...pack(),row(12,data(2,{Z:''}))]),notes=[invoice(1,4),invoice(2)],labels=[label(1),label(2)],read={invoices:notes,sales};
- const report=await c.LocalBatchRecovery.analyze(labels,read);assert.equal(report.ready,true);assert.equal(report.counts.pages,4);assert.match(report.warnings.join(' '),/personalização/);
+ const report=await c.LocalBatchRecovery.analyze(labels,read);assert.equal(report.ready,true);assert.equal(report.counts.pages,4);assert.match(report.warnings.join(' '),/Se personalizado, confira o pedido/);
  const output=await c.PDFLib.PDFDocument.create(),layout=await c.LocalPicking.planOrders(report.rows,output);
- assert.equal(layout.layouts.get(report.rows[0].order.key).sheets[0].length,4);assert.deepEqual(clone(layout.layouts.get(report.rows[1].order.key).sheets[0][0].variant),['Conferir personalização no pedido']);
+ assert.equal(layout.layouts.get(report.rows[0].order.key).sheets[0].length,4);assert.deepEqual(clone(layout.layouts.get(report.rows[1].order.key).sheets[0][0].variant),['Siga a descrição. Se personalizado, confira o pedido.']);
  const result=await c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'picking');assert.equal(result.sequence.length,4);
  sales.groups[0].id='2000000000000999';await assert.rejects(c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'picking'),/venda\/pacote/);
+});
+
+test('blank Excel variations preserve fixed-color and personalized titles without inventing a variation',async()=>{
+ const c=env(),grid=pack(),titles=['Sabonete Pezinho Verde','Sagu Lilás com perfume Lavanda','Sabonete personalizado com nome','Lembrancinha para presente'];
+ for(let i=0;i<4;i++){grid[i+3].cells.Y.value=titles[i];grid[i+3].cells.Z.value='';}
+ const sales=c.LocalSales.parse(grid),before=clone(sales),report=await c.LocalBatchRecovery.analyze([label(1)],{sales,invoices:[]});
+ const layout=await c.LocalPicking.planOrders(report.rows,await c.PDFLib.PDFDocument.create());
+ const sheets=layout.layouts.get(report.rows[0].order.key).sheets;
+ assert.equal(sheets.length,1);assert.equal(sheets[0].length,4);
+ assert.deepEqual(clone(sheets[0].map(card=>card.description.join(' '))),titles);
+ assert.ok(sheets[0].every(card=>!card.product.variation&&card.variant.join(' ')==='Siga a descrição. Se personalizado, confira o pedido.'));
+ assert.match(report.warnings.join(' '),/4 item\(ns\) sem variação no Excel/);assert.deepEqual(clone(sales),before);
 });
 
 test('report gaps isolate the affected order and preserve Excel for explicit partial generation',async()=>{
