@@ -135,7 +135,9 @@
   showMore.hidden = true;
   const searchHint = make('p', 'workspace-note', 'A lista original de pend\u00eancias permanece completa abaixo. A busca n\u00e3o aprova v\u00ednculos nem inclui pedidos no PDF.');
   finder.append(finderHead, searchRow, filters, resultSummary, results, showMore, searchHint);
-  resolution.before(finder);
+  const finderSlot = byId('guide-finder-body');
+  if (finderSlot) finderSlot.append(finder);
+  else resolution.before(finder);
 
   const jump = make('div', 'workspace-page-jump');
   jump.hidden = true;
