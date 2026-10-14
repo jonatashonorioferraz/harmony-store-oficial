@@ -1,5 +1,11 @@
 # Changelog
 
+## [v25.123] - 2026-10-14
+
+- Conversor: o CEP explícito do local de entrega no DANFE tem prioridade sobre o CEP do destinatário, com origem preservada e conferência entre as folhas. Endereços do emitente, transportador e retirada continuam fora da associação.
+- Fichas e conferência de itens sem variação no Excel orientam seguir a descrição e conferir o pedido quando personalizado, preservando cores no título e a orientação da expedição.
+
+
 ## [v25.122] - 2026-10-14
 
 - Mercado Livre: o Excel passa a ser a fonte dos produtos, quantidades e variações das fichas internas. DANFE opcional para conferência complementar; impressão do DANFE completo mantém o vínculo fiscal estrito.

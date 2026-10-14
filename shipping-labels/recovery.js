@@ -64,7 +64,7 @@
             }
             if(options.alternative&&!usedAlternative){content=await page.getTextContent({disableNormalization:true});active();
               const alternative=root.LocalInvoices.pageInfo(alternativeItems(content.items));
-              if(alternative.key!==info.key||alternative.postcode!==info.postcode)throw Error('As duas leituras discordam sobre a identidade da nota. Selecione novamente o DANFE original da plataforma.');
+              if(['key','recipientPostcode','deliveryPostcode'].some(field=>alternative[field]!==info[field]))throw Error('As duas leituras discordam sobre a identidade da nota. Selecione novamente o DANFE original da plataforma.');
             }
             try{info.products=root.LocalPicking.extract(content.items,await page.getOperatorList());active();}
             catch(error){active();info.productError=error.message;}
@@ -84,9 +84,10 @@
       if(pages.some(p=>(p.totalSheets||1)!==expected)||pages.length!==expected||(expected>1&&pages.some(p=>!p.sheet))||new Set(pages.map(p=>p.sheet||1)).size!==pages.length){
         problems.push(problem('sheets',`NF ${first.invoiceNumber}: há folhas repetidas, faltantes ou com numeração inconsistente. Selecione o conjunto completo desta nota, sem editar o PDF.`,extra));continue;
       }
-      pages.sort((a,b)=>(a.sheet||1)-(b.sheet||1));const ceps=[...new Set(pages.map(p=>p.postcode).filter(Boolean))];
-      if(ceps.length!==1){problems.push(problem('postcode',`NF ${first.invoiceNumber}: a leitura não confirmou um único CEP do destinatário. Tente a leitura alternativa ou selecione novamente o DANFE original.`,extra));continue;}
-      invoices.push({key,invoiceNumber:first.invoiceNumber,series:first.series,issuer:first.issuer,postcode:ceps[0],pages});
+      pages.sort((a,b)=>(a.sheet||1)-(b.sheet||1));let destination;
+      try{destination=root.LocalInvoices.invoiceDestination(pages);}
+      catch(error){problems.push(problem('postcode',`NF ${first.invoiceNumber}: ${error.message} Tente a leitura alternativa ou selecione novamente o DANFE original.`,extra));continue;}
+      invoices.push({key,invoiceNumber:first.invoiceNumber,series:first.series,issuer:first.issuer,...destination,pages});
     }
     return {documents,invoices,problems,recovered};
   }

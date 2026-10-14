@@ -29,7 +29,7 @@
     }
     let nextPage=1;
     for(const row of rows){
-      if(row.sales){const missing=row.sales.products.filter(p=>!p.variation).length;report.warnings.push('NF '+row.invoice.invoiceNumber+': '+(row.sales.products.length-missing)+' item(ns) com variação do Excel; produtos e quantidades conferidos com a NF.'+(missing?' '+missing+' item(ns) sem variação no relatório: conferir personalização no pedido.':''));}
+      if(row.sales){const missing=row.sales.products.filter(p=>!p.variation).length;report.warnings.push('NF '+row.invoice.invoiceNumber+': '+(row.sales.products.length-missing)+' item(ns) com variação do Excel; produtos e quantidades conferidos com a NF.'+(missing?' '+missing+' item(ns) sem variação no relatório. '+root.LocalPicking.missingSalesVariation:''));}
       if(row.confirmedByAdmin)report.warnings.push('Envio '+row.shipmentId+' / NF '+row.invoice.invoiceNumber+': vínculo confirmado pelo ADM porque a etiqueta não informa a NF. CEP conferido; a confirmação vale somente para esta seleção.');
       const count=picking?picking.layouts.get(row.invoice.key).sheets.length:row.invoice.pages.length;
       report.rows.push({...row,labelPage:nextPage,invoiceStart:nextPage+1,invoiceEnd:nextPage+count});
