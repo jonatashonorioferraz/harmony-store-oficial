@@ -18,10 +18,13 @@ Cada pessoa deve usar sua própria conta. Senhas temporárias precisam ser troca
 
 Abra **Etiquetas → Conversor de etiquetas**. Essa opção é independente de **Lotes e etiquetas**.
 
-1. Selecione os ZIPs, ZPLs ou TXTs de etiquetas da Shopee ou Mercado Livre.
-2. Para separar produtos do Mercado Livre, selecione também os PDFs originais de DANFE do mesmo lote e mantenha **Ficha de separação**.
-3. Clique em **Vincular notas e gerar PDF** e confira o relatório de correspondências.
-4. Baixe ou abra o PDF: cada etiqueta vem seguida da ficha daquele pedido, em páginas de **10 × 15 cm**. Imprima em tamanho real, escala 100%.
+1. Escolha **Shopee** ou **Mercado Livre**, sem misturar plataformas no mesmo lote.
+2. Na **Shopee**, selecione o ZPL exportado com etiquetas e lista de empacotamento (ou o ZIP que o contem). Nao precisa de DANFE. A lista precisa estar no arquivo original: o conversor nao cria produtos que nao vieram nele.
+3. No **Mercado Livre**, selecione o ZPL das etiquetas e os DANFEs originais em PDF pesquisavel do mesmo lote. Os dois sao necessarios neste fluxo. A ficha de separacao continua no formato existente.
+4. Clique em **Continuar para conferencia**. Resolva as pendencias indicadas ou autorize explicitamente o subconjunto seguro, quando disponivel.
+5. Gere o PDF, confira a previa e baixe ou abra para imprimir em tamanho real / escala 100%.
+
+As etapas **Adicionar arquivos**, **Conferir pedidos** e **Gerar e imprimir** orientam a tarefa. Voltar nao apaga arquivos; mudar um arquivo, configuracao ou plataforma exige nova conferencia. **Visao completa** mostra as ferramentas juntas, mas nao remove nenhuma protecao. Em **Mais opcoes de impressao** ficam resolucao, tamanho e alternativa de DANFE completo. PDFs selecionados anteriormente ficam preservados na sessao ao escolher Shopee, mas nao entram nessa conversao. Ao fechar a central a selecao nao fica armazenada.
 
 A ficha apresenta a descrição, a quantidade comercial da NF e a cor/variação quando explicitamente informada. Composição de kits permanece na descrição. Uma nota com quantidade 1 de um kit continua como 1; não calculamos peças a partir do título. Quando a cor não consta, confira no pedido.
 

@@ -165,6 +165,7 @@
     }
     pageInput.setCustomValidity('');
     window.dispatchEvent(new CustomEvent('harmony-labels:preview-page', { detail: { page: value } }));
+    window.dispatchEvent(new CustomEvent('harmony-labels:guide-reveal', { detail: { target: byId('result-title') } }));
     byId('result-title')?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
   pageInput.addEventListener('input', () => pageInput.setCustomValidity(''), { signal: events.signal });
@@ -223,6 +224,7 @@
 
   function locate(target) {
     if (!active() || !target?.isConnected) return;
+    window.dispatchEvent(new CustomEvent('harmony-labels:guide-reveal', { detail: { target } }));
     located?.classList.remove('workspace-located');
     located = target;
     target.classList.add('workspace-located');
