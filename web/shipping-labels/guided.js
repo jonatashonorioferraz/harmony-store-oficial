@@ -52,18 +52,19 @@
       if ($('guide-marketplace-logo')) $('guide-marketplace-logo').src = platform === 'shopee' ? 'assets/shopee.webp' : 'assets/mercado-livre.webp';
     }
     text('guide-label-title', platform === 'shopee' ? 'Etiquetas + lista de empacotamento' : 'Etiquetas ZPL');
-    text('guide-upload-description', platform === 'shopee' ? 'Use o ZPL com a lista de empacotamento incluída.' : 'Selecione o ZPL, os DANFEs e o Excel de vendas dos mesmos pedidos para incluir cores e aromas.');
-    const note = platform === 'shopee' ? 'A lista de empacotamento precisa vir no ZPL exportado. O conversor não cria uma lista ausente.' : 'As notas são vinculadas pela NF e pelo CEP, não pela ordem dos arquivos.';
+    text('guide-upload-description', platform === 'shopee' ? 'Use o ZPL com a lista de empacotamento incluída.' : 'Selecione as etiquetas ZPL e o Excel de vendas. O DANFE é opcional para a ficha interna.');
+    const note = platform === 'shopee' ? 'A lista de empacotamento precisa vir no ZPL exportado. O conversor não cria uma lista ausente.' : 'As etiquetas definem o lote. O Excel pode incluir outras vendas: somente os pedidos das etiquetas serão usados.';
     text('guide-platform-note', note + (platform === 'shopee' && (state.invoices || state.sales) ? ' Os PDFs e o Excel já selecionados foram mantidos na sessão, mas não serão usados na Shopee.' : ''));
     text('guide-help-platform', platform === 'shopee' ? 'Confira se etiquetas e lista estão presentes no ZPL. A lista não é reconstruída pelo conversor.' : 'Cada etiqueta será seguida do documento escolhido nas opções de impressão.');
     text('check', state.review ? 'Conferir novamente' : 'Conferir pedidos');
     let hint = 'Escolha onde você vendeu. Eu te mostro o próximo passo.';
     if (!selecting) {
       if (step === 1) {
-        hint = platform === 'shopee' ? 'Na Shopee, use o ZPL que já inclui a lista de empacotamento.' : 'No Mercado Livre, adicione o ZPL, os DANFEs e o Excel de vendas para preencher cores e aromas.';
-        if (platform === 'mercado-livre' && state.labels && !state.invoices) hint = 'Etiquetas selecionadas! Agora adicione as notas em PDF.';
-        if (state.labels && (platform === 'shopee' || state.invoices)) hint = 'Arquivos selecionados. Vamos conferir antes de imprimir?';
+        hint = platform === 'shopee' ? 'Na Shopee, use o ZPL que já inclui a lista de empacotamento.' : 'No Mercado Livre, adicione o ZPL e o Excel para gerar as fichas com produtos, quantidades e variações.';
+        if (platform === 'mercado-livre' && state.labels && !state.invoices && !state.sales) hint = 'Etiquetas selecionadas! Agora adicione o relatório Excel de vendas.';
+        if (state.labels && (platform === 'shopee' || state.invoices || state.sales)) hint = 'Arquivos selecionados. Confira os pedidos antes de imprimir.';
         if (platform === 'mercado-livre' && state.labels && state.invoices && !state.sales) hint = 'Adicione também o Excel de vendas para incluir cores e aromas. Sem ele, a ficha usa apenas a nota fiscal.';
+        if (platform === 'mercado-livre' && state.labels && state.mode === 'danfe' && !state.invoices) hint = 'Para imprimir o DANFE completo após a etiqueta, adicione as notas em PDF.';
       } else if (step === 2) {
         hint = !state.ready ? 'Veja o que precisa de atenção e use as soluções indicadas abaixo.' : platform === 'shopee' ? 'Ao gerar, confira na prévia se a lista de empacotamento veio no arquivo.' : 'Revise o resumo e os avisos antes de gerar o PDF.';
       } else hint = 'Confira a prévia antes de baixar. Na impressora, use escala 100%.';

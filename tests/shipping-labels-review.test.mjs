@@ -89,7 +89,7 @@ test('composition still refuses stale reviewed rows if the actual invoice batch 
 
 const controller=await read('app.js');
 function element(tag='div'){
-  return {tagName:tag.toUpperCase(),click(){if(this.disabled)return;this.clicked=(this.clicked||0)+1;if(this.events.click)return this.events.click();return this.onclick?.();},children:[],events:{},classList:{toggle(){}},value:'',hidden:false,textContent:'',
+  return {tagName:tag.toUpperCase(),click(){if(this.disabled)return;this.clicked=(this.clicked||0)+1;if(this.events.click)return this.events.click();return this.onclick?.();},children:[],events:{},dataset:{},classList:{toggle(){}},value:'',hidden:false,textContent:'',
     addEventListener(type,fn){this.events[type]=fn;},setAttribute(key,value){this[key]=value;},removeAttribute(key){delete this[key];},
     append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},focus(){this.focused=true;},scrollIntoView(){},getContext(){return {};},
     set innerHTML(value){throw Error('Unsafe HTML insertion: '+value);}};
@@ -137,6 +137,26 @@ test('selecting, replacing and removing the sales report invalidates the previou
   env.get('clear-sales').onclick();assert.equal(env.get('sales-name').textContent,'');assert.equal(env.get('convert').disabled,true);
   selectSales('sales.xlsx');await env.get('check').onclick();await env.get('convert').onclick();
   env.get('new-batch-open').onclick();env.get('new-batch-same').onclick();assert.equal(env.get('sales-name').textContent,'');assert.equal(env.get('sales-file').value,'');assert.equal(env.get('clear-sales').hidden,true);
+});
+
+test('Mercado Livre accepts ZPL plus Excel without DANFE and switches gates for full-DANFE mode',async()=>{
+ const env=environment({platform:'mercado-livre',update(){}});let checked,reads=0;
+ env.context.LocalSales={read:async()=>({groups:[]})};env.context.LocalBatchRecovery.analyze=async(labels,read)=>{checked=read;reads++;return env.report;};
+ env.select();assert.equal(env.get('check').disabled,true);
+ env.get('sales-file').events.change({target:{files:[{name:'sales.xlsx',size:20}]}});assert.equal(env.get('check').disabled,false);assert.equal(env.get('size').disabled,true);
+ await env.get('check').onclick();assert.ok(checked.sales);assert.equal(checked.invoices.length,0);
+ env.get('document-mode').value='danfe';env.get('document-mode').events.change();assert.equal(env.get('check').disabled,true);await env.get('check').onclick();assert.equal(reads,1);
+ env.get('document-mode').value='picking';env.get('document-mode').events.change();assert.equal(env.get('check').disabled,false);
+ env.get('clear-sales').onclick();assert.equal(env.get('check').disabled,true);
+});
+
+test('Excel-backed rows display orders and report scope without claiming a fiscal association',async()=>{
+ const env=environment({platform:'mercado-livre',update(){}});
+ const order={id:'2000000000000001',source:'sales.xlsx',sheet:'Vendas BR',row:7,products:[{description:'Kit de teste',quantity:'2',unit:'UNID',variation:'AZUL',variationSource:'sales'}]};
+ Object.assign(env.report,{salesSource:true,paired:true,scope:{total:95,matched:50,ignored:45},rows:[{order,shipmentId:'10000000001',fiscalCheck:'DANFE não fornecido',labelPage:1,invoiceStart:2,invoiceEnd:2}]});
+ env.context.LocalSales={read:async()=>({groups:[]})};env.select();env.get('sales-file').events.change({target:{files:[{name:'sales.xlsx',size:20}]}});
+ await env.get('check').onclick();assert.match(env.get('review-scope').textContent,/95 pedidos.*50 conferidos.*45 fora/);assert.equal(env.get('pairing-identity-title').textContent,'Pedido / pacote');assert.equal(env.get('pairing-rows').children[0].dataset.orderId,order.id);
+ await env.get('convert').onclick();assert.equal(env.calls.paired,1);assert.match(env.get('preview-caption').textContent,/Pedido 2000000000000001/);assert.doesNotMatch(env.get('preview-caption').textContent,/NF /);
 });
 
 test('Shopee ignores a retained sales report and a late Excel read cannot restore a disposed session',async()=>{

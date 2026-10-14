@@ -1,5 +1,13 @@
 # Changelog
 
+## [v25.122] - 2026-10-14
+
+- Mercado Livre: o Excel passa a ser a fonte dos produtos, quantidades e variações das fichas internas. DANFE opcional para conferência complementar; impressão do DANFE completo mantém o vínculo fiscal estrito.
+- As etiquetas delimitam o lote. Relatórios com mais vendas podem ser reutilizados em lotes de 50 ou 100 pedidos, com resumo dos pedidos usados e não usados. Vínculo exige pedido/pacote, envio e CEP correspondentes; duplicidades e cancelamentos continuam pendentes.
+- Ficha identifica pedido, envio e fonte Excel; personalizados sem variação mantêm a orientação de conferência manual. Busca inclui número de pedido.
+- Ajuste limitado da fonte equivalente em campos ZPL com espaçamento excepcional evita encolher a etiqueta inteira ao quebrar uma linha curta de endereço.
+
+
 ## [v25.121] - 2026-10-14
 
 - Conversor Mercado Livre: upload local do relatório de vendas `.xlsx` junto ao ZPL e aos DANFEs para preencher cores e aromas nas fichas de separação.

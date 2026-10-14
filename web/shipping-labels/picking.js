@@ -97,13 +97,22 @@
  const CONTENT_TOP=H-65,CONTENT_BOTTOM=30,CONTENT_HEIGHT=CONTENT_TOP-CONTENT_BOTTOM;
  const MAX_ITEMS=4,MIN_DESCRIPTION_SIZE=10;
  async function plan(invoices,output,rows=[]){
-  const {StandardFonts}=root.PDFLib,regular=await output.embedFont(StandardFonts.Helvetica),bold=await output.embedFont(StandardFonts.HelveticaBold);
-  const layouts=new Map();
-  for(const invoice of invoices){
+  const records=invoices.map(invoice=>{
    const errors=invoice.pages.filter(p=>p.productError);
    if(errors.length)fail(`NF ${invoice.invoiceNumber}: ${errors[0].productError} Use o DANFE completo ou envie um PDF com a tabela de produtos reconhecível.`);
    const sales=rows.find(row=>row.invoice.key===invoice.key)?.sales;
-   const products=sales?sales.products:invoice.pages.flatMap(p=>p.products||[]);if(!products.length)fail(`NF ${invoice.invoiceNumber}: nenhum produto encontrado.`);
+   return {key:invoice.key,name:'NF '+invoice.invoiceNumber,products:sales?sales.products:invoice.pages.flatMap(p=>p.products||[]),sales:Boolean(sales)};
+  });
+  return planRecords(records,output);
+ }
+ async function planOrders(rows,output){
+  return planRecords(rows.map(({order})=>({key:order.key,name:'Pedido '+order.id,products:order.products,sales:true,order:true})),output);
+ }
+ async function planRecords(records,output){
+  const {StandardFonts}=root.PDFLib,regular=await output.embedFont(StandardFonts.Helvetica),bold=await output.embedFont(StandardFonts.HelveticaBold);
+  const layouts=new Map();
+  for(const record of records){
+   const {products}=record;if(!products.length)fail(`${record.name}: nenhum produto encontrado.`);
    function cardAt(index,size){
     const p=products[index],match=variantMatch(p.description);
     // Move an explicit variation to its own line without printing it twice.
@@ -119,7 +128,7 @@
     const sku=wrap('CÓDIGO: '+p.code,regular,7,width);
     const quantity=p.quantity+' '+p.unit.toUpperCase();
     const quantitySize=Math.min(size+3,16,110/bold.widthOfTextAtSize(quantity,1));
-    if(quantitySize<10)fail(`NF ${invoice.invoiceNumber}: quantidade ou unidade extensa demais para a ficha.`);
+    if(quantitySize<10)fail(`${record.name}: quantidade ou unidade extensa demais para a ficha.`);
     const height=29+description.length*(size+1)+variant.length*(variantSize+1)+sku.length*8+2;
     return {product:p,index,description,variant,variantSize,variantFont,sku,quantity,quantitySize,size,height};
    }
@@ -132,7 +141,7 @@
      sheet=Array.from({length:count},(_,i)=>cardAt(start+i,MIN_DESCRIPTION_SIZE));
      if(sheet.reduce((sum,card)=>sum+card.height,0)<=CONTENT_HEIGHT)break;
     }
-    if(!count)fail(`NF ${invoice.invoiceNumber}, item ${start+1}: descrição longa demais para uma ficha legível. Use o DANFE completo para este pedido.`);
+    if(!count)fail(`${record.name}, item ${start+1}: descrição longa demais para uma ficha legível. Confira este pedido separadamente.`);
     const largest=count<=2?14:count===3?13:12;
     for(let size=largest;size>MIN_DESCRIPTION_SIZE;size--){
      const candidate=Array.from({length:count},(_,i)=>cardAt(start+i,size));
@@ -140,13 +149,13 @@
     }
     sheets.push(sheet);start+=count;
    }
-   layouts.set(invoice.key,{products,sheets,sales:Boolean(sales)});
+   layouts.set(record.key,{products,sheets,sales:record.sales,order:record.order});
   }
   return {regular,bold,layouts};
  }
  function draw(output,row,layout){
   const {rgb}=root.PDFLib,black=rgb(0,0,0),{regular,bold}=layout;
-  const invoiceLayout=layout.layouts.get(row.invoice.key),pages=[];
+  const invoiceLayout=layout.layouts.get(row.order?.key||row.invoice.key),pages=[];
   for(let si=0;si<invoiceLayout.sheets.length;si++){
    const page=output.addPage([W,H]);pages.push(page);
    const text=(value,x,y,size,font=regular)=>page.drawText(value,{x,y,size,font,color:black});
@@ -154,10 +163,12 @@
    const right=(value,y,size,font=regular)=>text(value,W-MARGIN-font.widthOfTextAtSize(value,size),y,size,font);
    text('HARMONY STORE OFICIAL - EXPEDIÇÃO',MARGIN,H-13,7,bold);
    text('FICHA DE SEPARAÇÃO',MARGIN,H-30,13,bold);
-   right('NF '+row.invoice.invoiceNumber,H-30,10.5,bold);
+   right(row.order?'EXCEL':'NF '+row.invoice.invoiceNumber,H-30,row.order?8:10.5,bold);
    text('ENVIO '+row.shipmentId,MARGIN,H-43,9,bold);
    right(`FICHA ${si+1}/${invoiceLayout.sheets.length}`,H-43,8,bold);
-   text(`ITENS ${sheet[0].index+1} A ${sheet.at(-1).index+1} DE ${invoiceLayout.products.length}`,MARGIN,H-55,7.5,bold);
+   const range=`ITENS ${sheet[0].index+1} A ${sheet.at(-1).index+1} DE ${invoiceLayout.products.length}`;
+   if(row.order){text('PEDIDO '+row.order.id,MARGIN,H-55,7.5,bold);right(range,H-55,7,bold);}
+   else text(range,MARGIN,H-55,7.5,bold);
    page.drawLine({start:{x:MARGIN,y:H-61},end:{x:W-MARGIN,y:H-61},thickness:0.8,color:black});
    const extra=Math.min(16,(CONTENT_HEIGHT-sheet.reduce((sum,c)=>sum+c.height,0))/sheet.length);
    let top=CONTENT_TOP;
@@ -165,7 +176,7 @@
     page.drawRectangle({x:MARGIN,y:top-14,width:8,height:8,borderWidth:0.6,borderColor:black});
     text('ITEM '+(card.index+1),MARGIN+14,top-13,8.5,bold);
     const quantityX=W-MARGIN-bold.widthOfTextAtSize(card.quantity,card.quantitySize);
-    const quantityLabel=invoiceLayout.sales?'QTD. CONFERIDA':'QTD. NA NOTA';
+    const quantityLabel=row.order?'QTD. DO PEDIDO':invoiceLayout.sales?'QTD. CONFERIDA':'QTD. NA NOTA';
     text(quantityLabel,quantityX-6-bold.widthOfTextAtSize(quantityLabel,7),top-12,7,bold);
     text(card.quantity,quantityX,top-14,card.quantitySize,bold);
     let y=top-29;
@@ -175,10 +186,10 @@
     top-=card.height+extra;
     page.drawLine({start:{x:MARGIN,y:top},end:{x:W-MARGIN,y:top},thickness:0.5,color:black});
    }
-   text(invoiceLayout.sales?'Variações do Excel. Quantidades conferidas com a NF.':'Quantidade da NF. Peças dos kits permanecem na descrição.',MARGIN,20,7);
+   text(row.order?'Produtos, quantidades e variações do relatório de vendas.':invoiceLayout.sales?'Variações do Excel. Quantidades conferidas com a NF.':'Quantidade da NF. Peças dos kits permanecem na descrição.',MARGIN,20,7);
    text('USO INTERNO - NÃO É DOCUMENTO FISCAL',MARGIN,10,7,bold);
   }
   return pages;
  }
- root.LocalPicking={extract,variation,plan,draw};
+ root.LocalPicking={extract,variation,plan,planOrders,draw};
 })(globalThis);

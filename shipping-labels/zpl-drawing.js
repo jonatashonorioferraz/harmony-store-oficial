@@ -127,6 +127,16 @@
       } else if (f.text !== undefined) {
         measure.font='700 '+f.font.height+'px HarmonyZpl'; measure.fontKerning='none';
         f.lines=textLines(measure,f.text,f);
+        // The bundled substitute font can be slightly wider than Zebra's font.
+        // Some exports use a huge FB line gap to keep an address field on one
+        // line. Condense only a near-fitting field (at most 15%) when wrapping
+        // would push its second line beyond the paper and shrink every barcode.
+        // Preserve all text; keep ordinary line wrapping and spacing unchanged.
+        if(f.block&&f.lines.length===2&&!f.text.includes('\\&')&&f.block.spacing>=f.font.height*10&&f.y+2*f.font.height+f.block.spacing>(state.height||1200)){
+          const fullWidth=measure.measureText(f.text.replace(/\s+/g,' ').trim()).width*f.font.width/f.font.height;
+          const ratio=f.block.width/fullWidth;
+          if(ratio>=0.85&&ratio<1){f.font={...f.font,width:f.font.width*ratio};f.lines=[f.text.replace(/\s+/g,' ').trim()];}
+        }
         f.lineWidths=f.lines.map(s=>measure.measureText(s).width*f.font.width/f.font.height);
         f.drawWidth=Math.max(0,...f.lineWidths);
         f.drawHeight=f.lines.length ? f.font.height+(f.lines.length-1)*(f.font.height+(f.block?.spacing||0)) : 0;
