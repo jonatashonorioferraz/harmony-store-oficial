@@ -28,6 +28,7 @@
     }
     let nextPage=1;
     for(const row of rows){
+      if(row.confirmedByAdmin)report.warnings.push('Envio '+row.shipmentId+' / NF '+row.invoice.invoiceNumber+': vínculo confirmado pelo ADM porque a etiqueta não informa a NF. CEP conferido; a confirmação vale somente para esta seleção.');
       const count=picking?picking.layouts.get(row.invoice.key).sheets.length:row.invoice.pages.length;
       report.rows.push({...row,labelPage:nextPage,invoiceStart:nextPage+1,invoiceEnd:nextPage+count});
       nextPage+=1+count;

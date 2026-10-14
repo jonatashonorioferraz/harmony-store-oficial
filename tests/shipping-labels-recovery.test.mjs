@@ -14,6 +14,59 @@ const label=n=>({width:8,height:8,raw:new Uint8Array(8).fill(255),metadata:{invo
 const read=notes=>({documents:[],invoices:notes,problems:[],recovered:[]});
 const file=(name,body)=>({name,size:new TextEncoder().encode(body).length,arrayBuffer:async()=>new TextEncoder().encode(body).buffer});
 const clone=value=>JSON.parse(JSON.stringify(value));
+const missingLabel=()=>({...label(1),metadata:{...label(1).metadata,invoiceNumber:null,invoiceNumbers:[]}});
+
+test('missing NF stays pending even with one matching CEP; explicit confirmation binds the access key',async()=>{
+ const env=environment(),labels=[missingLabel()],notes=[invoice(1)],before=clone(labels);
+ let report=await env.LocalBatchRecovery.analyze(labels,read(notes));
+ assert.equal(report.ready,false);assert.equal(report.confirmedCount,0);assert.equal(report.items[0].code,'missing-invoice-number');
+ assert.equal(report.items[0].confirmationOptions[0].key,key(1));
+ assert.throws(()=>env.LocalInvoices.confirmMissingInvoice(labels,notes,0,key(1)),/Confirme/);
+ env.LocalInvoices.confirmMissingInvoice(labels,notes,0,key(1),true);
+ report=await env.LocalBatchRecovery.analyze(labels,read(notes));
+ assert.equal(report.ready,true);assert.equal(report.rows[0].confirmedByAdmin,true);assert.match(report.warnings.join(' '),/confirmado pelo ADM/);
+ assert.deepEqual(clone(labels),before);
+ const fresh=await env.LocalBatchRecovery.analyze([missingLabel()],read(notes));assert.equal(fresh.ready,false);
+ assert.throws(()=>env.LocalInvoices.pair(labels,[invoice(1,2)]),error=>error.issues.some(i=>i.includes('mudou após')));
+ labels[0].metadata.shipmentId='20000000001';assert.throws(()=>env.LocalInvoices.labelIdentity(labels[0]),/etiqueta mudou/);
+});
+
+test('confirmation candidates exclude invalid identities, conflicts, already paired notes and duplicate shipments',()=>{
+ const env=environment(),badCep=invoice(1);badCep.postcode='99999999';
+ const invalidKey=invoice(1);invalidKey.key='invalid';
+ const ambiguous=missingLabel();ambiguous.metadata.invoiceNumbers=['1','2'];
+ const conflict=missingLabel();conflict.metadata.invoiceNumber='2';
+ for(const [labels,notes] of [
+  [[missingLabel()],[badCep]],[[missingLabel()],[invalidKey]],[[ambiguous],[invoice(1)]],[[conflict],[invoice(1)]],
+  [[missingLabel(),missingLabel()],[invoice(1)]],[[missingLabel()],[invoice(1),invoice(1,2)]],
+  [[missingLabel(),{...label(1),metadata:{...label(1).metadata,shipmentId:'20000000001'}}],[invoice(1)]],
+ ]){
+  assert.equal(env.LocalInvoices.missingInvoiceOptions(labels,notes,0).length,0);
+  assert.throws(()=>env.LocalInvoices.confirmMissingInvoice(labels,notes,0,key(1),true),/não pode ser confirmada/);
+ }
+});
+
+test('matching CEP offers all eligible notes without picking one by position or eliminating the last note',async()=>{
+ const env=environment(),labels=[missingLabel()],notes=[invoice(2),invoice(1)];
+ const pending=await env.LocalBatchRecovery.analyze(labels,read(notes));
+ assert.deepEqual(clone(pending.items[0].confirmationOptions.map(n=>n.number)),['2','1']);assert.equal(pending.ready,false);
+ env.LocalInvoices.confirmMissingInvoice(labels,notes,0,key(1),true);
+ const report=await env.LocalBatchRecovery.analyze(labels,read(notes));
+ assert.equal(report.ready,false);assert.equal(report.partialReady,true);assert.equal(report.rows[0].invoice.invoiceNumber,'1');
+ assert.equal(report.unmatchedInvoices[0].invoiceNumber,'2');
+});
+
+test('unreadable source pages, duplicate files and known invoice problems cannot offer confirmation',async()=>{
+ const env=environment();
+ for(const [problems,options] of [
+  [[{uncertain:true,message:'Unidentified page'}],{}],[[{invoiceNumber:'1',message:'Missing sheet'}],{}],
+  [[],{duplicates:[{kind:'invoices',index:1}]}],[[],{sourceProblems:[{source:'broken.zpl',message:'Unreadable'}]}],
+ ]){
+  const input=read([invoice(1)]);input.problems=problems;
+  const report=await env.LocalBatchRecovery.analyze([missingLabel()],input,options);
+  assert.equal(report.ready,false);assert.notEqual(report.items[0].code,'missing-invoice-number');
+ }
+});
 
 test('exact duplicate bytes are identified across filenames, not merely by filename',async()=>{
  const api=environment().LocalBatchRecovery;

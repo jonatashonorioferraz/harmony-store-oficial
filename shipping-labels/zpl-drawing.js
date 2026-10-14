@@ -97,7 +97,7 @@
         case 'FB': field.block = {width:number(p[0]),lines:number(p[1],1,1,9999),spacing:number(p[2],0,-9999,9999),align:p[3]||'L'}; if(!['L','C','R'].includes(field.block.align)||number(p[4])!==0) fail('Alinhamento de texto ZPL não suportado.'); break;
         case 'FR': field.reverse = true; break;
         case 'BY': state.module = number(p[0],2,1,10); state.barcodeHeight = number(p[2],10); break;
-        case 'BC': normal(p[0]); if((p[2]||'Y')!=='N'||(p[3]||'N')!=='N'||(p[4]||'N')!=='N'||(p[5]||'N')!=='N') fail('Variação Code 128 não suportada.'); field.barcode = {type:'code128',height:number(p[1],state.barcodeHeight,1,32000),module:state.module}; break;
+        case 'BC': normal(p[0]); if((p[2]||'Y')!=='N'||(p[3]||'N')!=='N'||(p[4]||'N')!=='N'||!['N','A'].includes(p[5]||'N')||p.slice(6).some(Boolean)) fail('Variação Code 128 não suportada.'); field.barcode = {type:'code128',height:number(p[1],state.barcodeHeight,1,32000),module:state.module,mode:p[5]||'N'}; break;
         case 'BQ': normal(p[0]); if((p[1]||'2')!=='2') fail('Somente QR Code modelo 2 é suportado.'); field.barcode = {type:'qr',module:number(p[2],2,1,100)}; break;
         case 'GB': field.drawing = {type:'box',width:number(p[0]),height:number(p[1]),thickness:number(p[2],1,1),color:p[3]||'B'}; if(!['B','W'].includes(field.drawing.color)||number(p[4])!==0) fail('Caixa arredondada ZPL não suportada.'); break;
         case 'GF': { const g = data.match(/^A,(\d+),(\d+),(\d+),([\s\S]*)$/); if(!g) fail('Formato de gráfico ZPL não suportado.'); field.drawing = {type:'image',image:await decodeGraphic(g[2],g[3],g[4])}; break; }
@@ -117,7 +117,7 @@
     for (const f of fields) {
       if(f.barcode) {
         if(f.reverse) fail('Código de barras invertido não suportado.');
-        if(f.barcode.type==='code128') { f.bars = root.ZplCode128(f.text); f.drawWidth = f.bars.reduce((a,b)=>a+b,0)*f.barcode.module; f.drawHeight=f.barcode.height; }
+        if(f.barcode.type==='code128') { f.bars = root.ZplCode128(f.text,f.barcode.mode); f.drawWidth = f.bars.reduce((a,b)=>a+b,0)*f.barcode.module; f.drawHeight=f.barcode.height; }
         else {
           const qrData=f.text.match(/^([LMQH])A,([\s\S]+)$/); if(!qrData) fail('Formato de dados QR Code não suportado.');
           root.qrcode.stringToBytes=root.qrcode.stringToBytesFuncs['UTF-8'];

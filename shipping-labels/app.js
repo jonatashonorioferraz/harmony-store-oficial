@@ -134,10 +134,10 @@ for(const id of ['dpi','size','document-mode'])$(id).addEventListener('change',(
 function showReport(rows,generated=false){
   $('pairing-rows').replaceChildren();const picking=$('document-mode').value==='picking';
   for(const row of rows){const tr=document.createElement('tr'),products=row.invoice.pages.flatMap(p=>p.products||[]);
-    const values=[row.shipmentId,`${row.invoice.invoiceNumber} / ${row.invoice.series}`,products.length?products.map(p=>`${p.quantity} ${p.unit} · ${p.description}${p.variation?'':' · Cor/variação não informada'}`).join('; '):'Não extraídos (DANFE completo)',row.invoice.pages.map(p=>`${p.source} · pág. ${p.pageIndex+1}`).join('; '),`${generated?'PDF':'Previsto'}: ${row.labelPage}: etiqueta → ${row.invoiceStart}${row.invoiceEnd!==row.invoiceStart?'–'+row.invoiceEnd:''}: ${picking?'ficha':'DANFE'}`];
+    const values=[row.shipmentId,`${row.invoice.invoiceNumber} / ${row.invoice.series}${row.confirmedByAdmin?' · Confirmada pelo ADM':''}`,products.length?products.map(p=>`${p.quantity} ${p.unit} · ${p.description}${p.variation?'':' · Cor/variação não informada'}`).join('; '):'Não extraídos (DANFE completo)',row.invoice.pages.map(p=>`${p.source} · pág. ${p.pageIndex+1}`).join('; '),`${generated?'PDF':'Previsto'}: ${row.labelPage}: etiqueta → ${row.invoiceStart}${row.invoiceEnd!==row.invoiceStart?'–'+row.invoiceEnd:''}: ${picking?'ficha':'DANFE'}`];
     for(const value of values){const td=document.createElement('td');td.textContent=value;tr.append(td);}$('pairing-rows').append(tr);
   }
-  $('pairing-summary').textContent=`${rows.length} pedido(s) com vínculo único por NF e CEP${generated?', incluídos neste PDF':'; PDF ainda não gerado'}. Os pedidos pendentes, se houver, permanecem na lista de soluções.`;
+  $('pairing-summary').textContent=`${rows.length} pedido(s) com vínculo conferido e CEP validado${generated?', incluídos neste PDF':'; PDF ainda não gerado'}. ${rows.filter(r=>r.confirmedByAdmin).length} confirmação(ões) do ADM para etiqueta sem NF. Os pedidos pendentes, se houver, permanecem na lista de soluções.`;
   $('pairing-report').hidden=!rows.length;
 }
 function listMessages(id,messages){$(id).replaceChildren();for(const message of messages){const li=document.createElement('li');li.textContent=message;$(id).append(li);}$(id).hidden=!messages.length;}
@@ -177,6 +177,7 @@ function showSolutions(report){
     });
   }
   const guidance={
+    'missing-invoice-number':'Consulte este envio no Mercado Livre. Selecione a NF que você conferiu e marque a confirmação. As opções têm CEP compatível e não estão vinculadas a outro envio; nenhuma é escolhida automaticamente.',
     missing:'Baixe o DANFE deste pedido na plataforma e adicione-o ao lote. Se já estiver selecionado, tente a leitura alternativa.',
     products:'Tente a leitura alternativa. Se a tabela continuar incompatível, você pode escolher DANFE completo; essa escolha troca o formato de TODOS os pedidos deste lote, não apenas desta nota.',
     metadata:'Obtenha o ZPL original que contenha NF, CEP e envio em texto. Troque o arquivo abaixo; o sistema não inventará esses campos.',
@@ -188,6 +189,30 @@ function showSolutions(report){
   };
   for(const item of report.items.filter(i=>!i.ready)){
     const article=card(`Etiqueta ${item.labelIndex+1}${item.shipmentId?' · Envio '+item.shipmentId:''}${item.invoiceNumber?' · NF '+item.invoiceNumber:''}`,item.message,[`Etiqueta: CEP ${item.labelPostcode||'não identificado'} · ${item.source}`,...(item.candidates||[]).map(n=>`Nota: NF ${n.number} · série ${n.series} · emitente ${n.issuer} · CEP ${n.postcode||'não identificado'} · ${n.source}`)],guidance[item.code]||'Confira a origem dos documentos e use os arquivos do mesmo pedido.');
+    if(item.code==='missing-invoice-number'){
+      const label=document.createElement('label'),choice=document.createElement('select'),placeholder=document.createElement('option');
+      label.textContent='Nota conferida no Mercado Livre';choice.setAttribute('aria-label',`Nota conferida para o envio ${item.shipmentId}`);
+      placeholder.value='';placeholder.textContent='Selecione a nota que você conferiu';choice.append(placeholder);
+      for(const note of item.confirmationOptions){const option=document.createElement('option');option.value=note.key;option.textContent=`NF ${note.number} · série ${note.series} · CEP ${note.postcode} · ${note.source}`;choice.append(option);}
+      label.append(choice);article.append(label);
+      const consentLabel=document.createElement('label'),consent=document.createElement('input'),consentText=document.createElement('span');
+      consent.type='checkbox';consentLabel.className='partial-choice';consentText.textContent=`Conferi o envio ${item.shipmentId} no Mercado Livre e confirmo que ele pertence à nota selecionada.`;
+      consentLabel.append(consent,consentText);article.append(consentLabel);resolutionControls.push(choice,consent);
+      const notice=document.createElement('p');notice.setAttribute('role','status');article.append(notice);
+      choice.addEventListener('change',()=>{consent.checked=false;notice.textContent='';});
+      button(article,'Confirmar vínculo e conferir lote',async()=>{
+        if(!choice.value||!consent.checked){notice.textContent='Selecione a nota e marque a confirmação após consultar o envio na plataforma.';return;}
+        const snapshot=prepared;
+        try{LocalInvoices.confirmMissingInvoice(snapshot.batch,snapshot.read.invoices,item.labelIndex,choice.value,consent.checked);}
+        catch(error){notice.textContent=error.message;return;}
+        busy=true;clearResult(true);$('partial-consent').checked=false;syncControls();
+        try{
+          const updated=await LocalBatchRecovery.analyze(snapshot.batch,snapshot.read,snapshot.reviewOptions);ensureActive();
+          prepared={...snapshot,report:updated};showReview(updated);$('status').className='';$('status').textContent='Vínculo confirmado pelo ADM. Revise o resumo e os avisos antes de gerar o PDF.';
+        }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=error.message;}
+        finally{busy=false;if(!disposed)syncControls();}
+      });
+    }
     if(item.code==='missing')button(article,'Adicionar o DANFE faltante',()=>$('invoice-files').click());
     if(['missing','products','invoice-read'].includes(item.code))button(article,'Tentar leitura alternativa',()=>checkBatch(true));
     if(item.code==='products')button(article,'Usar DANFE completo neste lote',()=>{$('document-mode').value='danfe';checkBatch(true);});
@@ -210,7 +235,7 @@ function showSolutions(report){
 function showReview(report){
   $('batch-review').hidden=false;
   $('review-state').textContent=report.ready?'LOTE CONFERIDO':report.partialReady?'PARTE DO LOTE CONFERIDA':'AÇÃO NECESSÁRIA';
-  $('review-summary').textContent=report.ready?(report.paired?'Vínculos por NF e CEP conferidos. Revise os avisos antes de gerar.':guide?.platform==='shopee'?'Conteúdo do ZPL da Shopee preservado. Confira na prévia se a lista de empacotamento veio no arquivo; produtos não foram extraídos nem conferidos por DANFE.':'Modo somente etiquetas. Notas e produtos não foram conferidos.'):'Veja as soluções abaixo. Você não precisa editar a nota ou a etiqueta recebida da plataforma.';
+  $('review-summary').textContent=report.ready?(report.paired?'Vínculos conferidos e CEP validado. Confirmações do ADM aparecem nos avisos e na relação de pedidos. Revise antes de gerar.':guide?.platform==='shopee'?'Conteúdo do ZPL da Shopee preservado. Confira na prévia se a lista de empacotamento veio no arquivo; produtos não foram extraídos nem conferidos por DANFE.':'Modo somente etiquetas. Notas e produtos não foram conferidos.'):'Veja as soluções abaixo. Você não precisa editar a nota ou a etiqueta recebida da plataforma.';
   for(const [name,value] of Object.entries(report.counts))$('review-'+name).textContent=value===null?(name==='products'&&!report.paired?'Não se aplica':'Não calculado'):String(value);
   listMessages('issues',report.issues);listMessages('review-warnings',report.warnings);
   $('review-issues-title').hidden=!report.issues.length;$('review-warnings-title').hidden=!report.warnings.length;
@@ -246,7 +271,7 @@ async function checkBatch(alternative=false){
     }
     const read=activeInvoices().length?await LocalBatchRecovery.readInvoices(activeInvoices(),(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):null;
     ensureActive();const mode=$('document-mode').value,report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
-    prepared={batch,read,report,mode,dpi:Number($('dpi').value),size:$('size').value};showReview(report);
+    prepared={batch,read,report,mode,reviewOptions:{mode,ignored,duplicates,sourceProblems},dpi:Number($('dpi').value),size:$('size').value};showReview(report);
     $('status').textContent=report.ready?'Lote conferido. Revise o resumo e gere o PDF.':report.partialReady?'Há pedidos prontos e pendências separadas. Você pode resolver tudo ou autorizar somente os conferidos.':'A conferência encontrou uma situação que precisa de ação. Veja a solução indicada abaixo.';
   }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=(error.message||'Não foi possível conferir o lote.')+' Os originais não foram alterados. Remova da seleção o arquivo indicado, adicione o original da plataforma ou tente um lote menor.';}
   finally{busy=false;if(!disposed){syncControls();$('progress').hidden=true;}}

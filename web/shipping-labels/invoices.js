@@ -5,6 +5,29 @@
   const unique=values=>[...new Set(values)];
   const fold=text=>text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
   const W=100/25.4*72,H=150/25.4*72,MAX_PAGES=1000;
+  // Confirmations belong only to parsed label objects in this session. Original
+  // ZPL metadata stays unchanged; re-reading files creates unconfirmed objects.
+  const confirmations=new WeakMap();
+  function labelIdentity(label){
+    const m=label.metadata||{},confirmation=confirmations.get(label);
+    if(!confirmation)return m;
+    if(m.invoiceNumber||m.invoiceNumbers?.length||m.shipmentId!==confirmation.shipmentId||m.postcode!==confirmation.postcode)fail('A etiqueta mudou após a confirmação. Confira o lote novamente.');
+    return {...m,invoiceNumber:confirmation.invoiceNumber,confirmedKey:confirmation.key};
+  }
+  function missingInvoiceOptions(labels,invoices,index){
+    const label=labels[index],m=label?.metadata;
+    if(!m||confirmations.has(label)||m.invoiceNumber||m.invoiceNumbers?.length||!/^\d{8}$/.test(m.postcode||'')||!/^\d+$/.test(m.shipmentId||'')||labels.filter(l=>l.metadata?.shipmentId===m.shipmentId).length!==1)return [];
+    return invoices.filter(note=>validKey(note.key)&&note.key.slice(25,34).replace(/^0+/,'')===note.invoiceNumber&&note.postcode===m.postcode&&
+      invoices.filter(n=>n.invoiceNumber===note.invoiceNumber).length===1&&
+      !labels.some(l=>labelIdentity(l).invoiceNumber===note.invoiceNumber||l.metadata?.invoiceNumbers?.includes(note.invoiceNumber)));
+  }
+  function confirmMissingInvoice(labels,invoices,index,key,confirmed=false){
+    if(confirmed!==true)fail('Confirme o envio e a nota no Mercado Livre antes de vincular.');
+    const note=missingInvoiceOptions(labels,invoices,index).find(n=>n.key===key);
+    if(!note)fail('Essa nota não pode ser confirmada: confira CEP, duplicidades e os arquivos do lote.');
+    const m=labels[index].metadata;
+    confirmations.set(labels[index],{key:note.key,invoiceNumber:note.invoiceNumber,shipmentId:m.shipmentId,postcode:m.postcode});
+  }
   class MemoryFonts {
     async fetch({kind,filename}){
       // Standard PDF fonts are already bundled as bytes. Disallow every other
@@ -107,7 +130,7 @@
     const used=new Set(),shipments=new Set(),rows=[],errors=[];
     let nextPage=1;
     for(let i=0;i<labels.length;i++){
-      const m=labels[i].metadata||{},prefix=`Etiqueta ${i+1}`;
+      const m=labelIdentity(labels[i]),prefix=`Etiqueta ${i+1}`;
       if(!m.invoiceNumber||!/^\d{1,9}$/.test(m.invoiceNumber)){errors.push(`${prefix}: número NF ausente ou ambíguo no ZPL.`);continue;}
       if(!m.postcode){errors.push(`${prefix} / NF ${m.invoiceNumber}: CEP ausente ou ambíguo no ZPL.`);continue;}
       if(!m.shipmentId){errors.push(`${prefix}: identificador de envio ausente ou divergente entre os códigos.`);continue;}
@@ -116,10 +139,11 @@
       const matches=invoices.filter(n=>n.invoiceNumber===m.invoiceNumber);
       if(matches.length!==1){errors.push(`${prefix} / NF ${m.invoiceNumber}: ${matches.length?'mais de uma nota com esse número (séries ou emissores diferentes).':'nota não encontrada nos PDFs selecionados.'}`);continue;}
       const invoice=matches[0];
+      if(m.confirmedKey&&m.confirmedKey!==invoice.key){errors.push(`${prefix}: a nota mudou após a confirmação do ADM. Confira o lote novamente.`);continue;}
       if(used.has(invoice.key)){errors.push(`${prefix} / NF ${m.invoiceNumber}: a mesma nota aparece em mais de uma etiqueta. Separe os volumes para conferência.`);continue;}
       if(invoice.postcode!==m.postcode){errors.push(`${prefix} / NF ${m.invoiceNumber}: CEP da etiqueta (${m.postcode}) diferente do DANFE (${invoice.postcode}).`);continue;}
       used.add(invoice.key);
-      rows.push({labelIndex:i,invoice,shipmentId:m.shipmentId,labelPage:nextPage,invoiceStart:nextPage+1,invoiceEnd:nextPage+invoice.pages.length});
+      rows.push({labelIndex:i,invoice,shipmentId:m.shipmentId,confirmedByAdmin:Boolean(m.confirmedKey),labelPage:nextPage,invoiceStart:nextPage+1,invoiceEnd:nextPage+invoice.pages.length});
       nextPage+=1+invoice.pages.length;
     }
     const extras=invoices.filter(n=>!used.has(n.key));
@@ -198,5 +222,5 @@
     const bytes=await output.save();
     return {blob:new Blob([bytes],{type:'application/pdf'}),bytes,sequence,rows};
   }
-  root.LocalInvoices={openPdf,validKey,pageInfo,readInvoices,pair,createPairedPdf};
+  root.LocalInvoices={openPdf,validKey,pageInfo,readInvoices,pair,createPairedPdf,labelIdentity,missingInvoiceOptions,confirmMissingInvoice};
 })(globalThis);

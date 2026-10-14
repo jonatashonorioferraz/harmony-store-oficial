@@ -204,6 +204,37 @@ test('an explicit duplicate-removal action keeps the original selection entry',a
 
 const cards=env=>env.get('resolution-items').children.filter(node=>node.tagName==='ARTICLE');
 const cardAction=(card,label)=>{const control=card.children.find(node=>node.tagName==='BUTTON'&&node.textContent===label);assert.ok(control,'Expected action: '+label);return control;};
+async function confirmationUI(){
+ const env=environment();env.calls.confirm=0;
+ Object.assign(env.report,{ready:false,paired:true,confirmedCount:0,pendingCount:1,issues:['NF ausente'],items:[{labelIndex:0,ready:false,code:'missing-invoice-number',shipmentId:'10000000001',labelPostcode:'01234567',source:'synthetic.zpl',message:'NF ausente',confirmationOptions:[{key:'test-key',number:'1',series:'1',postcode:'01234567',source:'synthetic.pdf'}]}]});
+ env.context.LocalInvoices.confirmMissingInvoice=(labels,notes,index,key,confirmed)=>{assert.equal(index,0);assert.equal(key,'test-key');assert.equal(confirmed,true);env.calls.confirm++;};
+ env.select();env.get('invoice-files').events.change({target:{files:[{name:'synthetic.pdf',size:10}]}});await env.get('check').onclick();
+ const card=cards(env)[0],choice=card.children.flatMap(n=>n.children).find(n=>n.tagName==='SELECT'),consent=card.children.flatMap(n=>n.children).find(n=>n.type==='checkbox');
+ return {...env,choice,consent,action:cardAction(card,'Confirmar vínculo e conferir lote')};
+}
+
+test('confirmation requires a selected note and renewed consent, rechecks the lot and never generates automatically',async()=>{
+ const env=await confirmationUI();
+ assert.equal(env.choice.value,'');env.action.click();assert.equal(env.calls.confirm,0);
+ env.choice.value='test-key';env.action.click();assert.equal(env.calls.confirm,0);
+ env.consent.checked=true;env.choice.events.change();assert.equal(env.consent.checked,false);
+ let finish;const pending=new Promise(resolve=>{finish=resolve;});
+ env.context.LocalBatchRecovery.analyze=(labels,notes,options)=>{assert.equal(options.mode,'picking');assert.deepEqual(clone(options.sourceProblems),[]);return pending;};
+ env.get('partial-consent').checked=true;env.consent.checked=true;env.action.click();
+ assert.equal(env.calls.confirm,1);assert.equal(env.action.disabled,true);assert.equal(env.get('partial-consent').checked,false);
+ env.action.events.click();assert.equal(env.calls.confirm,1);
+ finish({...env.report,ready:true,items:[],issues:[],confirmedCount:1,pendingCount:0});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(env.get('convert').disabled,false);assert.equal(env.calls.paired,0);assert.equal(env.calls.generate,0);
+ assert.match(env.get('status').textContent,/confirmado pelo ADM/);
+ env.action.events.click();assert.equal(env.calls.confirm,1,'stale report cannot confirm again');
+});
+
+test('confirmation controls cannot act after changed files, revoked access or disposed frame',async()=>{
+ for(const invalidate of [env=>env.select(),env=>{env.context.HarmonyConverterAccess.allowed=()=>false;},env=>env.context.HarmonyConverterLifecycle.dispose()]){
+  const env=await confirmationUI();env.choice.value='test-key';env.consent.checked=true;
+  invalidate(env);env.action.events.click();assert.equal(env.calls.confirm,0);assert.equal(env.calls.paired,0);
+ }
+});
 const picker=card=>{const input=card.children.find(node=>node.tagName==='INPUT');assert.ok(input,'Expected replacement picker');return input;};
 const settle=async()=>{for(let i=0;i<8;i++)await new Promise(resolve=>setImmediate(resolve));};
 async function problemEnvironment(code='metadata',files=[syntheticFile()]){
