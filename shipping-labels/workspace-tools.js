@@ -86,14 +86,14 @@
   const finderHeading = make('div', 'workspace-heading');
   const finderTitle = make('h2', '', 'Localizar pedido no lote');
   finderTitle.id = 'workspace-finder-title';
-  finderHeading.append(finderTitle, make('p', '', 'Busque a NF ou o envio. Os resultados s\u00e3o atalhos, n\u00e3o alteram o lote.'));
+  finderHeading.append(finderTitle, make('p', '', 'Busque o pedido, a NF ou o envio. Os resultados s\u00e3o atalhos, n\u00e3o alteram o lote.'));
   finderHead.append(finderHeading);
   const searchRow = make('div', 'workspace-search-row');
-  const searchLabel = make('label', 'workspace-search-label', 'NF ou c\u00f3digo de envio');
+  const searchLabel = make('label', 'workspace-search-label', 'Pedido, NF ou c\u00f3digo de envio');
   const search = make('input', 'workspace-search-input');
   search.id = 'workspace-search';
   search.type = 'search';
-  search.placeholder = 'Ex.: NF 123 ou c\u00f3digo de envio';
+  search.placeholder = 'N\u00famero do pedido, NF ou envio';
   search.autocomplete = 'off';
   search.spellcheck = false;
   search.maxLength = 100;
@@ -188,6 +188,9 @@
     if (!query) return true;
     const normalizedNumber = value => String(value || '').replace(/^0+(?=\d)/, '');
     const invoiceNumber = normalizedNumber(item.invoiceNumber);
+    const orderId = String(item.orderId || '');
+    const orderQuery = query.match(/^(?:pedido|venda|pacote|pack)\s*[:#]?\s*(\d+)$/);
+    if (orderQuery) return orderId === orderQuery[1];
     const shipmentId = fold(item.shipmentId).replace(/\s+/g, '');
     const invoiceQuery = query.match(/^(?:nf(?:-?e)?|nota(?: fiscal)?)\s*[:#.-]?\s*(\d+)$/);
     if (invoiceQuery) return invoiceNumber === normalizedNumber(invoiceQuery[1]);
@@ -195,7 +198,7 @@
     const shipmentQuery = query.replace(/^(?:envio|remessa)\s*[:#]?\s*/,'').replace(/\s+/g, '');
     const explicitShipment = /^(?:envio|remessa)(?:\s|:|#)/.test(query);
     return Boolean(shipmentQuery) && (
-      (!explicitShipment && /^\d+$/.test(query) && invoiceNumber === normalizedNumber(query)) ||
+      (!explicitShipment && /^\d+$/.test(query) && (invoiceNumber === normalizedNumber(query) || orderId === query)) ||
       (Boolean(shipmentId) && shipmentId.includes(shipmentQuery))
     );
   }
@@ -205,14 +208,14 @@
     if (state.preview) {
       for (const page of state.preview.pages) {
         const kind = names[page.kind] ? page.kind : 'label';
-        const details = [page.invoiceNumber ? 'NF ' + page.invoiceNumber : '', page.shipmentId ? 'Envio ' + page.shipmentId : '', page.totalSheets > 1 ? 'Folha ' + page.sheet + '/' + page.totalSheets : ''].filter(Boolean).join(' \u00b7 ');
-        items.push({ kind, invoiceNumber: page.invoiceNumber, shipmentId: page.shipmentId, title: names[kind] + ' \u00b7 p\u00e1gina ' + page.page, details: details || 'Etiqueta sem nota vinculada', page: page.page });
+        const details = [page.orderId ? 'Pedido ' + page.orderId : '', page.invoiceNumber ? 'NF ' + page.invoiceNumber : '', page.shipmentId ? 'Envio ' + page.shipmentId : '', page.totalSheets > 1 ? 'Folha ' + page.sheet + '/' + page.totalSheets : ''].filter(Boolean).join(' \u00b7 ');
+        items.push({ kind, orderId: page.orderId, invoiceNumber: page.invoiceNumber, shipmentId: page.shipmentId, title: names[kind] + ' \u00b7 p\u00e1gina ' + page.page, details: details || 'Etiqueta sem nota vinculada', page: page.page });
       }
     } else if (!pairing.hidden) {
       for (const row of rows.querySelectorAll('tr')) {
         const cells = row.querySelectorAll('td');
         if (cells.length < 4) continue;
-        items.push({ kind: 'confirmed', invoiceNumber: cells[1].textContent.trim().match(/^\d+/)?.[0] || '', shipmentId: cells[0].textContent.trim(), title: 'NF ' + cells[1].textContent.trim() + ' \u00b7 Envio ' + cells[0].textContent.trim(), details: 'V\u00ednculo conferido; o PDF ainda precisa ser gerado. ' + cells[3].textContent.trim(), target: row });
+        items.push({ kind: 'confirmed', orderId: row.dataset.orderId || '', invoiceNumber: row.dataset.orderId ? '' : cells[1].textContent.trim().match(/^\d+/)?.[0] || '', shipmentId: cells[0].textContent.trim(), title: (row.dataset.orderId ? 'Pedido ' : 'NF ') + cells[1].textContent.trim() + ' \u00b7 Envio ' + cells[0].textContent.trim(), details: 'V\u00ednculo conferido; o PDF ainda precisa ser gerado. ' + cells[3].textContent.trim(), target: row });
       }
     }
     if (!resolution.hidden) {

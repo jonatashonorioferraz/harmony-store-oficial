@@ -155,16 +155,16 @@
   async function createPairedPdf(labels,read,rows,dpi,onProgress=()=>{},mode='danfe'){
     // Validate again at the composition boundary. Never allow a stale or partial
     // review table to decide which invoice is printed next to a shipment.
-    rows=pair(labels,read.invoices);
-    if(mode==='picking'&&read.sales)rows=root.LocalSales.apply(rows,labels,read.sales);
+    const salesSource=mode==='picking'&&read.sales;
+    rows=salesSource?root.LocalSales.pair(labels,read):pair(labels,read.invoices);
     const {PDFDocument,degrees,StandardFonts,rgb}=root.PDFLib;
     const output=await PDFDocument.create();
     if(!['danfe','picking'].includes(mode))fail('Tipo de documento inválido.');
     output.setTitle(mode==='picking'?'Harmony Store — Etiquetas e fichas de separação':'Harmony Store — Etiquetas e notas vinculadas');output.setProducer('Harmony Store · conversão local');
-    const picking=mode==='picking'?await root.LocalPicking.plan(read.invoices,output,rows):null;
+    const picking=mode==='picking'?(salesSource?await root.LocalPicking.planOrders(rows,output):await root.LocalPicking.plan(read.invoices,output,rows)):null;
     let nextPage=1;
     for(const row of rows){
-      const count=picking?picking.layouts.get(row.invoice.key).sheets.length:row.invoice.pages.length;
+      const count=picking?picking.layouts.get(row.order?.key||row.invoice.key).sheets.length:row.invoice.pages.length;
       row.labelPage=nextPage;row.invoiceStart=nextPage+1;row.invoiceEnd=nextPage+count;nextPage+=1+count;
     }
     if(nextPage-1>MAX_PAGES)fail('O PDF final ultrapassaria 1.000 páginas. Divida o lote.');

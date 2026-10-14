@@ -91,6 +91,7 @@
     return {documents,invoices,problems,recovered};
   }
   async function analyze(labels,read,options={}){
+    if((options.mode||'picking')==='picking'&&read?.sales)return root.LocalSales.review(labels,read,options);
     const mode=options.mode||'picking',duplicates=options.duplicates||[],sourceProblems=options.sourceProblems||[];
     const invoiceProblems=read?.problems||[],items=[],validLabels=[],validInvoices=[],used=new Set();
     const count=(values,key)=>values.filter(v=>key(v)).reduce((m,v)=>m.set(key(v),(m.get(key(v))||0)+1),new Map());

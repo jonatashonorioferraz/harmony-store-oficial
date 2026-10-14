@@ -62,6 +62,15 @@ test('pre-PDF search navigates to confirmed rows without generating or changing 
   assert.equal(h.query('.workspace-page-jump').hidden,true);
 });
 
+test('Excel order search uses the exact long order ID without presenting it as a fiscal number',async()=>{
+ const h=await harness(),row=h.add(h.query('#pairing-rows'),'tr');row.dataset.orderId='2000000000000001';
+ for(const text of ['10000000001',row.dataset.orderId,'2 UNID Kit de teste','sales.xlsx'])h.add(row,'td').textContent=text;
+ h.query('#pairing-report').hidden=false;h.set({labels:[file]});
+ h.input(h.query('#workspace-search'),'Pedido 2000000000000001');assert.equal(h.query('.workspace-results').children.length,1);assert.match(h.query('.workspace-results').textContent,/Pedido 2000000000000001/);
+ h.input(h.query('#workspace-search'),'NF 2000000000000001');assert.equal(h.query('.workspace-results').children.length,0);
+ h.input(h.query('#workspace-search'),'2000000000000002');assert.equal(h.query('.workspace-results').children.length,0);
+});
+
 test('results are paginated and clearing a filter preserves all original inputs', async () => {
   const h = await harness(); h.set({labels:[file],sequence:Array.from({length:12},(_,i)=>page(i+1))});
   assert.equal(h.query('.workspace-results').children.length,8);

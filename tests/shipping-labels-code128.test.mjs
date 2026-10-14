@@ -4,9 +4,9 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const context=vm.createContext({Uint8Array,TextEncoder,TextDecoder,setTimeout});
-const bars=[];
+const bars=[],texts=[];
 context.ZplCanvasFactory=(width,height)=>({width,height,getContext:()=>({
-  fillRect(x,y,w,h){bars.push({x,y,w,h});},save(){},restore(){},translate(){},scale(){},fillText(){},
+  fillRect(x,y,w,h){bars.push({x,y,w,h});},save(){},restore(){},translate(){},scale(){},fillText(text){texts.push(text);},
   measureText(text){return {width:text.length*10};},
   getImageData(){return {data:new Uint8Array(width*height*4).fill(255)};},
 })});
@@ -69,4 +69,17 @@ test('a routing label without NF remains unpaired rather than inventing an invoi
   const [page]=await context.LocalZpl.parseZpl(label('A').replace('^FDNF: 123^FS','^FDPeso: 1 kg^FS'));
   assert.equal(page.metadata.invoiceNumber,null);
   assert.equal(page.metadata.shipmentId,'40000000001');
+});
+
+test('near-fitting address with exceptional FB spacing keeps the whole text without shrinking barcodes',async()=>{
+ const address='Cidade de destino: Municipio de Exemplo, Estado de Teste';
+ // Fixture font measurement is 10 dots/character: a 500-dot field is 92.6%.
+ assert.ok(address.length*10>500&&500/(address.length*10)>=0.85);
+ const field=spacing=>'^XA^FO30,1121^A0N,26,26^FB500,2,'+spacing+',L^FD'+address+'^FS^XZ';
+ texts.length=0;const [fitted]=await context.LocalZpl.parseZpl(field(1000));
+ assert.equal(fitted.height,1200);assert.deepEqual(texts,[address]);
+ texts.length=0;const [ordinary]=await context.LocalZpl.parseZpl(field(0));
+ assert.equal(ordinary.height,1200);assert.equal(texts.length,2);assert.equal(texts.join(' '),address);
+ texts.length=0;const [explicit]=await context.LocalZpl.parseZpl(field(1000).replace('Estado de Teste','Estado\\&de Teste'));
+ assert.ok(explicit.height>1200);assert.equal(texts.length,2);
 });

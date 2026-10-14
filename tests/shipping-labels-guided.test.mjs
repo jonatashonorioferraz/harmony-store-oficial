@@ -27,7 +27,7 @@ test('initial wizard shows explicit platform choices, not invented sample orders
   const h=await setup();assert.equal(h.guide.platform,null);assert.equal(h.root.dataset.step,'1');
   assert.equal(h.query('#files').disabled,true);assert.equal(h.query('.invoice-upload').hidden,true);
   assert.equal(h.query('#guide-step-2').disabled,true);assert.equal(h.query('#guide-step-3').disabled,true);
-  assert.match(html,/Shopee/);assert.match(html,/Mercado Livre/);assert.match(html,/ZPL \+ PDF/);
+  assert.match(html,/Shopee/);assert.match(html,/Mercado Livre/);assert.match(html,/ZPL \+ Excel/);
   assert.equal((html.match(/id="files"/g)||[]).length,1);assert.equal((html.match(/id="invoice-files"/g)||[]).length,1);
 });
 test('platform-specific instructions show Shopee labels or Mercado Livre labels, notes and sales',async()=>{
@@ -37,9 +37,9 @@ test('platform-specific instructions show Shopee labels or Mercado Livre labels,
   h.query('#guide-ml').click();assert.equal(h.guide.platform,'mercado-livre');
   assert.equal(h.query('.invoice-upload').hidden,false);assert.equal(h.query('#invoice-files').disabled,false);
   assert.equal(h.query('#sales-file').disabled,false);
-  h.update({labels:1});assert.match(h.query('#guide-next-hint').textContent,/notas em PDF/);
+  h.update({labels:1});assert.match(h.query('#guide-next-hint').textContent,/relatório Excel/);
   h.update({labels:1,invoices:1});assert.match(h.query('#guide-next-hint').textContent,/Excel de vendas/);
-  h.update({labels:1,invoices:1,sales:1});assert.match(h.query('#guide-next-hint').textContent,/conferir/);
+  h.update({labels:1,invoices:1,sales:1});assert.match(h.query('#guide-next-hint').textContent,/Confira/);
 });
 test('review, generation and back navigation preserve original selection and do not auto-generate',async()=>{
   const h=await setup();h.query('#guide-shopee').click();h.update({labels:1,review:true,ready:true});
@@ -90,7 +90,7 @@ test('review and generated PDF share the third journey step without bypassing ge
 test('contextual helper does not report a blocked batch as ready and disabled sessions stay gated',async()=>{
   const h=await setup();h.add(h.root,'p','guide-fairy-message');
   h.query('#guide-ml').click();h.update({labels:1,invoices:0});
-  assert.match(h.query('#guide-fairy-message').textContent,/notas em PDF/);
+  assert.match(h.query('#guide-fairy-message').textContent,/relatório Excel/);
   h.update({invoices:1,review:true,ready:false});
   assert.match(h.query('#guide-fairy-message').textContent,/atenção/);
   h.update({busy:true});h.query('#guide-step-1').click();assert.equal(h.root.dataset.screen,'review');

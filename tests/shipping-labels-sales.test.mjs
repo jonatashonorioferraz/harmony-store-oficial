@@ -83,10 +83,10 @@ test('checks explicit fiscal variations without reusing the first color in all p
 test('blank variation prints the personalization instruction without blocking and all four variations fit on one sheet',async()=>{
  const c=env(),sales=c.LocalSales.parse([...pack(),row(12,data(2,{Z:''}))]),notes=[invoice(1,4),invoice(2)],labels=[label(1),label(2)],read={invoices:notes,sales};
  const report=await c.LocalBatchRecovery.analyze(labels,read);assert.equal(report.ready,true);assert.equal(report.counts.pages,4);assert.match(report.warnings.join(' '),/personalização/);
- const output=await c.PDFLib.PDFDocument.create(),layout=await c.LocalPicking.plan(notes,output,report.rows);
- assert.equal(layout.layouts.get(notes[0].key).sheets[0].length,4);assert.deepEqual(clone(layout.layouts.get(notes[1].key).sheets[0][0].variant),['Conferir personalização no pedido']);
+ const output=await c.PDFLib.PDFDocument.create(),layout=await c.LocalPicking.planOrders(report.rows,output);
+ assert.equal(layout.layouts.get(report.rows[0].order.key).sheets[0].length,4);assert.deepEqual(clone(layout.layouts.get(report.rows[1].order.key).sheets[0][0].variant),['Conferir personalização no pedido']);
  const result=await c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'picking');assert.equal(result.sequence.length,4);
- sales.groups[0].products[0].quantity=9;await assert.rejects(c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'picking'),/quantidade/);
+ sales.groups[0].id='2000000000000999';await assert.rejects(c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'picking'),/venda\/pacote/);
 });
 
 test('report gaps isolate the affected order and preserve Excel for explicit partial generation',async()=>{
@@ -104,4 +104,46 @@ test('100 orders reconcile by identity regardless of report or DANFE order, incl
 test('without Excel the original conversion remains available; no network or storage is added',async()=>{
  const c=env(),report=await c.LocalBatchRecovery.analyze([label(1)],{invoices:[invoice(1)]});assert.equal(report.ready,true);assert.match(report.warnings.join(' '),/sem cor\/variação/);
  assert.doesNotMatch(sources[5],/\b(?:fetch|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|indexedDB)\s*[.(]/);
+});
+
+test('50 labels select only their orders from 95 sales without DANFE or invoice numbers',async()=>{
+ const c=env(),sales=c.LocalSales.parse([...headers(),...Array.from({length:95},(_,i)=>row(i+7,data(i+1)))]),labels=Array.from({length:50},(_,i)=>label(i+1));
+ for(const l of labels)delete l.metadata.invoiceNumber;
+ sales.groups.reverse();const read={invoices:[],sales},report=await c.LocalBatchRecovery.analyze(labels,read);
+ assert.equal(report.ready,true);assert.equal(report.pendingCount,0);assert.deepEqual(clone(report.scope),{total:95,matched:50,ignored:45});assert.equal(report.counts.products,50);assert.equal(report.counts.pages,100);
+ assert.ok(report.rows.every(r=>r.order&&!r.invoice));
+ const result=await c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'picking');
+ assert.equal(result.sequence.length,100);assert.equal((await c.PDFLib.PDFDocument.load(result.bytes)).getPageCount(),100);
+ assert.deepEqual(clone(result.rows.map(r=>r.order.id)),labels.map(l=>l.metadata.saleId));
+ for(let i=0;i<100;i++)assert.equal(result.sequence[i].kind,i%2?'picking':'label');
+});
+
+test('DANFE gaps, custom SKU, quantity, variation and CEP disagreements are complementary, never fiscal associations',async()=>{
+ const c=env(),sales=c.LocalSales.parse([...headers(),...Array.from({length:5},(_,i)=>row(i+7,data(i+1)))]),labels=Array.from({length:5},(_,i)=>label(i+1)),notes=Array.from({length:4},(_,i)=>invoice(i+1));
+ notes[0].pages[0].products[0].code='CUSTOM SKU';notes[1].pages[0].products[0].quantity='9';notes[2].postcode='99999999';notes[3].pages[0].products[0].variation='VERMELHO';
+ const read={invoices:notes,sales,problems:[{source:'unreadable.pdf',message:'Unreadable',uncertain:true}]},before=clone(read),report=await c.LocalBatchRecovery.analyze(labels,read);
+ assert.equal(report.ready,true);assert.equal(report.counts.pages,10);assert.equal(report.counts.products,5);assert.ok(report.rows.every(r=>!r.invoice&&r.order.products[0].quantity==='1'));
+ assert.match(report.warnings.join(' '),/CEP diferente/);assert.match(report.warnings.join(' '),/não encontrada/);assert.match(report.warnings.join(' '),/quantidade.*diverge/);assert.deepEqual(clone(read),before);
+ const fiscal=await c.LocalBatchRecovery.analyze(labels,read,{mode:'danfe'});assert.equal(fiscal.ready,false);
+ await assert.rejects(c.LocalInvoices.createPairedPdf(labels,read,report.rows,203,()=>{},'danfe'),/vincular/);
+});
+
+test('Excel authority still rejects missing, ambiguous, conflicting and duplicate order identities',async()=>{
+ for(const change of [l=>delete l.metadata.saleId,l=>l.metadata.saleIds=['2000000000000001','2000000000000002'],l=>l.metadata.shipmentId='99999999999',l=>l.metadata.saleId='2000000000000099',l=>l.metadata.postcode='99999999']){
+  const c=env(),sales=c.LocalSales.parse([...headers(),row(7,data(1))]),l=label(1);change(l);
+  const report=await c.LocalBatchRecovery.analyze([l],{sales,invoices:[]});assert.equal(report.ready,false);assert.equal(report.confirmedCount,0);
+  await assert.rejects(c.LocalInvoices.createPairedPdf([l],{sales,invoices:[]},[],203,()=>{},'picking'));
+ }
+ const c=env(),sales=c.LocalSales.parse([...headers(),row(7,data(1)),row(8,data(2))]);
+ let report=await c.LocalBatchRecovery.analyze([label(1),label(1),label(2)],{sales,invoices:[]});assert.equal(report.confirmedCount,1);assert.equal(report.pendingCount,2);assert.equal(report.partialReady,true);
+ sales.groups[1].products[0].status='Venda cancelada';report=await c.LocalBatchRecovery.analyze([label(2)],{sales,invoices:[]});assert.equal(report.ready,false);assert.match(report.issues.join(' '),/cancelamento/);
+});
+
+test('ten variants remain separate and sequential across picking sheets with source and order clearly printed',async()=>{
+ const c=env(),grid=[...headers(),row(7,data(1,{D:'Pacote de 10 produtos',X:'',Y:'',H:'',W:'',Z:''})),...Array.from({length:10},(_,i)=>row(8+i,data(20+i,{F:'Sim',AO:'',AU:'',Z:'COR: ROSA '+i})))],sales=c.LocalSales.parse(grid),report=await c.LocalBatchRecovery.analyze([label(1)],{sales,invoices:[]});
+ assert.equal(report.ready,true);assert.equal(report.counts.pages,4);const output=await c.PDFLib.PDFDocument.create(),layout=await c.LocalPicking.planOrders(report.rows,output);
+ assert.deepEqual(clone(layout.layouts.get(report.rows[0].order.key).sheets.map(s=>s.length)),[4,4,2]);
+ const printed=[];c.LocalPicking.draw({addPage:()=>({drawText:t=>printed.push(t),drawLine(){},drawRectangle(){}})},report.rows[0],layout);
+ const text=printed.join('\n');assert.match(text,/PEDIDO 2000000000000001/);assert.match(text,/ENVIO 10000000001/);assert.match(text,/QTD. DO PEDIDO/);assert.match(text,/NÃO É DOCUMENTO FISCAL/);assert.doesNotMatch(text,/NF |conferidas com a NF/);
+ for(let i=0;i<10;i++)assert.match(text,new RegExp('COR / AROMA: ROSA '+i));
 });

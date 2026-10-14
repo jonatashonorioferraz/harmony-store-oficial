@@ -7,7 +7,7 @@ const resolutionControls=[];
 const guide=globalThis.HarmonyLabelsGuide;
 const activeInvoices=()=>guide?.platform==='shopee'?[]:invoiceFiles;
 const activeSales=()=>guide?.platform==='shopee'?null:salesFile;
-const inputReady=()=>!guide||Boolean(guide.platform&&(guide.platform!=='mercado-livre'||invoiceFiles.length));
+const inputReady=()=>!guide||Boolean(guide.platform&&(guide.platform!=='mercado-livre'||invoiceFiles.length||salesFile&&$('document-mode').value==='picking'));
 window.addEventListener('harmony-labels:platform-change',()=>{if(busy||disposed)return;clearResult();refreshFiles();$('status').className='';$('status').textContent=selected.length||invoiceFiles.length?'Plataforma alterada. Os arquivos selecionados foram preservados; confira o lote novamente.':'Plataforma selecionada. Adicione os arquivos deste lote.';});
 function ensureActive(){if(disposed||!globalThis.HarmonyConverterAccess.allowed())throw Error('Conversão encerrada.');}
 function clearResult(keepReview=false){
@@ -59,8 +59,9 @@ function syncControls(){
   $('sales-file').disabled=busy||Boolean(guide&&guide.platform!=='mercado-livre');$('clear-sales').disabled=busy;$('clear-sales').hidden=!salesFile;
   for(const control of resolutionControls)control.disabled=busy;
   for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
-  $('size').disabled=busy||!!activeInvoices().length;$('paired-size').hidden=!activeInvoices().length;
-  $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. Até 4 produtos/variações por ficha, com cor quando informada e quantidade da nota. Descrições extensas podem ocupar mais espaço. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
+  const paired=!!(activeInvoices().length||activeSales());
+  $('size').disabled=busy||paired;$('paired-size').hidden=!paired;
+  $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. Até 4 produtos/variações por ficha, com quantidade '+(activeSales()?'do pedido no Excel':'da nota')+'. Descrições extensas podem ocupar mais espaço. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
   $('check').disabled=busy||!selected.length||!inputReady();$('check').textContent=prepared?'Conferir lote novamente':'1. Conferir lote';
   const partial=prepared&&!prepared.report.ready&&prepared.report.partialReady;
   const caption=partial?`Gerar somente ${prepared.report.confirmedCount} pedido(s) conferido(s)`:'2. Gerar PDF conferido';
@@ -71,7 +72,7 @@ function syncControls(){
   $('new-batch').hidden=!url;
   for(const id of ['new-batch-open','new-batch-same','new-batch-platform','new-batch-cancel'])$(id).disabled=busy||disposed||!url;
   $('review-hint').textContent=prepared?(prepared.report.ready?'Conferência concluída. Revise o resumo antes de gerar.':partial?'Revise as pendências e confirme explicitamente para gerar só os pedidos conferidos.':'Use as ações indicadas para resolver a pendência, sem editar os arquivos originais.'):'Confira os arquivos para liberar a geração do PDF.';
-  guide?.update({busy,review:Boolean(prepared),generated:Boolean(url),labels:selected.length,invoices:invoiceFiles.length,sales:salesFile?1:0,ready:canGenerate(),disposed});
+  guide?.update({busy,review:Boolean(prepared),generated:Boolean(url),labels:selected.length,invoices:invoiceFiles.length,sales:salesFile?1:0,mode:$('document-mode').value,ready:canGenerate(),disposed});
 }
 function showFiles(id,files){
   $(id).replaceChildren();files.forEach((f,index)=>{const li=document.createElement('li'),name=document.createElement('span'),button=document.createElement('button');
@@ -88,10 +89,10 @@ $('invoice-files').addEventListener('change',e=>{if(!busy)selectInvoices(e.targe
 $('sales-file').addEventListener('change',e=>{
   if(busy||disposed||!globalThis.HarmonyConverterAccess.allowed())return;const file=e.target.files?.[0];$('sales-file').value='';if(!file)return;
   if(!/\.xlsx$/i.test(file.name)){$('status').className='error';$('status').textContent='Selecione o relatório de vendas original em .xlsx.';return;}
-  salesFile=file;clearResult();refreshFiles();$('status').className='';$('status').textContent='Relatório Excel selecionado. Confira o lote para preencher as variações e validar as quantidades.';
+  salesFile=file;clearResult();refreshFiles();$('status').className='';$('status').textContent='Relatório Excel selecionado. As etiquetas definem o lote; produtos, quantidades e variações da ficha virão do Excel.';
 });
 $('clear-sales').onclick=()=>{if(busy||disposed||!globalThis.HarmonyConverterAccess.allowed())return;salesFile=null;$('sales-file').value='';clearResult();refreshFiles();$('status').textContent='Excel removido da seleção. As fichas usarão apenas as informações das notas.';};
-$('clear-invoices').onclick=()=>{invoiceFiles=[];$('invoice-files').value='';clearResult();refreshFiles();$('status').textContent=guide?.platform==='mercado-livre'?'Notas removidas da seleção. Adicione os DANFEs deste lote para continuar.':'Modo somente etiquetas: notas e produtos não serão conferidos. Confira novamente antes de gerar.';};
+$('clear-invoices').onclick=()=>{invoiceFiles=[];$('invoice-files').value='';clearResult();refreshFiles();$('status').textContent=activeSales()&&$('document-mode').value==='picking'?'Notas removidas. As fichas usarão os pedidos do Excel. Confira novamente.':guide?.platform==='mercado-livre'?'Notas removidas. Adicione o Excel para a ficha interna ou os DANFEs para usar as notas.':'Modo somente etiquetas: notas e produtos não serão conferidos. Confira novamente antes de gerar.';};
 for(const event of ['dragover','dragleave','drop'])$('drop').addEventListener(event,e=>{e.preventDefault();$('drop').classList.toggle('drag',event==='dragover');if(event==='drop'&&!busy)selectFiles(e.dataTransfer.files);});
 async function preview(){
   const token=++revision,index=page,reader=pdfReader;
@@ -99,7 +100,7 @@ async function preview(){
   $('page-count').textContent=`Página ${index+1} de ${sequence.length}`;
   $('previous').disabled=index===0;$('next').disabled=index===sequence.length-1;
   const item=sequence[index];
-  $('preview-caption').textContent=item.row?`${item.kind==='label'?'Etiqueta':item.kind==='picking'?'Ficha de separação':'DANFE'} · NF ${item.row.invoice.invoiceNumber} · Envio ${item.row.shipmentId}${item.kind!=='label'&&item.totalSheets>1?` · Folha ${item.sheet}/${item.totalSheets}`:''}`:'Etiqueta';
+  $('preview-caption').textContent=item.row?`${item.kind==='label'?'Etiqueta':item.kind==='picking'?'Ficha de separação':'DANFE'} · ${item.row.order?'Pedido '+item.row.order.id:'NF '+item.row.invoice.invoiceNumber} · Envio ${item.row.shipmentId}${item.kind!=='label'&&item.totalSheets>1?` · Folha ${item.sheet}/${item.totalSheets}`:''}`:'Etiqueta';
   try{
     const pdfPage=await reader.getPage(index+1);if(token!==revision)return;
     const natural=pdfPage.getViewport({scale:1}),viewport=pdfPage.getViewport({scale:Math.min(2,900/natural.height)});
@@ -123,7 +124,7 @@ window.addEventListener('harmony-labels:workspace-request',()=>{
       page:page+1,partial:/-PARCIAL-\d+-de-\d+\.pdf$/i.test($('download').download),
       pages:sequence.map((item,index)=>({
         page:index+1,kind:item.kind,invoiceNumber:item.row?.invoice?.invoiceNumber||'',
-        shipmentId:item.row?.shipmentId||'',sheet:item.sheet||1,totalSheets:item.totalSheets||1
+        orderId:item.row?.order?.id||'',shipmentId:item.row?.shipmentId||'',sheet:item.sheet||1,totalSheets:item.totalSheets||1
       }))
     }:null
   }}));
@@ -141,17 +142,25 @@ $('open').onclick=()=>{if(globalThis.HarmonyConverterAccess.allowed()&&url)windo
 for(const id of ['dpi','size','document-mode'])$(id).addEventListener('change',()=>{if(busy||disposed)return;clearResult();$('status').className='';$('status').textContent='Configuração alterada. Confira o lote novamente.';syncControls();});
 function showReport(rows,generated=false){
   $('pairing-rows').replaceChildren();const picking=$('document-mode').value==='picking';
-  for(const row of rows){const tr=document.createElement('tr'),products=row.sales?.products||row.invoice.pages.flatMap(p=>p.products||[]);
-    const values=[row.shipmentId,`${row.invoice.invoiceNumber} / ${row.invoice.series}${row.confirmedByAdmin?' · Confirmada pelo ADM':''}`,products.length?products.map(p=>`${p.quantity} ${p.unit} · ${p.description}${p.variation?' · '+p.variation:p.variationSource==='sales'?' · Conferir personalização no pedido':' · Cor/variação não informada'}`).join('; '):'Não extraídos (DANFE completo)',row.invoice.pages.map(p=>`${p.source} · pág. ${p.pageIndex+1}`).join('; ')+(row.sales?`; Variações: ${row.sales.source} · ${row.sales.sheet}, linha ${row.sales.row}`:''),`${generated?'PDF':'Previsto'}: ${row.labelPage}: etiqueta → ${row.invoiceStart}${row.invoiceEnd!==row.invoiceStart?'–'+row.invoiceEnd:''}: ${picking?'ficha':'DANFE'}`];
+  const salesSource=rows.some(row=>row.order);
+  $('pairing-badge').textContent=salesSource?'PEDIDO + ENVIO + CEP':'NF + CEP CONFERIDOS';
+  $('pairing-identity-title').textContent=salesSource?'Pedido / pacote':'Nota fiscal / série';
+  $('pairing-products-title').textContent=salesSource?'Produtos / quantidade no Excel':'Produtos / quantidade na NF';
+  $('pairing-source-title').textContent=salesSource?'Origem e conferência complementar':'Origem do DANFE';
+  for(const row of rows){const tr=document.createElement('tr'),products=row.order?.products||row.sales?.products||row.invoice.pages.flatMap(p=>p.products||[]);
+    if(row.order)tr.dataset.orderId=row.order.id;
+    const identity=row.order?row.order.id:`${row.invoice.invoiceNumber} / ${row.invoice.series}${row.confirmedByAdmin?' · Confirmada pelo ADM':''}`;
+    const source=row.order?`${row.order.source} · ${row.order.sheet}, linha ${row.order.row}. ${row.fiscalCheck}`:row.invoice.pages.map(p=>`${p.source} · pág. ${p.pageIndex+1}`).join('; ')+(row.sales?`; Variações: ${row.sales.source} · ${row.sales.sheet}, linha ${row.sales.row}`:'');
+    const values=[row.shipmentId,identity,products.length?products.map(p=>`${p.quantity} ${p.unit} · ${p.description}${p.variation?' · '+p.variation:p.variationSource==='sales'?' · Conferir personalização no pedido':' · Cor/variação não informada'}`).join('; '):'Não extraídos (DANFE completo)',source,`${generated?'PDF':'Previsto'}: ${row.labelPage}: etiqueta → ${row.invoiceStart}${row.invoiceEnd!==row.invoiceStart?'–'+row.invoiceEnd:''}: ${picking?'ficha':'DANFE'}`];
     for(const value of values){const td=document.createElement('td');td.textContent=value;tr.append(td);}$('pairing-rows').append(tr);
   }
-  $('pairing-summary').textContent=`${rows.length} pedido(s) com vínculo conferido e CEP validado${generated?', incluídos neste PDF':'; PDF ainda não gerado'}. ${rows.filter(r=>r.confirmedByAdmin).length} confirmação(ões) do ADM para etiqueta sem NF. Os pedidos pendentes, se houver, permanecem na lista de soluções.`;
+  $('pairing-summary').textContent=`${rows.length} pedido(s) com vínculo conferido e CEP validado${generated?', incluídos neste PDF':'; PDF ainda não gerado'}. `+(salesSource?'Produtos, quantidades e variações do Excel. DANFE complementar.':`${rows.filter(r=>r.confirmedByAdmin).length} confirmação(ões) do ADM para etiqueta sem NF.`)+' Os pedidos pendentes, se houver, permanecem na lista de soluções.';
   $('pairing-report').hidden=!rows.length;
 }
 function listMessages(id,messages){$(id).replaceChildren();for(const message of messages){const li=document.createElement('li');li.textContent=message;$(id).append(li);}$(id).hidden=!messages.length;}
 function showSolutions(report){
   $('resolution-panel').hidden=report.ready;$('resolution-items').replaceChildren();resolutionControls.length=0;
-  $('resolution-summary').textContent=`${report.confirmedCount} de ${report.counts.labels} etiqueta(s) com vínculo conferido · ${report.pendingCount} etiqueta(s) pendente(s) · ${report.unmatchedInvoices.length} nota(s) fora dos pedidos conferidos.`;
+  $('resolution-summary').textContent=`${report.confirmedCount} de ${report.counts.labels} etiqueta(s) com vínculo conferido · ${report.pendingCount} etiqueta(s) pendente(s)`+(report.salesSource?' no Excel.':` · ${report.unmatchedInvoices.length} nota(s) fora dos pedidos conferidos.`);
   const current=()=>!busy&&!disposed&&globalThis.HarmonyConverterAccess.allowed()&&prepared?.report===report;
   const next=document.createElement('p');next.className='resolution-next-step';
   next.textContent=report.duplicates.length?'Comece pelas cópias idênticas. Depois da remoção da seleção, o lote será conferido novamente.':report.uncertain?'Comece pelos arquivos sem leitura segura. Use a ação do cartão correspondente; nenhuma nota será associada por tentativa.':report.partialReady?'Você pode resolver as pendências abaixo ou escolher, ao final, gerar somente os pedidos já conferidos.':'Cada cartão mostra o próximo passo. Não é necessário editar o documento recebido da plataforma.';
@@ -185,7 +194,7 @@ function showSolutions(report){
     });
   }
   const guidance={
-    sales:'Selecione o Excel original que contenha este envio, com o pacote completo e as linhas dos produtos. Confira possíveis cancelamentos. O relatório não pode alterar os produtos ou quantidades da NF.',
+    sales:'Selecione o Excel original que contenha este envio e pedido, com o pacote completo, CEP e linhas dos produtos. Confira possíveis cancelamentos. Vendas extras na planilha são permitidas. Se a etiqueta estiver incorreta, substitua o arquivo de etiquetas.',
     'missing-invoice-number':'Consulte este envio no Mercado Livre. Selecione a NF que você conferiu e marque a confirmação. As opções têm CEP compatível e não estão vinculadas a outro envio; nenhuma é escolhida automaticamente.',
     missing:'Baixe o DANFE deste pedido na plataforma e adicione-o ao lote. Se já estiver selecionado, tente a leitura alternativa.',
     products:'Tente a leitura alternativa. Se a tabela continuar incompatível, você pode escolher DANFE completo; essa escolha troca o formato de TODOS os pedidos deste lote, não apenas desta nota.',
@@ -223,7 +232,7 @@ function showSolutions(report){
       });
     }
     if(item.code==='missing')button(article,'Adicionar o DANFE faltante',()=>$('invoice-files').click());
-    if(item.code==='sales')button(article,'Selecionar outro relatório Excel',()=>$('sales-file').click());
+    if(item.code==='sales'){button(article,'Selecionar outro relatório Excel',()=>$('sales-file').click());replacementAction(article,item.source,'labels');}
     if(['missing','products','invoice-read'].includes(item.code))button(article,'Tentar leitura alternativa',()=>checkBatch(true));
     if(item.code==='products')button(article,'Usar DANFE completo neste lote',()=>{$('document-mode').value='danfe';checkBatch(true);});
     if(['metadata','duplicate-label','volumes','mismatch'].includes(item.code))replacementAction(article,item.source,'labels');
@@ -244,8 +253,13 @@ function showSolutions(report){
 }
 function showReview(report){
   $('batch-review').hidden=false;
+  $('review-products-title').textContent=report.salesSource?'Itens do Excel neste lote':'Itens da NF';
+  $('review-items-help').textContent='Itens são linhas de produtos '+(report.salesSource?'dos pedidos conferidos no Excel':'da nota')+', não a soma de unidades ou de peças dos kits. Em um lote parcial, a quantidade de páginas aparece junto da confirmação de geração.';
+  $('review-scope').hidden=!report.salesSource;
+  $('review-scope').textContent=report.salesSource?`${report.scope.total} pedidos no Excel · ${report.scope.matched} conferidos neste lote · ${report.scope.ignored} fora dos pedidos conferidos. Somente as etiquetas selecionadas entram no PDF. Você pode reutilizar o mesmo Excel no próximo lote.`:'';
   $('review-state').textContent=report.ready?'LOTE CONFERIDO':report.partialReady?'PARTE DO LOTE CONFERIDA':'AÇÃO NECESSÁRIA';
   $('review-summary').textContent=report.ready?(report.paired?'Vínculos conferidos e CEP validado. Confirmações do ADM aparecem nos avisos e na relação de pedidos. Revise antes de gerar.':guide?.platform==='shopee'?'Conteúdo do ZPL da Shopee preservado. Confira na prévia se a lista de empacotamento veio no arquivo; produtos não foram extraídos nem conferidos por DANFE.':'Modo somente etiquetas. Notas e produtos não foram conferidos.'):'Veja as soluções abaixo. Você não precisa editar a nota ou a etiqueta recebida da plataforma.';
+  if(report.salesSource)$('review-summary').textContent='Ficha interna com produtos, quantidades e variações do Excel. Vínculo por pedido, envio e CEP. DANFE opcional, apenas para conferência complementar.';
   for(const [name,value] of Object.entries(report.counts))$('review-'+name).textContent=value===null?(name==='products'&&!report.paired?'Não se aplica':'Não calculado'):String(value);
   listMessages('issues',report.issues);listMessages('review-warnings',report.warnings);
   $('review-issues-title').hidden=!report.issues.length;$('review-warnings-title').hidden=!report.warnings.length;
@@ -279,12 +293,12 @@ async function checkBatch(alternative=false){
         }catch(error){ensureActive();if(error.fatal)throw error;sourceProblems.push({source:f.name===entry.name?f.name:f.name+' / '+entry.name,fileName:f.name,message:error.message});}
       }
     }
-    const read=activeInvoices().length?await LocalBatchRecovery.readInvoices(activeInvoices(),(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):null;
-    if(activeSales()){
-      if(!read)throw Error('Adicione os DANFEs para conferir o relatório Excel com as notas.');
-      $('status').textContent='Lendo as variações do Excel e conferindo os pedidos…';read.sales=await LocalSales.read(activeSales(),ensureActive);ensureActive();
+    const mode=$('document-mode').value;
+    const read=activeInvoices().length?await LocalBatchRecovery.readInvoices(activeInvoices(),(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):activeSales()&&mode==='picking'?{documents:[],invoices:[],problems:[]}:null;
+    if(activeSales()&&mode==='picking'){
+      $('status').textContent='Lendo produtos, quantidades e variações do Excel e conferindo os pedidos…';read.sales=await LocalSales.read(activeSales(),ensureActive);ensureActive();
     }
-    ensureActive();const mode=$('document-mode').value,report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
+    ensureActive();const report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
     prepared={batch,read,report,mode,reviewOptions:{mode,ignored,duplicates,sourceProblems},dpi:Number($('dpi').value),size:$('size').value};showReview(report);
     $('status').textContent=report.ready?'Lote conferido. Revise o resumo e gere o PDF.':report.partialReady?'Há pedidos prontos e pendências separadas. Você pode resolver tudo ou autorizar somente os conferidos.':'A conferência encontrou uma situação que precisa de ação. Veja a solução indicada abaixo.';
   }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=(error.message||'Não foi possível conferir o lote.')+' Os originais não foram alterados. Remova da seleção o arquivo indicado, adicione o original da plataforma ou tente um lote menor.';}
@@ -306,8 +320,7 @@ async function generate(){
   const batch=partial?snapshot.report.subset.labels:snapshot.batch,read=partial?snapshot.report.subset.read:snapshot.read;
   busy=true;clearResult(true);syncControls();$('progress').hidden=false;
   try{
-    // Recheck the exact chosen subset at the composition boundary. The printed
-    // picking layout and the authoritative invoice matching remain unchanged.
+    // Recheck the exact chosen subset and its authoritative source before printing.
     const checked=await LocalBatchReview.inspect(batch,read,{mode:snapshot.mode});ensureActive();
     if(!checked.ready)throw Error('A conferência mudou. Confira o lote novamente antes de gerar.');
     const progress=(n,total)=>{ensureActive();$('progress').value=n/total;$('status').textContent=`Preparando PDF: ${n} de ${total} páginas…`;};

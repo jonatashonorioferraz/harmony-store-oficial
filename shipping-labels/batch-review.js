@@ -2,6 +2,7 @@
 (function(root){
   'use strict';
   async function inspect(labels,read=null,{mode='picking',ignored=[]}={}){
+    if(mode==='picking'&&read?.sales)return root.LocalSales.review(labels,read,{ignored});
     const paired=read!==null;
     const report={ready:false,paired,mode:paired?mode:'labels',rows:[],issues:[],warnings:[],
       counts:{labels:labels.length,invoices:paired?read.invoices.length:0,products:null,pages:null}};
