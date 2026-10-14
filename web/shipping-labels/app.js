@@ -2,10 +2,11 @@
 'use strict';
 if(!globalThis.HarmonyConverterAccess?.allowed())return;
 const $=id=>document.getElementById(id);
-let selected=[],invoiceFiles=[],sequence=[],page=0,url=null,pdfReader=null,renderTask=null,revision=0,busy=false,disposed=false,prepared=null;
+let selected=[],invoiceFiles=[],salesFile=null,sequence=[],page=0,url=null,pdfReader=null,renderTask=null,revision=0,busy=false,disposed=false,prepared=null;
 const resolutionControls=[];
 const guide=globalThis.HarmonyLabelsGuide;
 const activeInvoices=()=>guide?.platform==='shopee'?[]:invoiceFiles;
+const activeSales=()=>guide?.platform==='shopee'?null:salesFile;
 const inputReady=()=>!guide||Boolean(guide.platform&&(guide.platform!=='mercado-livre'||invoiceFiles.length));
 window.addEventListener('harmony-labels:platform-change',()=>{if(busy||disposed)return;clearResult();refreshFiles();$('status').className='';$('status').textContent=selected.length||invoiceFiles.length?'Plataforma alterada. Os arquivos selecionados foram preservados; confira o lote novamente.':'Plataforma selecionada. Adicione os arquivos deste lote.';});
 function ensureActive(){if(disposed||!globalThis.HarmonyConverterAccess.allowed())throw Error('Conversão encerrada.');}
@@ -33,8 +34,8 @@ function closeNewBatch(){
 function canRestart(){return !busy&&!disposed&&globalThis.HarmonyConverterAccess.allowed()&&!!url;}
 function restartBatch(keepPlatform){
   if(!canRestart()||$('new-batch-choice').hidden)return;
-  selected=[];invoiceFiles=[];clearResult();
-  for(const id of ['files','invoice-files'])$(id).value='';
+  selected=[];invoiceFiles=[];salesFile=null;clearResult();
+  for(const id of ['files','invoice-files','sales-file'])$(id).value='';
   // A full-DANFE recovery choice belongs to the old lot. Keep only printer preferences.
   $('document-mode').value='picking';$('progress').value=0;$('progress').hidden=true;
   for(const id of ['review-state','pairing-summary'])$(id).textContent='';
@@ -55,6 +56,7 @@ $('new-batch-choice').addEventListener('keydown',event=>{if(event.key==='Escape'
 $('new-batch-same').onclick=()=>restartBatch(true);
 $('new-batch-platform').onclick=()=>restartBatch(false);
 function syncControls(){
+  $('sales-file').disabled=busy||Boolean(guide&&guide.platform!=='mercado-livre');$('clear-sales').disabled=busy;$('clear-sales').hidden=!salesFile;
   for(const control of resolutionControls)control.disabled=busy;
   for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
   $('size').disabled=busy||!!activeInvoices().length;$('paired-size').hidden=!activeInvoices().length;
@@ -69,7 +71,7 @@ function syncControls(){
   $('new-batch').hidden=!url;
   for(const id of ['new-batch-open','new-batch-same','new-batch-platform','new-batch-cancel'])$(id).disabled=busy||disposed||!url;
   $('review-hint').textContent=prepared?(prepared.report.ready?'Conferência concluída. Revise o resumo antes de gerar.':partial?'Revise as pendências e confirme explicitamente para gerar só os pedidos conferidos.':'Use as ações indicadas para resolver a pendência, sem editar os arquivos originais.'):'Confira os arquivos para liberar a geração do PDF.';
-  guide?.update({busy,review:Boolean(prepared),generated:Boolean(url),labels:selected.length,invoices:invoiceFiles.length,ready:canGenerate(),disposed});
+  guide?.update({busy,review:Boolean(prepared),generated:Boolean(url),labels:selected.length,invoices:invoiceFiles.length,sales:salesFile?1:0,ready:canGenerate(),disposed});
 }
 function showFiles(id,files){
   $(id).replaceChildren();files.forEach((f,index)=>{const li=document.createElement('li'),name=document.createElement('span'),button=document.createElement('button');
@@ -78,11 +80,17 @@ function showFiles(id,files){
     li.append(name,button);$(id).append(li);
   });
 }
-function refreshFiles(){showFiles('file-list',selected);showFiles('invoice-list',invoiceFiles);syncControls();}
+function refreshFiles(){showFiles('file-list',selected);showFiles('invoice-list',invoiceFiles);$('sales-name').textContent=salesFile?salesFile.name+' · '+(salesFile.size/1024).toFixed(0)+' KB':'';syncControls();}
 function selectFiles(files){selected.push(...Array.from(files));$('files').value='';clearResult();refreshFiles();$('status').className='';$('status').textContent=`${selected.length} arquivo(s) de etiquetas na seleção. Você pode adicionar mais ou remover um arquivo abaixo.`;}
 function selectInvoices(files){invoiceFiles.push(...Array.from(files));$('invoice-files').value='';clearResult();refreshFiles();$('status').className='';$('status').textContent=`${invoiceFiles.length} PDF(s) de notas na seleção. Os arquivos anteriores foram mantidos. Confira o lote novamente.`;}
 $('files').addEventListener('change',e=>{if(!busy)selectFiles(e.target.files);});
 $('invoice-files').addEventListener('change',e=>{if(!busy)selectInvoices(e.target.files);});
+$('sales-file').addEventListener('change',e=>{
+  if(busy||disposed||!globalThis.HarmonyConverterAccess.allowed())return;const file=e.target.files?.[0];$('sales-file').value='';if(!file)return;
+  if(!/\.xlsx$/i.test(file.name)){$('status').className='error';$('status').textContent='Selecione o relatório de vendas original em .xlsx.';return;}
+  salesFile=file;clearResult();refreshFiles();$('status').className='';$('status').textContent='Relatório Excel selecionado. Confira o lote para preencher as variações e validar as quantidades.';
+});
+$('clear-sales').onclick=()=>{if(busy||disposed||!globalThis.HarmonyConverterAccess.allowed())return;salesFile=null;$('sales-file').value='';clearResult();refreshFiles();$('status').textContent='Excel removido da seleção. As fichas usarão apenas as informações das notas.';};
 $('clear-invoices').onclick=()=>{invoiceFiles=[];$('invoice-files').value='';clearResult();refreshFiles();$('status').textContent=guide?.platform==='mercado-livre'?'Notas removidas da seleção. Adicione os DANFEs deste lote para continuar.':'Modo somente etiquetas: notas e produtos não serão conferidos. Confira novamente antes de gerar.';};
 for(const event of ['dragover','dragleave','drop'])$('drop').addEventListener(event,e=>{e.preventDefault();$('drop').classList.toggle('drag',event==='dragover');if(event==='drop'&&!busy)selectFiles(e.dataTransfer.files);});
 async function preview(){
@@ -110,7 +118,7 @@ window.addEventListener('harmony-labels:workspace-request',()=>{
   const available=Boolean(!busy&&pdfReader&&sequence.length&&!$('navigation').hidden&&!$('actions').hidden);
   const describe=files=>files.map(file=>({name:file.name,size:file.size}));
   window.dispatchEvent(new CustomEvent('harmony-labels:workspace-state',{detail:{
-    files:{labels:describe(selected),invoices:describe(invoiceFiles)},busy,
+    files:{labels:describe(selected),invoices:describe(invoiceFiles),sales:describe(salesFile?[salesFile]:[])},busy,
     preview:available?{
       page:page+1,partial:/-PARCIAL-\d+-de-\d+\.pdf$/i.test($('download').download),
       pages:sequence.map((item,index)=>({
@@ -133,8 +141,8 @@ $('open').onclick=()=>{if(globalThis.HarmonyConverterAccess.allowed()&&url)windo
 for(const id of ['dpi','size','document-mode'])$(id).addEventListener('change',()=>{if(busy||disposed)return;clearResult();$('status').className='';$('status').textContent='Configuração alterada. Confira o lote novamente.';syncControls();});
 function showReport(rows,generated=false){
   $('pairing-rows').replaceChildren();const picking=$('document-mode').value==='picking';
-  for(const row of rows){const tr=document.createElement('tr'),products=row.invoice.pages.flatMap(p=>p.products||[]);
-    const values=[row.shipmentId,`${row.invoice.invoiceNumber} / ${row.invoice.series}${row.confirmedByAdmin?' · Confirmada pelo ADM':''}`,products.length?products.map(p=>`${p.quantity} ${p.unit} · ${p.description}${p.variation?'':' · Cor/variação não informada'}`).join('; '):'Não extraídos (DANFE completo)',row.invoice.pages.map(p=>`${p.source} · pág. ${p.pageIndex+1}`).join('; '),`${generated?'PDF':'Previsto'}: ${row.labelPage}: etiqueta → ${row.invoiceStart}${row.invoiceEnd!==row.invoiceStart?'–'+row.invoiceEnd:''}: ${picking?'ficha':'DANFE'}`];
+  for(const row of rows){const tr=document.createElement('tr'),products=row.sales?.products||row.invoice.pages.flatMap(p=>p.products||[]);
+    const values=[row.shipmentId,`${row.invoice.invoiceNumber} / ${row.invoice.series}${row.confirmedByAdmin?' · Confirmada pelo ADM':''}`,products.length?products.map(p=>`${p.quantity} ${p.unit} · ${p.description}${p.variation?' · '+p.variation:p.variationSource==='sales'?' · Conferir personalização no pedido':' · Cor/variação não informada'}`).join('; '):'Não extraídos (DANFE completo)',row.invoice.pages.map(p=>`${p.source} · pág. ${p.pageIndex+1}`).join('; ')+(row.sales?`; Variações: ${row.sales.source} · ${row.sales.sheet}, linha ${row.sales.row}`:''),`${generated?'PDF':'Previsto'}: ${row.labelPage}: etiqueta → ${row.invoiceStart}${row.invoiceEnd!==row.invoiceStart?'–'+row.invoiceEnd:''}: ${picking?'ficha':'DANFE'}`];
     for(const value of values){const td=document.createElement('td');td.textContent=value;tr.append(td);}$('pairing-rows').append(tr);
   }
   $('pairing-summary').textContent=`${rows.length} pedido(s) com vínculo conferido e CEP validado${generated?', incluídos neste PDF':'; PDF ainda não gerado'}. ${rows.filter(r=>r.confirmedByAdmin).length} confirmação(ões) do ADM para etiqueta sem NF. Os pedidos pendentes, se houver, permanecem na lista de soluções.`;
@@ -169,7 +177,7 @@ function showSolutions(report){
       const activeFiles=kind==='labels'?selected:invoiceFiles,index=activeFiles.indexOf(original);if(index<0)return;
       if(!(kind==='labels'?/\.(zip|zpl|txt)$/i:/\.pdf$/i).test(replacement.name)){notice.textContent=kind==='labels'?'Escolha ZIP, ZPL ou TXT exportado pela plataforma. A seleção anterior foi mantida.':'Escolha o DANFE em PDF. A seleção anterior foi mantida.';return;}
       const updated=activeFiles.map((file,i)=>i===index?replacement:file);
-      try{LocalBatchRecovery.guardSize(kind==='labels'?[...updated,...invoiceFiles]:[...selected,...updated]);}
+      try{LocalBatchRecovery.guardSize([...(kind==='labels'?[...updated,...invoiceFiles]:[...selected,...updated]),...(salesFile?[salesFile]:[])]);}
       catch(error){notice.textContent=(error.message||'Não foi possível usar este arquivo.')+' A seleção anterior foi mantida.';return;}
       if(kind==='labels')selected=updated;else invoiceFiles=updated;
       clearResult();refreshFiles();$('status').className='';$('status').textContent='Arquivo substituído somente na seleção. Conferindo o lote novamente, sem alterar os originais…';
@@ -177,6 +185,7 @@ function showSolutions(report){
     });
   }
   const guidance={
+    sales:'Selecione o Excel original que contenha este envio, com o pacote completo e as linhas dos produtos. Confira possíveis cancelamentos. O relatório não pode alterar os produtos ou quantidades da NF.',
     'missing-invoice-number':'Consulte este envio no Mercado Livre. Selecione a NF que você conferiu e marque a confirmação. As opções têm CEP compatível e não estão vinculadas a outro envio; nenhuma é escolhida automaticamente.',
     missing:'Baixe o DANFE deste pedido na plataforma e adicione-o ao lote. Se já estiver selecionado, tente a leitura alternativa.',
     products:'Tente a leitura alternativa. Se a tabela continuar incompatível, você pode escolher DANFE completo; essa escolha troca o formato de TODOS os pedidos deste lote, não apenas desta nota.',
@@ -214,6 +223,7 @@ function showSolutions(report){
       });
     }
     if(item.code==='missing')button(article,'Adicionar o DANFE faltante',()=>$('invoice-files').click());
+    if(item.code==='sales')button(article,'Selecionar outro relatório Excel',()=>$('sales-file').click());
     if(['missing','products','invoice-read'].includes(item.code))button(article,'Tentar leitura alternativa',()=>checkBatch(true));
     if(item.code==='products')button(article,'Usar DANFE completo neste lote',()=>{$('document-mode').value='danfe';checkBatch(true);});
     if(['metadata','duplicate-label','volumes','mismatch'].includes(item.code))replacementAction(article,item.source,'labels');
@@ -247,7 +257,7 @@ async function checkBatch(alternative=false){
   clearResult();busy=true;syncControls();$('status').className='';$('progress').hidden=false;$('progress').value=0;
   try{
     if(!globalThis.DecompressionStream||!globalThis.CompressionStream)throw Error('Abra esta página no Chrome ou Edge atualizado.');
-    LocalBatchRecovery.guardSize([...selected,...invoiceFiles]);
+    LocalBatchRecovery.guardSize([...selected,...invoiceFiles,...(salesFile?[salesFile]:[])]);
     $('status').textContent='Identificando cópias idênticas, sem enviar os arquivos…';
     const duplicates=await LocalBatchRecovery.duplicateFiles(selected,activeInvoices(),ensureActive);ensureActive();
     const batch=[],ignored=[],sourceProblems=[];let textSize=0;
@@ -270,6 +280,10 @@ async function checkBatch(alternative=false){
       }
     }
     const read=activeInvoices().length?await LocalBatchRecovery.readInvoices(activeInvoices(),(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):null;
+    if(activeSales()){
+      if(!read)throw Error('Adicione os DANFEs para conferir o relatório Excel com as notas.');
+      $('status').textContent='Lendo as variações do Excel e conferindo os pedidos…';read.sales=await LocalSales.read(activeSales(),ensureActive);ensureActive();
+    }
     ensureActive();const mode=$('document-mode').value,report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
     prepared={batch,read,report,mode,reviewOptions:{mode,ignored,duplicates,sourceProblems},dpi:Number($('dpi').value),size:$('size').value};showReview(report);
     $('status').textContent=report.ready?'Lote conferido. Revise o resumo e gere o PDF.':report.partialReady?'Há pedidos prontos e pendências separadas. Você pode resolver tudo ou autorizar somente os conferidos.':'A conferência encontrou uma situação que precisa de ação. Veja a solução indicada abaixo.';
@@ -317,6 +331,6 @@ $('convert').onclick=generate;$('review-generate').onclick=generate;
 
 syncControls();
 
-window.HarmonyConverterLifecycle=Object.freeze({dispose(){if(disposed)return;disposed=true;selected=[];invoiceFiles=[];clearResult();showFiles('file-list',[]);showFiles('invoice-list',[]);for(const id of ["files","invoice-files"]){$(id).value="";}busy=false;syncControls();}});
+window.HarmonyConverterLifecycle=Object.freeze({dispose(){if(disposed)return;disposed=true;selected=[];invoiceFiles=[];salesFile=null;clearResult();showFiles('file-list',[]);showFiles('invoice-list',[]);$('sales-name').textContent='';for(const id of ["files","invoice-files","sales-file"]){$(id).value="";}busy=false;syncControls();}});
 window.addEventListener("pagehide",()=>window.HarmonyConverterLifecycle.dispose(),{once:true});
 })();

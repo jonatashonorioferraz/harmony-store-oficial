@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.121] - 2026-10-14
+
+- Conversor Mercado Livre: upload local do relatório de vendas `.xlsx` junto ao ZPL e aos DANFEs para preencher cores e aromas nas fichas de separação.
+- O relatório é conferido por envio, venda/pacote quando presente, CEP, anúncio, descrição e quantidades. Variações não são deduzidas pelo SKU truncado da nota ou pela posição entre documentos.
+- Produtos sem variação no relatório recebem “Conferir personalização no pedido”, sem bloquear o lote. Até quatro produtos por ficha de 10 × 15 cm, respeitando a legibilidade.
+- O Excel acompanha a seleção, a conferência e os lotes parciais; “Iniciar novo lote” também limpa o relatório. DANFEs originais permanecem inalterados e nenhum arquivo é enviado a serviços externos.
+
 ## [v25.120] - 2026-10-14
 
 - Mercado Livre: leitura local de Code 128 automático numérico, incluindo códigos de transporte com quantidade ímpar de dígitos e zeros iniciais.

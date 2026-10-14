@@ -20,7 +20,7 @@
     root.dataset.screen = screen;
     root.dataset.platform = platform || 'none';
     root.dataset.complete = String(complete);
-    root.dataset.hasFiles = String(Boolean(state.labels || state.invoices));
+    root.dataset.hasFiles = String(Boolean(state.labels || state.invoices || state.sales));
     root.dataset.retainedInvoices = String(platform === 'shopee' && Boolean(state.invoices));
     root.dataset.busy = String(Boolean(state.busy));
     for (let n = 1; n <= 3; n++) {
@@ -43,6 +43,7 @@
     documentChoice.hidden = platform !== 'mercado-livre';
     $('files').disabled = state.busy || stopped || !platform;
     $('invoice-files').disabled = state.busy || stopped || platform !== 'mercado-livre';
+    $('sales-file').disabled = state.busy || stopped || platform !== 'mercado-livre';
     $('add-invoices').disabled = state.busy || stopped || platform !== 'mercado-livre';
     if ($('guide-context')) $('guide-context').hidden = selecting || !platform;
     if ($('guide-change')) $('guide-change').disabled = state.busy || stopped;
@@ -51,17 +52,18 @@
       if ($('guide-marketplace-logo')) $('guide-marketplace-logo').src = platform === 'shopee' ? 'assets/shopee.webp' : 'assets/mercado-livre.webp';
     }
     text('guide-label-title', platform === 'shopee' ? 'Etiquetas + lista de empacotamento' : 'Etiquetas ZPL');
-    text('guide-upload-description', platform === 'shopee' ? 'Use o ZPL com a lista de empacotamento incluída.' : 'Selecione o ZPL e os DANFEs dos mesmos pedidos.');
+    text('guide-upload-description', platform === 'shopee' ? 'Use o ZPL com a lista de empacotamento incluída.' : 'Selecione o ZPL, os DANFEs e o Excel de vendas dos mesmos pedidos para incluir cores e aromas.');
     const note = platform === 'shopee' ? 'A lista de empacotamento precisa vir no ZPL exportado. O conversor não cria uma lista ausente.' : 'As notas são vinculadas pela NF e pelo CEP, não pela ordem dos arquivos.';
-    text('guide-platform-note', note + (platform === 'shopee' && state.invoices ? ' Os PDFs já selecionados foram mantidos na sessão, mas não serão usados na Shopee.' : ''));
+    text('guide-platform-note', note + (platform === 'shopee' && (state.invoices || state.sales) ? ' Os PDFs e o Excel já selecionados foram mantidos na sessão, mas não serão usados na Shopee.' : ''));
     text('guide-help-platform', platform === 'shopee' ? 'Confira se etiquetas e lista estão presentes no ZPL. A lista não é reconstruída pelo conversor.' : 'Cada etiqueta será seguida do documento escolhido nas opções de impressão.');
     text('check', state.review ? 'Conferir novamente' : 'Conferir pedidos');
     let hint = 'Escolha onde você vendeu. Eu te mostro o próximo passo.';
     if (!selecting) {
       if (step === 1) {
-        hint = platform === 'shopee' ? 'Na Shopee, use o ZPL que já inclui a lista de empacotamento.' : 'No Mercado Livre, adicione o ZPL e os DANFEs do mesmo lote.';
+        hint = platform === 'shopee' ? 'Na Shopee, use o ZPL que já inclui a lista de empacotamento.' : 'No Mercado Livre, adicione o ZPL, os DANFEs e o Excel de vendas para preencher cores e aromas.';
         if (platform === 'mercado-livre' && state.labels && !state.invoices) hint = 'Etiquetas selecionadas! Agora adicione as notas em PDF.';
         if (state.labels && (platform === 'shopee' || state.invoices)) hint = 'Arquivos selecionados. Vamos conferir antes de imprimir?';
+        if (platform === 'mercado-livre' && state.labels && state.invoices && !state.sales) hint = 'Adicione também o Excel de vendas para incluir cores e aromas. Sem ele, a ficha usa apenas a nota fiscal.';
       } else if (step === 2) {
         hint = !state.ready ? 'Veja o que precisa de atenção e use as soluções indicadas abaixo.' : platform === 'shopee' ? 'Ao gerar, confira na prévia se a lista de empacotamento veio no arquivo.' : 'Revise o resumo e os avisos antes de gerar o PDF.';
       } else hint = 'Confira a prévia antes de baixar. Na impressora, use escala 100%.';
@@ -108,7 +110,7 @@
   $('guide-change')?.addEventListener('click', selectPlatform);
   $('guide-back').addEventListener('click', () => step === 1 ? selectPlatform() : go(step === 3 ? 2 : 1));
   $('guide-view').addEventListener('click', () => { if (allowed()) { complete = !complete; render(); } });
-  for (const id of ['files', 'invoice-files', 'file-list', 'invoice-list']) {
+  for (const id of ['files', 'invoice-files', 'sales-file', 'file-list', 'invoice-list']) {
     $(id).addEventListener('focus', () => { if (allowed() && !complete) { selecting = false; step = 1; render(); } });
   }
   window.addEventListener('harmony-labels:guide-reveal', event => {

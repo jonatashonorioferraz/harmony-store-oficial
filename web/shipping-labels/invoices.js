@@ -156,11 +156,12 @@
     // Validate again at the composition boundary. Never allow a stale or partial
     // review table to decide which invoice is printed next to a shipment.
     rows=pair(labels,read.invoices);
+    if(mode==='picking'&&read.sales)rows=root.LocalSales.apply(rows,labels,read.sales);
     const {PDFDocument,degrees,StandardFonts,rgb}=root.PDFLib;
     const output=await PDFDocument.create();
     if(!['danfe','picking'].includes(mode))fail('Tipo de documento inválido.');
     output.setTitle(mode==='picking'?'Harmony Store — Etiquetas e fichas de separação':'Harmony Store — Etiquetas e notas vinculadas');output.setProducer('Harmony Store · conversão local');
-    const picking=mode==='picking'?await root.LocalPicking.plan(read.invoices,output):null;
+    const picking=mode==='picking'?await root.LocalPicking.plan(read.invoices,output,rows):null;
     let nextPage=1;
     for(const row of rows){
       const count=picking?picking.layouts.get(row.invoice.key).sheets.length:row.invoice.pages.length;

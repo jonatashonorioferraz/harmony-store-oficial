@@ -74,7 +74,7 @@ export async function harness({authorized = true, previewTools = true} = {}) {
   const add = (parent, tag, id = '', className = '') => { const el = document.createElement(tag); el.id = id; el.className = className; parent.append(el); return el; };
   const layout = add(document.body, 'div', '', 'layout');
   const upload = add(layout, 'section', '', 'panel');
-  for (const id of ['upload-title','files','invoice-files','file-list','invoice-list','convert']) add(upload, id.includes('files') ? 'input' : 'div', id);
+  for (const id of ['upload-title','files','invoice-files','sales-file','sales-name','file-list','invoice-list','convert']) add(upload, id.includes('files') || id==='sales-file' ? 'input' : 'div', id);
   const result = add(layout, 'aside', '', 'panel result');
   add(result, 'h2', 'result-title');
   const body = add(result, 'div', '', 'result-body');
@@ -102,7 +102,7 @@ export async function harness({authorized = true, previewTools = true} = {}) {
     localStorage: {setItem(){throw Error('Persistence forbidden');},getItem(){throw Error('Persistence forbidden');}},
     authorized, previewCalls: [], initial: {labels:[], invoices:[], sequence:[]},
   });
-  vm.runInContext(`const $=id=>document.getElementById(id); let selected=[],invoiceFiles=[],sequence=[],page=0,pdfReader=null,busy=false,disposed=false; globalThis.HarmonyConverterAccess={allowed:()=>authorized}; function preview(){previewCalls.push(page);}`, context);
+  vm.runInContext(`const $=id=>document.getElementById(id); let selected=[],invoiceFiles=[],salesFile=null,sequence=[],page=0,pdfReader=null,busy=false,disposed=false; globalThis.HarmonyConverterAccess={allowed:()=>authorized}; function preview(){previewCalls.push(page);}`, context);
   const app = await readFile(new URL('../shipping-labels/app.js', import.meta.url), 'utf8');
   const start = app.indexOf('// Read-only session metadata for the local workspace UI.');
   const end = app.indexOf("$('previous').onclick", start);
@@ -111,9 +111,9 @@ export async function harness({authorized = true, previewTools = true} = {}) {
   if (previewTools) vm.runInContext(await readFile(new URL('../shipping-labels/preview-tools.js', import.meta.url), 'utf8'), context);
   vm.runInContext(await readFile(new URL('../shipping-labels/workspace-tools.js', import.meta.url), 'utf8'), context);
   function flush() { for (const observer of observers) if (observer.connected) observer.callback(); const queued = [...frames.values()]; frames.clear(); for (const callback of queued) callback(); }
-  function set({labels = [], invoices = [], sequence = [], partial = false, busy = false} = {}) {
-    context.initial = {labels, invoices, sequence, busy};
-    vm.runInContext('selected=initial.labels;invoiceFiles=initial.invoices;sequence=initial.sequence;busy=initial.busy;pdfReader=sequence.length?{}:null;page=0;', context);
+  function set({labels = [], invoices = [], sales = null, sequence = [], partial = false, busy = false} = {}) {
+    context.initial = {labels, invoices, sales, sequence, busy};
+    vm.runInContext('selected=initial.labels;invoiceFiles=initial.invoices;salesFile=initial.sales;sequence=initial.sequence;busy=initial.busy;pdfReader=sequence.length?{}:null;page=0;', context);
     navigation.hidden = !sequence.length; actions.hidden = !sequence.length;
     download.download = partial ? 'etiquetas-PARCIAL-1-de-2.pdf' : 'etiquetas.pdf';
     window.dispatchEvent(new Event('harmony-labels:workspace-request'));

@@ -20,14 +20,18 @@ Abra **Etiquetas → Conversor de etiquetas**. Essa opção é independente de *
 
 1. Escolha **Shopee** ou **Mercado Livre**, sem misturar plataformas no mesmo lote.
 2. Na **Shopee**, selecione o ZPL exportado com etiquetas e lista de empacotamento (ou o ZIP que o contem). Nao precisa de DANFE. A lista precisa estar no arquivo original: o conversor nao cria produtos que nao vieram nele.
-3. No **Mercado Livre**, selecione o ZPL das etiquetas e os DANFEs originais em PDF pesquisavel do mesmo lote. Os dois sao necessarios neste fluxo. A ficha de separacao continua no formato existente.
-4. Clique em **Continuar para conferencia**. Resolva as pendencias indicadas ou autorize explicitamente o subconjunto seguro, quando disponivel.
+3. No **Mercado Livre**, selecione o ZIP/ZPL das etiquetas, os DANFEs originais em PDF pesquisável e o **relatório de vendas Excel (.xlsx)** que contenha esses pedidos. O Excel preenche cores e aromas; sem ele, a ficha usa apenas as informações presentes na NF. Use a aba original **Vendas BR**, mantendo os pacotes completos, sem ordenar ou remover suas linhas internas. O relatório pode incluir outras vendas além deste lote.
+4. Clique em **Conferir pedidos**. Resolva as pendências indicadas ou autorize explicitamente o subconjunto seguro, quando disponível.
 5. Gere o PDF, confira a previa e baixe ou abra para imprimir em tamanho real / escala 100%.
 6. Para converter outros pedidos, clique em **Iniciar novo lote**, abaixo das ações do PDF. Salve o PDF e, se for parcial, a lista de pendências. Escolha **Novo lote na Shopee / no Mercado Livre** para continuar na mesma plataforma ou **Escolher outra plataforma**. **Cancelar** mantém a conversão atual. O reinício limpa os arquivos da sessão, prévia, busca e conferência; preserva os arquivos no computador e a resolução/tamanho da impressora. O Mercado Livre volta ao modo ficha de separação.
 
 As etapas **Adicionar arquivos**, **Conferir pedidos** e **Gerar e imprimir** orientam a tarefa. Voltar nao apaga arquivos; mudar um arquivo, configuracao ou plataforma exige nova conferencia. **Visao completa** mostra as ferramentas juntas, mas nao remove nenhuma protecao. Em **Mais opcoes de impressao** ficam resolucao, tamanho e alternativa de DANFE completo. PDFs selecionados anteriormente ficam preservados na sessao ao escolher Shopee, mas nao entram nessa conversao. Ao fechar a central a selecao nao fica armazenada.
 
 A ficha apresenta a descrição, a quantidade comercial da NF e a cor/variação quando explicitamente informada. Composição de kits permanece na descrição. Uma nota com quantidade 1 de um kit continua como 1; não calculamos peças a partir do título. Quando a cor não consta, confira no pedido.
+
+Com o Excel, o sistema compara o envio/rastreamento, a venda ou pacote quando identificado na etiqueta, o CEP, o anúncio, a descrição e a soma das quantidades. A ficha usa as linhas do pedido conferidas com a NF, incluindo o SKU completo e a variação do relatório. Códigos truncados e a posição das linhas da nota não determinam cores. Divergências ficam como pendências. **Variação vazia no Excel não bloqueia o pedido:** a ficha mostra **Conferir personalização no pedido**, para os produtos anotados manualmente pela expedição. Nenhuma cor ou personalização é inventada. O modo **DANFE completo** mantém o documento fiscal original, sem acrescentar informações do Excel.
+
+O relatório Excel é processado somente no navegador. O limite é 20 MB e 20.000 linhas, dentro do limite total do lote. Trocar ou remover o relatório exige nova conferência; **Iniciar novo lote** também limpa o Excel. Ao escolher Shopee, o Excel fica fora da conversão.
 
 Cada folha de 10 × 15 cm acomoda **até 4 produtos/variações**, sem juntar linhas iguais ou códigos repetidos. Por exemplo, 10 itens de tamanho usual ficam em 3 fichas (4 + 4 + 2), sempre após a etiqueta do pedido. Descrições extensas podem exigir menos itens por folha para manter a letra legível e o conteúdo completo. As fichas mostram número da NF, envio, paginação, intervalo de itens e caixas para marcar a conferência.
 

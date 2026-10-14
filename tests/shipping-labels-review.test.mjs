@@ -125,6 +125,30 @@ test('UI requires a separate successful review before it creates any PDF',async(
   await env.get('review-generate').onclick();assert.equal(env.calls.generate,1);assert.equal(env.calls.urls,1);assert.equal(env.get('review-state').textContent,'PDF GERADO');
 });
 
+test('selecting, replacing and removing the sales report invalidates the previous PDF; reset clears it',async()=>{
+  const env=environment();env.select();await env.get('check').onclick();await env.get('convert').onclick();
+  env.context.LocalSales={read:async()=>({groups:[]})};
+  const selectSales=name=>env.get('sales-file').events.change({target:{files:[{name,size:40}]}});
+  selectSales('sales.xlsx');assert.equal(env.get('actions').hidden,true);assert.equal(env.get('convert').disabled,true);assert.equal(env.calls.revoked,1);assert.match(env.get('sales-name').textContent,/sales.xlsx/);
+  env.get('invoice-files').events.change({target:{files:[{name:'notes.pdf',size:10}]}});
+  let checked;env.context.LocalBatchRecovery.analyze=async(labels,read)=>{checked=read;return env.report;};
+  await env.get('check').onclick();assert.ok(checked.sales);await env.get('convert').onclick();
+  selectSales('new.xlsx');assert.equal(env.get('actions').hidden,true);assert.match(env.get('sales-name').textContent,/new.xlsx/);
+  env.get('clear-sales').onclick();assert.equal(env.get('sales-name').textContent,'');assert.equal(env.get('convert').disabled,true);
+  selectSales('sales.xlsx');await env.get('check').onclick();await env.get('convert').onclick();
+  env.get('new-batch-open').onclick();env.get('new-batch-same').onclick();assert.equal(env.get('sales-name').textContent,'');assert.equal(env.get('sales-file').value,'');assert.equal(env.get('clear-sales').hidden,true);
+});
+
+test('Shopee ignores a retained sales report and a late Excel read cannot restore a disposed session',async()=>{
+  const guide={platform:'mercado-livre',update(){}},env=environment(guide);let reads=0,finish;
+  env.context.LocalSales={read:()=>{reads++;return new Promise(resolve=>{finish=resolve;});}};
+  env.select();env.get('invoice-files').events.change({target:{files:[{name:'notes.pdf',size:10}]}});env.get('sales-file').events.change({target:{files:[{name:'sales.xlsx',size:10}]}});
+  guide.platform='shopee';env.emit('harmony-labels:platform-change');await env.get('check').onclick();assert.equal(reads,0);
+  guide.platform='mercado-livre';env.emit('harmony-labels:platform-change');const checking=env.get('check').onclick();
+  for(let i=0;i<20&&!finish;i++)await Promise.resolve();assert.equal(reads,1);
+  env.context.HarmonyConverterLifecycle.dispose();env.context.document.getElementById=()=>null;finish({groups:[]});await checking;assert.equal(env.calls.urls,0);assert.equal(env.get('sales-name').textContent,'');
+});
+
 test('each print configuration change invalidates review and hides a previously generated PDF',async()=>{
   const env=environment();env.select();await env.get('check').onclick();await env.get('convert').onclick();
   for(const id of ['dpi','size','document-mode']){

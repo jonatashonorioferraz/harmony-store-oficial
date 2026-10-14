@@ -111,11 +111,14 @@
       else if(matches.length!==1)stop('ambiguous','Há notas de séries ou emissores diferentes com este número. Compare as origens e selecione o lote da loja correta. Nenhuma foi escolhida automaticamente.');
       else if(matches[0].postcode!==m.postcode)stop('mismatch','O CEP da etiqueta e o da nota são diferentes. Confira os dois documentos abaixo e selecione os arquivos do mesmo pedido. Não edite o CEP para forçar o vínculo.');
       else if(mode==='picking'&&matches[0].pages.some(p=>p.productError||!p.products?.length))stop('products','Não conseguimos interpretar a tabela de produtos deste modelo. Tente outra leitura ou escolha DANFE completo para continuar com o documento original.');
-      else{item.ready=true;validLabels.push(label);validInvoices.push(matches[0]);used.add(matches[0].key);}
+      else{
+        try{if(mode==='picking'&&read.sales)root.LocalSales.productsFor(label,matches[0],read.sales);item.ready=true;validLabels.push(label);validInvoices.push(matches[0]);used.add(matches[0].key);}
+        catch(error){stop('sales',error.message);}
+      }
       items.push(item);
     }
     const unmatchedInvoices=(read?.invoices||[]).filter(n=>!used.has(n.key));
-    const subsetRead=read?{documents:read.documents,invoices:validInvoices}:null;
+    const subsetRead=read?{documents:read.documents,invoices:validInvoices,sales:read.sales}:null;
     let subset=null;
     if(validLabels.length)subset=await root.LocalBatchReview.inspect(validLabels,subsetRead,{mode,ignored:options.ignored||[]});
     const issues=[...items.filter(i=>!i.ready).map(i=>`Etiqueta ${i.labelIndex+1}${i.invoiceNumber?' / NF '+i.invoiceNumber:''}: ${i.message}`),...invoiceProblems.map(p=>`${p.source}${p.page?', página '+p.page:''}: ${p.message}`),...sourceProblems.map(p=>`${p.source}: ${p.message}`)];
