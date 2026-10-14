@@ -36,11 +36,11 @@ test('platform-specific instructions show one Shopee input or both Mercado Livre
   assert.match(h.query('#guide-platform-note').textContent,/não cria uma lista ausente/);
   h.query('#guide-ml').click();assert.equal(h.guide.platform,'mercado-livre');
   assert.equal(h.query('.invoice-upload').hidden,false);assert.equal(h.query('#invoice-files').disabled,false);
-  h.update({labels:1});assert.match(h.query('#guide-next-hint').textContent,/DANFEs/);
+  h.update({labels:1});assert.match(h.query('#guide-next-hint').textContent,/notas em PDF/);
 });
 test('review, generation and back navigation preserve original selection and do not auto-generate',async()=>{
   const h=await setup();h.query('#guide-shopee').click();h.update({labels:1,review:true,ready:true});
-  assert.equal(h.root.dataset.step,'2');assert.equal(h.query('#guide-step-3').disabled,true);
+  assert.equal(h.root.dataset.step,'2');assert.equal(h.query('#guide-step-3').disabled,false);
   h.query('#guide-back').click();assert.equal(h.root.dataset.step,'1');assert.equal(h.query('#guide-step-2').disabled,false);
   h.query('#guide-step-2').click();h.update({generated:true});assert.equal(h.root.dataset.step,'3');
   h.query('#guide-back').click();assert.equal(h.root.dataset.step,'2');
@@ -64,4 +64,49 @@ test('retained PDFs are clearly excluded from Shopee and recovery search reveals
 test('guide assets load before controller and remain local without external services',()=>{
   assert.ok(html.indexOf('guided.js?')<html.indexOf('src="app.js?'));
   assert.match(html,/connect-src 'none'/);assert.doesNotMatch(source,/fetch\(|localStorage|sessionStorage|indexedDB/);
+});
+
+test('simplified journey starts with platform only and retains files on back navigation',async()=>{
+  const h=await setup();assert.equal(h.root.dataset.screen,'platform');
+  h.query('#guide-ml').click();assert.equal(h.root.dataset.screen,'files');
+  assert.equal(h.query('#guide-step-2').disabled,false);
+  h.update({labels:2,invoices:1});h.query('#guide-step-1').click();
+  assert.equal(h.root.dataset.screen,'platform');assert.equal(h.guide.platform,'mercado-livre');
+  h.query('#guide-ml').click();assert.equal(h.root.dataset.screen,'files');
+  assert.equal(h.root.dataset.hasFiles,'true');
+});
+test('review and generated PDF share the third journey step without bypassing generation',async()=>{
+  const h=await setup();h.query('#guide-shopee').click();
+  assert.equal(h.query('#guide-step-3').disabled,true);
+  h.update({labels:1,review:true,ready:false});
+  assert.equal(h.root.dataset.screen,'review');assert.equal(h.query('#guide-step-3').getAttribute('aria-current'),'step');
+  h.query('#guide-step-3').click();assert.equal(h.root.dataset.step,'2');
+  h.update({ready:true,generated:true});assert.equal(h.root.dataset.screen,'result');
+  h.query('#guide-back').click();assert.equal(h.root.dataset.screen,'review');
+});
+test('contextual helper does not report a blocked batch as ready and disabled sessions stay gated',async()=>{
+  const h=await setup();h.add(h.root,'p','guide-fairy-message');
+  h.query('#guide-ml').click();h.update({labels:1,invoices:0});
+  assert.match(h.query('#guide-fairy-message').textContent,/notas em PDF/);
+  h.update({invoices:1,review:true,ready:false});
+  assert.match(h.query('#guide-fairy-message').textContent,/atenção/);
+  h.update({busy:true});h.query('#guide-step-1').click();assert.equal(h.root.dataset.screen,'review');
+  h.update({busy:false,disposed:true});assert.equal(h.query('#guide-step-2').disabled,true);
+});
+test('search opens a collapsed preview or pairing details before navigating',async()=>{
+  const h=await setup();const preview=h.add(h.query('.result'),'details','guide-preview');
+  h.query('#guide-shopee').click();h.update({labels:1,review:true,ready:true,generated:true});
+  assert.equal(preview.open,false);
+  h.window.dispatchEvent(new h.Event('harmony-labels:guide-reveal',{detail:{target:h.query('#result-title')}}));
+  assert.equal(preview.open,true);assert.equal(h.root.dataset.screen,'result');
+  const details=h.add(h.root,'details');const row=h.add(details,'div');
+  h.window.dispatchEvent(new h.Event('harmony-labels:guide-reveal',{detail:{target:row}}));
+  assert.equal(details.open,true);assert.equal(h.root.dataset.screen,'review');
+});
+test('marketplace logos and blonde guide are local and optional panels start collapsed',()=>{
+  assert.match(html,/assets\/shopee\.webp/);assert.match(html,/assets\/mercado-livre\.webp/);
+  assert.match(html,/assets\/fadinha-loira\.webp/);assert.match(html,/journey\.css\?v=/);
+  assert.match(html,/<details id="guide-preview"/);assert.match(html,/<details id="guide-finder"/);
+  assert.doesNotMatch(html,/<details[^>]*id="guide-(?:preview|finder|pairing)"[^>]*\bopen\b/);
+  assert.match(html,/id="partial-consent"/);assert.match(html,/id="resolution-panel"/);
 });

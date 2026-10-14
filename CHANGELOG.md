@@ -1,5 +1,12 @@
 # Changelog
 
+## [v25.118] - 2026-10-14
+
+- Jornada simplificada da central: plataforma, arquivos e conferencia/PDF, uma decisao por vez.
+- Logotipos fornecidos de Shopee e Mercado Livre e fadinha loira com orientacoes locais por etapa.
+- Previa, busca, detalhes e configuracoes recolhidos; erros, pendencias e consentimento parcial continuam visiveis.
+- Ficha impressa, parsers, vinculos fiscais e processamento local preservados.
+
 ## [v25.117] - 2026-10-13
 
 - Central de etiquetas sem marca duplicada; cabecalho, etapas e cartoes mais compactos.

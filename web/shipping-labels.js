@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const VIEW='shipping-labels';
-  const VERSION='25.117';
+  const VERSION='25.118';
   let frame=null;
   // This tool has no server records or elevated APIs. The existing signed-in
   // profile controls its app entry point; no session/token enters the frame.
@@ -16,7 +16,7 @@
     if(!canUse()){reset();S.view='home';return renderApp();}
     const page=document.querySelector('#page');if(!page)return;
     reset();
-    page.innerHTML=`<div class="page shipping-labels-page">${head('EXPEDIÇÃO · EXCLUSIVO PARA ADMS','Conversor de etiquetas','Shopee: ZPL com etiquetas e lista de empacotamento. Mercado Livre: ZPL e DANFEs em PDF. Siga as etapas abaixo.')}<p class="shipping-labels-privacy">Conversão no navegador · os arquivos dos pedidos não são enviados ao servidor.</p><div class="shipping-labels-loading" role="status">Carregando o conversor local…</div><div id="shippingLabelsHost"></div></div>`;
+    page.innerHTML=`<div class="page shipping-labels-page"><div class="shipping-labels-loading" role="status">Carregando a central local…</div><div id="shippingLabelsHost"></div></div>`;
     const created=document.createElement('iframe');frame=created;
     created.className='shipping-labels-frame';
     created.title='Conversor de etiquetas e fichas de separação';
