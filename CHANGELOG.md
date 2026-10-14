@@ -1,5 +1,14 @@
 # Changelog
 
+## [v25.116] - 2026-10-13
+
+- Central guiada em tres etapas, com escolha explicita entre Shopee e Mercado Livre e identidade azul, rosa e dourado.
+- Shopee usa o conteudo do ZPL, incluindo lista de empacotamento quando exportada no arquivo; Mercado Livre solicita ZPL e DANFEs em PDF.
+- Configuracoes tecnicas recolhidas, navegacao de volta sem perder arquivos e visao completa opcional com as mesmas protecoes.
+- Troca de plataforma invalida resultados anteriores sem apagar arquivos; conferencia e consentimento parcial preservados.
+- Ficha impressa, parsers, vinculos fiscais e geracao de documentos preservados.
+
+
 ## [v25.115] - 2026-10-13
 
 - Solucoes em cada pendencia da central de etiquetas, com acao indicada e escopo explicito.

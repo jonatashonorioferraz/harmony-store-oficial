@@ -4,6 +4,10 @@ if(!globalThis.HarmonyConverterAccess?.allowed())return;
 const $=id=>document.getElementById(id);
 let selected=[],invoiceFiles=[],sequence=[],page=0,url=null,pdfReader=null,renderTask=null,revision=0,busy=false,disposed=false,prepared=null;
 const resolutionControls=[];
+const guide=globalThis.HarmonyLabelsGuide;
+const activeInvoices=()=>guide?.platform==='shopee'?[]:invoiceFiles;
+const inputReady=()=>!guide||Boolean(guide.platform&&(guide.platform!=='mercado-livre'||invoiceFiles.length));
+window.addEventListener('harmony-labels:platform-change',()=>{if(busy||disposed)return;clearResult();refreshFiles();$('status').className='';$('status').textContent='Plataforma alterada. Os arquivos selecionados foram preservados; confira o lote novamente.';});
 function ensureActive(){if(disposed||!globalThis.HarmonyConverterAccess.allowed())throw Error('Conversão encerrada.');}
 function clearResult(keepReview=false){
   revision++;renderTask?.cancel();renderTask=null;
@@ -20,13 +24,13 @@ function clearResult(keepReview=false){
     $('issues').hidden=true;
   }
 }
-function canGenerate(){return !!prepared&&(prepared.report.ready||prepared.report.partialReady&&$('partial-consent').checked);}
+function canGenerate(){return inputReady()&&!!prepared&&(prepared.report.ready||prepared.report.partialReady&&$('partial-consent').checked);}
 function syncControls(){
   for(const control of resolutionControls)control.disabled=busy;
   for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
-  $('size').disabled=busy||!!invoiceFiles.length;$('paired-size').hidden=!invoiceFiles.length;
+  $('size').disabled=busy||!!activeInvoices().length;$('paired-size').hidden=!activeInvoices().length;
   $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. Até 4 produtos/variações por ficha, com cor quando informada e quantidade da nota. Descrições extensas podem ocupar mais espaço. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
-  $('check').disabled=busy||!selected.length;$('check').textContent=prepared?'Conferir lote novamente':'1. Conferir lote';
+  $('check').disabled=busy||!selected.length||!inputReady();$('check').textContent=prepared?'Conferir lote novamente':'1. Conferir lote';
   const partial=prepared&&!prepared.report.ready&&prepared.report.partialReady;
   const caption=partial?`Gerar somente ${prepared.report.confirmedCount} pedido(s) conferido(s)`:'2. Gerar PDF conferido';
   $('convert').disabled=busy||!canGenerate();$('review-generate').disabled=busy||!canGenerate();
@@ -34,6 +38,7 @@ function syncControls(){
   $('clear-invoices').hidden=!invoiceFiles.length;
   $('download-pending').disabled=busy||!prepared;
   $('review-hint').textContent=prepared?(prepared.report.ready?'Conferência concluída. Revise o resumo antes de gerar.':partial?'Revise as pendências e confirme explicitamente para gerar só os pedidos conferidos.':'Use as ações indicadas para resolver a pendência, sem editar os arquivos originais.'):'Confira os arquivos para liberar a geração do PDF.';
+  guide?.update({busy,review:Boolean(prepared),generated:Boolean(url),labels:selected.length,invoices:invoiceFiles.length,ready:canGenerate(),disposed});
 }
 function showFiles(id,files){
   $(id).replaceChildren();files.forEach((f,index)=>{const li=document.createElement('li'),name=document.createElement('span'),button=document.createElement('button');
@@ -47,7 +52,7 @@ function selectFiles(files){selected.push(...Array.from(files));$('files').value
 function selectInvoices(files){invoiceFiles.push(...Array.from(files));$('invoice-files').value='';clearResult();refreshFiles();$('status').className='';$('status').textContent=`${invoiceFiles.length} PDF(s) de notas na seleção. Os arquivos anteriores foram mantidos. Confira o lote novamente.`;}
 $('files').addEventListener('change',e=>{if(!busy)selectFiles(e.target.files);});
 $('invoice-files').addEventListener('change',e=>{if(!busy)selectInvoices(e.target.files);});
-$('clear-invoices').onclick=()=>{invoiceFiles=[];$('invoice-files').value='';clearResult();refreshFiles();$('status').textContent='Modo somente etiquetas: notas e produtos não serão conferidos. Confira novamente antes de gerar.';};
+$('clear-invoices').onclick=()=>{invoiceFiles=[];$('invoice-files').value='';clearResult();refreshFiles();$('status').textContent=guide?.platform==='mercado-livre'?'Notas removidas da seleção. Adicione os DANFEs deste lote para continuar.':'Modo somente etiquetas: notas e produtos não serão conferidos. Confira novamente antes de gerar.';};
 for(const event of ['dragover','dragleave','drop'])$('drop').addEventListener(event,e=>{e.preventDefault();$('drop').classList.toggle('drag',event==='dragover');if(event==='drop'&&!busy)selectFiles(e.dataTransfer.files);});
 async function preview(){
   const token=++revision,index=page,reader=pdfReader;
@@ -174,7 +179,7 @@ function showSolutions(report){
 function showReview(report){
   $('batch-review').hidden=false;
   $('review-state').textContent=report.ready?'LOTE CONFERIDO':report.partialReady?'PARTE DO LOTE CONFERIDA':'AÇÃO NECESSÁRIA';
-  $('review-summary').textContent=report.ready?(report.paired?'Vínculos por NF e CEP conferidos. Revise os avisos antes de gerar.':'Modo somente etiquetas. Notas e produtos não foram conferidos.'):'Veja as soluções abaixo. Você não precisa editar a nota ou a etiqueta recebida da plataforma.';
+  $('review-summary').textContent=report.ready?(report.paired?'Vínculos por NF e CEP conferidos. Revise os avisos antes de gerar.':guide?.platform==='shopee'?'Conteúdo do ZPL da Shopee preservado. Confira na prévia se a lista de empacotamento veio no arquivo; produtos não foram extraídos nem conferidos por DANFE.':'Modo somente etiquetas. Notas e produtos não foram conferidos.'):'Veja as soluções abaixo. Você não precisa editar a nota ou a etiqueta recebida da plataforma.';
   for(const [name,value] of Object.entries(report.counts))$('review-'+name).textContent=value===null?(name==='products'&&!report.paired?'Não se aplica':'Não calculado'):String(value);
   listMessages('issues',report.issues);listMessages('review-warnings',report.warnings);
   $('review-issues-title').hidden=!report.issues.length;$('review-warnings-title').hidden=!report.warnings.length;
@@ -182,13 +187,13 @@ function showReview(report){
   const target=$(report.ready?'batch-review':'resolution-panel');target.focus?.();target.scrollIntoView?.({behavior:'smooth',block:'start'});
 }
 async function checkBatch(alternative=false){
-  if(busy||disposed||!selected.length||!globalThis.HarmonyConverterAccess.allowed())return;
+  if(busy||disposed||!selected.length||!inputReady()||!globalThis.HarmonyConverterAccess.allowed())return;
   clearResult();busy=true;syncControls();$('status').className='';$('progress').hidden=false;$('progress').value=0;
   try{
     if(!globalThis.DecompressionStream||!globalThis.CompressionStream)throw Error('Abra esta página no Chrome ou Edge atualizado.');
     LocalBatchRecovery.guardSize([...selected,...invoiceFiles]);
     $('status').textContent='Identificando cópias idênticas, sem enviar os arquivos…';
-    const duplicates=await LocalBatchRecovery.duplicateFiles(selected,invoiceFiles,ensureActive);ensureActive();
+    const duplicates=await LocalBatchRecovery.duplicateFiles(selected,activeInvoices(),ensureActive);ensureActive();
     const batch=[],ignored=[],sourceProblems=[];let textSize=0;
     for(let i=0;i<selected.length;i++){
       const f=selected[i];let entries;
@@ -208,7 +213,7 @@ async function checkBatch(alternative=false){
         }catch(error){ensureActive();if(error.fatal)throw error;sourceProblems.push({source:f.name===entry.name?f.name:f.name+' / '+entry.name,fileName:f.name,message:error.message});}
       }
     }
-    const read=invoiceFiles.length?await LocalBatchRecovery.readInvoices(invoiceFiles,(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):null;
+    const read=activeInvoices().length?await LocalBatchRecovery.readInvoices(activeInvoices(),(file,total,n,pages)=>{ensureActive();$('status').textContent=`Conferindo notas: PDF ${file} de ${total}, página ${n} de ${pages}…`;$('progress').value=((file-1)+n/pages)/total;},{active:ensureActive,alternative}):null;
     ensureActive();const mode=$('document-mode').value,report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
     prepared={batch,read,report,mode,dpi:Number($('dpi').value),size:$('size').value};showReview(report);
     $('status').textContent=report.ready?'Lote conferido. Revise o resumo e gere o PDF.':report.partialReady?'Há pedidos prontos e pendências separadas. Você pode resolver tudo ou autorizar somente os conferidos.':'A conferência encontrou uma situação que precisa de ação. Veja a solução indicada abaixo.';

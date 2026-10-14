@@ -95,13 +95,14 @@ function element(tag='div'){
     set innerHTML(value){throw Error('Unsafe HTML insertion: '+value);}};
 }
 const syntheticFile=()=>({name:'synthetic.zpl',size:10,text:async()=>'^XA^XZ'});
-function environment(){
+function environment(guide){
+  const listeners={};
   const nodes=new Map(),calls={parse:0,generate:0,paired:0,urls:0,revoked:0};
   const get=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
   get('dpi').value='203';get('size').value='100x150';get('document-mode').value='picking';
   const report={ready:true,partialReady:false,paired:false,mode:'labels',rows:[],issues:[],warnings:[],counts:{labels:1,invoices:0,products:null,pages:1},confirmedCount:1,pendingCount:0,items:[],unmatchedInvoices:[],invoiceProblems:[],sourceProblems:[],duplicates:[],uncertain:false};
   const context=vm.createContext({Uint8Array,Blob,CompressionStream,DecompressionStream,
-    document:{getElementById:get,createElement:element},addEventListener(){},HarmonyConverterAccess:{allowed:()=>true},
+    document:{getElementById:get,createElement:element},HarmonyLabelsGuide:guide,addEventListener(type,fn){listeners[type]=fn;},HarmonyConverterAccess:{allowed:()=>true},
     URL:{createObjectURL(){calls.urls++;return 'blob:synthetic';},revokeObjectURL(){calls.revoked++;}},
     LocalBatchReview:{inspect:async()=>report.partialReady?report.subset.report:report},
     LocalBatchRecovery:{guardSize(files){if(files.reduce((n,f)=>n+f.size,0)>100*1024*1024)throw Error('Limite de 100 MB');},duplicateFiles:async()=>[],readInvoices:(...args)=>context.LocalInvoices.readInvoices(...args),analyze:async()=>report},
@@ -112,7 +113,7 @@ function environment(){
   });
   context.window=context;vm.runInContext(controller,context);
   const select=(files=[syntheticFile()])=>get('files').events.change({target:{files}});
-  return {context,get,calls,report,select};
+  return {context,get,calls,report,select,emit:type=>listeners[type]?.()};
 }
 
 test('UI requires a separate successful review before it creates any PDF',async()=>{
@@ -273,4 +274,41 @@ test('mismatch and ambiguous-note cards do not offer identity overrides or a ful
 test('untrusted problem text and filenames are rendered as text rather than markup',async()=>{
  const env=await problemEnvironment('metadata',[{...syntheticFile(),name:'<img src=x onerror=alert(1)>.zpl'}]);
  assert.equal(env.get('resolution-panel').hidden,false);assert.ok(cards(env)[0].children.some(node=>node.textContent.includes('<img src=x onerror=alert(1)>')));
+});
+
+test('guided flow requires platform choice and Mercado Livre DANFEs even on direct actions',async()=>{
+  const guide={platform:null,update(next){this.state=next;}};
+  const env=environment(guide);env.select();
+  assert.equal(env.get('check').disabled,true);await env.get('check').onclick();assert.equal(env.calls.parse,0);
+  guide.platform='mercado-livre';env.emit('harmony-labels:platform-change');
+  await env.get('check').onclick();assert.equal(env.calls.parse,0);assert.equal(env.get('check').disabled,true);
+  env.get('invoice-files').events.change({target:{files:[{name:'danfes.pdf',size:10}]}});
+  assert.equal(env.get('check').disabled,false);await env.get('check').onclick();assert.equal(env.calls.parse,1);
+  assert.equal(guide.state.review,true);assert.equal(guide.state.generated,false);
+  env.get('clear-invoices').onclick();assert.equal(env.get('check').disabled,true);await env.get('convert').onclick();assert.equal(env.calls.generate,0);assert.equal(env.calls.paired,0);
+});
+
+test('Shopee ignores retained DANFEs and preserves ZPL pages without inventing products',async()=>{
+  const guide={platform:'mercado-livre',update(next){this.state=next;}};
+  const env=environment(guide);env.select();
+  env.get('invoice-files').events.change({target:{files:[{name:'danfes.pdf',size:10}]}});
+  guide.platform='shopee';env.emit('harmony-labels:platform-change');
+  env.context.LocalBatchRecovery.readInvoices=()=>{throw Error('Shopee must not read DANFEs');};
+  await env.get('check').onclick();assert.equal(env.get('size').disabled,false);
+  await env.get('convert').onclick();assert.equal(env.calls.generate,1);assert.equal(env.calls.paired,0);
+  assert.equal(guide.state.invoices,1);assert.equal(guide.state.generated,true);
+  guide.platform='mercado-livre';env.emit('harmony-labels:platform-change');
+  assert.equal(env.get('actions').hidden,true);assert.equal(env.get('convert').disabled,true);
+  assert.equal(env.get('invoice-list').children.length,1);assert.equal(env.get('file-list').children.length,1);
+  assert.equal(env.get('check').disabled,false);assert.equal(env.calls.revoked,1);
+});
+
+test('guided controller reports busy and invalidation, without bypassing partial consent',async()=>{
+  const guide={platform:'shopee',update(next){this.state=next;}};
+  const env=environment(guide);env.select();
+  env.report.ready=false;env.report.partialReady=true;env.report.subset={labels:[label(1)],read:null,report:{ready:true,counts:{pages:1}}};
+  await env.get('check').onclick();assert.equal(guide.state.review,true);assert.equal(guide.state.ready,false);
+  await env.get('convert').onclick();assert.equal(env.calls.generate,0);
+  env.get('partial-consent').checked=true;env.get('partial-consent').events.change();assert.equal(guide.state.ready,true);
+  env.select();assert.equal(guide.state.review,false);assert.equal(guide.state.ready,false);
 });
