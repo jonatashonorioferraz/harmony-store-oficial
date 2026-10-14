@@ -1,5 +1,11 @@
 # Changelog
 
+## [v25.117] - 2026-10-13
+
+- Central de etiquetas sem marca duplicada; cabecalho, etapas e cartoes mais compactos.
+- Campos, acoes e conferencia adaptados a largura disponivel dentro do app e a telas pequenas.
+- Fluxos Shopee e Mercado Livre e ficha impressa preservados.
+
 ## [v25.116] - 2026-10-13
 
 - Central guiada em tres etapas, com escolha explicita entre Shopee e Mercado Livre e identidade azul, rosa e dourado.
