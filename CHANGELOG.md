@@ -7,6 +7,11 @@
 - Ficha identifica pedido, envio e fonte Excel; personalizados sem variação mantêm a orientação de conferência manual. Busca inclui número de pedido.
 - Ajuste limitado da fonte equivalente em campos ZPL com espaçamento excepcional evita encolher a etiqueta inteira ao quebrar uma linha curta de endereço.
 
+## [v25.121.1] - 2026-10-14
+
+- Logo do Mercado Livre com transparencia real, sem o fundo quadriculado da imagem anterior.
+- Referencia versionada na escolha da plataforma e nas etapas seguintes para renovar o cache.
+- Fluxos, ficha impressa e demais melhorias da versao atual preservados.
 
 ## [v25.121] - 2026-10-14
 

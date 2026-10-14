@@ -49,7 +49,7 @@
     if ($('guide-change')) $('guide-change').disabled = state.busy || stopped;
     if (platform) {
       text('guide-marketplace-name', platform === 'shopee' ? 'Shopee' : 'Mercado Livre');
-      if ($('guide-marketplace-logo')) $('guide-marketplace-logo').src = platform === 'shopee' ? 'assets/shopee.webp' : 'assets/mercado-livre.webp';
+      if ($('guide-marketplace-logo')) $('guide-marketplace-logo').src = platform === 'shopee' ? 'assets/shopee.webp' : 'assets/mercado-livre.webp?v=25.122';
     }
     text('guide-label-title', platform === 'shopee' ? 'Etiquetas + lista de empacotamento' : 'Etiquetas ZPL');
     text('guide-upload-description', platform === 'shopee' ? 'Use o ZPL com a lista de empacotamento incluída.' : 'Selecione as etiquetas ZPL e o Excel de vendas. O DANFE é opcional para a ficha interna.');

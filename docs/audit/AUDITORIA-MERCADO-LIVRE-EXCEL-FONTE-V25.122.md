@@ -1,6 +1,6 @@
 # Fichas internas pelo Excel e lotes parciais do Mercado Livre — v25.122
 
-Data: 2026-10-14. Base: main `7a3146f26f2d50b8bf370c4ca394e9813eb5cff1`.
+Data: 2026-10-14. Base inicial: main `7a3146f26f2d50b8bf370c4ca394e9813eb5cff1`. Entrega compatibilizada com main `bc9bcc9a76852052ac9c80d11f41013da4a9508f`, preservando o logo transparente publicado na v25.121.1.
 
 ## Problema e comportamento
 
@@ -21,7 +21,7 @@ No modo ficha de separação com Excel, as etiquetas delimitam o lote e o relat�
 
 ## Validação
 
-- 798 testes aprovados, incluindo ZPL + Excel sem PDF, 50 etiquetas contra 95 vendas, 100 pedidos, pacotes com dez variações, dados fiscais divergentes sem associação indevida, cancelamentos, duplicidades, revalidação na geração, identificação impressa e busca exata por pedido.
+- 799 testes aprovados, incluindo ZPL + Excel sem PDF, 50 etiquetas contra 95 vendas, 100 pedidos, pacotes com dez variações, dados fiscais divergentes sem associação indevida, cancelamentos, duplicidades, revalidação na geração, identificação impressa e busca exata por pedido.
 - Build estático aprovado; 122 espelhos oficiais sincronizados antes do build e depois dos testes. Versões de recursos/cache avançadas e validadas contra a base. ESLint: zero erros e 19 avisos legados. Auditoria de dependências de produção: zero vulnerabilidades. Nenhuma dependência alterada.
 - Arquivos reais processados somente no computador: 50 etiquetas, 45 notas e relatório com 95 pedidos. Antes: 39 pedidos liberados. Depois: 50 pedidos conferidos, 56 linhas de produtos e 100 páginas. As outras 45 vendas não entram no PDF. Resultado idêntico dos produtos com e sem DANFE. 23 linhas com variação e 33 sem variação explicitada no relatório.
 - Texto das 56 linhas confrontado com o PDF gerado: descrição completa, variação/personalização, quantidade, pedido e envio. Todas as páginas têm 100 × 150 mm. Inspeção visual das 100 páginas renderizadas com Poppler; 54 Code 128 e 50 QR Codes decodificados a 203 DPI com ZXing-C++ e comparados integralmente ao ZPL, após corrigir o campo de cidade. Sem alegar teste físico de impressão.
