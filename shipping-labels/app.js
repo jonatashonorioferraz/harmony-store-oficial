@@ -7,13 +7,15 @@ const resolutionControls=[];
 const guide=globalThis.HarmonyLabelsGuide;
 const activeInvoices=()=>guide?.platform==='shopee'?[]:invoiceFiles;
 const inputReady=()=>!guide||Boolean(guide.platform&&(guide.platform!=='mercado-livre'||invoiceFiles.length));
-window.addEventListener('harmony-labels:platform-change',()=>{if(busy||disposed)return;clearResult();refreshFiles();$('status').className='';$('status').textContent='Plataforma alterada. Os arquivos selecionados foram preservados; confira o lote novamente.';});
+window.addEventListener('harmony-labels:platform-change',()=>{if(busy||disposed)return;clearResult();refreshFiles();$('status').className='';$('status').textContent=selected.length||invoiceFiles.length?'Plataforma alterada. Os arquivos selecionados foram preservados; confira o lote novamente.':'Plataforma selecionada. Adicione os arquivos deste lote.';});
 function ensureActive(){if(disposed||!globalThis.HarmonyConverterAccess.allowed())throw Error('Conversão encerrada.');}
 function clearResult(keepReview=false){
   revision++;renderTask?.cancel();renderTask=null;
   if(pdfReader){pdfReader.destroy().catch(()=>{});pdfReader=null;}
   sequence=[];page=0;if(url)URL.revokeObjectURL(url);url=null;
   $('actions').hidden=true;$('download').removeAttribute('href');$('navigation').hidden=true;
+  $('download').removeAttribute('download');$('page-count').textContent='';
+  $('new-batch').hidden=true;closeNewBatch();
   $('preview').replaceChildren();const p=document.createElement('p');p.textContent='Sua prévia aparecerá após a conversão.';$('preview').append(p);
   $('preview-caption').textContent='';$('result-title').textContent='Sua prévia aparece aqui';
   if(!keepReview){prepared=null;resolutionControls.length=0;$('partial-consent').checked=false;
@@ -25,6 +27,33 @@ function clearResult(keepReview=false){
   }
 }
 function canGenerate(){return inputReady()&&!!prepared&&(prepared.report.ready||prepared.report.partialReady&&$('partial-consent').checked);}
+function closeNewBatch(){
+  $('new-batch-choice').hidden=true;$('new-batch-open').setAttribute('aria-expanded','false');
+}
+function canRestart(){return !busy&&!disposed&&globalThis.HarmonyConverterAccess.allowed()&&!!url;}
+function restartBatch(keepPlatform){
+  if(!canRestart()||$('new-batch-choice').hidden)return;
+  selected=[];invoiceFiles=[];clearResult();
+  for(const id of ['files','invoice-files'])$(id).value='';
+  // A full-DANFE recovery choice belongs to the old lot. Keep only printer preferences.
+  $('document-mode').value='picking';$('progress').value=0;$('progress').hidden=true;
+  for(const id of ['review-state','pairing-summary'])$(id).textContent='';
+  refreshFiles();guide?.reset(keepPlatform);
+  window.dispatchEvent(new CustomEvent('harmony-labels:batch-reset'));
+  $('status').className='';
+  $('status').textContent=keepPlatform?'Novo lote iniciado. Adicione os arquivos dos próximos pedidos.':'Lote anterior encerrado. Escolha a plataforma para começar.';
+}
+$('new-batch-open').onclick=()=>{
+  if(!canRestart())return;
+  $('new-batch-choice').hidden=false;$('new-batch-open').setAttribute('aria-expanded','true');
+  $('new-batch-same').textContent=guide?.platform==='shopee'?'Novo lote na Shopee':guide?.platform==='mercado-livre'?'Novo lote no Mercado Livre':'Novo lote nesta plataforma';
+  $('new-batch-warning').textContent=prepared?.report.ready?'Baixe o PDF antes de continuar. Os arquivos selecionados e a prévia serão limpos. Os originais e o PDF já baixado continuam no computador.':'Este PDF é parcial. Salve o PDF e a lista de pendências antes de continuar; as pendências também serão limpas. Os arquivos já baixados continuam no computador.';
+  $('new-batch-choice').focus();
+};
+$('new-batch-cancel').onclick=()=>{if(!canRestart())return;closeNewBatch();$('new-batch-open').focus();};
+$('new-batch-choice').addEventListener('keydown',event=>{if(event.key==='Escape'&&canRestart()){event.preventDefault();closeNewBatch();$('new-batch-open').focus();}});
+$('new-batch-same').onclick=()=>restartBatch(true);
+$('new-batch-platform').onclick=()=>restartBatch(false);
 function syncControls(){
   for(const control of resolutionControls)control.disabled=busy;
   for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
@@ -37,6 +66,8 @@ function syncControls(){
   $('convert').textContent=caption;$('review-generate').textContent=partial?caption:'Gerar PDF conferido';
   $('clear-invoices').hidden=!invoiceFiles.length;
   $('download-pending').disabled=busy||!prepared;
+  $('new-batch').hidden=!url;
+  for(const id of ['new-batch-open','new-batch-same','new-batch-platform','new-batch-cancel'])$(id).disabled=busy||disposed||!url;
   $('review-hint').textContent=prepared?(prepared.report.ready?'Conferência concluída. Revise o resumo antes de gerar.':partial?'Revise as pendências e confirme explicitamente para gerar só os pedidos conferidos.':'Use as ações indicadas para resolver a pendência, sem editar os arquivos originais.'):'Confira os arquivos para liberar a geração do PDF.';
   guide?.update({busy,review:Boolean(prepared),generated:Boolean(url),labels:selected.length,invoices:invoiceFiles.length,ready:canGenerate(),disposed});
 }

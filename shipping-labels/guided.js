@@ -129,6 +129,14 @@
   });
   window.HarmonyLabelsGuide = Object.freeze({
     get platform() { return platform; },
+    reset(keepPlatform = false) {
+      if (!allowed()) return;
+      if (!keepPlatform) platform = null;
+      selecting = !platform; step = 1; complete = false;
+      state = { busy: false, review: false, generated: false, labels: 0, invoices: 0, ready: false };
+      for (const details of root.querySelectorAll('details')) details.open = false;
+      render(); focusStep();
+    },
     update(next) {
       if (stopped) return;
       if (next.disposed) { stopped = true; state = { ...next }; render(); return; }

@@ -110,3 +110,17 @@ test('marketplace logos and blonde guide are local and optional panels start col
   assert.doesNotMatch(html,/<details[^>]*id="guide-(?:preview|finder|pairing)"[^>]*\bopen\b/);
   assert.match(html,/id="partial-consent"/);assert.match(html,/id="resolution-panel"/);
 });
+
+test('new batch resets the guided journey and closes details with or without the platform',async()=>{
+  for(const platform of ['guide-shopee','guide-ml'])for(const keep of [true,false]){
+    const h=await setup();h.query('#'+platform).click();const previous=h.guide.platform;
+    const details=h.add(h.root,'details');details.open=true;
+    h.update({labels:2,invoices:1,review:true,ready:true,generated:true});h.query('#guide-view').click();
+    h.guide.reset(keep);
+    assert.equal(h.guide.platform,keep?previous:null);assert.equal(h.root.dataset.screen,keep?'files':'platform');
+    assert.equal(h.root.dataset.hasFiles,'false');assert.equal(h.root.dataset.complete,'false');assert.equal(details.open,false);
+    assert.equal(h.query('#guide-step-3').disabled,true);assert.equal(h.query('#files').disabled,!keep);
+    assert.equal(h.document.activeElement,h.query(keep?'#guide-step-2':'#guide-step-1'));
+    if(!keep){h.query('#guide-ml').click();assert.equal(h.query('.invoice-upload').hidden,false);}
+  }
+});

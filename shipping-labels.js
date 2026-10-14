@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const VIEW='shipping-labels';
-  const VERSION='25.118';
+  const VERSION='25.119';
   let frame=null;
   // This tool has no server records or elevated APIs. The existing signed-in
   // profile controls its app entry point; no session/token enters the frame.

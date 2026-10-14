@@ -334,6 +334,14 @@
   if (byId('convert')) observer.observe(byId('convert'), { attributes: true, attributeFilter: ['disabled'] });
   observer.observe(document.body, { childList: true });
 
+  window.addEventListener('harmony-labels:batch-reset', () => {
+    if (!active()) return;
+    search.value = ''; filter = 'all'; resultLimit = 8;
+    pageInput.value = ''; pageInput.setCustomValidity('');
+    located?.classList.remove('workspace-located'); located = null;
+    requestState();
+  }, { signal: events.signal });
+
   function dispose() {
     if (disposed) return;
     disposed = true;
