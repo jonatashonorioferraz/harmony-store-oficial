@@ -1,5 +1,11 @@
 # Changelog
 
+## [v25.120] - 2026-10-14
+
+- Mercado Livre: leitura local de Code 128 automático numérico, incluindo códigos de transporte com quantidade ímpar de dígitos e zeros iniciais.
+- Etiqueta sem número da NF: o ADM pode selecionar uma nota elegível, confirmar o vínculo após consultar o envio na plataforma e conferir o lote novamente, sem editar os originais.
+- O vínculo confirmado fica identificado nos avisos e na relação de pedidos. CEP, chave da nota, duplicidades e composição do PDF continuam validados; a confirmação vale apenas para a seleção atual.
+
 ## [v25.119] - 2026-10-14
 
 - Conversor: ação “Iniciar novo lote” após gerar o PDF, com opções para continuar na mesma plataforma ou escolher outra, sem recarregar o app.

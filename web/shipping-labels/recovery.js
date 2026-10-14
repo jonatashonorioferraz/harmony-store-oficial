@@ -94,14 +94,16 @@
     const mode=options.mode||'picking',duplicates=options.duplicates||[],sourceProblems=options.sourceProblems||[];
     const invoiceProblems=read?.problems||[],items=[],validLabels=[],validInvoices=[],used=new Set();
     const count=(values,key)=>values.filter(v=>key(v)).reduce((m,v)=>m.set(key(v),(m.get(key(v))||0)+1),new Map());
-    const shipmentCount=count(labels,l=>l.metadata?.shipmentId),numberCount=count(labels,l=>l.metadata?.invoiceNumber);
+    const shipmentCount=count(labels,l=>l.metadata?.shipmentId),numberCount=count(labels,l=>root.LocalInvoices.labelIdentity(l).invoiceNumber);
     const uncertain=invoiceProblems.some(p=>p.uncertain);
     for(let index=0;index<labels.length;index++){
-      const label=labels[index],m=label.metadata||{},item={labelIndex:index,shipmentId:m.shipmentId||'',invoiceNumber:m.invoiceNumber||'',labelPostcode:m.postcode||'',source:label.source||`Etiqueta ${index+1}`,ready:false};
+      const label=labels[index],m=root.LocalInvoices.labelIdentity(label),item={labelIndex:index,shipmentId:m.shipmentId||'',invoiceNumber:m.invoiceNumber||'',labelPostcode:m.postcode||'',source:label.source||`Etiqueta ${index+1}`,ready:false};
       const stop=(code,message,extra={})=>Object.assign(item,problem(code,message,extra));
       if(!read){item.ready=true;validLabels.push(label);items.push(item);continue;}
       const matches=read.invoices.filter(n=>n.invoiceNumber===m.invoiceNumber);item.candidates=matches.map(n=>({number:n.invoiceNumber,series:n.series,issuer:n.issuer,postcode:n.postcode,source:n.pages.map(p=>`${p.source}, pág. ${p.pageIndex+1}`).join('; ')}));
-      if(!m.invoiceNumber||!/^\d{1,9}$/.test(m.invoiceNumber)||!m.postcode||!m.shipmentId)stop('metadata','A etiqueta não contém NF, CEP e envio legíveis em texto. Selecione o ZPL original com esses campos; etiquetas somente em imagem não podem ser vinculadas automaticamente.');
+      const confirmable=!uncertain&&!duplicates.length&&!sourceProblems.length?root.LocalInvoices.missingInvoiceOptions(labels,read.invoices,index).filter(n=>!invoiceProblems.some(p=>p.invoiceNumber===n.invoiceNumber)):[];
+      if(confirmable.length)stop('missing-invoice-number','Este modelo de etiqueta não informa o número da NF. Confira o envio no Mercado Livre e confirme a nota correspondente abaixo. O CEP igual, sozinho, não comprova o vínculo.',{confirmationOptions:confirmable.map(n=>({key:n.key,number:n.invoiceNumber,series:n.series,postcode:n.postcode,source:n.pages.map(p=>`${p.source}, pág. ${p.pageIndex+1}`).join('; ')}))});
+      else if(!m.invoiceNumber||!/^\d{1,9}$/.test(m.invoiceNumber)||!m.postcode||!m.shipmentId)stop('metadata','A etiqueta não contém NF, CEP e envio legíveis em texto. Selecione o ZPL original com esses campos; etiquetas somente em imagem não podem ser vinculadas automaticamente.');
       else if(shipmentCount.get(m.shipmentId)>1)stop('duplicate-label','Este envio aparece mais de uma vez. Remova arquivos idênticos, quando indicados, ou selecione um lote sem repetir o envio.');
       else if(numberCount.get(m.invoiceNumber)>1)stop('volumes','Mais de uma etiqueta usa esta NF. Separe os volumes na plataforma; não é seguro escolher uma etiqueta automaticamente.');
       else if(invoiceProblems.some(p=>p.invoiceNumber===m.invoiceNumber))stop('invoice-read','A nota correspondente tem pendência de leitura ou de folhas. Veja o arquivo indicado abaixo; tente outra leitura ou adicione o DANFE completo.');
