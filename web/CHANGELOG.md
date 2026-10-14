@@ -1,5 +1,11 @@
 # Changelog
 
+## [v25.119] - 2026-10-14
+
+- Conversor: ação “Iniciar novo lote” após gerar o PDF, com opções para continuar na mesma plataforma ou escolher outra, sem recarregar o app.
+- Antes da limpeza, lembra de baixar o PDF e, em lotes parciais, salvar as pendências. Cancelar preserva o lote.
+- O reinício libera a prévia e os arquivos da sessão, zera conferência, consentimento parcial e busca, mantém resolução/tamanho da impressora e retorna ao modo ficha de separação.
+
 ## [v25.118] - 2026-10-14
 
 - Jornada simplificada da central: plataforma, arquivos e conferencia/PDF, uma decisao por vez.

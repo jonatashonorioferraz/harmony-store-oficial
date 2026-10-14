@@ -154,3 +154,15 @@ test('pre-PDF identifier search excludes invoice series and source filenames', a
   h.input(h.query('#workspace-search'),'NF 1');assert.equal(h.query('.workspace-results').children.length,1);
   h.input(h.query('#workspace-search'),'envio BR111');assert.equal(h.query('.workspace-results').children.length,1);
 });
+
+test('batch reset clears search, filters, page selection and expanded preview for the next lot',async()=>{
+  const h=await harness();h.set({labels:[file],sequence:[page(1),page(1,'picking')]});
+  h.input(h.query('#workspace-search'),'NF 1');h.clickText('Fichas');
+  h.query('#workspace-page-number').setCustomValidity('Invalid page');
+  h.set();h.window.dispatchEvent(new h.Event('harmony-labels:batch-reset'));h.flush();
+  assert.equal(h.query('#workspace-search').value,'');assert.equal(h.query('#workspace-page-number').value,'');
+  assert.equal(h.query('#workspace-page-number').validationMessage,'');
+  h.set({labels:[file],sequence:[page(2),page(2,'picking')]});
+  assert.equal(h.query('.workspace-results').children.length,2);
+  assert.equal(h.query('.layout').classList.contains('preview-expanded'),false);
+});

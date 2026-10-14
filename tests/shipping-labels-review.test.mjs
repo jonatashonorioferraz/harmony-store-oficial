@@ -97,11 +97,12 @@ function element(tag='div'){
 const syntheticFile=()=>({name:'synthetic.zpl',size:10,text:async()=>'^XA^XZ'});
 function environment(guide){
   const listeners={};
-  const nodes=new Map(),calls={parse:0,generate:0,paired:0,urls:0,revoked:0};
+  const nodes=new Map(),calls={parse:0,generate:0,paired:0,urls:0,revoked:0,destroyed:0};
   const get=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
   get('dpi').value='203';get('size').value='100x150';get('document-mode').value='picking';
   const report={ready:true,partialReady:false,paired:false,mode:'labels',rows:[],issues:[],warnings:[],counts:{labels:1,invoices:0,products:null,pages:1},confirmedCount:1,pendingCount:0,items:[],unmatchedInvoices:[],invoiceProblems:[],sourceProblems:[],duplicates:[],uncertain:false};
   const context=vm.createContext({Uint8Array,Blob,CompressionStream,DecompressionStream,
+    CustomEvent:class{constructor(type,fields={}){this.type=type;Object.assign(this,fields);}},dispatchEvent(event){listeners[event.type]?.(event);},
     document:{getElementById:get,createElement:element},HarmonyLabelsGuide:guide,addEventListener(type,fn){listeners[type]=fn;},HarmonyConverterAccess:{allowed:()=>true},
     URL:{createObjectURL(){calls.urls++;return 'blob:synthetic';},revokeObjectURL(){calls.revoked++;}},
     LocalBatchReview:{inspect:async()=>report.partialReady?report.subset.report:report},
@@ -109,7 +110,7 @@ function environment(guide){
     LocalZpl:{parseZpl:async()=>{calls.parse++;return [label(1)];},createPdf:async()=>{calls.generate++;return new Blob(['synthetic']);},dimensions:()=>({pw:283,ph:425})},
     LocalInvoices:{readInvoices:async()=>({invoices:[invoice(1)]}),
       createPairedPdf:async(batch,read,rows)=>{calls.paired++;return {blob:new Blob(['synthetic']),rows,sequence:[{kind:'label',row:rows[0]},{kind:'picking',row:rows[0],sheet:1,totalSheets:1}]};},
-      openPdf:async()=>({destroy:async()=>{},getPage:async()=>({getViewport:({scale})=>({width:283*scale,height:425*scale}),render:()=>({promise:Promise.resolve(),cancel(){}}),cleanup(){}})})},
+      openPdf:async()=>({destroy:async()=>{calls.destroyed++;},getPage:async()=>({getViewport:({scale})=>({width:283*scale,height:425*scale}),render:()=>({promise:Promise.resolve(),cancel(){}}),cleanup(){}})})},
   });
   context.window=context;vm.runInContext(controller,context);
   const select=(files=[syntheticFile()])=>get('files').events.change({target:{files}});
@@ -311,4 +312,59 @@ test('guided controller reports busy and invalidation, without bypassing partial
   await env.get('convert').onclick();assert.equal(env.calls.generate,0);
   env.get('partial-consent').checked=true;env.get('partial-consent').events.change();assert.equal(guide.state.ready,true);
   env.select();assert.equal(guide.state.review,false);assert.equal(guide.state.ready,false);
+});
+
+test('new batch choice can be cancelled without losing the PDF, files or review',async()=>{
+  const env=environment();env.select();await env.get('check').onclick();await env.get('convert').onclick();
+  env.get('new-batch-same').onclick();assert.equal(env.calls.revoked,0,'closed confirmation must not reset');
+  env.get('new-batch-open').onclick();assert.equal(env.get('new-batch-choice').hidden,false);
+  assert.match(env.get('new-batch-warning').textContent,/Baixe o PDF/);
+  env.get('new-batch-cancel').onclick();assert.equal(env.get('new-batch-choice').hidden,true);
+  assert.equal(env.get('actions').hidden,false);assert.equal(env.get('file-list').children.length,1);
+  assert.equal(env.calls.revoked,0);assert.equal(env.get('new-batch-open').focused,true);
+});
+
+test('new lot clears both uploads and old PDF, resets consent and allows a fresh conversion',async()=>{
+  const guide={platform:'shopee',update(next){this.state=next;},reset(keep){this.kept=keep;if(!keep)this.platform=null;}};
+  const env=environment(guide);env.select();
+  env.get('invoice-files').events.change({target:{files:[{name:'retained.pdf',size:10}]}});
+  env.get('dpi').value='300';env.get('document-mode').value='danfe';
+  await env.get('check').onclick();await env.get('convert').onclick();
+  env.get('partial-consent').checked=true;env.get('new-batch-open').onclick();env.get('new-batch-same').onclick();
+  assert.equal(guide.kept,true);assert.equal(guide.platform,'shopee');
+  assert.equal(env.calls.revoked,1);assert.equal(env.calls.destroyed,1);
+  for(const id of ['file-list','invoice-list','resolution-items','pairing-rows','review-warnings','issues'])assert.equal(env.get(id).children.length,0,id);
+  for(const id of ['new-batch','new-batch-choice','actions','navigation','batch-review','resolution-panel','pairing-report'])assert.equal(env.get(id).hidden,true,id);
+  assert.equal(env.get('download').href,undefined);assert.equal(env.get('download').download,undefined);
+  assert.equal(env.get('partial-consent').checked,false);assert.equal(env.get('check').disabled,true);
+  assert.equal(env.get('document-mode').value,'picking');assert.equal(env.get('dpi').value,'300');
+  await env.get('convert').onclick();assert.equal(env.calls.generate,1);
+  env.select([{...syntheticFile(),name:'next.zpl'}]);await env.get('check').onclick();
+  assert.equal(env.calls.parse,2,'only the new file is parsed in the second lot');
+  await env.get('convert').onclick();assert.equal(env.calls.generate,2);assert.equal(env.get('new-batch').hidden,false);
+  env.get('new-batch-open').onclick();env.get('new-batch-platform').onclick();
+  assert.equal(guide.platform,null);assert.equal(env.get('file-list').children.length,0);
+});
+
+test('partial PDF restart warns about pending orders and clears the old authorization',async()=>{
+  const env=environment();Object.assign(env.report,{ready:false,partialReady:true,subset:{labels:[label(1)],read:null,report:{ready:true,counts:{pages:1}}}});
+  env.select();await env.get('check').onclick();env.get('partial-consent').checked=true;
+  await env.get('convert').onclick();env.get('new-batch-open').onclick();
+  assert.match(env.get('new-batch-warning').textContent,/parcial/);assert.match(env.get('new-batch-warning').textContent,/lista de pendências/);
+  env.get('new-batch-platform').onclick();assert.equal(env.get('partial-consent').checked,false);
+  env.select();await env.get('check').onclick();await env.get('convert').onclick();
+  assert.equal(env.calls.generate,1,'old consent cannot authorize the next partial lot');
+});
+
+test('restart actions cannot interrupt work or run after access revocation or disposal',async()=>{
+  const env=environment();env.select();await env.get('check').onclick();
+  let finish;env.context.LocalZpl.createPdf=()=>new Promise(resolve=>{finish=resolve;});
+  const generating=env.get('convert').onclick();await settle();
+  env.get('new-batch-open').onclick();env.get('new-batch-same').onclick();
+  assert.equal(env.get('file-list').children.length,1);assert.equal(env.get('new-batch-choice').hidden,true);
+  finish(new Blob(['synthetic']));await generating;
+  env.get('new-batch-open').onclick();env.context.HarmonyConverterAccess.allowed=()=>false;
+  env.get('new-batch-same').onclick();assert.equal(env.get('file-list').children.length,1);
+  env.context.HarmonyConverterAccess.allowed=()=>true;env.context.HarmonyConverterLifecycle.dispose();
+  env.get('new-batch-platform').onclick();assert.equal(env.calls.revoked,1);assert.equal(env.get('actions').hidden,true);
 });
