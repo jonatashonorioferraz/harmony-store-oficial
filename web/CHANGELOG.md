@@ -1,5 +1,10 @@
 # Changelog
 
+## [v25.124] - 2026-10-15
+
+- Conversor: etiquetas do Mercado Livre com Code 128 automático numérico e número impresso abaixo das barras passam a ser aceitas, incluindo o formato da transportadora iMile. Os dígitos e a altura das barras são preservados; o texto participa da validação dos limites da etiqueta.
+- Testes cobrem zeros à esquerda, interpretação numérica padrão, limites da página e rejeição de formatos ainda não suportados.
+
 ## [v25.123] - 2026-10-14
 
 - Conversor: o CEP explícito do local de entrega no DANFE tem prioridade sobre o CEP do destinatário, com origem preservada e conferência entre as folhas. Endereços do emitente, transportador e retirada continuam fora da associação.
