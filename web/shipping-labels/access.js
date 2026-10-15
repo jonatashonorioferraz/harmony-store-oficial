@@ -19,9 +19,16 @@
   if(!allowed())return;
   // Only layout dimensions cross the frame boundary, never labels, invoices,
   // file names, PDF bytes, extracted product data or authentication tokens.
-  function size(){if(allowed())window.parent.postMessage({type:'harmony-labels:height',height:document.body.getBoundingClientRect().height},location.origin);}
+  function size(){
+    if(!allowed())return;
+    // The preview must follow the app window, not the expanding iframe height.
+    const height=window.parent.innerHeight;
+    if(Number.isFinite(height)&&height>0)document.documentElement.style.setProperty('--host-viewport-height',height+'px');
+    window.parent.postMessage({type:'harmony-labels:height',height:document.body.getBoundingClientRect().height},location.origin);
+  }
   if(typeof ResizeObserver==='function')new ResizeObserver(size).observe(document.body);
   window.addEventListener('load',size);
+  window.parent.addEventListener?.('resize',size);
   const timer=setInterval(()=>{if(!allowed())clearInterval(timer);},1000);
-  window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
+  window.addEventListener('pagehide',()=>{clearInterval(timer);window.parent.removeEventListener?.('resize',size);},{once:true});
 })();
