@@ -37,6 +37,7 @@ for (const filename of [
   "shipping-planning.css",
   "shipping-planning.js",
   "shipping-labels.js",
+  "expedition.js",
   "shipping-labels.css",
   "shopee-intelligence.css",
   "shopee-intelligence.js",

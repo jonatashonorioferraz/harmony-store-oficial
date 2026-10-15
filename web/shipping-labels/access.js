@@ -17,8 +17,8 @@
   }
   window.HarmonyConverterAccess=Object.freeze({allowed});
   if(!allowed())return;
-  // Only layout dimensions cross the frame boundary, never labels, invoices,
-  // file names, PDF bytes, extracted product data or authentication tokens.
+  // Layout messages contain only dimensions. After generation, history.js sends
+  // an allowlisted operational summary through the authenticated parent bridge.
   function size(){
     if(!allowed())return;
     // The preview must follow the app window, not the expanding iframe height.

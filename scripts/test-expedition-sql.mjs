@@ -1,0 +1,52 @@
+import {createRequire} from 'node:module';
+import {readFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
+import assert from 'node:assert/strict';
+if(!process.env.PGLITE_ROOT)throw Error('PGLITE_ROOT required; production fallback forbidden');
+const require=createRequire(join(process.env.PGLITE_ROOT,'package.json'));
+const {PGlite}=require('@electric-sql/pglite'),db=new PGlite();
+const admin=randomUUID(),other=randomUUID(),worker=randomUUID(),inactive=randomUUID(),reset=randomUUID();
+const scalar=async(sql,args=[]) => (await db.query(sql,args)).rows[0]?.result;
+const call=(action,input={})=>scalar('select public.expedition($1,$2::jsonb) result',[action,JSON.stringify(input)]);
+async function identity(role,id=''){await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role '+role);}
+let passed=0;async function check(name,fn){await fn();passed++;console.log('PASS '+name);}
+try{
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema private;
+ create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ grant usage on schema public,auth to anon,authenticated,service_role;grant execute on all functions in schema auth to anon,authenticated,service_role;
+ create table public.profiles(id uuid primary key,full_name text,role text,status text,must_change_password boolean default false);
+ alter default privileges in schema public grant all on tables to anon,authenticated,service_role;
+ alter default privileges in schema public grant execute on functions to anon,authenticated,service_role;`);
+ await db.query("insert into public.profiles values($1,'ADM','admin','active',false),($2,'Outro','admin','active',false),($3,'Equipe','collaborator','active',false),($4,'Inativo','admin','inactive',false),($5,'Senha','admin','active',true)",[admin,other,worker,inactive,reset]);
+ await db.exec(await readFile(new URL('../supabase/migrations/20261015200526_expedition_history.sql',import.meta.url),'utf8'));
+ await identity('authenticated',admin);const account=(await call('accounts'))[0].id;
+ const product={listing_id:'MLB123',title:'Kit com 100 unidades',sku:'ABC',variation:'',quantity:2};
+ const order=(n=1,products=[product])=>({key:'shipment:'+String(10000000000+n),identified:true,order_ref:String(2000000000000000n+BigInt(n)),shipment_ref:String(10000000000+n),products});
+ const input=(orders=[order()],extra={})=>({request_id:randomUUID(),account_id:account,channel:'mercado-livre',pages:orders.length*2,total:orders.length,orders,...extra});
+ const day=new Date().toISOString().slice(0,10);const workspace=(extra={})=>call('workspace',{from:day,to:day,...extra});
+ let original=input(),r;
+ await check('empty workspace has no fabricated conversions',async()=>{assert.equal((await workspace()).batch_count,0)});
+ await check('records only included orders; kit quantity stays commercial',async()=>{r=await call('record',{...original,total:50});original.total=50;assert.equal(r.new_count,1);const w=await workspace();assert.equal(w.channels[0].orders,1);assert.equal(w.products[0].quantity,2);assert.equal(w.batches[0].included,1);assert.equal(w.batches[0].total,50)});
+ await check('same request after network failure is idempotent',async()=>{assert.deepEqual(await call('record',original),r);assert.equal((await workspace()).batch_count,1)});
+ await check('same request with different content is rejected',async()=>{await assert.rejects(()=>call('record',{...original,pages:3}))});
+ await check('new generation is recorded without counting products twice',async()=>{const r=await call('record',input());assert.equal(r.repeated_count,1);assert.equal(r.new_count,0);assert.equal((await workspace()).products[0].quantity,2)});
+ await check('changed source preserves metrics and reports conflict',async()=>{assert.equal((await call('record',input([order(1,[{...product,quantity:3}])]))).conflicts,1);assert.equal((await workspace()).products[0].quantity,2)});
+ await check('duplicate orders within batch roll back atomically',async()=>{await assert.rejects(()=>call('record',input([order(2),order(2)])));assert.equal((await workspace()).channels[0].orders,1)});
+ await check('account separates identities and normalized duplicate name rejected',async()=>{const a=await call('account_create',{name:'Outra conta'});await call('record',input([order()],{account_id:a.id}));assert.equal((await workspace({account_id:a.id})).channels[0].orders,1);await assert.rejects(()=>call('account_create',{name:' outra CONTA '}))});
+ let listing=(await workspace({account_id:account})).listings[0];
+ await check('personalized classification remains after later missing variation',async()=>{await call('classify',{...listing,status:'personalized',note:'Conferir gravação no pedido',responsible:'Expedição'});await call('record',input([order(3)]));assert.equal((await workspace({account_id:account})).listings[0].status,'personalized')});
+ await check('stale classification cannot overwrite another ADM',async()=>{await assert.rejects(()=>call('classify',{...listing,status:'single',note:'',responsible:''}))});
+ await check('matched variants do not create false review candidates',async()=>{await call('record',input([order(4,[{...product,listing_id:'MLB999',variation:'Azul'}])]));assert.equal((await workspace({account_id:account})).listing_count,1)});
+ await check('unknown image labels never count as identified sales',async()=>{const o={key:'label:8x8:'+'a'.repeat(64),identified:false,order_ref:'',shipment_ref:'',products:[]};await call('record',input([o],{channel:'shopee'}));const r=await call('record',input([o],{channel:'shopee'}));assert.equal(r.repeated_count,1);const c=(await workspace()).channels.find(c=>c.channel==='shopee');assert.equal(c.orders,0);assert.equal(c.labels,1)});
+ await check('metadata allowlist strips buyer/address/files',async()=>{await call('record',input([{...order(5),buyer:'PRIVATE',postcode:'12345678',products:[{...product,filename:'PRIVATE'}]}],{filename:'PRIVATE'}));await identity('postgres');assert.equal(await scalar("select count(*)::int result from public.expedition_batches where payload::text like '%PRIVATE%'"),0);await identity('authenticated',admin)});
+ await check('empty or invalid quantities rejected with no partial writes',async()=>{await assert.rejects(()=>call('record',input([order(6,[{...product,quantity:0}])])));await assert.rejects(()=>call('record',input([])))});
+ await check('search exact order finds its generations',async()=>{assert.equal((await workspace({account_id:account,search:order().order_ref})).batch_count,3);assert.equal((await workspace({search:'%'})).batch_count,0)});
+ for(let n=20;n<47;n++)await call('record',input([order(n)]));
+ await check('metrics aggregate beyond paginated history',async()=>{const w=await workspace({account_id:account});assert.equal(w.batches.length,25);assert.equal(w.channels.find(c=>c.channel==='mercado-livre').orders,31);assert.ok((await workspace({account_id:account,offset:25})).batches.length>0)});
+ await check('other active ADM reads shared history',async()=>{await identity('authenticated',other);assert.ok((await workspace()).batch_count>0)});
+ for(const [role,id] of [['anon',''],['authenticated',worker],['authenticated',inactive],['authenticated',reset],['service_role','']])await check('denies '+role+' '+id.slice(0,4),async()=>{await identity(role,id);await assert.rejects(()=>call('accounts'));await assert.rejects(()=>workspace());await assert.rejects(()=>call('record',input()))});
+ await identity('postgres');
+ await check('all operational tables have RLS and no direct client writes/reads',async()=>{for(const suffix of ['accounts','batches','orders','batch_orders','listings']){const name='expedition_'+suffix;assert.equal(await scalar("select relrowsecurity result from pg_class where oid=$1::regclass",['public.'+name]),true);for(const role of ['anon','authenticated'])for(const privilege of ['SELECT','INSERT','UPDATE','DELETE'])assert.equal(await scalar('select has_table_privilege($1,$2,$3) result',[role,'public.'+name,privilege]),false);assert.equal(await scalar('select has_table_privilege($1,$2,$3) result',['service_role','public.'+name,'INSERT']),false)}});
+ console.log(passed+' expedition SQL scenarios passed. Synthetic isolated database only.');
+}finally{await db.close();}

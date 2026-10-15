@@ -2,9 +2,174 @@
 // Shared contract audited against public metadata on 2026-10-01. No production data.
 // Reviewed 2026-10-08: source_evidence JSONB adds no keys, grants, triggers or tables.
 // All retained event fields, including source evidence, remain in encrypted capture.
-export const CATALOG_VERSION = 'harmony-public-2026-10-09-v2';
-export const MIGRATIONS_SHA256 = 'bff3f796f0103a682c72b69a37f90bccb312f6b1f1bf80a5b18cd8b8592ed519';
+export const CATALOG_VERSION = 'harmony-public-2026-10-15-v1';
+export const MIGRATIONS_SHA256 = 'f1d1402ee01a34c9b4f6c59ec5139e3cdd5925fbb9a6cf2e1cd5fdf5aaa2bac0';
 export const TABLE_CATALOG = [
+{
+  "name": "expedition_accounts",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture operational conversion summaries and listing classifications; no source files or buyer/address data."
+},
+{
+  "name": "expedition_batches",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "account_id"
+      ],
+      "schema": "public",
+      "table": "expedition_accounts",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "actor_id"
+      ],
+      "schema": "public",
+      "table": "profiles",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture operational conversion summaries and listing classifications; no source files or buyer/address data."
+},
+{
+  "name": "expedition_orders",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "account_id"
+      ],
+      "schema": "public",
+      "table": "expedition_accounts",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "first_batch"
+      ],
+      "schema": "public",
+      "table": "expedition_batches",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture operational conversion summaries and listing classifications; no source files or buyer/address data."
+},
+{
+  "name": "expedition_batch_orders",
+  "primaryKey": [
+    "batch_id",
+    "order_id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "batch_id"
+      ],
+      "schema": "public",
+      "table": "expedition_batches",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "order_id"
+      ],
+      "schema": "public",
+      "table": "expedition_orders",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture operational conversion summaries and listing classifications; no source files or buyer/address data."
+},
+{
+  "name": "expedition_listings",
+  "primaryKey": [
+    "account_id",
+    "channel",
+    "listing_id"
+  ],
+  "foreignKeys": [
+    {
+      "columns": [
+        "account_id"
+      ],
+      "schema": "public",
+      "table": "expedition_accounts",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    },
+    {
+      "columns": [
+        "updated_by"
+      ],
+      "schema": "public",
+      "table": "profiles",
+      "deferrable": false,
+      "targetColumns": [
+        "id"
+      ]
+    }
+  ],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture operational conversion summaries and listing classifications; no source files or buyer/address data."
+},
 {
   "name": "financial_ai_settings",
   "primaryKey": [
