@@ -443,3 +443,14 @@ test('restart actions cannot interrupt work or run after access revocation or di
   env.context.HarmonyConverterAccess.allowed=()=>true;env.context.HarmonyConverterLifecycle.dispose();
   env.get('new-batch-platform').onclick();assert.equal(env.calls.revoked,1);assert.equal(env.get('actions').hidden,true);
 });
+
+test('history is sent only after successful generation; save failure preserves the PDF',async()=>{
+  const guide={platform:'shopee',update(){},subscribe(){}};
+  const env=environment(guide),records=[];let summaryCalls=0;
+  env.context.parent={HarmonyShippingLabels:{historyAccount:()=> 'account',recordConversion:async(source,payload)=>{records.push(payload);throw Error('Offline');}}};
+  env.context.LocalConversionHistory={summary:async input=>{summaryCalls++;return {channel:input.channel,included:input.batch.length};}};
+  env.select();await env.get('check').onclick();assert.equal(summaryCalls,0);
+  await env.get('review-generate').onclick();assert.equal(records.length,1);assert.equal(records[0].account_id,'account');assert.equal(records[0].included,1);
+  assert.equal(env.get('actions').hidden,false);assert.equal(env.get('download').href,'blob:synthetic');assert.match(env.get('status').textContent,/Histórico não confirmado/);
+  env.context.LocalZpl.createPdf=async()=>{throw Error('Conversion failed');};await env.get('review-generate').onclick();assert.equal(records.length,1);
+});

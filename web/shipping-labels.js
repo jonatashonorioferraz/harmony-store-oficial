@@ -1,12 +1,13 @@
 (function(){
   'use strict';
   const VIEW='shipping-labels';
-  const VERSION='25.125';
+  const VERSION='25.126';
   let frame=null,loadingTimer=null;
-  // This tool has no server records or elevated APIs. The existing signed-in
-  // profile controls its app entry point; no session/token enters the frame.
+  // The parent keeps authentication. Only allowlisted operational summaries
+  // reach the shared history; source files and tokens stay out of the bridge.
   const canUse=()=>Boolean(S.session&&S.profile?.role==='admin'&&S.profile.status==='active'&&!S.profile.must_change_password&&!sessionDocumentClosed);
   function reset(){
+    window.HarmonyExpedition?.purge();
     clearTimeout(loadingTimer);loadingTimer=null;
     const previous=frame;frame=null;
     if(!previous)return;
@@ -41,6 +42,7 @@
     created.addEventListener('load',()=>checkReady());
     loadingTimer=setTimeout(()=>checkReady(true),20000);
     document.querySelector('#shippingLabelsHost').append(created);
+    window.HarmonyExpedition?.mount(page.querySelector('.shipping-labels-page'));
   }
   window.addEventListener('message',event=>{
     if(!frame||!canUse()||event.source!==frame.contentWindow||event.origin!==location.origin)return;
@@ -48,6 +50,8 @@
     if(event.data.height<=0)return;
     frame.style.height=`${Math.max(320,Math.min(1000000,Math.ceil(event.data.height)+8))}px`;
   });
-  window.HarmonyShippingLabels=Object.freeze({canUse,reset,render,open(){if(!canUse())return;S.view=VIEW;renderApp();}});
+  window.HarmonyShippingLabels=Object.freeze({canUse,reset,render,
+    historyAccount(source){if(!canUse()||source!==frame?.contentWindow)throw Error('Acesso encerrado.');return window.HarmonyExpedition.historyAccount();},
+    recordConversion(source,input){if(!canUse()||source!==frame?.contentWindow)throw Error('Acesso encerrado.');return window.HarmonyExpedition.record(input);},open(){if(!canUse())return;S.view=VIEW;renderApp();}});
   new MutationObserver(()=>{if(frame&&(!canUse()||!frame.isConnected||S.view!==VIEW))reset();}).observe(document.body,{childList:true,subtree:true});
 })();

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import test from 'node:test';
 
+const expedition = await readFile(new URL('../supabase/migrations/20261015200526_expedition_history.sql', import.meta.url), 'utf8');
 const migrationUrl = new URL('../supabase/migrations/20260719053406_explicit_data_api_grants.sql', import.meta.url);
 const sql = await readFile(migrationUrl, 'utf8');
 const labelLots = await readFile(
@@ -228,7 +229,7 @@ test('every statically named RPC used by the web app remains granted', () => {
   for (const match of webSource.matchAll(/\bchangePurchase\('([^']+)'/g)) rpcNames.add(match[1]);
 
   assert.ok(rpcNames.size >= 20, `RPC inventory unexpectedly small: ${rpcNames.size}`);
-  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}\n${productVisibility}\n${internalSupplies}\n${internalReceiptDeletion}\n${productionColors}\n${productionOrdersFoundation}\n${productionOrders}\n${directRequestCompletion}\n${primaryRequestEdit}\n${separatedCatalogs}\n${individualPaymentCycles}\n${appUsage}\n${bills}\n${billReactivation}\n${billDueDateCorrection}\n${pendingBillDueDateCorrection}\n${separationCheckup}\n${separationStockCorrection}\n${productionInventory}\n${productionInventoryBoxes}\n${productionInventoryTransfers}\n${productionInventoryGallery}\n${productionInventoryLabels}\n${individualProductStock}\n${internalReceiptReconciliation}\n${inventoryAiIntelligence}\n${adminAgendaHarmony}\n${adminAgendaProductionOrderState}\n${shippingPlanning}\n${shippingExclusiveProducts}\n${shippingColorCombinations}\n${shippingCompositeKits}\n${shippingAvailabilityProjection}\n${transferCenter}\n${transferCenterGranularCorrections}\n${shopeeIntelligence}\n${labelLots}\n${commercialCalendar}\n${financialFoundation}\n${financialWorkspace}\n${financialAI}`;
+  const effectiveGrants = `${sql}\n${phase2b}\n${phase2bEnforce}\n${systemHealth}\n${adminNotifications}\n${productVisibility}\n${internalSupplies}\n${internalReceiptDeletion}\n${productionColors}\n${productionOrdersFoundation}\n${productionOrders}\n${directRequestCompletion}\n${primaryRequestEdit}\n${separatedCatalogs}\n${individualPaymentCycles}\n${appUsage}\n${bills}\n${billReactivation}\n${billDueDateCorrection}\n${pendingBillDueDateCorrection}\n${separationCheckup}\n${separationStockCorrection}\n${productionInventory}\n${productionInventoryBoxes}\n${productionInventoryTransfers}\n${productionInventoryGallery}\n${productionInventoryLabels}\n${individualProductStock}\n${internalReceiptReconciliation}\n${inventoryAiIntelligence}\n${adminAgendaHarmony}\n${adminAgendaProductionOrderState}\n${shippingPlanning}\n${shippingExclusiveProducts}\n${shippingColorCombinations}\n${shippingCompositeKits}\n${shippingAvailabilityProjection}\n${transferCenter}\n${transferCenterGranularCorrections}\n${shopeeIntelligence}\n${labelLots}\n${commercialCalendar}\n${financialFoundation}\n${financialWorkspace}\n${financialAI}\n${expedition}`;
   const grantedRpcs = authenticatedRpcNames(effectiveGrants);
   for (const rpcName of rpcNames) {
     assert.ok(grantedRpcs.has(rpcName), `Missing authenticated grant for web RPC ${rpcName}`);

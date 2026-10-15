@@ -1,3 +1,10 @@
+## [v25.126] - 2026-10-15
+
+- Histórico compartilhado de PDFs gerados, métricas por conta/canal e produtos do Excel incluídos no lote.
+- Reprocessamentos deduplicados; etiquetas sem identificação contadas separadamente de pedidos.
+- Central de anúncios com classificação de personalizados, opção única e ajustes pendentes de validação.
+- Resumo operacional sem arquivos nem dados do comprador; sincronização com repetição idempotente e acesso ADM.
+
 # Changelog
 
 ## [v25.125] - 2026-10-15

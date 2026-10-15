@@ -227,7 +227,7 @@ function showSolutions(report){
         try{
           const updated=await LocalBatchRecovery.analyze(snapshot.batch,snapshot.read,snapshot.reviewOptions);ensureActive();
           prepared={...snapshot,report:updated};showReview(updated);$('status').className='';$('status').textContent='Vínculo confirmado pelo ADM. Revise o resumo e os avisos antes de gerar o PDF.';
-        }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=error.message;}
+  }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=error.message;}
         finally{busy=false;if(!disposed)syncControls();}
       });
     }
@@ -324,6 +324,7 @@ async function generate(){
     const checked=await LocalBatchReview.inspect(batch,read,{mode:snapshot.mode});ensureActive();
     if(!checked.ready)throw Error('A conferência mudou. Confira o lote novamente antes de gerar.');
     const progress=(n,total)=>{ensureActive();$('progress').value=n/total;$('status').textContent=`Preparando PDF: ${n} de ${total} páginas…`;};
+    const historyAccount=window.parent?.HarmonyShippingLabels?.historyAccount?.(window);
     let pdf,rows=null;
     if(read){const result=await LocalInvoices.createPairedPdf(batch,read,checked.rows,snapshot.dpi,progress,snapshot.mode);ensureActive();pdf=result.blob;sequence=result.sequence;rows=result.rows;}
     else{pdf=await LocalZpl.createPdf(batch,snapshot.dpi,snapshot.size,progress);ensureActive();sequence=batch.map(()=>({kind:'label'}));}
@@ -336,7 +337,15 @@ async function generate(){
     if(rows)showReport(rows,true);await preview();ensureActive();
     $('review-state').textContent=partial?'PDF PARCIAL GERADO':'PDF GERADO';
     $('review-summary').textContent=partial?`${batch.length} de ${snapshot.batch.length} etiqueta(s) incluída(s). As pendências continuam na lista de soluções e NÃO estão neste PDF.`:'PDF disponível. Confira a prévia e a primeira etiqueta na impressora. Gerar ou baixar não confirma impressão física.';
-    $('status').textContent=`${partial?'PDF PARCIAL':'PDF'} pronto · ${batch.length} etiqueta(s) · ${sequence.length} páginas. ${partial?'As pendências listadas não foram incluídas. ':''}Nenhum dado enviado; impressão física não confirmada.`;
+    $('status').textContent=`${partial?'PDF PARCIAL':'PDF'} pronto · ${batch.length} etiqueta(s) · ${sequence.length} páginas. ${partial?'As pendências listadas não foram incluídas. ':''}Arquivos processados localmente; impressão física não confirmada.`;
+    if(window.parent?.HarmonyShippingLabels?.recordConversion){
+      try{
+        const summary=await LocalConversionHistory.summary({channel:guide.platform,batch,rows,read,pages:sequence.length,total:snapshot.batch.length});
+        ensureActive();
+        const saved=await window.parent?.HarmonyShippingLabels.recordConversion(window,{...summary,account_id:historyAccount});
+        ensureActive();$('status').textContent+=' '+saved;
+      }catch{if(!disposed)$('status').textContent+=' PDF disponível. Histórico não confirmado: confira o aviso acima do conversor antes de sair.';}
+    }
   }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=error.message||'Não foi possível gerar. Confira o lote novamente; os originais foram preservados.';}
   finally{busy=false;if(!disposed){syncControls();$('progress').hidden=true;}}
 }

@@ -46,6 +46,7 @@ jobs:
           node scripts/test-financial-contracts-sql.mjs
           node scripts/test-financial-workspace-sql.mjs
           node scripts/test-financial-ai-sql.mjs
+          node scripts/test-expedition-sql.mjs
       - run: npm test
       - name: Verificar qualidade estática do código
         run: npm run lint
