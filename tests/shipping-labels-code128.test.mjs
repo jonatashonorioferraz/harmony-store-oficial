@@ -59,10 +59,34 @@ test('mixed Mercado Envios codes fit 100x150 geometry and keep shipment metadata
 });
 
 test('unsupported BC variants and rotations remain blocked',async()=>{
-  for(const command of ['^BCN,140,Y,N,N,A','^BCN,140,N,Y,N,A','^BCN,140,N,N,Y,A',
+  for(const command of ['^BCN,140,Y,N,N,N','^BCN,140,X,N,N,A','^BCN,140,N,Y,N,A','^BCN,140,N,N,Y,A',
     '^BCN,140,N,N,N,D','^BCN,140,N,N,N,U','^BCR,140,N,N,N,A','^BCN,140,N,N,N,A,extra']){
     await assert.rejects(context.LocalZpl.parseZpl('^XA^FO70,755^BY5,,0'+command+'^FD12345678^FS^XZ'),/suportad/);
   }
+});
+
+test('automatic Code 128 prints the exact numeric interpretation without changing the bars',async()=>{
+  const data='0001234567890';
+  const zpl=show=>'^XA^PW800^LL1200^FO170,775^BY4,,0^BCN,135,'+show+',N,N,A^FD'+data+'^FS^XZ';
+  bars.length=0;texts.length=0;
+  await context.LocalZpl.parseZpl(zpl('N'));
+  const originalBars=bars.filter(b=>b.y===775&&b.h===135);
+  bars.length=0;
+  const [page]=await context.LocalZpl.parseZpl(zpl('Y'));
+  assert.deepEqual(bars.filter(b=>b.y===775&&b.h===135),originalBars);
+  assert.deepEqual(texts,[data]);
+  assert.equal(page.width,800);assert.equal(page.height,1200);
+  texts.length=0;
+  await context.LocalZpl.parseZpl(zpl(''));
+  assert.deepEqual(texts,[data],'An omitted interpretation flag defaults to Y');
+});
+
+test('Code 128 interpretation participates in page bounds and rejects unverified payloads',async()=>{
+  const zpl='^XA^PW800^LL1200^FO170,1060^BY4,,0^BCN,135,Y,N,N,A^FD0001234567890^FS^XZ';
+  await assert.rejects(context.LocalZpl.parseZpl(zpl),/altura/);
+  await context.LocalZpl.parseZpl(zpl.replace(',Y,N,N,A',',N,N,N,A'));
+  await assert.rejects(context.LocalZpl.parseZpl(zpl.replace('0001234567890','>;001234')),/numéricos/);
+  await assert.rejects(context.LocalZpl.parseZpl(zpl.replace('^FO170,1060','^FO0,0^A0N,10,400').replace('0001234567890','1')),/borda/);
 });
 
 test('a routing label without NF remains unpaired rather than inventing an invoice number',async()=>{

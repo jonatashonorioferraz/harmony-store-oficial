@@ -97,7 +97,16 @@
         case 'FB': field.block = {width:number(p[0]),lines:number(p[1],1,1,9999),spacing:number(p[2],0,-9999,9999),align:p[3]||'L'}; if(!['L','C','R'].includes(field.block.align)||number(p[4])!==0) fail('Alinhamento de texto ZPL não suportado.'); break;
         case 'FR': field.reverse = true; break;
         case 'BY': state.module = number(p[0],2,1,10); state.barcodeHeight = number(p[2],10); break;
-        case 'BC': normal(p[0]); if((p[2]||'Y')!=='N'||(p[3]||'N')!=='N'||(p[4]||'N')!=='N'||!['N','A'].includes(p[5]||'N')||p.slice(6).some(Boolean)) fail('Variação Code 128 não suportada.'); field.barcode = {type:'code128',height:number(p[1],state.barcodeHeight,1,32000),module:state.module,mode:p[5]||'N'}; break;
+        case 'BC': {
+          normal(p[0]);
+          const interpretation=p[2]||'Y',mode=p[5]||'N';
+          if(!['N','Y'].includes(interpretation)||(p[3]||'N')!=='N'||(p[4]||'N')!=='N'||!['N','A'].includes(mode)||p.slice(6).some(Boolean)) fail('Variação Code 128 não suportada.');
+          // The numeric automatic payload can be printed verbatim. Other modes
+          // need interpretation of invocation/FNC characters before printing.
+          if(interpretation==='Y'&&mode!=='A') fail('Linha numérica Code 128 ainda não suportada neste modo.');
+          field.barcode = {type:'code128',height:number(p[1],state.barcodeHeight,1,32000),module:state.module,mode,interpretation:interpretation==='Y'};
+          break;
+        }
         case 'BQ': normal(p[0]); if((p[1]||'2')!=='2') fail('Somente QR Code modelo 2 é suportado.'); field.barcode = {type:'qr',module:number(p[2],2,1,100)}; break;
         case 'GB': field.drawing = {type:'box',width:number(p[0]),height:number(p[1]),thickness:number(p[2],1,1),color:p[3]||'B'}; if(!['B','W'].includes(field.drawing.color)||number(p[4])!==0) fail('Caixa arredondada ZPL não suportada.'); break;
         case 'GF': { const g = data.match(/^A,(\d+),(\d+),(\d+),([\s\S]*)$/); if(!g) fail('Formato de gráfico ZPL não suportado.'); field.drawing = {type:'image',image:await decodeGraphic(g[2],g[3],g[4])}; break; }
@@ -117,7 +126,19 @@
     for (const f of fields) {
       if(f.barcode) {
         if(f.reverse) fail('Código de barras invertido não suportado.');
-        if(f.barcode.type==='code128') { f.bars = root.ZplCode128(f.text,f.barcode.mode); f.drawWidth = f.bars.reduce((a,b)=>a+b,0)*f.barcode.module; f.drawHeight=f.barcode.height; }
+        if(f.barcode.type==='code128') {
+          f.bars = root.ZplCode128(f.text,f.barcode.mode);
+          f.drawWidth = f.bars.reduce((a,b)=>a+b,0)*f.barcode.module; f.drawHeight=f.barcode.height;
+          if(f.barcode.interpretation){
+            measure.font='700 '+f.font.height+'px HarmonyZpl';measure.fontKerning='none';
+            const textWidth=measure.measureText(f.text).width*f.font.width/f.font.height;
+            const x=f.x+(f.drawWidth-textWidth)/2,gap=Math.max(2,f.barcode.module);
+            if(x<0)fail('A linha numérica do código de barras ultrapassa a borda da etiqueta.');
+            f.interpretation={x,y:f.y+f.barcode.height+gap+f.font.height*.75};
+            f.drawWidth=Math.max(f.drawWidth,x-f.x+textWidth);
+            f.drawHeight+=gap+f.font.height;
+          }
+        }
         else {
           const qrData=f.text.match(/^([LMQH])A,([\s\S]+)$/); if(!qrData) fail('Formato de dados QR Code não suportado.');
           root.qrcode.stringToBytes=root.qrcode.stringToBytesFuncs['UTF-8'];
@@ -160,7 +181,12 @@
       ctx.save();ctx.fillStyle=f.reverse?'#fff':'#000';
       if(f.reverse)ctx.globalCompositeOperation='difference';
       if(f.barcode?.type==='code128') {
-        let x=f.x; f.bars.forEach((b,i)=>{if(i%2===0)ctx.fillRect(x,f.y,b*f.barcode.module,f.drawHeight);x+=b*f.barcode.module;});
+        let x=f.x; f.bars.forEach((b,i)=>{if(i%2===0)ctx.fillRect(x,f.y,b*f.barcode.module,f.barcode.height);x+=b*f.barcode.module;});
+        if(f.interpretation){
+          ctx.font='700 '+f.font.height+'px HarmonyZpl';ctx.fontKerning='none';ctx.textBaseline='alphabetic';
+          ctx.translate(f.interpretation.x,f.interpretation.y);ctx.scale(f.font.width/f.font.height,1);
+          ctx.fillText(f.text,0,0);
+        }
       } else if(f.barcode?.type==='qr') {
         const n=f.qr.getModuleCount(),s=f.barcode.module;
         for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(f.qr.isDark(y,x))ctx.fillRect(f.x+x*s,f.y+y*s,s,s);
