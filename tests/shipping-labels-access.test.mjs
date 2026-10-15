@@ -21,21 +21,22 @@ function element() {
   };
 }
 function parentEnvironment() {
-  const page = element(), host = element(), loading = element(), events = {}, observers = [];
+  const page = element(), host = element(), loading = element(), events = {}, observers = [], timers = [];
   page.querySelector = () => loading;
   const S = { session: {}, profile: {role: 'admin', status: 'active'}, view: 'shipping-labels' };
   let disposed = 0, renders = 0;
   const context = vm.createContext({
     S, sessionDocumentClosed: false, location: {origin: 'https://example.test'},
     document: {body: element(), querySelector: id => id === '#page' ? page : host,
-      createElement: () => ({...element(), contentWindow: {HarmonyConverterLifecycle: {dispose() { disposed++; }}}})},
+      createElement: () => ({...element(), contentWindow: {HarmonyLabelsGuide:{},HarmonyConverterLifecycle: {dispose() { disposed++; }}}})},
     head: () => '', renderApp: () => { renders++; },
     MutationObserver: class { constructor(fn) { observers.push(fn); } observe() {} },
     addEventListener: (type, fn) => { events[type] = fn; },
+    setTimeout: fn => {timers.push(fn);return timers.length;}, clearTimeout() {},
   });
   context.window = context;
   vm.runInContext(parent, context);
-  return {context, S, page, host, events, observers, api: context.HarmonyShippingLabels,
+  return {context, S, page, host, loading, timers, events, observers, api: context.HarmonyShippingLabels,
     disposed: () => disposed, renders: () => renders};
 }
 
@@ -99,6 +100,36 @@ test('a late frame load cannot remove the newly opened converter', () => {
   assert.equal(env.disposed(), 1);
   current.events.load();
   env.api.reset(); assert.equal(env.disposed(), 2);
+});
+
+test('incomplete initialization stays hidden and offers a scoped retry',()=>{
+  const env=parentEnvironment();env.api.render();
+  const frame=env.host.children[0];
+  assert.equal(frame.style.visibility,'hidden');
+  delete frame.contentWindow.HarmonyLabelsGuide;
+  frame.events.load();
+  assert.equal(frame.style.visibility,'hidden');assert.equal(env.loading.hidden,false);
+  const retry=env.loading.children.at(-1);assert.equal(retry.textContent,'Tentar novamente');
+  retry.events.click();const next=env.host.children[1];
+  assert.equal(frame.isConnected,false);assert.equal(next.style.visibility,'hidden');
+  env.timers[0]();assert.equal(next.style.visibility,'hidden','Old timer cannot reveal the new frame');
+  next.events.load();assert.equal(next.style.visibility,'visible');assert.equal(env.loading.hidden,true);
+});
+
+test('a slow load can recover without recreating the converter or losing files',()=>{
+  const env=parentEnvironment();env.api.render();const frame=env.host.children[0];
+  const lifecycle=frame.contentWindow.HarmonyConverterLifecycle;
+  delete frame.contentWindow.HarmonyConverterLifecycle;env.timers[0]();
+  assert.match(env.loading.textContent,/demorando/);assert.equal(frame.style.visibility,'hidden');
+  frame.contentWindow.HarmonyConverterLifecycle=lifecycle;frame.events.load();
+  assert.equal(frame.style.visibility,'visible');assert.equal(env.disposed(),0);
+});
+
+test('long pending batches use the outer page scroll and reject invalid heights',()=>{
+  const env=parentEnvironment();env.api.render();const frame=env.host.children[0];
+  const send=height=>env.events.message({source:frame.contentWindow,origin:'https://example.test',data:{type:'harmony-labels:height',height}});
+  send(12000);assert.equal(frame.style.height,'12008px');
+  for(const height of [-10,0,NaN,Infinity]){send(height);assert.equal(frame.style.height,'12008px');}
 });
 
 test('direct URLs and revoked admin access clear the child before use', () => {

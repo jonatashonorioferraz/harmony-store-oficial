@@ -1,5 +1,11 @@
 # Changelog
 
+## [v25.125] - 2026-10-15
+
+- Central de etiquetas: estado inicial organizado antes da execução dos scripts, com exibição somente após inicialização e opção de tentar novamente quando o carregamento falha ou demora.
+- Prévia acompanha a altura da janela do aplicativo, evitando crescimento causado pelo iframe. Lotes com muitas pendências usam a rolagem externa sem o corte anterior em 6.500 pixels.
+
+
 ## [v25.124] - 2026-10-15
 
 - Conversor: etiquetas do Mercado Livre com Code 128 automático numérico e número impresso abaixo das barras passam a ser aceitas, incluindo o formato da transportadora iMile. Os dígitos e a altura das barras são preservados; o texto participa da validação dos limites da etiqueta.

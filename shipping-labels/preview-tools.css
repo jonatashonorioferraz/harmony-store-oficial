@@ -10,10 +10,10 @@
 .preview-document-caption:empty{display:none}
 .preview-document-caption[data-document-kind="picking"]{background:#f1f7ff;border-color:#c6daf4;border-left-color:var(--blue);color:#345f91}
 .preview-document-caption[data-document-kind="danfe"]{background:#fffbf1;border-color:#e9d9b7;border-left-color:#b58a3c;color:#765621}
-#preview.preview-inspect{display:block;flex:0 0 auto;height:clamp(320px,60vh,650px);min-height:0;padding:16px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-x pan-y;background:repeating-linear-gradient(135deg,#f7f4f8 0,#f7f4f8 10px,#faf8fb 10px,#faf8fb 20px)}
+#preview.preview-inspect{display:block;flex:0 0 auto;height:clamp(320px,calc(var(--host-viewport-height, 100vh) * .6),650px);min-height:0;padding:16px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-x pan-y;background:repeating-linear-gradient(135deg,#f7f4f8 0,#f7f4f8 10px,#faf8fb 10px,#faf8fb 20px)}
 #preview.preview-inspect canvas{display:block;max-width:none;max-height:none;height:auto;object-fit:initial;margin:0 auto;background:#fff;box-shadow:0 3px 15px #392c3520}
 .embedded .layout.preview-expanded{grid-template-columns:minmax(0,1fr)}
 .layout.preview-expanded>.result{grid-column:1/-1;grid-row:1;scroll-margin-top:20px}
 .layout.preview-expanded>.panel:not(.result){grid-column:1/-1}
-.layout.preview-expanded #preview.preview-inspect{height:clamp(360px,72vh,900px)}
-@media(max-width:560px){.preview-tools-zoom{flex-basis:100%}.preview-tools>button{flex:1}.preview-document-caption{font-size:11px}.preview-tools-help{font-size:10px}#preview.preview-inspect{height:clamp(300px,58vh,560px)}}
+.layout.preview-expanded #preview.preview-inspect{height:clamp(360px,calc(var(--host-viewport-height, 100vh) * .72),900px)}
+@media(max-width:560px){.preview-tools-zoom{flex-basis:100%}.preview-tools>button{flex:1}.preview-document-caption{font-size:11px}.preview-tools-help{font-size:10px}#preview.preview-inspect{height:clamp(300px,calc(var(--host-viewport-height, 100vh) * .58),560px)}}
