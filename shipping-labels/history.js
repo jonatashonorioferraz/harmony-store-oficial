@@ -2,7 +2,8 @@
 (function(root){
   'use strict';
   const text=(value,max)=>String(value??'').trim().slice(0,max);
-  async function summary({channel,batch,rows,read,pages,total}){
+  async function summary({channel,batch,rows,read,shopee,shopeeOrders,pages,total}){
+    if(channel==='shopee'&&shopee){const orders=shopeeOrders||root.LocalShopee.orders(shopee);if(!orders.length)throw Error('Nenhum pedido Shopee foi identificado para o histórico.');return {request_id:crypto.randomUUID(),channel,pages,total:shopee.labels.length,included:shopee.labels.length,orders};}
     const orders=[];
     for(let index=0;index<batch.length;index++){
       const label=batch[index],row=rows?.find(r=>r.labelIndex===index),identity=root.LocalInvoices.labelIdentity(label);

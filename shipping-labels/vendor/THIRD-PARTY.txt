@@ -41,3 +41,11 @@ Liberation fonts: LICENSE_LIBERATION.txt
 pdf-lib 1.17.1
 Source: https://github.com/Hopding/pdf-lib
 License: PDF-lib-LICENSE.txt (MIT).
+
+Tesseract.js 6.0.1 / tesseract.js-core 6.1.2 (Apache 2.0)
+Source: https://github.com/naptha/tesseract.js and https://github.com/naptha/tesseract.js-core
+Local worker, embedded LSTM WASM, Portuguese traineddata from @tesseract.js-data/por 1.0.0 / 4.0.0_best_int.
+Model source: https://github.com/naptha/tessdata (Apache 2.0).
+Licenses: ocr/Tesseract-LICENSE.txt and ocr/Tesseract-core-LICENSE.txt.
+jsQR 1.4.0 (Apache 2.0): https://github.com/cozmo/jsQR; ocr/jsQR-LICENSE.txt.
+Original files and OCR stay local. Only the reviewed operational summary is saved.

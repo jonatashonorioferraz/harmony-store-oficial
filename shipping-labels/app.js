@@ -19,7 +19,7 @@ function clearResult(keepReview=false){
   $('new-batch').hidden=true;closeNewBatch();
   $('preview').replaceChildren();const p=document.createElement('p');p.textContent='Sua prévia aparecerá após a conversão.';$('preview').append(p);
   $('preview-caption').textContent='';$('result-title').textContent='Sua prévia aparece aqui';
-  if(!keepReview){prepared=null;resolutionControls.length=0;$('partial-consent').checked=false;
+  if(!keepReview){if($('shopee-review')){$('shopee-review').replaceChildren();$('shopee-review').hidden=true;}prepared=null;resolutionControls.length=0;$('partial-consent').checked=false;
     for(const id of ['review-labels','review-invoices','review-products','review-pages'])$(id).textContent='Não calculado';
     for(const id of ['resolution-summary','partial-label','partial-safety','review-summary'])$(id).textContent='';
     for(const id of ['batch-review','pairing-report','resolution-panel'])$(id).hidden=true;
@@ -299,7 +299,12 @@ async function checkBatch(alternative=false){
       $('status').textContent='Lendo produtos, quantidades e variações do Excel e conferindo os pedidos…';read.sales=await LocalSales.read(activeSales(),ensureActive);ensureActive();
     }
     ensureActive();const report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
-    prepared={batch,read,report,mode,reviewOptions:{mode,ignored,duplicates,sourceProblems},dpi:Number($('dpi').value),size:$('size').value};showReview(report);
+    let shopee=null;
+    if(guide?.platform==='shopee'&&batch.length&&globalThis.LocalShopee){
+      shopee=await LocalShopee.read(batch,{active:ensureActive,progress:(n,total)=>{$('status').textContent=`Lendo checklists localmente: página ${n+1} de ${total}…`;$('progress').value=n/total;}});ensureActive();
+    }
+    prepared={batch,read,report,mode,shopee,reviewOptions:{mode,ignored,duplicates,sourceProblems},dpi:Number($('dpi').value),size:$('size').value};showReview(report);
+    if(shopee){LocalShopee.render(shopee,batch,$('shopee-review'));$('review-summary').textContent='Etiquetas e checklists preservados no PDF. Produtos dos checklists conferidos serão registrados no histórico, sem Excel.';$('review-products-title').textContent='Itens dos checklists';$('review-products').textContent=shopee.orders.reduce((n,o)=>n+o.products.length,0);$('review-labels').textContent=shopee.labels.length;}
     $('status').textContent=report.ready?'Lote conferido. Revise o resumo e gere o PDF.':report.partialReady?'Há pedidos prontos e pendências separadas. Você pode resolver tudo ou autorizar somente os conferidos.':'A conferência encontrou uma situação que precisa de ação. Veja a solução indicada abaixo.';
   }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=(error.message||'Não foi possível conferir o lote.')+' Os originais não foram alterados. Remova da seleção o arquivo indicado, adicione o original da plataforma ou tente um lote menor.';}
   finally{busy=false;if(!disposed){syncControls();$('progress').hidden=true;}}
@@ -318,6 +323,8 @@ async function generate(){
   if(busy||disposed||!globalThis.HarmonyConverterAccess.allowed()||!canGenerate())return;
   const snapshot=prepared,partial=!snapshot.report.ready;
   const batch=partial?snapshot.report.subset.labels:snapshot.batch,read=partial?snapshot.report.subset.read:snapshot.read;
+  let shopeeOrders=null;
+  if(snapshot.shopee){try{shopeeOrders=LocalShopee.orders(snapshot.shopee);}catch(error){$('status').textContent=error.message;return;}}
   busy=true;clearResult(true);syncControls();$('progress').hidden=false;
   try{
     // Recheck the exact chosen subset and its authoritative source before printing.
@@ -340,10 +347,11 @@ async function generate(){
     $('status').textContent=`${partial?'PDF PARCIAL':'PDF'} pronto · ${batch.length} etiqueta(s) · ${sequence.length} páginas. ${partial?'As pendências listadas não foram incluídas. ':''}Arquivos processados localmente; impressão física não confirmada.`;
     if(window.parent?.HarmonyShippingLabels?.recordConversion){
       try{
-        const summary=await LocalConversionHistory.summary({channel:guide.platform,batch,rows,read,pages:sequence.length,total:snapshot.batch.length});
+        const summary=await LocalConversionHistory.summary({channel:guide.platform,batch,rows,read,shopee:snapshot.shopee,shopeeOrders,pages:sequence.length,total:snapshot.batch.length});
         ensureActive();
         const saved=await window.parent?.HarmonyShippingLabels.recordConversion(window,{...summary,account_id:historyAccount});
         ensureActive();$('status').textContent+=' '+saved;
+        if(shopeeOrders){const pending=shopeeOrders.filter(o=>!o.products.length).length;if(pending)$('status').textContent+=` ${pending} pedido(s) ainda sem produtos no histórico: use “Voltar à conferência”, revise as leituras pendentes e gere novamente para complementar sem duplicar.`;}
       }catch{if(!disposed)$('status').textContent+=' PDF disponível. Histórico não confirmado: confira o aviso acima do conversor antes de sair.';}
     }
   }catch(error){if(disposed)return;clearResult();$('status').className='error';$('status').textContent=error.message||'Não foi possível gerar. Confira o lote novamente; os originais foram preservados.';}
