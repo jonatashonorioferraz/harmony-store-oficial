@@ -66,7 +66,7 @@
      for(const row of table.rows){
       const values=[];for(let col=0;col<3;col++){
        const a=table.columns[col],b=table.columns[col+1];
-       const value=await recognize(crop(rotated,{x:a+3,y:row.top,w:b-a-6,h:row.bottom-row.top} ),col===2?'quantity':'text');active();values.push(value);
+       const value=await recognize(crop(rotated,{x:a+3,y:row.top,w:b-a-6,h:row.bottom-row.top},col===2?2:1),col===2?'quantity':'text');active();values.push(value);
       }
       const [title,variation,quantity]=values.map(v=>clean(v.text));
       const [a,b]=table.columns.slice(2,4);
