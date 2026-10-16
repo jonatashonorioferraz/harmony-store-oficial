@@ -172,8 +172,8 @@ test('closing the converter during a pending file read cannot restore private re
   assert.equal(published, 0);
 });
 
-test('converter packages only local assets and blocks network connections', async () => {
-  assert.match(html, /connect-src 'none'/);
+test('converter packages only local assets and restricts OCR resources to same-origin assets', async () => {
+  assert.match(html, /connect-src 'self'/);
   assert.doesNotMatch(html, /(?:src|href)="https?:/);
   for (const match of html.matchAll(/(?:src|href)="([^"#?]+)(?:\?[^"]*)?"/g)) {
     if (match[1].startsWith('../')) continue;

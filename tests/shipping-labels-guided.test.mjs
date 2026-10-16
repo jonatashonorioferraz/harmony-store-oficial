@@ -33,7 +33,7 @@ test('initial wizard shows explicit platform choices, not invented sample orders
 test('platform-specific instructions show Shopee labels or Mercado Livre labels, notes and sales',async()=>{
   const h=await setup();h.query('#guide-shopee').click();assert.equal(h.guide.platform,'shopee');
   assert.equal(h.query('.invoice-upload').hidden,true);assert.equal(h.query('#files').disabled,false);
-  assert.match(h.query('#guide-platform-note').textContent,/não cria uma lista ausente/);
+  assert.match(h.query('#guide-platform-note').textContent,/lista precisa vir no arquivo/);
   h.query('#guide-ml').click();assert.equal(h.guide.platform,'mercado-livre');
   assert.equal(h.query('.invoice-upload').hidden,false);assert.equal(h.query('#invoice-files').disabled,false);
   assert.equal(h.query('#sales-file').disabled,false);
@@ -66,7 +66,7 @@ test('retained PDFs are clearly excluded from Shopee and recovery search reveals
 });
 test('guide assets load before controller and remain local without external services',()=>{
   assert.ok(html.indexOf('guided.js?')<html.indexOf('src="app.js?'));
-  assert.match(html,/connect-src 'none'/);assert.doesNotMatch(source,/fetch\(|localStorage|sessionStorage|indexedDB/);
+  assert.match(html,/connect-src 'self'/);assert.doesNotMatch(source,/fetch\(|localStorage|sessionStorage|indexedDB/);
 });
 
 test('simplified journey starts with platform only and retains files on back navigation',async()=>{

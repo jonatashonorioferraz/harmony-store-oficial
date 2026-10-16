@@ -1,3 +1,10 @@
+## [v25.127] - 2026-10-16
+
+- Shopee: leitura local dos produtos, variações e quantidades no checklist do ZIP, sem Excel.
+- Registro automático com identificação nas duas páginas e duas leituras locais da quantidade; somente campos ilegíveis ou vínculos incompletos ficam separados.
+- Histórico agrupa títulos sem exigir SKU e evita duplicar reimpressões, inclusive ao complementar registros antigos.
+- Produtos personalizados mantêm a orientação de conferir os detalhes no pedido.
+
 ## [v25.126] - 2026-10-15
 
 - Histórico compartilhado de PDFs gerados, métricas por conta/canal e produtos do Excel incluídos no lote.

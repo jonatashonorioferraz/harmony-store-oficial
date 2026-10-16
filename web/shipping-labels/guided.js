@@ -53,7 +53,7 @@
     }
     text('guide-label-title', platform === 'shopee' ? 'Etiquetas + lista de empacotamento' : 'Etiquetas ZPL');
     text('guide-upload-description', platform === 'shopee' ? 'Use o ZPL com a lista de empacotamento incluída.' : 'Selecione as etiquetas ZPL e o Excel de vendas. O DANFE é opcional para a ficha interna.');
-    const note = platform === 'shopee' ? 'A lista de empacotamento precisa vir no ZPL exportado. O conversor não cria uma lista ausente.' : 'As etiquetas definem o lote. O Excel pode incluir outras vendas: somente os pedidos das etiquetas serão usados.';
+    const note = platform === 'shopee' ? 'Use o ZPL com checklist para registrar produtos no histórico, sem Excel. Leituras incertas pedem conferência; a lista precisa vir no arquivo.' : 'As etiquetas definem o lote. O Excel pode incluir outras vendas: somente os pedidos das etiquetas serão usados.';
     text('guide-platform-note', note + (platform === 'shopee' && (state.invoices || state.sales) ? ' Os PDFs e o Excel já selecionados foram mantidos na sessão, mas não serão usados na Shopee.' : ''));
     text('guide-help-platform', platform === 'shopee' ? 'Confira se etiquetas e lista estão presentes no ZPL. A lista não é reconstruída pelo conversor.' : 'Cada etiqueta será seguida do documento escolhido nas opções de impressão.');
     text('check', state.review ? 'Conferir novamente' : 'Conferir pedidos');
