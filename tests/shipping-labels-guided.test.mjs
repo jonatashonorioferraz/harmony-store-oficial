@@ -13,7 +13,7 @@ async function setup() {
   h.document.querySelectorAll = s => h.document.body.querySelectorAll(s);
   const upload = h.query('.layout').children[0]; upload.classList.add('guide-upload');
   h.add(upload, 'section', '', 'invoice-upload'); h.add(upload, 'label', '', 'document-choice');
-  h.add(root, 'section', '', 'guide-platforms');
+  h.add(root, 'section', '', 'guide-platforms'); h.add(upload, 'section', 'shopee-history-options');
   for (const id of ['guide-shopee','guide-ml','guide-step-1','guide-step-2','guide-step-3','guide-view','guide-back','check','add-invoices']) h.add(root,'button',id);
   for (const id of ['guide-label-title','guide-upload-description','guide-platform-note','guide-help-platform','guide-next-hint']) h.add(root,'p',id);
   vm.runInContext(source,h.context);
@@ -33,9 +33,11 @@ test('initial wizard shows explicit platform choices, not invented sample orders
 test('platform-specific instructions show Shopee labels or Mercado Livre labels, notes and sales',async()=>{
   const h=await setup();h.query('#guide-shopee').click();assert.equal(h.guide.platform,'shopee');
   assert.equal(h.query('.invoice-upload').hidden,true);assert.equal(h.query('#files').disabled,false);
+  assert.equal(h.query('#shopee-history-options').hidden,false);
   assert.match(h.query('#guide-platform-note').textContent,/lista precisa vir no arquivo/);
   h.query('#guide-ml').click();assert.equal(h.guide.platform,'mercado-livre');
   assert.equal(h.query('.invoice-upload').hidden,false);assert.equal(h.query('#invoice-files').disabled,false);
+  assert.equal(h.query('#shopee-history-options').hidden,true);
   assert.equal(h.query('#sales-file').disabled,false);
   h.update({labels:1});assert.match(h.query('#guide-next-hint').textContent,/relatório Excel/);
   h.update({labels:1,invoices:1});assert.match(h.query('#guide-next-hint').textContent,/Excel de vendas/);
