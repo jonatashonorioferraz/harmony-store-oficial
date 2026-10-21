@@ -1,3 +1,9 @@
+## [v25.128] - 2026-10-21
+
+- Shopee volta a gerar o PDF sem executar a leitura dos produtos por imagem.
+- Importação de produtos para métricas é opcional, desligada por padrão e reiniciada a cada novo lote.
+- Etiquetas, checklist original, histórico existente e proteção contra duplicações são preservados.
+
 ## [v25.127] - 2026-10-16
 
 - Shopee: leitura local dos produtos, variações e quantidades no checklist do ZIP, sem Excel.

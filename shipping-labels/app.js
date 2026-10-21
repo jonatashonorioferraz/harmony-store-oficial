@@ -37,7 +37,7 @@ function restartBatch(keepPlatform){
   selected=[];invoiceFiles=[];salesFile=null;clearResult();
   for(const id of ['files','invoice-files','sales-file'])$(id).value='';
   // A full-DANFE recovery choice belongs to the old lot. Keep only printer preferences.
-  $('document-mode').value='picking';$('progress').value=0;$('progress').hidden=true;
+  $('shopee-history').checked=false;$('document-mode').value='picking';$('progress').value=0;$('progress').hidden=true;
   for(const id of ['review-state','pairing-summary'])$(id).textContent='';
   refreshFiles();guide?.reset(keepPlatform);
   window.dispatchEvent(new CustomEvent('harmony-labels:batch-reset'));
@@ -58,7 +58,7 @@ $('new-batch-platform').onclick=()=>restartBatch(false);
 function syncControls(){
   $('sales-file').disabled=busy||Boolean(guide&&guide.platform!=='mercado-livre');$('clear-sales').disabled=busy;$('clear-sales').hidden=!salesFile;
   for(const control of resolutionControls)control.disabled=busy;
-  for(const id of ['files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
+  for(const id of ['shopee-history','files','invoice-files','clear-invoices','dpi','document-mode','add-invoices','add-labels','retry-reading','use-danfe','remove-duplicates','partial-consent'])$(id).disabled=busy;
   const paired=!!(activeInvoices().length||activeSales());
   $('size').disabled=busy||paired;$('paired-size').hidden=!paired;
   $('paired-size').textContent=$('document-mode').value==='picking'?'Todas as páginas ficam em 10 × 15 cm. Até 4 produtos/variações por ficha, com quantidade '+(activeSales()?'do pedido no Excel':'da nota')+'. Descrições extensas podem ocupar mais espaço. Composição de kits permanece na descrição.':'Todas as páginas ficam em 10 × 15 cm, na sequência etiqueta → DANFE completo. O A4 é reduzido por inteiro, com texto menor, e recebe uma cópia maior do código da chave no rodapé.';
@@ -139,7 +139,7 @@ window.addEventListener('harmony-labels:preview-page',event=>{
 $('previous').onclick=()=>{if(page>0){page--;preview();}};
 $('next').onclick=()=>{if(page<sequence.length-1){page++;preview();}};
 $('open').onclick=()=>{if(globalThis.HarmonyConverterAccess.allowed()&&url)window.open(url,'_blank','noopener');};
-for(const id of ['dpi','size','document-mode'])$(id).addEventListener('change',()=>{if(busy||disposed)return;clearResult();$('status').className='';$('status').textContent='Configuração alterada. Confira o lote novamente.';syncControls();});
+for(const id of ['dpi','size','document-mode','shopee-history'])$(id).addEventListener('change',()=>{if(busy||disposed)return;clearResult();$('status').className='';$('status').textContent='Configuração alterada. Confira o lote novamente.';syncControls();});
 function showReport(rows,generated=false){
   $('pairing-rows').replaceChildren();const picking=$('document-mode').value==='picking';
   const salesSource=rows.some(row=>row.order);
@@ -300,7 +300,7 @@ async function checkBatch(alternative=false){
     }
     ensureActive();const report=await LocalBatchRecovery.analyze(batch,read,{mode,ignored,duplicates,sourceProblems});ensureActive();
     let shopee=null;
-    if(guide?.platform==='shopee'&&batch.length&&globalThis.LocalShopee){
+    if(guide?.platform==='shopee'&&$('shopee-history').checked&&batch.length&&globalThis.LocalShopee){
       shopee=await LocalShopee.read(batch,{active:ensureActive,progress:(n,total)=>{$('status').textContent=`Lendo checklists localmente: página ${n+1} de ${total}…`;$('progress').value=n/total;}});ensureActive();
     }
     prepared={batch,read,report,mode,shopee,reviewOptions:{mode,ignored,duplicates,sourceProblems},dpi:Number($('dpi').value),size:$('size').value};showReview(report);
