@@ -175,3 +175,19 @@ test('long descriptions use fewer items instead of tiny type, clipped text or a 
   note.pages[0].products[0].description='Texto '.repeat(2000);
   await assert.rejects(LocalPicking.plan([note],await PDFLib.PDFDocument.create()),/longa demais/);
 });
+
+test('standalone MCY does not consume a label or mask damaged formats', async()=>{
+ const a='^XA^FO0,0^GFA,8,8,1,FFFFFFFFFFFFFFFF^FS^XZ';
+ const b=a.replace('FFFFFFFFFFFFFFFF','0000000000000000');
+ const progress=[];
+ const pages=await LocalZpl.parseZpl(a+'^XA\n^MCY\n^XZ'+b,{onProgress:(n,total)=>progress.push([n,total])});
+ assert.equal(pages.length,2);assert.equal(pages[0].raw[0],255);assert.equal(pages[1].raw[0],0);
+ assert.deepEqual(progress,[[1,3],[2,3],[3,3]]);
+ await assert.rejects(LocalZpl.parseZpl('^XA^MCY^XZ'),/Nenhuma etiqueta/);
+ await assert.rejects(LocalZpl.parseZpl(a+'^XA^MCY^FO0,0^GFA,8,8,1,FF^FS^XZ'));
+});
+test('NF and Nota fiscal labels retain ambiguity instead of guessing',()=>{
+ assert.equal(LocalZpl.labelMetadata('^FDNota fiscal #24169^FS').invoiceNumber,'24169');
+ assert.equal(LocalZpl.labelMetadata('^FDNF: 24.169^FS').invoiceNumber,'24169');
+ assert.equal(LocalZpl.labelMetadata('^FDNota fiscal #24169^FS^FDNF: 24170^FS').invoiceNumber,null);
+});

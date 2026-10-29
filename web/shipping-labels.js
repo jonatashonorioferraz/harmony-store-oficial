@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const VIEW='shipping-labels';
-  const VERSION='25.128';
+  const VERSION='25.129';
   let frame=null,loadingTimer=null;
   // The parent keeps authentication. Only allowlisted operational summaries
   // reach the shared history; source files and tokens stay out of the bridge.
