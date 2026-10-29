@@ -1,3 +1,9 @@
+## [v25.130] - 2026-10-29
+
+- Aba Shopee compacta · Beta separada do conversor normal, com até 20 pedidos locais por teste e sem registrar histórico.
+- Uma página por pedido, vínculo por ID nas duas fontes, textos originais reorganizados sem OCR e barras do DANFE no tamanho original.
+- Modelos desconhecidos, duplicidades e listas que não cabem são bloqueados; prévia, download e novo teste disponíveis.
+
 ## [v25.129] - 2026-10-29
 
 - Mercado Livre: reconhece o bloco de controle MCY sem gerar página ou interromper etiquetas válidas.
