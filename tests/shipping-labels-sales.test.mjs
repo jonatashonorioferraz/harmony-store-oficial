@@ -159,3 +159,17 @@ test('ten variants remain separate and sequential across picking sheets with sou
  const text=printed.join('\n');assert.match(text,/PEDIDO 2000000000000001/);assert.match(text,/ENVIO 10000000001/);assert.match(text,/QTD. DO PEDIDO/);assert.match(text,/NÃO É DOCUMENTO FISCAL/);assert.doesNotMatch(text,/NF |conferidas com a NF/);
  for(let i=0;i<10;i++)assert.match(text,new RegExp('COR / AROMA: ROSA '+i));
 });
+
+test('missing label CEP uses only its explicit unique invoice after exact order and shipment match',async()=>{
+ const c=env(),sales=c.LocalSales.parse([...headers(),row(7,data(1))]),l=label(1),n=invoice(1);
+ l.metadata.postcode=null;l.metadata.postcodes=[];
+ const original=JSON.stringify(l);
+ const order=c.LocalSales.orderFor(l,sales,[n]);
+ assert.equal(order.products.length,1);assert.equal(order.postcodeEvidence.invoiceNumber,'1');
+ assert.equal(JSON.stringify(l),original);
+ const report=await c.LocalSales.review([l],{sales,invoices:[n]});
+ assert.equal(report.ready,true);assert.match(report.rows[0].fiscalCheck,/etiqueta sem CEP/);
+ const paired=c.LocalSales.pair([l],{sales,invoices:[n]});assert.equal(paired.length,1);
+ for(const notes of [[],[invoice(2)],[n,n],[{...n,postcode:'99999999'}]])assert.throws(()=>c.LocalSales.orderFor(l,sales,notes),/sem CEP/);
+ for(const metadata of [{...l.metadata,invoiceNumber:null},{...l.metadata,postcodes:['01234567','99999999']},{...l.metadata,saleId:'2000000000000002'},{...l.metadata,shipmentId:'10000000002'},{...l.metadata,postcode:'99999999'}])assert.throws(()=>c.LocalSales.orderFor({...l,metadata},sales,[n]));
+});

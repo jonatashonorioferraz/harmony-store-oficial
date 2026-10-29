@@ -1,3 +1,8 @@
+## [v25.129] - 2026-10-29
+
+- Mercado Livre: reconhece o bloco de controle MCY sem gerar página ou interromper etiquetas válidas.
+- Etiqueta sem CEP pode usar o DANFE da NF explicitamente indicada, com pedido/envio únicos no Excel e CEP da nota igual ao Excel. Divergências e ambiguidades continuam bloqueadas.
+
 ## [v25.128] - 2026-10-21
 
 - Shopee volta a gerar o PDF sem executar a leitura dos produtos por imagem.

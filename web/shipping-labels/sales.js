@@ -113,21 +113,27 @@
  function apply(rows,labels,sales){return rows.map(row=>({...row,sales:productsFor(labels[row.labelIndex],row.invoice,sales)}));}
  // Picking from sales is an independent mode: an invoice is not its identity
  // or quantity source. Require both order and shipment IDs plus destination CEP.
- function orderFor(label,sales){
+ function orderFor(label,sales,invoices=[]){
   const m=root.LocalInvoices.labelIdentity(label);
-  if(!/^\d{8,15}$/.test(m.shipmentId||'')||!/^\d{8,20}$/.test(m.saleId||'')||m.saleIds?.length>1||!/^\d{8}$/.test(m.postcode||''))fail('A etiqueta precisa informar um único envio, pedido/pacote e CEP em texto para conferir com o Excel. Selecione o ZPL original.');
+  if(!/^\d{8,15}$/.test(m.shipmentId||'')||!/^\d{8,20}$/.test(m.saleId||'')||m.saleIds?.length>1)fail('A etiqueta precisa informar um único envio, pedido/pacote e CEP em texto para conferir com o Excel. Selecione o ZPL original.');
   const shipments=sales.groups.filter(g=>g.shipmentId===m.shipmentId),orders=sales.groups.filter(g=>g.id===m.saleId);
   if(shipments.length!==1)fail(`Envio ${m.shipmentId}: ${shipments.length?'rastreamento repetido':'não encontrado'} no Excel. Selecione o relatório que contém este pedido.`);
   const group=shipments[0];
   if(orders.length!==1||orders[0]!==group)fail('O número de venda/pacote do Excel diverge da etiqueta ou está repetido. Selecione o relatório correto.');
-  if(group.postcode!==m.postcode)fail('O CEP do Excel diverge da etiqueta. Confira o pedido na plataforma e selecione os arquivos corretos.');
+
+  let postcodeEvidence=null;
+  if(!m.postcode){
+   const matches=invoices.filter(n=>n.invoiceNumber===m.invoiceNumber);
+   if(m.postcodes?.length||!label.metadata?.invoiceNumber||m.invoiceNumbers?.length>1||!m.invoiceNumber||matches.length!==1||!/^\d{8}$/.test(group.postcode)||matches[0].postcode!==group.postcode)fail('Etiqueta sem CEP: adicione o DANFE da NF indicada na etiqueta, com CEP correspondente ao Excel. Pedido e envio também precisam coincidir.');
+   postcodeEvidence={invoiceNumber:m.invoiceNumber,invoiceKey:matches[0].key};
+  }else if(!/^\d{8}$/.test(m.postcode)||group.postcode!==m.postcode)fail('O CEP do Excel diverge da etiqueta. Confira o pedido na plataforma e selecione os arquivos corretos.');
   if(!group.products.length||group.products.length!==group.expected)fail('O pacote do Excel está incompleto. Exporte novamente, sem remover ou ordenar suas linhas internas.');
   if(group.products.some(p=>/CANCEL|DEVOL|REEMBOLS/.test(fold(p.status))))fail('O relatório indica cancelamento ou devolução neste pedido. Confira na plataforma.');
   const products=group.products.map(p=>{
    if(!/^MLB\d+$/.test(p.itemId)||!p.title?.trim()||!Number.isSafeInteger(p.quantity)||p.quantity<1)fail('Produto ou quantidade inválida no pedido do Excel. Exporte novamente.');
    return {description:p.title,quantity:String(p.quantity),unit:'UNID',code:p.sku||p.itemId,variation:root.LocalPicking.variation(p.variation||'')||p.variation,variationSource:'sales',orderId:p.orderId,source:p.source,sheet:p.sheet,sourceRow:p.row};
   });
-  return {key:'sales:'+group.id,id:group.id,shipmentId:group.shipmentId,postcode:group.postcode,products,source:group.source,sheet:group.sheet,row:group.row};
+  return {key:'sales:'+group.id,id:group.id,shipmentId:group.shipmentId,postcode:group.postcode,postcodeEvidence,products,source:group.source,sheet:group.sheet,row:group.row};
  }
  function fiscalCheck(label,read){
   if(!read.invoices?.length&&!read.problems?.length)return 'DANFE não fornecido; ficha baseada no Excel.';
@@ -135,6 +141,10 @@
   if(!m.invoiceNumber)return 'Etiqueta sem número de NF; nenhuma nota foi associada. Ficha baseada no Excel.';
   const matches=(read.invoices||[]).filter(n=>n.invoiceNumber===m.invoiceNumber);
   if(matches.length!==1)return `NF ${m.invoiceNumber}: ${matches.length?'número ambíguo nos PDFs':'não encontrada nos PDFs'}. Ficha baseada no Excel.`;
+  if(!m.postcode){
+   const order=orderFor(label,read.sales,read.invoices||[]);
+   return 'NF '+order.postcodeEvidence.invoiceNumber+': etiqueta sem CEP; pedido e envio conferidos no Excel e CEP conferido com o DANFE. Produtos e quantidades da ficha vêm do Excel.';
+  }
   if(matches[0].postcode!==m.postcode)return `NF ${m.invoiceNumber}: CEP diferente da etiqueta. A nota não foi vinculada; ficha baseada no Excel.`;
   try{productsFor(label,matches[0],read.sales);return `NF ${m.invoiceNumber}: produtos e quantidades também conferidos com o DANFE.${matches[0].postcodeSource==='delivery'?' CEP do local de entrega conferido.':''}`;}
   catch(error){return `NF ${m.invoiceNumber}: conferência complementar: ${error.message} A ficha usa os dados do Excel.`;}
@@ -143,7 +153,7 @@
   if(!labels.length||labels.length>1000)fail('Selecione entre 1 e 1.000 etiquetas.');
   const shipments=new Set(),orders=new Set();
   return labels.map((label,labelIndex)=>{
-   const order=orderFor(label,read.sales);
+   const order=orderFor(label,read.sales,read.invoices||[]);
    if(shipments.has(order.shipmentId)||orders.has(order.id))fail('Envio ou pedido repetido nas etiquetas. Selecione um lote sem duplicidades.');
    shipments.add(order.shipmentId);orders.add(order.id);
    return {labelIndex,order,sales:order,shipmentId:order.shipmentId,fiscalCheck:fiscalCheck(label,read)};
@@ -156,7 +166,7 @@
   for(let index=0;index<labels.length;index++){
    const label=labels[index],m=identities[index],item={labelIndex:index,shipmentId:m.shipmentId||'',invoiceNumber:m.invoiceNumber||'',labelPostcode:m.postcode||'',source:label.source||`Etiqueta ${index+1}`,ready:false};
    try{
-    const order=orderFor(label,read.sales);
+    const order=orderFor(label,read.sales,read.invoices||[]);
     if(identities.filter(other=>other.shipmentId===m.shipmentId||other.saleId===m.saleId).length!==1)fail('Envio ou pedido repetido nas etiquetas. Selecione um lote sem duplicidades.');
     rows.push({labelIndex:validLabels.length,order,sales:order,shipmentId:order.shipmentId,fiscalCheck:fiscalCheck(label,read)});
     validLabels.push(label);item.ready=true;

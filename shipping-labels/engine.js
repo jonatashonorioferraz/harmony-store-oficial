@@ -44,7 +44,7 @@ function labelMetadata(block){
     if(m[1]==='FS')indicator=null;
   }
   const text=fields.join('\n'),unique=values=>[...new Set(values)];
-  const invoiceNumbers=unique([...text.matchAll(/\bNF\s*:\s*([\d.]+)(?!\d)/gi)].map(m=>m[1].replace(/\D/g,'').replace(/^0+/,'')));
+  const invoiceNumbers=unique([...text.matchAll(/\b(?:NF\s*:|Nota\s+fiscal\s*#)\s*([\d.]+)(?!\d)/gi)].map(m=>m[1].replace(/\D/g,'').replace(/^0+/,'')));
   const postcodes=unique([...text.matchAll(/\bCEP\s*:\s*(\d{5})-?(\d{3})(?!\d)/gi)].map(m=>m[1]+m[2]));
   // Mercado Livre prints its 16-digit sale/pack ID in adjacent 5 + 11 fields.
   const saleIds=unique([...text.matchAll(/\b(?:Pack\s*ID|Venda)\s*:\s*(\d{5}\s+\d{11}|\d{8,20})(?!\d)/gi)].map(m=>m[1].replace(/\s/g,'')));
@@ -66,6 +66,9 @@ async function parseZpl(text,options={}){
     end=m.index+m[0].length;
     if(m[1]){const image=await graphic(m[2],m[3],m[4].trim());stored+=image.raw.length;if(stored>MAX)fail('Imagens descomprimidas ultrapassam 100 MB.');graphics.set(m[1].trim().toUpperCase(),image);continue;}
     const block=m[5];
+    // Mercado Envios may insert a standalone bitmap-clear format between labels.
+    // It contains no printable fields. Match only MCY, never discard damaged labels.
+    if(/^\s*\^MCY\s*$/.test(block)){options.onProgress?.(++labelIndex,labelTotal);continue;}
     if(/^\s*\^ID[^\^]*\^FS\s*$/.test(block))continue;
     const refs=[...block.matchAll(/\^XG([^,^]+),(\d+),(\d+)/g)],gf=[...block.matchAll(/\^GFA,(\d+),(\d+),(\d+),([^\^~]+)/g)];
     const rasterCommands=new Set(['MM','PO','MN','FO','XG','FS','PQ','GF','PW','LL','LH','LT','LS','CI']);
