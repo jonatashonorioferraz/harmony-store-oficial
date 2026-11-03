@@ -1,3 +1,8 @@
+## [v25.135] - 2026-11-03
+
+- Mercado Livre: ajuste horizontal limitado ao texto quando a fonte local ultrapassa as linhas do campo ZPL, preservando todas as palavras, altura, campos vizinhos e códigos.
+- Campos que não cabem com ajuste de até 15% e quebras explícitas excedentes continuam bloqueados.
+
 ## [v25.134] - 2026-11-03
 
 - Shopee compacta: suporte ao modelo PAC Industrial em lotes mistos, com vínculo por ID lido diretamente na etiqueta e no checklist.

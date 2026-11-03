@@ -44,7 +44,7 @@
     }
     return new TextDecoder(encoding === 28 ? 'utf-8' : 'windows-1252', { fatal: true }).decode(new Uint8Array(bytes));
   }
-  function textLines(ctx, text, field) {
+  function wrapTextLines(ctx, text, field) {
     const block = field.block;
     if (!block) return [text.replace(/\\&/g, ' ')];
     if (!block.width) return [];
@@ -65,8 +65,23 @@
       }
       lines.push(line);
     }
-    if (lines.length > block.lines) fail('O texto excede o limite de linhas de um campo ZPL. A conversão foi interrompida para evitar sobreposição.');
     return lines;
+  }
+  function textLines(ctx, text, field) {
+    let lines=wrapTextLines(ctx,text,field);
+    if(!field.block||lines.length<=field.block.lines)return lines;
+    // The bundled substitute can wrap a name/address earlier than Zebra font 0.
+    // Fit only this text field, by at most 15% horizontally; never clip text,
+    // change its height, move neighbouring fields or resize barcode modules.
+    if(!text.includes('\\&')){
+      const original=field.font,at=ratio=>wrapTextLines(ctx,text,{...field,font:{...original,width:original.width*ratio}});
+      let low=.85,high=1,best=at(low);
+      if(best.length<=field.block.lines){
+        for(let i=0;i<12;i++){const mid=(low+high)/2,candidate=at(mid);if(candidate.length<=field.block.lines){low=mid;best=candidate;}else high=mid;}
+        field.font={...original,width:original.width*low};return best;
+      }
+    }
+    fail('O texto excede o limite de linhas de um campo ZPL. A conversão foi interrompida para evitar sobreposição.');
   }
   async function render(block, graphics, decodeGraphic) {
     await prepareFont();
