@@ -1,3 +1,8 @@
+## [v25.133] - 2026-11-03
+
+- Shopee: IDs com caracteres encostados são separados por correspondência exata de cada letra, sem cadastrar pares novos ou presumir vínculo entre páginas.
+- Partições ambíguas e pixels desconhecidos continuam bloqueados. Formato de impressão, quantidades e histórico preservados.
+
 ## [v25.132] - 2026-11-03
 
 - Shopee compacta: tenta espaçamento mais enxuto quando a lista não cabe no padrão, sem reduzir letras, códigos ou omitir produtos.
