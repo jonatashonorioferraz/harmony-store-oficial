@@ -11,6 +11,7 @@ const ink=p=>Array.from(p.raw).reduce((n,v)=>n+v.toString(2).replaceAll('0','').
 function pair(id='261029ABCDEFGH',count=3){
  const label=image(816,1218),list=image(1218,816);label.id=list.id=id;list.table={columns:[75,560,949,1007],rows:[]};
  for(let x=85;x<726;x+=3)for(let y=1079;y<1140;y++)dot(label,x,y);
+ for(let x=54;x<516;x+=3)for(let y=693;y<801;y++)dot(label,x,y);
  for(let i=0;i<count;i++){const top=268+i*95;list.table.rows.push({top,bottom:top+60});for(let y=0;y<18;y++)for(let x=0;x<100;x+=3){dot(list,79+x,top+y);dot(list,565+x,top+y);}for(let y=0;y<18;y++)dot(list,954,top+y);}
  return {label,list};
 }
@@ -19,6 +20,8 @@ test('compact output keeps original DANFE pixels, exact IDs, quantities and ther
  const {label,list}=pair();const r=C.compose(label,list);
  assert.equal(r.id,label.id);assert.equal(r.items,3);
  assert.deepEqual(C.cut(r.page,0,918,816,70).raw,C.cut(label,0,1075,816,70).raw);
+ const parts=C.shippingParts(label);assert.deepEqual(parts.tracking.raw,C.cut(label,40,690,496,115).raw);
+ assert.equal(ink(C.cut(parts.upper,40,690,496,115)),0);
  const doc=await ctx.PDFLib.PDFDocument.load(await (await C.createPdf([r])).arrayBuffer());
  assert.equal(doc.getPageCount(),1);assert.ok(Math.abs(doc.getPage(0).getWidth()-100/25.4*72)<.001);assert.ok(Math.abs(doc.getPage(0).getHeight()-150/25.4*72)<.001);
 });
@@ -34,6 +37,7 @@ test('unsupported barcode geometry and excessive lists fail closed',()=>{
  const b=pair();dot(b.label,101,1080);assert.throws(()=>C.compose(b.label,b.list),/diferente/);
  const c=pair('261029ABCDEFGH',6);assert.throws(()=>C.compose(c.label,c.list),/não cabe|extensa/);
  assert.throws(()=>C.convert(Array(42).fill(a.label)),/20 pedidos/);
+ const d=pair();dot(d.label,55,710);assert.throws(()=>C.compose(d.label,d.list),/rastreamento diferente/);
 });
 test('reflow preserves all ink pixels and never shrinks words',()=>{
  const p=image(60,50);for(const [x,y] of [[2,2],[3,2],[25,2],[26,2],[2,30],[3,30]])dot(p,x,y);

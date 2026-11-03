@@ -1,3 +1,9 @@
+## [v25.131] - 2026-11-03
+
+- Shopee compacta: reconhece as combinações encostadas WA e 4V nos IDs dos checklists por correspondência exata, mantendo o vínculo seguro.
+- Mensagem identifica a página e o tipo de documento quando o ID não é reconhecido.
+- Barras de rastreamento preservam a largura original para evitar perda de leitura a 203 dpi; DANFE e lista compacta preservados.
+
 ## [v25.130] - 2026-10-29
 
 - Aba Shopee compacta · Beta separada do conversor normal, com até 20 pedidos locais por teste e sem registrar histórico.
