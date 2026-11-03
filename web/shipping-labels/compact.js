@@ -5,7 +5,7 @@
  const blank=(width,height)=>({width,height,stride:Math.ceil(width/8),raw:new Uint8Array(Math.ceil(width/8)*height),kind:'bitmap'});
  const put=(p,x,y)=>{if(x<0||y<0||x>=p.width||y>=p.height)throw Error('A lista não cabe em uma página. Use o conversor normal para este pedido.');p.raw[y*p.stride+(x>>3)]|=128>>(x%8);};
  function cut(p,x,y,w,h){const out=blank(w,h);for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(bit(p,x+i,y+j))put(out,i,j);return out;}
- function paste(out,p,x,y,scale=1){for(let j=0;j<Math.round(p.height*scale);j++)for(let i=0;i<Math.round(p.width*scale);i++)if(bit(p,Math.floor(i/scale),Math.floor(j/scale)))put(out,x+i,y+j);}
+ function paste(out,p,x,y,scale=1,scaleY=scale){for(let j=0;j<Math.round(p.height*scaleY);j++)for(let i=0;i<Math.round(p.width*scale);i++)if(bit(p,Math.floor(i/scale),Math.floor(j/scaleY)))put(out,x+i,y+j);}
  function trim(p){let l=p.width,r=-1,t=p.height,b=-1;for(let y=0;y<p.height;y++)for(let x=0;x<p.width;x++)if(bit(p,x,y)){l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}return r<0?blank(0,0):cut(p,l,t,r-l+1,b-t+1);}
  function bands(values){const runs=[];for(const n of values){const last=runs.at(-1);if(last&&n===last[1]+1)last[1]=n;else runs.push([n,n]);}return runs;}
  // Split only word-sized blank gaps. Every source ink pixel is copied unchanged.
@@ -25,6 +25,14 @@
   if(bars<100||bars>450)throw Error('Código DANFE não identificado no modelo testado.');
   for(let y=1140;y<p.height;y++)for(let x=0;x<p.width;x++)if(bit(p,x,y))throw Error('Conteúdo adicional abaixo do DANFE. Use o conversor normal.');
  }
+ function shippingParts(label){
+  const upper=cut(label,0,0,816,1075),tracking=cut(label,40,690,496,115);
+  let count=0;for(let x=0;x<tracking.width;x++)if(bit(tracking,x,20))count++;
+  if(count<50||count>350)throw Error('Barras de rastreamento não identificadas no modelo testado.');
+  for(let y=3;y<111;y++)for(let x=0;x<tracking.width;x++)if(bit(tracking,x,y)!==bit(tracking,x,20))throw Error('Modelo de barras de rastreamento diferente do testado. Use o conversor normal.');
+  for(let y=690;y<805;y++)for(let x=40;x<536;x++)upper.raw[y*upper.stride+(x>>3)]&=~(128>>(x%8));
+  return {upper,tracking};
+ }
  function compose(label,checklist){
   barcodeModel(label);const table=root.LocalShopee.layout(checklist);if(!table||!table.rows.length)throw Error('Checklist não reconhecido.');
   const id=root.LocalShopee.glyphId(label,'shipping');if(!id||id!==root.LocalShopee.glyphId(checklist,'checklist'))throw Error('IDs da etiqueta e do checklist não coincidem.');
@@ -33,7 +41,8 @@
    const titleKey=key(cells[0]);let group=groups.at(-1);if(!group||group.key!==titleKey){group={key:titleKey,title:cells[0],variants:[]};groups.push(group);}group.variants.push({variation:cells[1],quantity:cells[2]});
   }
   const out=blank(816,1224);
-  paste(out,cut(label,0,0,816,1075),61,4,.85);
+  const {upper,tracking}=shippingParts(label);
+  paste(out,upper,61,4,.85);paste(out,tracking,40,591,1,.85);
   // 1:1 source pixels, at the original physical width of 100 mm.
   paste(out,cut(label,0,1075,816,70),0,918);
   for(let x=24;x<792;x++)put(out,x,998);
@@ -53,8 +62,8 @@
  function convert(batch){
   if(!batch.length||batch.length>40)throw Error('Selecione até 20 pedidos com etiqueta e checklist neste beta.');
   const labels=new Map(),lists=new Map();
-  for(const page of batch){const rotated=root.LocalShopee.rotate(page),table=root.LocalShopee.layout(rotated),kind=table?'checklist':'shipping',p=table?rotated:page,id=root.LocalShopee.glyphId(p,kind),map=table?lists:labels;
-   if(!id)throw Error('ID não reconhecido. Nenhum vínculo será presumido pela ordem das páginas. Use o conversor normal.');
+  for(const [index,page] of batch.entries()){const rotated=root.LocalShopee.rotate(page),table=root.LocalShopee.layout(rotated),kind=table?'checklist':'shipping',p=table?rotated:page,id=root.LocalShopee.glyphId(p,kind),map=table?lists:labels;
+   if(!id)throw Error('ID não reconhecido no '+(table?'checklist':'envio')+' da página '+(index+1)+'. Nenhum vínculo será presumido pela ordem das páginas. Use o conversor normal.');
    if(map.has(id))throw Error('Pedido repetido no arquivo: '+id+'. Selecione uma única cópia.');map.set(id,p);
   }
   if(labels.size!==lists.size||!labels.size)throw Error('Falta etiqueta ou checklist no arquivo.');
@@ -65,15 +74,17 @@
   for(const result of results){
    // Embed source at its final PDF scale, avoiding two successive raster reductions.
    const lower=cut(result.page,0,0,816,1224);lower.raw.fill(0,0,918*lower.stride);
-   const upper=cut(result.label,0,0,816,1075);
-   const images=await root.LocalZpl.createPdf([lower,upper],203,'original');
-   const [bottom,top]=await doc.embedPdf(await images.arrayBuffer(),[0,1]);
+   // Restore tracking bar widths too: 85% can collapse narrow modules at 203 dpi.
+   const {upper,tracking}=shippingParts(result.label);
+   const images=await root.LocalZpl.createPdf([lower,upper,tracking],203,'original');
+   const [bottom,top,bars]=await doc.embedPdf(await images.arrayBuffer(),[0,1,2]);
    const page=doc.addPage([100*mm,150*mm]);
    page.drawPage(bottom,{x:0,y:0,width:100*mm,height:150*mm});
    const height=1075*85/816;
    page.drawPage(top,{x:7.5*mm,y:(150-.5-height)*mm,width:85*mm,height:height*mm});
+   page.drawPage(bars,{x:40*100/816*mm,y:(150-.5-805*85/816)*mm,width:496*100/816*mm,height:115*85/816*mm});
   }return new Blob([await doc.save()],{type:'application/pdf'});
  }
- root.ShopeeCompact=Object.freeze({convert,compose,createPdf,barcodeModel,cut,trim,words,lines});
+ root.ShopeeCompact=Object.freeze({convert,compose,createPdf,barcodeModel,shippingParts,cut,trim,words,lines});
 })(globalThis);
 
