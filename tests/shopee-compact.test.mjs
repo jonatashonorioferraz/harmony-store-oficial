@@ -16,7 +16,7 @@ function pair(id='261029ABCDEFGH',count=3){
  for(let i=0;i<count;i++){const top=268+i*95;list.table.rows.push({top,bottom:top+60});for(let y=0;y<18;y++)for(let x=0;x<100;x+=3){dot(list,79+x,top+y);dot(list,565+x,top+y);}for(let y=0;y<18;y++)dot(list,954,top+y);}
  return {label,list};
 }
-ctx.LocalShopee={layout:p=>p.table,glyphId:p=>p.id||'',rotate:p=>p};
+ctx.LocalShopee={layout:p=>p.table,glyphId:(p,kind)=>kind==='pac'?(p.pac?p.id:''):p.id||'',rotate:p=>p};
 test('compact output keeps original DANFE pixels, exact IDs, quantities and thermal page count',async()=>{
  const {label,list}=pair();const r=C.compose(label,list);
  assert.equal(r.id,label.id);assert.equal(r.items,3);
@@ -65,3 +65,15 @@ test('beta is separately gated and cannot record operational history',async()=>{
  assert.match(ui,/revokeObjectURL/);assert.match(html,/personalizados/);
 });
 
+
+test('PAC Industrial keeps all five code crops and DANFE with one thermal page',async()=>{
+ const {label,list}=pair();label.pac=true;
+ for(const [x,y,w,h]of [[74,263,660,147],[460,488,338,147],[11,862,626,109]])for(let j=4;j<h-4;j++)for(let i=8;i<w-8;i+=3)dot(label,x+i,y+j);
+ for(const [x,y]of [[45,110],[670,880]])for(let j=0;j<100;j+=3)for(let i=0;i<100;i+=3)dot(label,x+i,y+j);
+ const parts=C.shippingParts(label);assert.equal(parts.pac,true);assert.equal(parts.codes.length,5);
+ for(const c of parts.codes){assert.deepEqual(c.p.raw,C.cut(label,...c.rect).raw);assert.equal(ink(C.cut(parts.upper,...c.rect)),0);}
+ const r=C.compose(label,list),pdf=await ctx.PDFLib.PDFDocument.load(await(await C.createPdf([r])).arrayBuffer());assert.equal(pdf.getPageCount(),1);
+ const {PDFRawStream,PDFName}=ctx.PDFLib,streams=pdf.context.enumerateIndirectObjects().map(([,o])=>o).filter(o=>o instanceof PDFRawStream&&o.dict.get(PDFName.of('Subtype'))?.toString()==='/Image');
+ for(const c of parts.codes){assert.ok(streams.some(o=>o.dict.get(PDFName.of('Width'))?.asNumber()===c.p.width&&o.dict.get(PDFName.of('Height'))?.asNumber()===c.p.height&&Buffer.from(inflateSync(o.getContents())).equals(Buffer.from(c.p.raw))));}
+ dot(label,83,280);assert.throws(()=>C.shippingParts(label),/diferente/);
+});

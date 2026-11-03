@@ -1,3 +1,9 @@
+## [v25.134] - 2026-11-03
+
+- Shopee compacta: suporte ao modelo PAC Industrial em lotes mistos, com vínculo por ID lido diretamente na etiqueta e no checklist.
+- Códigos PAC e DANFE preservam a resolução horizontal de origem; códigos quadrados mantêm as duas dimensões. Um pedido por página de 10 × 15 cm, com lista compacta e ID repetido.
+- Modelos desconhecidos, vínculos ambíguos e listas sem espaço continuam bloqueados. Sem registro de vendas pelo beta.
+
 ## [v25.133] - 2026-11-03
 
 - Shopee: IDs com caracteres encostados são separados por correspondência exata de cada letra, sem cadastrar pares novos ou presumir vínculo entre páginas.
