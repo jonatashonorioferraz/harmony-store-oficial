@@ -2,8 +2,9 @@
 // Shared contract audited against public metadata on 2026-10-01. No production data.
 // Reviewed 2026-10-08: source_evidence JSONB adds no keys, grants, triggers or tables.
 // All retained event fields, including source evidence, remain in encrypted capture.
-export const CATALOG_VERSION = 'harmony-public-2026-10-16-v1';
-export const MIGRATIONS_SHA256 = '51e8dea4e52d33f03e273308c079fadeab67302a1856ae8c7fed0c8e253f009f';
+// Reviewed 2026-11-03: bills.digit_line may be null until a valid payment code is confirmed; no new table or privilege.
+export const CATALOG_VERSION = 'harmony-public-2026-11-03-v1';
+export const MIGRATIONS_SHA256 = '1a5bf28aec2c890c8b4d1dee0dd49ff1571afee226ddf2c116764ca2954e8e22';
 export const TABLE_CATALOG = [
 {
   "name": "expedition_accounts",

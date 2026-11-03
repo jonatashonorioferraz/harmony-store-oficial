@@ -1,3 +1,9 @@
+## [v25.136] - 2026-11-03
+
+- Boletos: leitura sugere correção de um único algarismo somente quando os dígitos verificadores apontam uma resposta única.
+- Cadastros podem ser concluídos sem código validado; o código fica indisponível para pagamento até ser informado e validado.
+- Falha da leitura automática preserva o arquivo selecionado para revisão manual, sem exigir novo envio.
+
 ## [v25.135] - 2026-11-03
 
 - Mercado Livre: ajuste horizontal limitado ao texto quando a fonte local ultrapassa as linhas do campo ZPL, preservando todas as palavras, altura, campos vizinhos e códigos.
