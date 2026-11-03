@@ -6,12 +6,13 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const read=name=>readFile(new URL('../'+name,import.meta.url),'utf8');
-const [ui,css,migration,reactivation,correction,pendingCorrection,edge,html,worker]=await Promise.all([
+const [ui,css,migration,reactivation,correction,pendingCorrection,edge,html,worker,optionalCodeMigration]=await Promise.all([
   read('bills.js'),read('bills.css'),read('supabase/migrations/20260725212141_admin_bills.sql'),
   read('supabase/migrations/20260727160000_bill_reactivation.sql'),
   read('supabase/migrations/20260819190000_bill_due_date_correction_reactivation.sql'),
   read('supabase/migrations/20260918193547_correct_pending_bill_due_date.sql'),
   read('supabase/functions/analyze-bill/index.ts'),read('index.html'),read('service-worker.js'),
+  read('supabase/migrations/20261103151927_allow_bill_registration_without_payment_code.sql'),
 ]);
 
 test('bill data and documents are admin-only, private and audited',()=>{
@@ -53,8 +54,23 @@ test('digit line is checked independently of AI before saving',()=>{
   assert.equal(context.HarmonyBills.validDigitLine(valid.slice(0,-1)+'1'),false,'the general check digit also protects the amount');
   assert.equal(context.HarmonyBills.validDigitLine('00191500954014481606906809350314337370000000100'),false);
   assert.equal(context.HarmonyBills.validDigitLine('11111111111111111111111111111111111111111111111'),false);
-  assert.match(ui,/if\(!validDigitLine\(line\.value\)\)return alert/);
+  assert.match(ui,/if\(digitLine&&!validDigitLine\(digitLine\)\)/);
+  assert.match(ui,/digit_line:digitLine\|\|null/);
+  assert.match(optionalCodeMigration,/alter table public\.bills alter column digit_line drop not null/i);
+  assert.match(optionalCodeMigration,/nullif\(v_digit_line,''\)/);
   assert.match(migration,/digit_line text not null check \(digit_line ~ '\^\[0-9\]\{44\}\$\|\^\[0-9\]\{47\}\$\|\^\[0-9\]\{48\}\$'\)/);
+});
+
+test('a single OCR digit can be recovered only from a unique checksum-valid candidate',()=>{
+  const context={S:{profile:{role:'admin'}},window:{},renderApp(){},renderPage(){},document:{},setTimeout,clearTimeout};
+  context.window=context;vm.runInNewContext(ui,context);
+  const valid='00190500954014481606906809350314337370000000100';
+  const index=6,changed=valid[index]==='9'?'8':String(Number(valid[index])+1),corrupted=valid.slice(0,index)+changed+valid.slice(index+1);
+  assert.equal(context.HarmonyBills.suggestDigitLineCorrection(corrupted),valid);
+  assert.equal(context.HarmonyBills.suggestDigitLineCorrection('11111111111111111111111111111111111111111111111'),'');
+  assert.match(ui,/Compare o código sugerido com o documento antes de confirmar/);
+  assert.match(ui,/Nenhum código validado/);
+  assert.match(ui,/admin_update_bill/);
 });
 
 test('bill workflow supports upload, quick copy, payment proof and due alerts',()=>{
