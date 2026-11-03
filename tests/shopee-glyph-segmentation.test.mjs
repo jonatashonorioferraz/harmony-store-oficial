@@ -16,3 +16,10 @@ test('longer adjacent sequences work and ambiguous or damaged pixels fail closed
  assert.equal(ctx.LocalShopee.decodeGlyph({width:2,height:1,bits:'11'},[{width:1,height:1,bits:'1',text:'A'},{width:1,height:1,bits:'1',text:'B'}]),'');
  assert.equal(ctx.LocalShopee.decodeGlyph({width:3,height:1,bits:'101'},[{width:1,height:1,bits:'1',text:'A'}]),'');
 });
+
+test('PAC Industrial ID is read from its own pixels at the top, never borrowed from a checklist',()=>{
+ const id='261103C06R9J52',p={width:816,height:1218,stride:102,raw:new Uint8Array(102*1218)};let x=480;
+ for(const char of id){const g=[...ctx.ShopeeIdFonts.pac].reverse().find(g=>g.text===char);assert.ok(g);for(let y=0;y<g.height;y++)for(let i=0;i<g.width;i++)if(g.bits[y*g.width+i]==='1')p.raw[(85+y)*p.stride+((x+i)>>3)]|=128>>((x+i)%8);x+=g.width+3;}
+ assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),id);assert.equal(ctx.LocalShopee.glyphId(p,'pac'),id);
+ p.raw[86*p.stride+(480>>3)]^=128>>(480%8);assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),'');
+});

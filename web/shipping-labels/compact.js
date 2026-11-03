@@ -39,7 +39,29 @@
   for(let x=0;x<816;x++)if((x<64||x>=752)&&bit(p,x,1079))throw Error('Barras do DANFE fora da área suportada. Use o conversor normal.');
   for(let y=1140;y<p.height;y++)for(let x=0;x<p.width;x++)if(bit(p,x,y))throw Error('Conteúdo adicional abaixo do DANFE. Use o conversor normal.');
  }
+
+ function pacParts(label){
+  // PAC Industrial has three linear codes and two square codes above the DANFE.
+  // Keep every code at native horizontal resolution, with explicit model guards.
+  const upper=cut(label,0,0,816,1075);
+  const specs=[
+   {rect:[35,100,144,144],x:88,y:86,square:true},
+   {rect:[74,263,660,147],x:70,y:226},
+   {rect:[460,488,338,147],x:453,y:413},
+   {rect:[11,862,626,109],x:25,y:726,height:80},
+   {rect:[654,860,145,145],x:650,y:718,square:true}
+  ];
+  const codes=specs.map(spec=>{const [x,y,w,h]=spec.rect,p=cut(label,x,y,w,h);
+   if(!spec.square){let count=0;for(let i=0;i<w;i++)if(bit(p,i,10))count++;
+    if(count<50||count>w*.8)throw Error('Código PAC Industrial não identificado. Use o conversor normal.');
+    for(let j=5;j<h-5;j++)for(let i=0;i<w;i++)if(bit(p,i,j)!==bit(p,i,10))throw Error('Modelo PAC Industrial diferente do testado. Use o conversor normal.');
+   }
+   for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)upper.raw[j*upper.stride+(i>>3)]&=~(128>>(i%8));
+   return {...spec,p,height:spec.height||(spec.square?h:Math.round(h*.85))};
+  });return {upper,codes,pac:true};
+ }
  function shippingParts(label){
+  if(root.LocalShopee.glyphId(label,'pac'))return pacParts(label);
   const upper=cut(label,0,0,816,1075),tracking=cut(label,40,690,496,115);
   let count=0;for(let x=0;x<tracking.width;x++)if(bit(tracking,x,20))count++;
   if(count<50||count>350)throw Error('Barras de rastreamento não identificadas no modelo testado.');
@@ -55,13 +77,15 @@
    const titleKey=key(cells[0]);let group=groups.at(-1);if(!group||group.key!==titleKey){group={key:titleKey,title:cells[0],variants:[]};groups.push(group);}group.variants.push({variation:cells[1],quantity:cells[2]});
   }
   const out=blank(816,1224);
-  const {upper,tracking}=shippingParts(label);
+  const {upper,tracking,codes,pac}=shippingParts(label);
   const native=816*25.4/(203*100);
-  paste(out,upper,61,4,.85);paste(out,tracking,Math.round(40*native),591,native,.85);
+  paste(out,upper,61,4,.85);
+  if(pac)for(const c of codes)paste(out,c.p,Math.round(c.x*native),Math.round(c.y*native),native,c.height/c.p.height*native);
+  else paste(out,tracking,Math.round(40*native),591,native,.85);
   // Native 203 dpi bar widths; the 816-pixel source is slightly wider than 100 mm.
   paste(out,cut(label,64,1075,688,70),Math.round(55*native),918,native);
   for(let x=24;x<792;x++)put(out,x,998);
-  paste(out,trim(cut(label,0,250,450,30)),24,1007);
+  paste(out,trim(pac?cut(label,380,82,260,18):cut(label,0,250,450,30)),24,1007);
   paste(out,trim(cut(checklist,950,233,55,30)),744,1007);
   const plan=fitList(groups);
   if(!plan)throw Error('Pedido '+id+': a lista não cabe sem reduzir a leitura, mesmo com espaçamento compacto. Use o conversor normal para este pedido.');
@@ -86,7 +110,18 @@
    // Embed source at its final PDF scale, avoiding two successive raster reductions.
    const lower=cut(result.page,0,0,816,1224);lower.raw.fill(0,0,990*lower.stride);
    // Restore tracking bar widths too: 85% can collapse narrow modules at 203 dpi.
-   const {upper,tracking}=shippingParts(result.label);
+   const {upper,tracking,codes,pac}=shippingParts(result.label);
+   if(pac){
+    const danfe=cut(result.label,64,1075,688,70);
+    const images=await root.LocalZpl.createPdf([lower,upper,danfe,...codes.map(c=>c.p)],203,'original');
+    const embeds=await doc.embedPdf(await images.arrayBuffer(),Array.from({length:3+codes.length},(_,i)=>i));
+    const page=doc.addPage([100*mm,150*mm]),dot=72/203,height=1075*85/816;
+    page.drawPage(embeds[0],{x:0,y:0,width:100*mm,height:150*mm});
+    page.drawPage(embeds[1],{x:7.5*mm,y:(150-.5-height)*mm,width:85*mm,height:height*mm});
+    page.drawPage(embeds[2],{x:55*dot,y:150*mm-969*dot,width:688*dot,height:70*dot});
+    codes.forEach((c,i)=>page.drawPage(embeds[i+3],{x:c.x*dot,y:150*mm-(c.y+c.height)*dot,width:c.p.width*dot,height:c.height*dot}));
+    continue;
+   }
    const danfe=cut(result.label,64,1075,688,70);
    const images=await root.LocalZpl.createPdf([lower,upper,tracking,danfe],203,'original');
    const [bottom,top,bars,fiscal]=await doc.embedPdf(await images.arrayBuffer(),[0,1,2,3]);
@@ -103,4 +138,3 @@
  }
  root.ShopeeCompact=Object.freeze({convert,compose,createPdf,barcodeModel,shippingParts,cut,trim,words,lines,fitList});
 })(globalThis);
-
