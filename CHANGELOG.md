@@ -1,3 +1,9 @@
+## [v25.132] - 2026-11-03
+
+- Shopee compacta: tenta espaçamento mais enxuto quando a lista não cabe no padrão, sem reduzir letras, códigos ou omitir produtos.
+- Códigos de barras preservam os pontos de origem a 203 dpi na saída PDF, evitando perda de módulos ao ajustar 816 pixels em 100 mm.
+- A paginação é calculada antes de desenhar; listas que ainda ultrapassam a área continuam bloqueadas com orientação para o conversor normal.
+
 ## [v25.131] - 2026-11-03
 
 - Shopee compacta: reconhece as combinações encostadas WA e 4V nos IDs dos checklists por correspondência exata, mantendo o vínculo seguro.
