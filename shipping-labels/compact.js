@@ -18,11 +18,25 @@
  const key=p=>p.width+'x'+p.height+':'+Array.from(p.raw).join(',');
  function lines(p,width){const out=[];let row=[],w=0;for(const word of words(p)){if(word.width>width)throw Error('Texto extenso demais para o formato compacto. Use o conversor normal.');if(w&&w+8+word.width>width){out.push(row);row=[];w=0;}row.push(word);w+=(w?8:0)+word.width;}if(row.length)out.push(row);return out;}
  function lineHeight(row){return Math.max(...row.map(w=>w.height));}
- function drawLines(out,rows,x,y){for(const row of rows){let px=x;const h=lineHeight(row);for(const word of row){paste(out,word,px,y+h-word.height);px+=word.width+8;}y+=h+5;}return y;}
+ function drawLines(out,rows,x,y,gap=5){for(const row of rows){let px=x;const h=lineHeight(row);for(const word of row){paste(out,word,px,y+h-word.height);px+=word.width+8;}y+=h+gap;}return y;}
+ function planList(groups,gaps){
+  let y=1038,bottom=y;const operations=[];
+  const height=rows=>rows.reduce((n,row)=>n+lineHeight(row)+gaps.line,0);
+  for(const group of groups){const title=lines(group.title,768),th=height(title);operations.push({rows:title,x:24,y});bottom=Math.max(bottom,y+th-gaps.line);y+=th;
+   for(const v of group.variants){const rows=lines(v.variation,650),h=Math.max(v.quantity.height,height(rows),15);
+    operations.push({rows,x:46,y,quantity:v.quantity});bottom=Math.max(bottom,y+h);y+=h+gaps.variant;
+   }y+=gaps.group;
+  }return {operations,end:y,bottom,gap:gaps.line};
+ }
+ function fitList(groups){
+  for(const gaps of [{line:5,variant:7,group:4},{line:2,variant:3,group:3}]){const plan=planList(groups,gaps);if(plan.bottom<=1200&&plan.end<=1208)return plan;}
+  return null;
+ }
  function barcodeModel(p){
   if(p.width!==816||p.height!==1218)throw Error('Tamanho de etiqueta ainda não suportado no beta. Use o conversor normal.');
   let bars=0;for(let x=0;x<816;x++){const value=bit(p,x,1079);if(value)bars++;for(let y=1080;y<=1139;y++)if(bit(p,x,y)!==value)throw Error('Modelo de código DANFE diferente do testado. Use o conversor normal.');}
   if(bars<100||bars>450)throw Error('Código DANFE não identificado no modelo testado.');
+  for(let x=0;x<816;x++)if((x<64||x>=752)&&bit(p,x,1079))throw Error('Barras do DANFE fora da área suportada. Use o conversor normal.');
   for(let y=1140;y<p.height;y++)for(let x=0;x<p.width;x++)if(bit(p,x,y))throw Error('Conteúdo adicional abaixo do DANFE. Use o conversor normal.');
  }
  function shippingParts(label){
@@ -42,21 +56,18 @@
   }
   const out=blank(816,1224);
   const {upper,tracking}=shippingParts(label);
-  paste(out,upper,61,4,.85);paste(out,tracking,40,591,1,.85);
-  // 1:1 source pixels, at the original physical width of 100 mm.
-  paste(out,cut(label,0,1075,816,70),0,918);
+  const native=816*25.4/(203*100);
+  paste(out,upper,61,4,.85);paste(out,tracking,Math.round(40*native),591,native,.85);
+  // Native 203 dpi bar widths; the 816-pixel source is slightly wider than 100 mm.
+  paste(out,cut(label,64,1075,688,70),Math.round(55*native),918,native);
   for(let x=24;x<792;x++)put(out,x,998);
   paste(out,trim(cut(label,0,250,450,30)),24,1007);
   paste(out,trim(cut(checklist,950,233,55,30)),744,1007);
-  let y=1038;
-  for(const group of groups){y=drawLines(out,lines(group.title,768),24,y);
-   for(const v of group.variants){const rows=lines(v.variation,650),h=Math.max(v.quantity.height,rows.reduce((n,r)=>n+lineHeight(r)+5,0));
-    if(y+h>1200)throw Error('Pedido '+id+': a lista não cabe sem reduzir a leitura. Use o conversor normal para este pedido.');
-    drawLines(out,rows,46,y);paste(out,v.quantity,760,y);
-    for(let i=0;i<12;i++){put(out,24+i,y+3);put(out,24+i,y+14);put(out,24,y+3+i);put(out,35,y+3+i);}y+=h+7;
-   }y+=4;
+  const plan=fitList(groups);
+  if(!plan)throw Error('Pedido '+id+': a lista não cabe sem reduzir a leitura, mesmo com espaçamento compacto. Use o conversor normal para este pedido.');
+  for(const op of plan.operations){drawLines(out,op.rows,op.x,op.y,plan.gap);
+   if(op.quantity){paste(out,op.quantity,760,op.y);for(let i=0;i<12;i++){put(out,24+i,op.y+3);put(out,24+i,op.y+14);put(out,24,op.y+3+i);put(out,35,op.y+3+i);}}
   }
-  if(y>1208)throw Error('Pedido '+id+': lista extensa demais. Use o conversor normal.');
   return {page:out,label,id,items:table.rows.length};
  }
  function convert(batch){
@@ -73,18 +84,23 @@
   const mm=72/25.4,doc=await root.PDFLib.PDFDocument.create();
   for(const result of results){
    // Embed source at its final PDF scale, avoiding two successive raster reductions.
-   const lower=cut(result.page,0,0,816,1224);lower.raw.fill(0,0,918*lower.stride);
+   const lower=cut(result.page,0,0,816,1224);lower.raw.fill(0,0,990*lower.stride);
    // Restore tracking bar widths too: 85% can collapse narrow modules at 203 dpi.
    const {upper,tracking}=shippingParts(result.label);
-   const images=await root.LocalZpl.createPdf([lower,upper,tracking],203,'original');
-   const [bottom,top,bars]=await doc.embedPdf(await images.arrayBuffer(),[0,1,2]);
+   const danfe=cut(result.label,64,1075,688,70);
+   const images=await root.LocalZpl.createPdf([lower,upper,tracking,danfe],203,'original');
+   const [bottom,top,bars,fiscal]=await doc.embedPdf(await images.arrayBuffer(),[0,1,2,3]);
    const page=doc.addPage([100*mm,150*mm]);
    page.drawPage(bottom,{x:0,y:0,width:100*mm,height:150*mm});
    const height=1075*85/816;
    page.drawPage(top,{x:7.5*mm,y:(150-.5-height)*mm,width:85*mm,height:height*mm});
-   page.drawPage(bars,{x:40*100/816*mm,y:(150-.5-805*85/816)*mm,width:496*100/816*mm,height:115*85/816*mm});
+   // Align bar widths and their left edges to native 203 dpi dots. Resizing the
+   // 816 px source to 100 mm otherwise drops dots from some Code 128 modules.
+   const dot=72/203;
+   page.drawPage(bars,{x:40*dot,y:150*mm-674*dot,width:496*dot,height:96*dot});
+   page.drawPage(fiscal,{x:55*dot,y:150*mm-969*dot,width:688*dot,height:70*dot});
   }return new Blob([await doc.save()],{type:'application/pdf'});
  }
- root.ShopeeCompact=Object.freeze({convert,compose,createPdf,barcodeModel,shippingParts,cut,trim,words,lines});
+ root.ShopeeCompact=Object.freeze({convert,compose,createPdf,barcodeModel,shippingParts,cut,trim,words,lines,fitList});
 })(globalThis);
 

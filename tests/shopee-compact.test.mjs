@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
+import {inflateSync} from 'node:zlib';
 const ctx=vm.createContext({Uint8Array,ArrayBuffer,TextEncoder,TextDecoder,Blob,Response,CompressionStream,DecompressionStream,setTimeout,atob,btoa});
 for(const f of ['vendor/pdf-lib.js','engine.js','compact.js'])vm.runInContext(await readFile(new URL('../shipping-labels/'+f,import.meta.url),'utf8'),ctx);
 const {ShopeeCompact:C}=ctx;
@@ -19,10 +20,12 @@ ctx.LocalShopee={layout:p=>p.table,glyphId:p=>p.id||'',rotate:p=>p};
 test('compact output keeps original DANFE pixels, exact IDs, quantities and thermal page count',async()=>{
  const {label,list}=pair();const r=C.compose(label,list);
  assert.equal(r.id,label.id);assert.equal(r.items,3);
- assert.deepEqual(C.cut(r.page,0,918,816,70).raw,C.cut(label,0,1075,816,70).raw);
  const parts=C.shippingParts(label);assert.deepEqual(parts.tracking.raw,C.cut(label,40,690,496,115).raw);
  assert.equal(ink(C.cut(parts.upper,40,690,496,115)),0);
  const doc=await ctx.PDFLib.PDFDocument.load(await (await C.createPdf([r])).arrayBuffer());
+ const {PDFName,PDFRawStream}=ctx.PDFLib;
+ const fiscal=doc.context.enumerateIndirectObjects().map(([,obj])=>obj).find(obj=>obj instanceof PDFRawStream&&obj.dict.get(PDFName.of('Width'))?.asNumber()===688&&obj.dict.get(PDFName.of('Height'))?.asNumber()===70);
+ assert.ok(fiscal);assert.deepEqual(new Uint8Array(inflateSync(fiscal.getContents())),C.cut(label,64,1075,688,70).raw);
  assert.equal(doc.getPageCount(),1);assert.ok(Math.abs(doc.getPage(0).getWidth()-100/25.4*72)<.001);assert.ok(Math.abs(doc.getPage(0).getHeight()-150/25.4*72)<.001);
 });
 test('identity matching is independent of page order and rejects missing, duplicate or conflicting IDs',()=>{
@@ -35,9 +38,19 @@ test('identity matching is independent of page order and rejects missing, duplic
 test('unsupported barcode geometry and excessive lists fail closed',()=>{
  const a=pair();dot(a.label,100,1160);assert.throws(()=>C.compose(a.label,a.list),/adicional/);
  const b=pair();dot(b.label,101,1080);assert.throws(()=>C.compose(b.label,b.list),/diferente/);
- const c=pair('261029ABCDEFGH',6);assert.throws(()=>C.compose(c.label,c.list),/não cabe|extensa/);
+ const c=pair('261029ABCDEFGH',6);for(let i=0;i<c.list.table.rows.length;i++)dot(c.list,180+i,c.list.table.rows[i].top);assert.throws(()=>C.compose(c.label,c.list),/não cabe|extensa/);
  assert.throws(()=>C.convert(Array(42).fill(a.label)),/20 pedidos/);
  const d=pair();dot(d.label,55,710);assert.throws(()=>C.compose(d.label,d.list),/rastreamento diferente/);
+});
+test('tight spacing fits longer lists without changing glyph pixels, barcode or quantities',()=>{
+ const {label,list}=pair('261029ABCDEFGH',6);
+ const r=C.compose(label,list);assert.equal(r.items,6);
+ assert.deepEqual(C.shippingParts(r.label).tracking.raw,C.cut(label,40,690,496,115).raw);
+ const title=C.trim(C.cut(list,78,268,476,60)),variation=C.trim(C.cut(list,563,268,383,60)),quantity=C.trim(C.cut(list,952,268,52,60));
+ const plan=C.fitList([{title,variants:Array.from({length:6},()=>({variation,quantity}))}]);
+ assert.equal(plan.gap,2);assert.ok(plan.bottom<=1200);assert.equal(plan.operations.filter(o=>o.quantity).length,6);
+ const titleInk=plan.operations[0].rows.flat().reduce((n,p)=>n+ink(p),0);assert.equal(titleInk,ink(title));
+ for(const op of plan.operations.slice(1)){assert.equal(op.rows.flat().reduce((n,p)=>n+ink(p),0),ink(variation));assert.deepEqual(op.quantity.raw,quantity.raw);}
 });
 test('reflow preserves all ink pixels and never shrinks words',()=>{
  const p=image(60,50);for(const [x,y] of [[2,2],[3,2],[25,2],[26,2],[2,30],[3,30]])dot(p,x,y);
