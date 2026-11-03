@@ -4,18 +4,44 @@
  const clean=s=>String(s||'').replace(/\s+/g,' ').trim();
  const black=(p,x,y)=>x>=0&&y>=0&&x<p.width&&y<p.height&&Boolean(p.raw[y*p.stride+(x>>3)]&(128>>(x%8)));
  const glyphKey=g=>g.width+'x'+g.height+':'+g.bits;
+ function decodeGlyph(glyph,patterns){
+  const exact=[...new Set(patterns.filter(p=>glyphKey(p)===glyphKey(glyph)).map(p=>p.text))];
+  if(exact.length)return exact.length===1?exact[0]:'';
+  // Adjacent glyphs can occupy consecutive columns with no empty column between
+  // them. Match each full character bitmap exactly; never use fuzzy OCR or IDs
+  // from another page to fill missing letters. Ambiguous partitions fail closed.
+  const singles=patterns.filter(p=>p.text.length===1),widths=[...new Set(singles.map(p=>p.width))],memo=new Map();
+  function visit(start){
+   if(start===glyph.width)return [''];if(memo.has(start))return memo.get(start);
+   const values=new Set();
+   for(const width of widths){
+    if(start+width>glyph.width)continue;
+    let top=0,bottom=glyph.height-1;
+    const row=y=>glyph.bits.slice(y*glyph.width+start,y*glyph.width+start+width);
+    while(top<=bottom&&!row(top).includes('1'))top++;
+    while(bottom>=top&&!row(bottom).includes('1'))bottom--;
+    if(bottom<top)continue;
+    let bits='';for(let y=top;y<=bottom;y++)bits+=row(y);
+    const piece={width,height:bottom-top+1,bits};
+    for(const p of singles)if(glyphKey(p)===glyphKey(piece))for(const suffix of visit(start+width)){values.add(p.text+suffix);if(values.size>1)break;}
+    if(values.size>1)break;
+   }
+   const result=[...values];memo.set(start,result);return result;
+  }
+  const result=visit(0);return result.length===1?result[0]:'';
+ }
  function glyphId(p,kind){
   const patterns=root.ShopeeIdFonts?.[kind];if(!patterns)return '';
   if(kind==='shipping'&&(p.width!==816||p.height!==1218)||kind==='checklist'&&(p.width!==1218||p.height!==816))return '';
   const [left,top,width,height]=kind==='shipping'?[135,255,300,23]:[208,173,171,24];
   const xs=[];for(let x=left;x<left+width;x++){for(let y=top;y<top+height;y++)if(black(p,x,y)){xs.push(x);break;}}
-  const columns=runs(xs),dict=new Map(patterns.map(g=>[glyphKey(g),g.text]));let text='';
+  const columns=runs(xs);let text='';
   for(let i=0;i<columns.length;i++){
    if(kind==='checklist'&&i&&columns[i][0]-columns[i-1][1]>5)break;
    const [a,b]=columns[i];let min=top+height,max=top;
    for(let y=top;y<top+height;y++)for(let x=a;x<=b;x++)if(black(p,x,y)){min=Math.min(min,y);max=Math.max(max,y);}
    let bits='';for(let y=min;y<=max;y++)for(let x=a;x<=b;x++)bits+=black(p,x,y)?'1':'0';
-   const value=dict.get(glyphKey({width:b-a+1,height:max-min+1,bits}));if(!value)return '';text+=value;
+   const value=decodeGlyph({width:b-a+1,height:max-min+1,bits},patterns);if(!value)return '';text+=value;
   }
   return /^\d{6}[A-Z0-9]{8}$/.test(text)?text:'';
  }
@@ -146,5 +172,5 @@
   }
   return [...seen.values()];
  }
- root.LocalShopee=Object.freeze({read,render,orders,rotate,layout,crop,fingerprint,orderId,glyphId,clean});
+ root.LocalShopee=Object.freeze({read,render,orders,rotate,layout,crop,fingerprint,orderId,glyphId,decodeGlyph,clean});
 })(globalThis);
