@@ -107,3 +107,16 @@ test('near-fitting address with exceptional FB spacing keeps the whole text with
  texts.length=0;const [explicit]=await context.LocalZpl.parseZpl(field(1000).replace('Estado de Teste','Estado\\&de Teste'));
  assert.ok(explicit.height>1200);assert.equal(texts.length,2);
 });
+
+test('near-fitting text overflow condenses only the field and preserves all words and barcode geometry',async()=>{
+ const name='Nome Exemplo Completo Compridinho (IDENTIFICADOR1234567890123)';
+ const field='^FO35,875^A0N,26,26^FB300,2,-2,L^FD'+name+'^FS';
+ const code='^FO40,40^BY2^BCN,80,N,N,N^FD>:12345678901^FS';
+ const zpl=text=>'^XA^PW800^LL1200'+code+text+'^XZ';
+ bars.length=0;await context.LocalZpl.parseZpl(zpl(''));const baseline=bars.filter(b=>b.y===40&&b.h===80);
+ bars.length=0;texts.length=0;const [p]=await context.LocalZpl.parseZpl(zpl(field));
+ assert.equal(p.width,800);assert.equal(p.height,1200);assert.equal(texts.length,2);assert.equal(texts.join(' '),name);
+ assert.deepEqual(bars.filter(b=>b.y===40&&b.h===80),baseline);
+ await assert.rejects(context.LocalZpl.parseZpl(zpl(field.replace('FB300','FB180'))),/limite de linhas/);
+ await assert.rejects(context.LocalZpl.parseZpl(zpl(field.replace('Nome Exemplo','Nome\\&Exemplo\\&'))),/limite de linhas/);
+});
