@@ -4,6 +4,29 @@
  const clean=s=>String(s||'').replace(/\s+/g,' ').trim();
  const black=(p,x,y)=>x>=0&&y>=0&&x<p.width&&y<p.height&&Boolean(p.raw[y*p.stride+(x>>3)]&(128>>(x%8)));
  const glyphKey=g=>g.width+'x'+g.height+':'+g.bits;
+ const kernedFonts=new WeakMap();
+ function kernedGlyph(glyph,patterns){
+  let index=kernedFonts.get(patterns);
+  if(!index){
+   index=new Map();const singles=patterns.filter(p=>p.text.length===1);
+   // A small kerning overlap may share columns, but never ink pixels. Require
+   // equal baselines/heights and an exact union of both complete letter masks.
+   for(const a of singles)for(const b of singles){
+    if(a.height!==b.height)continue;
+    for(let overlap=1;overlap<=3;overlap++){
+     if(overlap>=Math.min(a.width,b.width))continue;
+     const start=a.width-overlap,width=start+b.width,height=a.height;let bits='',collision=false;
+     for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const left=x<a.width&&a.bits[y*a.width+x]==='1',right=x>=start&&b.bits[y*b.width+x-start]==='1';
+      if(left&&right)collision=true;bits+=left||right?'1':'0';
+     }
+     if(collision)continue;
+     const key=glyphKey({width,height,bits}),values=index.get(key)||new Set();values.add(a.text+b.text);index.set(key,values);
+    }
+   }kernedFonts.set(patterns,index);
+  }
+  const values=index.get(glyphKey(glyph));return values?.size===1?[...values][0]:'';
+ }
  function decodeGlyph(glyph,patterns){
   const exact=[...new Set(patterns.filter(p=>glyphKey(p)===glyphKey(glyph)).map(p=>p.text))];
   if(exact.length)return exact.length===1?exact[0]:'';
@@ -28,7 +51,7 @@
    }
    const result=[...values];memo.set(start,result);return result;
   }
-  const result=visit(0);return result.length===1?result[0]:'';
+  const result=visit(0);return result.length===1?result[0]:result.length?'':kernedGlyph(glyph,patterns);
  }
  function glyphId(p,kind){
   if(kind==='shipping')return readGlyphId(p,'shipping')||readGlyphId(p,'pac');

@@ -1,3 +1,8 @@
+## [v25.137] - 2026-11-05
+
+- Shopee compacta: reconhece pares de letras com colunas sobrepostas, como VA, por união exata dos caracteres conhecidos, sem inferir IDs pela ordem das páginas.
+- Sobreposição de tinta, pixels desconhecidos e interpretações ambíguas continuam bloqueados. PDF, códigos e lista de produtos preservados.
+
 ## [v25.136] - 2026-11-03
 
 - Boletos: leitura sugere correção de um único algarismo somente quando os dígitos verificadores apontam uma resposta única.
