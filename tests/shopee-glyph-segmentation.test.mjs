@@ -23,3 +23,10 @@ test('PAC Industrial ID is read from its own pixels at the top, never borrowed f
  assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),id);assert.equal(ctx.LocalShopee.glyphId(p,'pac'),id);
  p.raw[86*p.stride+(480>>3)]^=128>>(480%8);assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),'');
 });
+
+test('kerning with shared columns requires two complete disjoint masks and a unique exact match',()=>{
+ const glyph={"width":29,"height":17,"bits":"1100000000000011000001100000011000000000001100000111000000011000000000011000001111000000110000000001100000010110000000110000000011000001100100000001100000000110000011001100000001100000011000001100001000000011000000110000011000011000000110000011000000100000110000000110000110000011000000110000001100011000000111111111100000001100110000011111111111000000011001100000110000000011000000110110000011000000000110000000111100000110000000000110000001110000001100000000001100000001100000110000000000011"};assert.equal(ctx.LocalShopee.decodeGlyph(glyph,ctx.ShopeeIdFonts.shipping),'VA');
+ for(let i=0;i<glyph.bits.length;i++){const damaged={...glyph,bits:glyph.bits.slice(0,i)+(glyph.bits[i]==='1'?'0':'1')+glyph.bits.slice(i+1)};assert.equal(ctx.LocalShopee.decodeGlyph(damaged,ctx.ShopeeIdFonts.shipping),'');}
+ const ambiguous=[...ctx.ShopeeIdFonts.shipping,{...ctx.ShopeeIdFonts.shipping.find(p=>p.text==='V'),text:'X'}];assert.equal(ctx.LocalShopee.decodeGlyph(glyph,ambiguous),'');
+ assert.equal(ctx.LocalShopee.decodeGlyph({width:3,height:1,bits:'111'},[{width:2,height:1,bits:'11',text:'A'},{width:2,height:1,bits:'11',text:'B'}]),'');
+});
