@@ -38,7 +38,7 @@ test('identity matching is independent of page order and rejects missing, duplic
 test('unsupported barcode geometry and excessive lists fail closed',()=>{
  const a=pair();dot(a.label,100,1160);assert.throws(()=>C.compose(a.label,a.list),/adicional/);
  const b=pair();dot(b.label,101,1080);assert.throws(()=>C.compose(b.label,b.list),/diferente/);
- const c=pair('261029ABCDEFGH',6);for(let i=0;i<c.list.table.rows.length;i++)dot(c.list,180+i,c.list.table.rows[i].top);assert.throws(()=>C.compose(c.label,c.list),/não cabe|extensa/);
+ const c=pair('261029ABCDEFGH',6);for(const row of c.list.table.rows)for(let y=0;y<50;y++)for(let x=0;x<450;x++)dot(c.list,79+x,row.top+y);assert.throws(()=>C.compose(c.label,c.list),/não cabe|extensa/);
  assert.throws(()=>C.convert(Array(42).fill(a.label)),/20 pedidos/);
  const d=pair();dot(d.label,55,710);assert.throws(()=>C.compose(d.label,d.list),/rastreamento diferente/);
 });
@@ -76,4 +76,14 @@ test('PAC Industrial keeps all five code crops and DANFE with one thermal page',
  const {PDFRawStream,PDFName}=ctx.PDFLib,streams=pdf.context.enumerateIndirectObjects().map(([,o])=>o).filter(o=>o instanceof PDFRawStream&&o.dict.get(PDFName.of('Subtype'))?.toString()==='/Image');
  for(const c of parts.codes){assert.ok(streams.some(o=>o.dict.get(PDFName.of('Width'))?.asNumber()===c.p.width&&o.dict.get(PDFName.of('Height'))?.asNumber()===c.p.height&&Buffer.from(inflateSync(o.getContents())).equals(Buffer.from(c.p.raw))));}
  dot(label,83,280);assert.throws(()=>C.shippingParts(label),/diferente/);
+});
+
+test('inline fallback fits distinct long products without dropping words, variations or quantities',()=>{
+ const title=image(450,66),variation=image(180,18),quantity=image(9,18);
+ for(let line=0;line<3;line++)for(let w=0;w<3;w++)for(let y=0;y<18;y++)for(let x=0;x<130;x++)dot(title,w*150+x,line*24+y);
+ for(let y=0;y<18;y++){for(let x=0;x<180;x++)dot(variation,x,y);dot(quantity,0,y);}
+ const groups=Array.from({length:3},()=>({title,variants:[{variation,quantity}]})),plan=C.fitList(groups);
+ assert.ok(plan?.inline);assert.equal(plan.operations.length,3);assert.ok(plan.bottom<=1200);
+ for(const op of plan.operations){assert.deepEqual(op.quantity.raw,quantity.raw);assert.equal(op.rows.flat().reduce((n,p)=>n+ink(p),0),ink(title)+ink(variation)+28);assert.ok(op.x+op.rows[0].reduce((n,p)=>n+p.width+8,0)-8<=op.quantityX-12);}
+ assert.equal(C.fitList([...groups,...groups]),null);
 });

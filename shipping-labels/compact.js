@@ -28,9 +28,26 @@
    }y+=gaps.group;
   }return {operations,end:y,bottom,gap:gaps.line};
  }
+ function inlineList(groups){
+  let y=1038,bottom=y;const operations=[];
+  const separator=blank(2,14);for(let j=0;j<14;j++){put(separator,0,j);put(separator,1,j);}
+  for(const group of groups)for(const v of group.variants){
+   const tokens=[...words(group.title),...(v.variation.width?[separator,...words(v.variation)]:[])];
+   const rows=[];let row=[],width=0;const quantityX=792-v.quantity.width;
+   // Keep quantity beside the first line; subsequent lines use the full width.
+   for(const word of tokens){const limit=rows.length?746:quantityX-46-12;
+    if(word.width>limit)return null;
+    if(width&&width+8+word.width>limit){rows.push(row);row=[];width=0;}
+    row.push(word);width+=(width?8:0)+word.width;
+   }if(row.length)rows.push(row);
+   const h=rows.reduce((n,r)=>n+lineHeight(r)+3,0);
+   operations.push({rows,x:46,y,quantity:v.quantity,quantityX});bottom=y+Math.max(h-3,v.quantity.height);y+=Math.max(h,v.quantity.height)+5;
+  }
+  return bottom<=1200&&y<=1208?{operations,end:y,bottom,gap:3,inline:true}:null;
+ }
  function fitList(groups){
   for(const gaps of [{line:5,variant:7,group:4},{line:2,variant:3,group:3}]){const plan=planList(groups,gaps);if(plan.bottom<=1200&&plan.end<=1208)return plan;}
-  return null;
+  return inlineList(groups);
  }
  function barcodeModel(p){
   if(p.width!==816||p.height!==1218)throw Error('Tamanho de etiqueta ainda não suportado no beta. Use o conversor normal.');
@@ -90,7 +107,7 @@
   const plan=fitList(groups);
   if(!plan)throw Error('Pedido '+id+': a lista não cabe sem reduzir a leitura, mesmo com espaçamento compacto. Use o conversor normal para este pedido.');
   for(const op of plan.operations){drawLines(out,op.rows,op.x,op.y,plan.gap);
-   if(op.quantity){paste(out,op.quantity,760,op.y);for(let i=0;i<12;i++){put(out,24+i,op.y+3);put(out,24+i,op.y+14);put(out,24,op.y+3+i);put(out,35,op.y+3+i);}}
+   if(op.quantity){paste(out,op.quantity,op.quantityX??760,op.y);for(let i=0;i<12;i++){put(out,24+i,op.y+3);put(out,24+i,op.y+14);put(out,24,op.y+3+i);put(out,35,op.y+3+i);}}
   }
   return {page:out,label,id,items:table.rows.length};
  }

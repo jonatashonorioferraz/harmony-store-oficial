@@ -1,3 +1,8 @@
+## [v25.138] - 2026-11-05
+
+- Shopee compacta: quando títulos longos excedem a lista convencional, aproveita o fim da linha para a variação, com separador visual, checkbox e quantidade por item.
+- Textos e quantidades preservam os pixels e o tamanho original; códigos, ID e página de 10 × 15 cm permanecem iguais. Listas que ainda não cabem continuam bloqueadas.
+
 ## [v25.137] - 2026-11-05
 
 - Shopee compacta: reconhece pares de letras com colunas sobrepostas, como VA, por união exata dos caracteres conhecidos, sem inferir IDs pela ordem das páginas.
