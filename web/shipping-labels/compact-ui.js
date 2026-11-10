@@ -16,7 +16,7 @@
    const data=new Uint8Array(await file.arrayBuffer());valid(token);
    const entries=/\.zip$/i.test(file.name)?await LocalZpl.unzip(data):[{name:file.name,text:new TextDecoder().decode(data)}];valid(token);
    const texts=entries.filter(e=>/\.(zpl|txt)$/i.test(e.name));if(!texts.length)throw Error('Nenhum ZPL ou TXT encontrado no ZIP.');
-   const batch=[];for(const entry of texts){batch.push(...await LocalZpl.parseZpl(entry.text));valid(token);if(batch.length>40)throw Error('Selecione até 20 pedidos neste beta.');}
+   const batch=[];for(const entry of texts){batch.push(...await LocalZpl.parseZpl(entry.text));valid(token);if(batch.length>200)throw Error('Selecione até 100 pedidos neste beta.');}
    results=ShopeeCompact.convert(batch);valid(token);
    const blob=await ShopeeCompact.createPdf(results);valid(token);
    url=URL.createObjectURL(blob);$('download').href=url;$('summary').textContent=`${results.length} pedidos · ${results.length} páginas · ${results.reduce((n,r)=>n+r.items,0)} linhas de produtos. Nenhum registro no histórico.`;$('result').hidden=false;preview();$('status').textContent='Teste pronto. Confira a prévia e teste os códigos na impressão.';

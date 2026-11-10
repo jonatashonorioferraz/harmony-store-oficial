@@ -111,7 +111,7 @@
   // Native 203 dpi bar widths; the 816-pixel source is slightly wider than 100 mm.
   paste(out,cut(label,64,model.cropY,688,model.height),Math.round(55*native),model.air?Math.round((model.end-model.height)*native):918,native);
   for(let x=24;x<792;x++)put(out,x,998);
-  paste(out,trim(pac?cut(label,380,82,260,18):cut(label,0,250,450,30)),24,1007);
+  paste(out,trim(pac?cut(label,380,82,260,24):cut(label,0,250,450,30)),24,1007);
   paste(out,trim(cut(checklist,950,233,55,30)),744,1007);
   const plan=fitList(groups);
   if(!plan)throw Error('Pedido '+id+': a lista não cabe sem reduzir a leitura, mesmo com espaçamento compacto. Use o conversor normal para este pedido.');
@@ -121,7 +121,7 @@
   return {page:out,label,id,items:table.rows.length};
  }
  function convert(batch){
-  if(!batch.length||batch.length>40)throw Error('Selecione até 20 pedidos com etiqueta e checklist neste beta.');
+  if(!batch.length||batch.length>200)throw Error('Selecione até 100 pedidos com etiqueta e checklist neste beta.');
   const labels=new Map(),lists=new Map();
   for(const [index,page] of batch.entries()){const rotated=root.LocalShopee.rotate(page),table=root.LocalShopee.layout(rotated),kind=table?'checklist':'shipping',p=table?rotated:page,id=root.LocalShopee.glyphId(p,kind),map=table?lists:labels;
    if(!id)throw Error('ID não reconhecido no '+(table?'checklist':'envio')+' da página '+(index+1)+'. Nenhum vínculo será presumido pela ordem das páginas. Use o conversor normal.');

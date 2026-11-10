@@ -1,3 +1,8 @@
+## [v25.141] - 2026-11-10
+
+- Shopee compacta: lotes de até 100 pedidos, leitura completa de IDs largos nos checklists e da letra Q no PAC Industrial; inclui máscaras exatas K, G e Q.
+- Mantém um pedido por página, códigos em largura original, vínculo independente por ID e processamento local sem gravar histórico.
+
 ## [v25.140] - 2026-11-10
 
 - Shopee: inclui máscaras exatas adicionais de 8, D e 7 usadas no ID do PAC Industrial. Mantém vínculo independente com checklist e rejeição de pixels desconhecidos.
