@@ -1,3 +1,8 @@
+## [v25.140] - 2026-11-10
+
+- Shopee: inclui máscaras exatas adicionais de 8, D e 7 usadas no ID do PAC Industrial. Mantém vínculo independente com checklist e rejeição de pixels desconhecidos.
+- Sem alteração no layout, produtos ou códigos de impressão.
+
 ## [v25.139] - 2026-11-10
 
 - Shopee compacta: suporte ao ID deslocado e ao DANFE mais alto do Expresso Aéreo, mantendo um pedido por página.
