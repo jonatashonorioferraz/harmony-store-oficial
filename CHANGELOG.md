@@ -1,3 +1,8 @@
+## [v25.143] - 2026-11-10
+
+- Shopee: inclui a máscara exata adicional da letra S usada no ID do PAC Industrial. Preserva a validação independente do checklist e rejeita pixels desconhecidos.
+- Sem alteração no layout, nas quantidades ou nos códigos de impressão.
+
 ## [v25.142] - 2026-11-10
 
 - Shopee compacta: lotes de até 200 pedidos e reconhecimento exato de sequências de três ou mais letras encostadas no ID.
