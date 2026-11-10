@@ -60,7 +60,7 @@
  function readGlyphId(p,kind,region){
   const patterns=root.ShopeeIdFonts?.[kind];if(!patterns)return '';
   if((kind==='shipping'||kind==='pac')&&(p.width!==816||p.height!==1218)||kind==='checklist'&&(p.width!==1218||p.height!==816))return '';
-  const [left,top,width,height]=region||(kind==='shipping'?[135,255,300,23]:kind==='pac'?[478,83,200,16]:[208,173,171,24]);
+  const [left,top,width,height]=region||(kind==='shipping'?[135,255,300,23]:kind==='pac'?[478,83,200,24]:[208,173,220,24]);
   const xs=[];for(let x=left;x<left+width;x++){for(let y=top;y<top+height;y++)if(black(p,x,y)){xs.push(x);break;}}
   const columns=runs(xs);let text='';
   for(let i=0;i<columns.length;i++){
