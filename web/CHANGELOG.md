@@ -1,3 +1,8 @@
+## [v25.139] - 2026-11-10
+
+- Shopee compacta: suporte ao ID deslocado e ao DANFE mais alto do Expresso Aéreo, mantendo um pedido por página.
+- Barras fiscais preservadas na resolução original; a linha numérica inteira ocupa o espaço em branco acima delas. Geometrias desconhecidas continuam bloqueadas.
+
 ## [v25.138] - 2026-11-05
 
 - Shopee compacta: quando títulos longos excedem a lista convencional, aproveita o fim da linha para a variação, com separador visual, checkbox e quantidade por item.

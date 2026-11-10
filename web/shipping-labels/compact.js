@@ -51,10 +51,17 @@
  }
  function barcodeModel(p){
   if(p.width!==816||p.height!==1218)throw Error('Tamanho de etiqueta ainda não suportado no beta. Use o conversor normal.');
-  let bars=0;for(let x=0;x<816;x++){const value=bit(p,x,1079);if(value)bars++;for(let y=1080;y<=1139;y++)if(bit(p,x,y)!==value)throw Error('Modelo de código DANFE diferente do testado. Use o conversor normal.');}
-  if(bars<100||bars>450)throw Error('Código DANFE não identificado no modelo testado.');
-  for(let x=0;x<816;x++)if((x<64||x>=752)&&bit(p,x,1079))throw Error('Barras do DANFE fora da área suportada. Use o conversor normal.');
-  for(let y=1140;y<p.height;y++)for(let x=0;x<p.width;x++)if(bit(p,x,y))throw Error('Conteúdo adicional abaixo do DANFE. Use o conversor normal.');
+  let firstError;
+  for(const model of [{top:1079,bottom:1139,cropY:1075,height:70,end:969},{top:1091,bottom:1168,cropY:1091,height:79,end:976,air:true}]){
+   try{
+    let bars=0;for(let x=0;x<816;x++){const value=bit(p,x,model.top);if(value)bars++;for(let y=model.top+1;y<=model.bottom;y++)if(bit(p,x,y)!==value)throw Error('Modelo de código DANFE diferente do testado. Use o conversor normal.');}
+    if(bars<100||bars>450)throw Error('Código DANFE não identificado no modelo testado.');
+    for(let x=0;x<816;x++)if((x<64||x>=752)&&bit(p,x,model.top))throw Error('Barras do DANFE fora da área suportada. Use o conversor normal.');
+    for(let y=model.bottom+1;y<p.height;y++)for(let x=0;x<p.width;x++)if(bit(p,x,y))throw Error('Conteúdo adicional abaixo do DANFE. Use o conversor normal.');
+    if(model.air)for(const [top,bottom]of [[1055,1066],[1081,1090]])for(let y=top;y<=bottom;y++)for(let x=0;x<816;x++)if(bit(p,x,y))throw Error('Espaçamento do DANFE aéreo diferente do testado. Use o conversor normal.');
+    return model;
+   }catch(error){firstError??=error;}
+  }throw firstError;
  }
 
  function pacParts(label){
@@ -78,8 +85,10 @@
   });return {upper,codes,pac:true};
  }
  function shippingParts(label){
+  const model=barcodeModel(label);
   if(root.LocalShopee.glyphId(label,'pac'))return pacParts(label);
   const upper=cut(label,0,0,816,1075),tracking=cut(label,40,690,496,115);
+  if(model.air){upper.raw.fill(0,1055*upper.stride);paste(upper,cut(label,0,1067,816,20),0,1055);}
   let count=0;for(let x=0;x<tracking.width;x++)if(bit(tracking,x,20))count++;
   if(count<50||count>350)throw Error('Barras de rastreamento não identificadas no modelo testado.');
   for(let y=3;y<111;y++)for(let x=0;x<tracking.width;x++)if(bit(tracking,x,y)!==bit(tracking,x,20))throw Error('Modelo de barras de rastreamento diferente do testado. Use o conversor normal.');
@@ -87,7 +96,7 @@
   return {upper,tracking};
  }
  function compose(label,checklist){
-  barcodeModel(label);const table=root.LocalShopee.layout(checklist);if(!table||!table.rows.length)throw Error('Checklist não reconhecido.');
+  const model=barcodeModel(label);const table=root.LocalShopee.layout(checklist);if(!table||!table.rows.length)throw Error('Checklist não reconhecido.');
   const id=root.LocalShopee.glyphId(label,'shipping');if(!id||id!==root.LocalShopee.glyphId(checklist,'checklist'))throw Error('IDs da etiqueta e do checklist não coincidem.');
   const groups=[];for(const row of table.rows){const cells=[0,1,2].map(i=>trim(cut(checklist,table.columns[i]+3,row.top,table.columns[i+1]-table.columns[i]-6,row.bottom-row.top)));
    if(!cells[0].width||!cells[2].width)throw Error('Produto ou quantidade ausente no checklist.');
@@ -100,7 +109,7 @@
   if(pac)for(const c of codes)paste(out,c.p,Math.round(c.x*native),Math.round(c.y*native),native,c.height/c.p.height*native);
   else paste(out,tracking,Math.round(40*native),591,native,.85);
   // Native 203 dpi bar widths; the 816-pixel source is slightly wider than 100 mm.
-  paste(out,cut(label,64,1075,688,70),Math.round(55*native),918,native);
+  paste(out,cut(label,64,model.cropY,688,model.height),Math.round(55*native),model.air?Math.round((model.end-model.height)*native):918,native);
   for(let x=24;x<792;x++)put(out,x,998);
   paste(out,trim(pac?cut(label,380,82,260,18):cut(label,0,250,450,30)),24,1007);
   paste(out,trim(cut(checklist,950,233,55,30)),744,1007);
@@ -129,7 +138,7 @@
    // Restore tracking bar widths too: 85% can collapse narrow modules at 203 dpi.
    const {upper,tracking,codes,pac}=shippingParts(result.label);
    if(pac){
-    const danfe=cut(result.label,64,1075,688,70);
+    const model=barcodeModel(result.label),danfe=cut(result.label,64,model.cropY,688,model.height);
     const images=await root.LocalZpl.createPdf([lower,upper,danfe,...codes.map(c=>c.p)],203,'original');
     const embeds=await doc.embedPdf(await images.arrayBuffer(),Array.from({length:3+codes.length},(_,i)=>i));
     const page=doc.addPage([100*mm,150*mm]),dot=72/203,height=1075*85/816;
@@ -139,7 +148,7 @@
     codes.forEach((c,i)=>page.drawPage(embeds[i+3],{x:c.x*dot,y:150*mm-(c.y+c.height)*dot,width:c.p.width*dot,height:c.height*dot}));
     continue;
    }
-   const danfe=cut(result.label,64,1075,688,70);
+   const model=barcodeModel(result.label),danfe=cut(result.label,64,model.cropY,688,model.height);
    const images=await root.LocalZpl.createPdf([lower,upper,tracking,danfe],203,'original');
    const [bottom,top,bars,fiscal]=await doc.embedPdf(await images.arrayBuffer(),[0,1,2,3]);
    const page=doc.addPage([100*mm,150*mm]);
@@ -150,7 +159,7 @@
    // 816 px source to 100 mm otherwise drops dots from some Code 128 modules.
    const dot=72/203;
    page.drawPage(bars,{x:40*dot,y:150*mm-674*dot,width:496*dot,height:96*dot});
-   page.drawPage(fiscal,{x:55*dot,y:150*mm-969*dot,width:688*dot,height:70*dot});
+   page.drawPage(fiscal,{x:55*dot,y:150*mm-model.end*dot,width:688*dot,height:model.height*dot});
   }return new Blob([await doc.save()],{type:'application/pdf'});
  }
  root.ShopeeCompact=Object.freeze({convert,compose,createPdf,barcodeModel,shippingParts,cut,trim,words,lines,fitList});
