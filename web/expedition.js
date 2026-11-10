@@ -80,8 +80,9 @@
  function selectTab(value){
   tab=value;loadSerial++;panel.querySelectorAll('[data-exp-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.expTab===value)));
   panel.querySelector('#exp-converter').hidden=value!=='converter';panel.querySelector('#exp-dashboard').hidden=!['history','listings'].includes(value);
+  panel.querySelector('#exp-account-box').hidden=!['converter','compact'].includes(value);
   const beta=panel.querySelector('#exp-compact');beta.hidden=value!=='compact';
-  if(value==='compact'&&!beta.firstChild){const frame=document.createElement('iframe');frame.title='Shopee compacta · Beta';frame.className='shipping-labels-frame';frame.style.height='1300px';frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox');frame.setAttribute('referrerpolicy','no-referrer');frame.src='shipping-labels/compact.html?v=25.144';beta.append(frame);}
+  if(value==='compact'&&!beta.firstChild){const frame=document.createElement('iframe');frame.title='Shopee compacta · Beta';frame.className='shipping-labels-frame';frame.style.height='1300px';frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox');frame.setAttribute('referrerpolicy','no-referrer');frame.src='shipping-labels/compact.html?v=25.145';beta.append(frame);}
   if(value!=='compact'){beta.firstChild?.contentWindow?.HarmonyConverterLifecycle?.dispose();beta.replaceChildren();}
   if(['history','listings'].includes(value))load();
  }
@@ -93,7 +94,7 @@
   const betaButton=document.createElement('button');betaButton.type='button';betaButton.dataset.expTab='compact';betaButton.setAttribute('aria-pressed','false');betaButton.textContent='Shopee compacta · Beta';header.querySelector('.exp-tabs').append(betaButton);
   const beta=document.createElement('section');beta.id='exp-compact';beta.hidden=true;container.append(beta);
   const converter=document.createElement('section');converter.id='exp-converter';
-  const account=document.createElement('div');account.className='exp-account';account.innerHTML='<label>Conta da loja deste lote<select id="exp-account"><option value="">Carregando…</option></select></label><button type="button" id="exp-refresh-accounts">Atualizar contas</button><details><summary>Adicionar conta</summary><form id="exp-add-account"><label>Nome da conta<input name="name" required minlength="2" maxlength="80" placeholder="Ex.: Harmony · conta principal"></label><button type="submit">Cadastrar conta</button></form></details><p>Use sempre a mesma conta para reconhecer reimpressões. O PDF continua local; apenas o resumo operacional é salvo no app.</p>';converter.append(account);
+  const account=document.createElement('div');account.className='exp-account';account.id='exp-account-box';account.innerHTML='<label>Conta da loja deste lote<select id="exp-account"><option value="">Carregando…</option></select></label><button type="button" id="exp-refresh-accounts">Atualizar contas</button><details><summary>Adicionar conta</summary><form id="exp-add-account"><label>Nome da conta<input name="name" required minlength="2" maxlength="80" placeholder="Ex.: Harmony · conta principal"></label><button type="submit">Cadastrar conta</button></form></details><p>Use sempre a mesma conta para reconhecer reimpressões. O PDF continua local; apenas o resumo operacional é salvo no app.</p>';header.append(account);
   converter.append(container.querySelector('.shipping-labels-loading'),container.querySelector('#shippingLabelsHost'));container.append(converter);
   const dashboard=document.createElement('section');dashboard.id='exp-dashboard';dashboard.hidden=true;
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -109,5 +110,5 @@
  }
  window.addEventListener('beforeunload',event=>{if(pending.size){event.preventDefault();event.returnValue='';}});
  window.addEventListener('message',event=>{if(!current()||event.origin!==location.origin)return;const frame=panel.querySelector('#exp-compact')?.firstChild;if(!frame||event.source!==frame.contentWindow||event.data?.type!=='harmony-labels:height'||!Number.isFinite(event.data.height)||event.data.height<=0)return;frame.style.height=Math.max(320,Math.min(1000000,Math.ceil(event.data.height)+8))+'px';});
- window.HarmonyExpedition=Object.freeze({mount,record,historyAccount,purge});
+ window.HarmonyExpedition=Object.freeze({mount,record,historyAccount,purge,isCompactSource(source){const frame=panel?.querySelector('#exp-compact')?.firstChild;return Boolean(current()&&tab==='compact'&&frame?.isConnected&&source===frame.contentWindow);}});
 })();
