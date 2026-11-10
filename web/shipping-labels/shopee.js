@@ -27,6 +27,29 @@
   }
   const values=index.get(glyphKey(glyph));return values?.size===1?[...values][0]:'';
  }
+ // Decode longer touching runs as a unique exact union of complete masks.
+ // Removing ink makes shared black pixels impossible; only up to three blank
+ // kerning columns may overlap, with the same height/baseline throughout.
+ function kernedSequence(glyph,patterns){
+  const singles=patterns.filter(p=>p.text.length===1&&p.height===glyph.height),memo=new Map();
+  function visit(g){
+   const key=glyphKey(g);if(memo.has(key))return memo.get(key);
+   const found=new Set();
+   for(const p of singles){
+    if(p.width>g.width)continue;let residual=g.bits.split(''),fits=true;
+    for(let y=0;y<g.height&&fits;y++)for(let x=0;x<p.width;x++)if(p.bits[y*p.width+x]==='1'){const i=y*g.width+x;if(residual[i]!=='1'){fits=false;break;}residual[i]='0';}
+    if(!fits)continue;
+    let left=g.width;for(let y=0;y<g.height;y++)for(let x=0;x<g.width;x++)if(residual[y*g.width+x]==='1')left=Math.min(left,x);
+    if(left===g.width){found.add(p.text);continue;}
+    if(left<Math.max(1,p.width-3)||left>p.width)continue;
+    let bits='';for(let y=0;y<g.height;y++)bits+=residual.slice(y*g.width+left,(y+1)*g.width).join('');
+    for(const suffix of visit({width:g.width-left,height:g.height,bits}))found.add(p.text+suffix);
+    if(found.size>1)break;
+   }
+   const values=[...found];memo.set(key,values);return values;
+  }
+  const values=visit(glyph);return values.length===1?values[0]:'';
+ }
  function decodeGlyph(glyph,patterns){
   const exact=[...new Set(patterns.filter(p=>glyphKey(p)===glyphKey(glyph)).map(p=>p.text))];
   if(exact.length)return exact.length===1?exact[0]:'';
@@ -51,7 +74,7 @@
    }
    const result=[...values];memo.set(start,result);return result;
   }
-  const result=visit(0);return result.length===1?result[0]:result.length?'':kernedGlyph(glyph,patterns);
+  const result=visit(0);return result.length===1?result[0]:result.length?'':kernedGlyph(glyph,patterns)||kernedSequence(glyph,patterns);
  }
  function glyphId(p,kind){
   if(kind==='shipping')return readGlyphId(p,'shipping')||readGlyphId(p,'shipping',[120,255,315,23])||readGlyphId(p,'pac');

@@ -1,3 +1,8 @@
+## [v25.142] - 2026-11-10
+
+- Shopee compacta: lotes de até 200 pedidos e reconhecimento exato de sequências de três ou mais letras encostadas no ID.
+- Mantém rejeição de leituras ambíguas ou pixels alterados, vínculo independente por pedido e um pedido por página.
+
 ## [v25.141] - 2026-11-10
 
 - Shopee compacta: lotes de até 100 pedidos, leitura completa de IDs largos nos checklists e da letra Q no PAC Industrial; inclui máscaras exatas K, G e Q.

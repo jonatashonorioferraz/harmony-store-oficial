@@ -121,7 +121,7 @@
   return {page:out,label,id,items:table.rows.length};
  }
  function convert(batch){
-  if(!batch.length||batch.length>200)throw Error('Selecione até 100 pedidos com etiqueta e checklist neste beta.');
+  if(!batch.length||batch.length>400)throw Error('Selecione até 200 pedidos com etiqueta e checklist neste beta.');
   const labels=new Map(),lists=new Map();
   for(const [index,page] of batch.entries()){const rotated=root.LocalShopee.rotate(page),table=root.LocalShopee.layout(rotated),kind=table?'checklist':'shipping',p=table?rotated:page,id=root.LocalShopee.glyphId(p,kind),map=table?lists:labels;
    if(!id)throw Error('ID não reconhecido no '+(table?'checklist':'envio')+' da página '+(index+1)+'. Nenhum vínculo será presumido pela ordem das páginas. Use o conversor normal.');

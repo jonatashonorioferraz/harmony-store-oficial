@@ -39,7 +39,7 @@ test('unsupported barcode geometry and excessive lists fail closed',()=>{
  const a=pair();dot(a.label,100,1160);assert.throws(()=>C.compose(a.label,a.list),/adicional/);
  const b=pair();dot(b.label,101,1080);assert.throws(()=>C.compose(b.label,b.list),/diferente/);
  const c=pair('261029ABCDEFGH',6);for(const row of c.list.table.rows)for(let y=0;y<50;y++)for(let x=0;x<450;x++)dot(c.list,79+x,row.top+y);assert.throws(()=>C.compose(c.label,c.list),/não cabe|extensa/);
- assert.throws(()=>C.convert(Array(202).fill(a.label)),/100 pedidos/);
+ assert.throws(()=>C.convert(Array(402).fill(a.label)),/200 pedidos/);
  const d=pair();dot(d.label,55,710);assert.throws(()=>C.compose(d.label,d.list),/rastreamento diferente/);
 });
 test('tight spacing fits longer lists without changing glyph pixels, barcode or quantities',()=>{
@@ -100,6 +100,6 @@ test('air DANFE keeps full barcode pixels and moves the entire numeric line into
  dot(label,100,1180);assert.throws(()=>C.barcodeModel(label));label.raw.set(before);dot(label,100,1060);assert.throws(()=>C.barcodeModel(label));
 });
 
-test('full 100-order batch is accepted with independent IDs and one page per order',()=>{
- const batch=Array.from({length:100},(_,i)=>pair('261110'+String(i).padStart(8,'0'),1));const results=C.convert([...batch.map(p=>p.label),...batch.map(p=>p.list).reverse()]);assert.equal(results.length,100);assert.equal(new Set(results.map(r=>r.id)).size,100);assert.ok(results.every(r=>r.items===1));
+test('full 200-order batch is accepted with independent IDs and one page per order',()=>{
+ const batch=Array.from({length:200},(_,i)=>pair('261110'+String(i).padStart(8,'0'),1));const results=C.convert([...batch.map(p=>p.label),...batch.map(p=>p.list).reverse()]);assert.equal(results.length,200);assert.equal(new Set(results.map(r=>r.id)).size,200);assert.ok(results.every(r=>r.items===1));
 });
