@@ -30,3 +30,11 @@ test('kerning with shared columns requires two complete disjoint masks and a uni
  const ambiguous=[...ctx.ShopeeIdFonts.shipping,{...ctx.ShopeeIdFonts.shipping.find(p=>p.text==='V'),text:'X'}];assert.equal(ctx.LocalShopee.decodeGlyph(glyph,ambiguous),'');
  assert.equal(ctx.LocalShopee.decodeGlyph({width:3,height:1,bits:'111'},[{width:2,height:1,bits:'11',text:'A'},{width:2,height:1,bits:'11',text:'B'}]),'');
 });
+
+test('shipping IDs at the air and standard origins retain every digit and reject damage',()=>{
+ const id='261110ABCDEFGH';
+ for(const origin of [124,140]){const p={width:816,height:1218,stride:102,raw:new Uint8Array(102*1218)};let x=origin;
+  for(const c of id){const g=ctx.ShopeeIdFonts.shipping.find(g=>g.text===c);assert.ok(g);for(let y=0;y<g.height;y++)for(let i=0;i<g.width;i++)if(g.bits[y*g.width+i]==='1')p.raw[(258+y)*p.stride+((x+i)>>3)]|=128>>((x+i)%8);x+=g.width+3;}
+  assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),id);p.raw[258*p.stride+(origin>>3)]^=128>>(origin%8);assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),'');
+ }
+});

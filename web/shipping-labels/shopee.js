@@ -54,13 +54,13 @@
   const result=visit(0);return result.length===1?result[0]:result.length?'':kernedGlyph(glyph,patterns);
  }
  function glyphId(p,kind){
-  if(kind==='shipping')return readGlyphId(p,'shipping')||readGlyphId(p,'pac');
+  if(kind==='shipping')return readGlyphId(p,'shipping')||readGlyphId(p,'shipping',[120,255,315,23])||readGlyphId(p,'pac');
   return readGlyphId(p,kind);
  }
- function readGlyphId(p,kind){
+ function readGlyphId(p,kind,region){
   const patterns=root.ShopeeIdFonts?.[kind];if(!patterns)return '';
   if((kind==='shipping'||kind==='pac')&&(p.width!==816||p.height!==1218)||kind==='checklist'&&(p.width!==1218||p.height!==816))return '';
-  const [left,top,width,height]=kind==='shipping'?[135,255,300,23]:kind==='pac'?[478,83,200,16]:[208,173,171,24];
+  const [left,top,width,height]=region||(kind==='shipping'?[135,255,300,23]:kind==='pac'?[478,83,200,16]:[208,173,171,24]);
   const xs=[];for(let x=left;x<left+width;x++){for(let y=top;y<top+height;y++)if(black(p,x,y)){xs.push(x);break;}}
   const columns=runs(xs);let text='';
   for(let i=0;i<columns.length;i++){

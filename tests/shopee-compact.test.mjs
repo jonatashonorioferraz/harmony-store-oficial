@@ -87,3 +87,15 @@ test('inline fallback fits distinct long products without dropping words, variat
  for(const op of plan.operations){assert.deepEqual(op.quantity.raw,quantity.raw);assert.equal(op.rows.flat().reduce((n,p)=>n+ink(p),0),ink(title)+ink(variation)+28);assert.ok(op.x+op.rows[0].reduce((n,p)=>n+p.width+8,0)-8<=op.quantityX-12);}
  assert.equal(C.fitList([...groups,...groups]),null);
 });
+
+test('air DANFE keeps full barcode pixels and moves the entire numeric line into blank space',async()=>{
+ const {label,list}=pair();label.raw.fill(0,1055*label.stride);
+ for(let x=67;x<742;x+=3)for(let y=1091;y<=1168;y++)dot(label,x,y);
+ for(let x=210;x<600;x+=4)for(let y=1070;y<=1080;y++)dot(label,x,y);
+ const numeric=C.cut(label,0,1067,816,20),before=label.raw.slice(),model=C.barcodeModel(label);
+ assert.equal(model.air,true);assert.deepEqual(C.cut(C.shippingParts(label).upper,0,1055,816,20).raw,numeric.raw);
+ const r=C.compose(label,list),doc=await ctx.PDFLib.PDFDocument.load(await(await C.createPdf([r])).arrayBuffer());assert.equal(doc.getPageCount(),1);assert.deepEqual(label.raw,before);
+ const {PDFName,PDFRawStream}=ctx.PDFLib,stream=doc.context.enumerateIndirectObjects().map(([,o])=>o).find(o=>o instanceof PDFRawStream&&o.dict.get(PDFName.of('Width'))?.asNumber()===688&&o.dict.get(PDFName.of('Height'))?.asNumber()===79);
+ assert.ok(stream);assert.deepEqual(new Uint8Array(inflateSync(stream.getContents())),C.cut(label,64,1091,688,79).raw);
+ dot(label,100,1180);assert.throws(()=>C.barcodeModel(label));label.raw.set(before);dot(label,100,1060);assert.throws(()=>C.barcodeModel(label));
+});
