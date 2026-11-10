@@ -1,3 +1,9 @@
+## [v25.145] - 2026-11-10
+
+- Shopee compacta registra pedidos, canal, lotes e páginas na conta selecionada após gerar o PDF. Reimpressões e uso alternado com o conversor normal reutilizam o pedido existente.
+- Mantém a geração rápida sem OCR de produtos; preserva os produtos já registrados. Falha ao salvar não impede baixar o PDF e permite tentar novamente pelo histórico pendente.
+- Conta compartilhada entre os conversores, vínculo pelo ID e hashes das páginas originais, com testes de deduplicação em banco isolado.
+
 ## [v25.144] - 2026-11-10
 
 - Shopee: máscaras exatas adicionais de B, U e W no PAC Industrial, levantadas em auditoria de arquivos históricos.

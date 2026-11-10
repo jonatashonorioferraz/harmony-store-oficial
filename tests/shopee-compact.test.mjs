@@ -57,11 +57,11 @@ test('reflow preserves all ink pixels and never shrinks words',()=>{
  const words=C.words(p);assert.equal(words.reduce((n,w)=>n+ink(w),0),ink(p));
  assert.equal(C.lines(p,10).length,3);
 });
-test('beta is separately gated and cannot record operational history',async()=>{
+test('compact UI stays gated and uses only the authenticated history bridge',async()=>{
  const ui=await readFile(new URL('../shipping-labels/compact-ui.js',import.meta.url),'utf8');
  const html=await readFile(new URL('../shipping-labels/compact.html',import.meta.url),'utf8');
  assert.match(html,/access\.js/);assert.match(ui,/HarmonyConverterAccess/);
- assert.doesNotMatch(ui,/recordConversion|historyAccount|fetch\(|localStorage|Tesseract/);
+ assert.doesNotMatch(ui,/fetch\(|localStorage|Tesseract/);assert.match(ui,/recordConversion/);assert.match(ui,/historyAccount/);
  assert.match(ui,/revokeObjectURL/);assert.match(html,/personalizados/);
 });
 

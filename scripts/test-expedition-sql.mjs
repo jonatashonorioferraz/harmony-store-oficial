@@ -1,7 +1,8 @@
 import {createRequire} from 'node:module';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,webcrypto} from 'node:crypto';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 if(!process.env.PGLITE_ROOT)throw Error('PGLITE_ROOT required; production fallback forbidden');
 const require=createRequire(join(process.env.PGLITE_ROOT,'package.json'));
@@ -58,6 +59,20 @@ try{
  await check('Shopee old label and checklist placeholders upgraded to one order',async()=>{const a=await call('account_create',{name:'Shopee antigo'});const old=key=>({key,identified:false,order_ref:'',shipment_ref:'',products:[]});const oldBatch=input([old(alias(1)),old(alias(2))],{account_id:a.id,channel:'shopee',total:2,pages:2});await call('record',oldBatch);await call('record',{...shoInput(shopee()),account_id:a.id});const w=await workspace({account_id:a.id,channel:'shopee'});assert.equal(w.channels[0].orders,1);assert.equal(w.channels[0].labels,0);assert.equal(w.products[0].quantity,2);assert.equal((await call('detail',{id:oldBatch.request_id})).length,1)});
  await check('Shopee pending product review can supplement once without another sale',async()=>{const a=await call('account_create',{name:'Shopee revisão'});const first={...shoInput(shopee(undefined,[])),account_id:a.id};await call('record',first);let w=await workspace({account_id:a.id});assert.equal(w.channels[0].orders,1);assert.equal(w.channels[0].orders_with_products,0);await call('record',{...shoInput(shopee()),account_id:a.id});await call('record',{...shoInput(shopee()),account_id:a.id});await call('record',{...shoInput(shopee(undefined,[])),account_id:a.id});w=await workspace({account_id:a.id});assert.equal(w.channels[0].orders,1);assert.equal(w.products[0].quantity,2);assert.equal(w.channels[0].orders_with_products,1);const old={key:alias(1),identified:false,order_ref:'',shipment_ref:'',products:[]};const r=await call('record',{...shoInput(old),account_id:a.id});assert.equal(r.conflicts,0);assert.equal(r.repeated_count,1);assert.equal((await workspace({account_id:a.id})).channels[0].labels,0)});
  await check('Shopee bad IDs, negative quantity and malformed source aliases rejected',async()=>{for(const o of [{...shopee(),order_ref:'BAD'},shopee(undefined,[{title:'Produto',variation:'',sku:'',quantity:0}]),shopee(undefined,undefined,['bad'])])await assert.rejects(()=>call('record',shoInput(o)))});
+
+ await check('actual compact payload reconciles normal originals, reprints, retries and product enrichment',async()=>{
+  const c=vm.createContext({crypto:webcrypto,Uint8Array,LocalInvoices:{labelIdentity:()=>({})}});
+  for(const f of ['shopee.js','history.js'])vm.runInContext(await readFile(new URL('../shipping-labels/'+f,import.meta.url),'utf8'),c);
+  const h=c.LocalConversionHistory,a=await call('account_create',{name:'Compacta integrada'});
+  const label={width:8,height:1,raw:new Uint8Array([11])},checklist={width:8,height:1,raw:new Uint8Array([22])},result={id:'261110ABCDEFGH',label,checklist};
+  const normal=await h.summary({channel:'shopee',batch:[label,checklist],pages:2,total:2});await call('record',{...normal,account_id:a.id});
+  const compact={...await h.compact([result]),account_id:a.id};const first=await call('record',compact);assert.deepEqual(await call('record',compact),first);
+  await call('record',{...await h.compact([result]),account_id:a.id});await call('record',{...normal,request_id:randomUUID(),account_id:a.id});
+  let w=await workspace({account_id:a.id});assert.equal(w.channels[0].orders,1);assert.equal(w.channels[0].labels,0);assert.equal(w.batch_count,4);
+  const enriched={...compact,request_id:randomUUID(),pages:2,orders:[{...compact.orders[0],products:[{title:'Produto conferido',variation:'Azul',sku:'',listing_id:'',quantity:3}]}]};await call('record',enriched);
+  await call('record',{...await h.compact([result]),account_id:a.id});w=await workspace({account_id:a.id});assert.equal(w.channels[0].orders,1);assert.equal(w.products[0].quantity,3);assert.equal(w.channels[0].orders_with_products,1);
+  const b=await call('account_create',{name:'Compacta outra conta'});assert.equal((await call('record',{...await h.compact([result]),account_id:b.id})).new_count,1);
+ });
  await identity('postgres');
  await check('all operational tables have RLS and no direct client writes/reads',async()=>{for(const suffix of ['accounts','batches','orders','batch_orders','listings']){const name='expedition_'+suffix;assert.equal(await scalar("select relrowsecurity result from pg_class where oid=$1::regclass",['public.'+name]),true);for(const role of ['anon','authenticated'])for(const privilege of ['SELECT','INSERT','UPDATE','DELETE'])assert.equal(await scalar('select has_table_privilege($1,$2,$3) result',[role,'public.'+name,privilege]),false);assert.equal(await scalar('select has_table_privilege($1,$2,$3) result',['service_role','public.'+name,'INSERT']),false)}});
  console.log(passed+' expedition SQL scenarios passed. Synthetic isolated database only.');

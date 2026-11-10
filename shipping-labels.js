@@ -1,11 +1,12 @@
 (function(){
   'use strict';
   const VIEW='shipping-labels';
-  const VERSION='25.135';
+  const VERSION='25.145';
   let frame=null,loadingTimer=null;
   // The parent keeps authentication. Only allowlisted operational summaries
   // reach the shared history; source files and tokens stay out of the bridge.
   const canUse=()=>Boolean(S.session&&S.profile?.role==='admin'&&S.profile.status==='active'&&!S.profile.must_change_password&&!sessionDocumentClosed);
+  const trustedSource=source=>Boolean(frame?.isConnected&&source===frame.contentWindow)||window.HarmonyExpedition?.isCompactSource(source)===true;
   function reset(){
     window.HarmonyExpedition?.purge();
     clearTimeout(loadingTimer);loadingTimer=null;
@@ -51,7 +52,7 @@
     frame.style.height=`${Math.max(320,Math.min(1000000,Math.ceil(event.data.height)+8))}px`;
   });
   window.HarmonyShippingLabels=Object.freeze({canUse,reset,render,
-    historyAccount(source){if(!canUse()||source!==frame?.contentWindow)throw Error('Acesso encerrado.');return window.HarmonyExpedition.historyAccount();},
-    recordConversion(source,input){if(!canUse()||source!==frame?.contentWindow)throw Error('Acesso encerrado.');return window.HarmonyExpedition.record(input);},open(){if(!canUse())return;S.view=VIEW;renderApp();}});
+    historyAccount(source){if(!canUse()||!trustedSource(source))throw Error('Acesso encerrado.');return window.HarmonyExpedition.historyAccount();},
+    recordConversion(source,input){if(!canUse()||!trustedSource(source))throw Error('Acesso encerrado.');return window.HarmonyExpedition.record(input);},open(){if(!canUse())return;S.view=VIEW;renderApp();}});
   new MutationObserver(()=>{if(frame&&(!canUse()||!frame.isConnected||S.view!==VIEW))reset();}).observe(document.body,{childList:true,subtree:true});
 })();

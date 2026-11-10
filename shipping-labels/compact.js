@@ -125,10 +125,10 @@
   const labels=new Map(),lists=new Map();
   for(const [index,page] of batch.entries()){const rotated=root.LocalShopee.rotate(page),table=root.LocalShopee.layout(rotated),kind=table?'checklist':'shipping',p=table?rotated:page,id=root.LocalShopee.glyphId(p,kind),map=table?lists:labels;
    if(!id)throw Error('ID não reconhecido no '+(table?'checklist':'envio')+' da página '+(index+1)+'. Nenhum vínculo será presumido pela ordem das páginas. Use o conversor normal.');
-   if(map.has(id))throw Error('Pedido repetido no arquivo: '+id+'. Selecione uma única cópia.');map.set(id,p);
+   if(map.has(id))throw Error('Pedido repetido no arquivo: '+id+'. Selecione uma única cópia.');map.set(id,table?{rotated:p,source:page}:p);
   }
   if(labels.size!==lists.size||!labels.size)throw Error('Falta etiqueta ou checklist no arquivo.');
-  return [...labels].map(([id,p])=>{if(!lists.has(id))throw Error('Checklist ausente para '+id);return compose(p,lists.get(id));});
+  return [...labels].map(([id,p])=>{if(!lists.has(id))throw Error('Checklist ausente para '+id);const list=lists.get(id);return {...compose(p,list.rotated),checklist:list.source};});
  }
  async function createPdf(results){
   const mm=72/25.4,doc=await root.PDFLib.PDFDocument.create();

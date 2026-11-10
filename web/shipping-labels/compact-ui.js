@@ -12,6 +12,7 @@
  $('form').onsubmit=async event=>{event.preventDefault();clear();const token=serial,file=$('files').files[0];if(!file)return;
   $('generate').disabled=true;$('files').disabled=true;$('status').textContent='Lendo etiquetas e checklists localmente…';
   try{
+   const historyAccount=window.parent.HarmonyShippingLabels.historyAccount(window);
    if(file.size>20*1024*1024)throw Error('Limite de 20 MB por arquivo neste beta.');
    const data=new Uint8Array(await file.arrayBuffer());valid(token);
    const entries=/\.zip$/i.test(file.name)?await LocalZpl.unzip(data):[{name:file.name,text:new TextDecoder().decode(data)}];valid(token);
@@ -19,7 +20,12 @@
    const batch=[];for(const entry of texts){batch.push(...await LocalZpl.parseZpl(entry.text));valid(token);if(batch.length>400)throw Error('Selecione até 200 pedidos neste beta.');}
    results=ShopeeCompact.convert(batch);valid(token);
    const blob=await ShopeeCompact.createPdf(results);valid(token);
-   url=URL.createObjectURL(blob);$('download').href=url;$('summary').textContent=`${results.length} pedidos · ${results.length} páginas · ${results.reduce((n,r)=>n+r.items,0)} linhas de produtos. Nenhum registro no histórico.`;$('result').hidden=false;preview();$('status').textContent='Teste pronto. Confira a prévia e teste os códigos na impressão.';
+   url=URL.createObjectURL(blob);$('download').href=url;$('summary').textContent=`${results.length} pedidos · ${results.length} páginas · ${results.reduce((n,r)=>n+r.items,0)} linhas de produtos. Os pedidos entram no histórico sem duplicar reimpressões.`;$('result').hidden=false;preview();$('status').textContent='PDF pronto. Salvando o histórico…';
+   try{
+    const summary=await LocalConversionHistory.compact(results);valid(token);
+    const saved=await window.parent.HarmonyShippingLabels.recordConversion(window,{...summary,account_id:historyAccount});valid(token);
+    $('status').textContent='PDF pronto. '+saved;
+   }catch(error){if(token===serial&&window.HarmonyConverterAccess.allowed())$('status').textContent='PDF disponível. Histórico não confirmado: '+error.message+' Confira o aviso acima e use “Tentar salvar histórico” antes de sair.';}
   }catch(error){if(token===serial){clear();$('status').textContent=error.message+' O conversor normal continua disponível na outra aba.';}}
   finally{if(token===serial){$('generate').disabled=false;$('files').disabled=false;}}
  };

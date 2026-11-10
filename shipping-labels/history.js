@@ -18,5 +18,19 @@
     }
     return {request_id:crypto.randomUUID(),channel,pages,total,included:batch.length,orders:[...new Map(orders.map(o=>[o.key,o])).values()]};
   }
-  root.LocalConversionHistory=Object.freeze({summary});
+  async function compact(results){
+    if(!Array.isArray(results)||!results.length||results.length>200)throw Error('Lote compacto inválido para o histórico.');
+    const orders=[],seen=new Set();
+    for(const result of results){
+      const id=result.id;
+      if(!/^\d{6}[A-Z0-9]{8}$/.test(id||'')||seen.has(id)||!result.label?.raw||!result.checklist?.raw)throw Error('Pedido compacto sem identificação única e origens válidas.');
+      seen.add(id);
+      // Hash ORIGINAL label and checklist, never the resized/combined PDF page.
+      // These aliases reconcile records previously saved by the normal converter.
+      const source_keys=await Promise.all([result.label,result.checklist].map(p=>root.LocalShopee.fingerprint(p)));
+      orders.push({key:'shopee:'+id,identified:true,order_ref:id,shipment_ref:'',products:[],source_keys});
+    }
+    return {request_id:crypto.randomUUID(),channel:'shopee',pages:results.length,total:results.length,included:results.length,orders};
+  }
+  root.LocalConversionHistory=Object.freeze({summary,compact});
 })(globalThis);
