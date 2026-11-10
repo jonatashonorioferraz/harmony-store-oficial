@@ -81,7 +81,7 @@
   tab=value;loadSerial++;panel.querySelectorAll('[data-exp-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.expTab===value)));
   panel.querySelector('#exp-converter').hidden=value!=='converter';panel.querySelector('#exp-dashboard').hidden=!['history','listings'].includes(value);
   const beta=panel.querySelector('#exp-compact');beta.hidden=value!=='compact';
-  if(value==='compact'&&!beta.firstChild){const frame=document.createElement('iframe');frame.title='Shopee compacta · Beta';frame.className='shipping-labels-frame';frame.style.height='1300px';frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox');frame.setAttribute('referrerpolicy','no-referrer');frame.src='shipping-labels/compact.html?v=25.142';beta.append(frame);}
+  if(value==='compact'&&!beta.firstChild){const frame=document.createElement('iframe');frame.title='Shopee compacta · Beta';frame.className='shipping-labels-frame';frame.style.height='1300px';frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox');frame.setAttribute('referrerpolicy','no-referrer');frame.src='shipping-labels/compact.html?v=25.143';beta.append(frame);}
   if(value!=='compact'){beta.firstChild?.contentWindow?.HarmonyConverterLifecycle?.dispose();beta.replaceChildren();}
   if(['history','listings'].includes(value))load();
  }
