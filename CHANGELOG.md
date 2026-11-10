@@ -1,3 +1,9 @@
+## [v25.144] - 2026-11-10
+
+- Shopee: máscaras exatas adicionais de B, U e W no PAC Industrial, levantadas em auditoria de arquivos históricos.
+- A leitura encerra o ID completo antes de um campo separado, evitando incorporar o bloco Residencial/Comercial. IDs truncados ou com caracteres extras encostados continuam rejeitados.
+- Sem alteração no layout ou códigos de impressão; processamento permanece local e sem OCR adicional.
+
 ## [v25.143] - 2026-11-10
 
 - Shopee: inclui a máscara exata adicional da letra S usada no ID do PAC Industrial. Preserva a validação independente do checklist e rejeita pixels desconhecidos.

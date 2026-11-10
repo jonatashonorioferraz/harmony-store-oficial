@@ -87,7 +87,7 @@
   const xs=[];for(let x=left;x<left+width;x++){for(let y=top;y<top+height;y++)if(black(p,x,y)){xs.push(x);break;}}
   const columns=runs(xs);let text='';
   for(let i=0;i<columns.length;i++){
-   if(kind!=='shipping'&&i&&columns[i][0]-columns[i-1][1]>5)break;
+   if(i&&columns[i][0]-columns[i-1][1]>5&&(kind!=='shipping'||/^\d{6}[A-Z0-9]{8}$/.test(text)))break;
    const [a,b]=columns[i];let min=top+height,max=top;
    for(let y=top;y<top+height;y++)for(let x=a;x<=b;x++)if(black(p,x,y)){min=Math.min(min,y);max=Math.max(max,y);}
    let bits='';for(let y=min;y<=max;y++)for(let x=a;x<=b;x++)bits+=black(p,x,y)?'1':'0';
