@@ -38,3 +38,8 @@ test('shipping IDs at the air and standard origins retain every digit and reject
   assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),id);p.raw[258*p.stride+(origin>>3)]^=128>>(origin%8);assert.equal(ctx.LocalShopee.glyphId(p,'shipping'),'');
  }
 });
+
+test('PAC Industrial alternate 8 D and 7 masks decode exactly and reject unknown altered pixels',()=>{
+ const fixtures=[{"width":8,"height":12,"bits":"011111101100001110000001100000011100001100111100110000101000000110000001100000011100011101111100","text":"8"},{"width":11,"height":12,"bits":"111111110001100000110011000000110110000000101100000001111000000011110000000111100000001111000000010110000001101100001110011111110000","text":"D"},{"width":8,"height":12,"bits":"111111110000001100000010000001000000110000001000000110000001000000010000001100000011000000110000","text":"7"}];
+ for(const g of fixtures){assert.equal(ctx.LocalShopee.decodeGlyph(g,ctx.ShopeeIdFonts.pac),g.text);for(let i=0;i<g.bits.length;i++){const broken={...g,bits:g.bits.slice(0,i)+(g.bits[i]==='1'?'0':'1')+g.bits.slice(i+1)};const known=ctx.ShopeeIdFonts.pac.find(p=>p.width===broken.width&&p.height===broken.height&&p.bits===broken.bits);assert.equal(ctx.LocalShopee.decodeGlyph(broken,ctx.ShopeeIdFonts.pac),known?.text||'');}}
+});
