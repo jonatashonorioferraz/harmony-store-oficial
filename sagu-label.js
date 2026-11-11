@@ -17,24 +17,37 @@
     const lines=(x,y,values,size=2.25,gap=3)=>values.map((t,i)=>line(x,y+i*gap,t,size)).join('');
     const rule=(x,y,w)=>`<path d="M${x} ${y}h${w}" fill="none" stroke="#000" stroke-width=".22"/>`;
     const box=(x,y,w,h,r=2)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="none" stroke="#000" stroke-width=".22"/>`;
-    const circle=(x,y,mark)=>`<circle cx="${x}" cy="${y}" r="3.8" fill="none" stroke="#000" stroke-width=".3"/>${line(x-1,y+1.2,mark,3.5,true)}`;
-    const leaf=`<g fill="none" stroke="#000" stroke-width=".35"><path d="M124 12q-5-4-3-7 5 0 3 7zM124 12q0-6 4-6 1 4-4 6zM124 12v2"/><circle cx="124" cy="9.5" r="5"/></g>`;
+    // Vector pictograms with thermal-safe strokes; no remote images or fonts.
+    const symbols={
+      bowl:'<path d="M4 13h16c-1 5-4 7-8 7s-7-2-8-7z"/><circle cx="7" cy="11" r="2"/><circle cx="12" cy="11" r="2"/><circle cx="17" cy="11" r="2"/><circle cx="9.5" cy="7.8" r="2"/><circle cx="14.5" cy="7.8" r="2"/><circle cx="12" cy="4.7" r="1.8"/>',
+      flask:'<path d="M8 3h7m-6 0v7L4 19q-1 2 2 2h11q3 0 1-3l-5-8V3M7 15h8"/><path d="M13 20q-1-8 8-8-1 8-8 8zM13 20l5-5" fill="#fff"/>',
+      caution:'<path d="M10.5 4q1.5-2 3 0L22 19q1 2-2 2H4q-3 0-2-2z"/><path d="M12 8v6" stroke-width="2"/><circle cx="12" cy="17.6" r="1" fill="#000" stroke="none"/>',
+      child:'<circle cx="9" cy="6" r="2"/><path d="M9 9v6m-5-3 5-3 4 3m-4 3-3 5m3-5 3 5"/><path d="M16 15q1-3 4-1l1 3h-6z" fill="#000"/><circle cx="15.5" cy="11.8" r="1"/><circle cx="18" cy="10.8" r="1"/><circle cx="20.5" cy="12" r="1"/>',
+      sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/>',
+      glass:'<path d="M6 4h12l-2 12H8zM12 16v4m-4 0h8M4 3l16 18"/>',
+      leaf:'<path d="M12 20V8"/><path d="M12 12Q5 9 12 2q7 7 0 10zM11 19Q2 18 3 10q8 1 8 9zM13 19q9-1 8-9-8 1-8 9z" fill="#000" stroke="none"/>',
+      heart:'<path d="M12 21C8 17 2 13 2 8c0-6 8-7 10-1 2-6 10-5 10 1 0 5-6 9-10 13z"/>',
+      sparkle:'<path d="M10 3q1 7 7 8-6 1-7 8-1-7-7-8 6-1 7-8zM19 1q.5 3 3 3.5-2.5.5-3 3.5-.5-3-3-3.5 2.5-.5 3-3.5zM20 17q.5 3 3 3.5-2.5.5-3 3.5-.5-3-3-3.5 2.5-.5 3-3.5z" fill="#000" stroke="none"/>'
+    };
+    const icon=(name,x,y,size=8,ring=true)=>`<g data-icon="${name}" transform="translate(${x-size/2} ${y-size/2}) scale(${size/24})" fill="none" stroke="#000" stroke-width="1" stroke-linejoin="round" stroke-linecap="round">${ring?'<circle cx="12" cy="12" r="11.5"/><g transform="translate(3 3) scale(.75)">':''}${symbols[name]}${ring?'</g>':''}</g>`;
+    const divider=y=>`${rule(54,y,19)}${rule(78,y,19)}<path d="M75.5 ${y-0.85}l.85.85-.85.85-.85-.85z"/>`;
+    const leaf=icon('leaf',124,9.5,10);
     const manufactured=date?date.slice(8,10)+'/'+date.slice(5,7)+'/'+date.slice(0,4):'____/____/______';
     return `<svg xmlns="http://www.w3.org/2000/svg" width="150mm" height="100mm" viewBox="0 0 150 100"><rect width="150" height="100" fill="#fff"/><g fill="#000" font-family="Arial, sans-serif">${box(1.8,1.8,146.4,96.4,3)}${box(2.8,2.8,144.4,94.4,2.2)}
     <path d="M50.5 6v78M100.5 6v78" fill="none" stroke="#000" stroke-width=".18" stroke-dasharray=".4 .7"/>
     ${barcode}${line(11,27,CODE,3,true)}${box(5,31,43,11,1.5)}<path d="M21 31v11" stroke="#000" stroke-width=".2"/>
     ${line(7,35,'VALIDADE:',2.1,true)}${line(7,39,'24 MESES',2.4,true)}${line(23,35,'FABRICAÇÃO:',2.1,true)}${line(23,39,manufactured,2.2)}
-    ${circle(9,50,'!')}${lines(15,48,['MANTER FORA DO ALCANCE','DE CRIANÇAS E ANIMAIS.'],2)}
-    ${circle(9,62,'○')}${lines(15,59,['CONSERVAR EM LOCAL SECO,','FRESCO E AO ABRIGO DA LUZ.'],1.95)}
-    ${circle(9,74,'!')}${lines(15,72,['PRODUTO NÃO COMESTÍVEL.','NÃO INGERIR.'],2)}
+    ${icon('child',9,50)}${lines(15,48,['MANTER FORA DO ALCANCE','DE CRIANÇAS E ANIMAIS.'],2)}
+    ${icon('sun',9,62)}${lines(15,59,['CONSERVAR EM LOCAL SECO,','FRESCO E AO ABRIGO DA LUZ.'],1.95)}
+    ${icon('glass',9,74)}${lines(15,72,['PRODUTO NÃO COMESTÍVEL.','NÃO INGERIR.'],2)}
     ${lines(6,82,['USO EXCLUSIVO PARA DECORAÇÃO','E AROMATIZAÇÃO DE AMBIENTES.'],2)}
-    ${line(54,9,'MODO DE USO:',2.8,true)}${lines(54,15,['Coloque a quantidade desejada de','sagu perfumado em um recipiente','decorativo aberto (sachê, potinho,','vaso, bandeja ou outro de sua','preferência). O aroma será liberado','gradualmente, perfumando','o ambiente.'],2.25,3.25)}
-    ${rule(54,39,43)}${line(54,45,'COMPOSIÇÃO:',2.8,true)}${lines(54,51,['Bolinhas de fécula, essência,','corantes, álcool, conservante','e veículo.'],2.3,3.25)}
-    ${rule(54,61,43)}${line(54,67,'PRECAUÇÕES:',2.8,true)}${lines(54,72,['Produto não comestível. Não ingerir.','Evitar contato com olhos e mucosas.','Em caso de contato, lavar com água','em abundância. Suspender o uso em','caso de irritação. Não utilizar','sobre a pele.'],2.1,2.8)}
+    ${icon('bowl',58,9,8.5)}${line(64,10,'MODO DE USO:',2.65,true)}${lines(54,16,['Coloque a quantidade desejada de','sagu perfumado em um recipiente','decorativo aberto (sachê, potinho,','vaso, bandeja ou outro de sua','preferência). O aroma será liberado','gradualmente, perfumando','o ambiente.'],2.25,3.25)}
+    ${divider(39)}${icon('flask',58,45,8.5)}${line(64,46,'COMPOSIÇÃO:',2.65,true)}${lines(54,52,['Bolinhas de fécula, essência,','corantes, álcool, conservante','e veículo.'],2.3,3.25)}
+    ${divider(61)}${icon('caution',58,67,8.5)}${line(64,68,'PRECAUÇÕES:',2.65,true)}${lines(54,74,['Produto não comestível. Não ingerir.','Evitar contato com olhos e mucosas.','Em caso de contato, lavar com água','em abundância. Suspender o uso em','caso de irritação. Não utilizar','sobre a pele.'],2.1,2.55)}
     ${box(103,4,42,50,3)}${leaf}${line(106,20,'PRODUTO NÃO TÓXICO',2.65,true)}${line(106,25,'NÃO INDICADO PARA USO CORPORAL',1.85,true)}${line(106,29,'USO DECORATIVO E AROMATIZANTE',1.85,true)}${rule(106,33,36)}
     ${line(106,38,'SUGESTÕES DE USO:',2.5,true)}${lines(106,42,['• Sachês perfumados','• Lembrancinhas','• Potpourris','• Decorações'],2.25,3)}
     ${box(103,58,42,28,3)}${line(106,64,'PRODUZIDO POR:',2.6,true)}${lines(106,68,['Harmony Store Oficial','CNPJ: 44.967.294/0001-09','Inscrição Estadual: 0350055270','Rua Gramado, 399 - Centro','Dois Irmãos/RS - CEP 93950-000'],2.15,3.15)}
-    ${rule(2.8,89,144.4)}${line(6,93,'PERFUME E DELICADEZA PARA SEU AMBIENTE E LEMBRANCINHAS',1.9,true)}${line(6,96,'COM ESSÊNCIAS PREMIUM',1.8)}${line(104,96,'AROMA SUAVE E DURADOURO',1.8)}
+    ${rule(2.8,89,144.4)}<circle cx="9" cy="93.4" r="3.1"/><g fill="#fff" stroke="#fff" transform="translate(6.8 91.2) scale(.183)">${symbols.heart}</g>${line(15,92.8,'PERFUME E DELICADEZA',2,true)}${line(15,95.5,'PARA SEU AMBIENTE E LEMBRANCINHAS',1.85)}<path d="M77 91v5M113 91v5" stroke="#000" stroke-width=".2"/>${icon('heart',83,93.4,5,false)}${line(88,92.8,'COM ESSÊNCIAS',1.95)}${line(88,95.5,'PREMIUM',1.95,true)}${icon('sparkle',119,93.4,5.5,false)}${line(125,92.8,'AROMA SUAVE',1.95)}${line(125,95.5,'E DURADOURO',1.95)}
     </g></svg>`;
   }
   async function canvas(options={}){
