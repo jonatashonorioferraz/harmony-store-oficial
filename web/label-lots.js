@@ -159,7 +159,8 @@
   function drawPage(page){
     const mapped=workers().filter(person=>codeFor(person.id));
     page.innerHTML=`<div class="page label-lots-page">
-      ${head('RASTREABILIDADE','Lotes e etiquetas','Etiqueta térmica 60 × 40 mm para mini sabonetes artesanais. O lote é registrado antes de gerar PDF ou ZPL.')}
+      ${head('RASTREABILIDADE','Lotes e etiquetas','Lotes de mini sabonetes 60 × 40 mm e rótulo de sagu perfumado 10 × 15 cm.')}
+      <section id="saguLabelHost"></section>
       <div class="label-lots-layout">
         <section class="card label-lots-create">
           <div class="label-lots-heading"><div><small>NOVO LOTE</small><h2>Prepare a emissão</h2></div><span>Número atribuído na confirmação</span></div>
@@ -187,6 +188,7 @@
       </section>
       <section id="labelLotDetail"></section>
     </div>`;
+    root.HarmonySaguLabel?.mount(page.querySelector('#saguLabelHost'));
     const form=page.querySelector('#labelLotForm');
     const preview=()=>{
       const id=form.elements.collaborator.value,manufactured=form.elements.manufactured.value;

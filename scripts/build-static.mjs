@@ -31,6 +31,7 @@ for (const filename of [
   "index.html",
   "label-lots.css",
   "label-lots.js",
+  "sagu-label.js",
   "media-optimization.js",
   "service-worker.js",
   "shipping-inventory-integration.js",

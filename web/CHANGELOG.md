@@ -1,3 +1,9 @@
+## [v25.146] - 2026-11-11
+
+- Lotes e etiquetas: rótulo de sagu perfumado em 10 × 15 cm, com conteúdo horizontal, fabricação opcional e saídas PDF e ZPL em 203/300 DPI.
+- Código interno Code 128 HS-SAGU-001, sem atribuir GTIN comercial. A exportação não cria lote de sabonetes nem movimenta estoque.
+- PDF monocromático sem perdas e ZPL com os mesmos pixels; mantém quantidade de cópias no ZPL e uma página no PDF.
+
 ## [v25.145] - 2026-11-10
 
 - Shopee compacta registra pedidos, canal, lotes e páginas na conta selecionada após gerar o PDF. Reimpressões e uso alternado com o conversor normal reutilizam o pedido existente.

@@ -1,4 +1,4 @@
-const CACHE='harmony-store-v25-145-r1';
+const CACHE='harmony-store-v25-146-r1';
 const PUBLIC_MEDIA_CACHE='harmony-public-media-v1';
 const PUBLIC_MEDIA_TTL=24*60*60*1000;
 const PUBLIC_MEDIA_MAX_BYTES=48*1024*1024;
@@ -10,7 +10,7 @@ const SHELL=['./','./index.html','./styles.css?v=25.67','./operational-central.c
 
 SHELL.push('./individual-product-stock.css?v=25.63','./individual-product-stock.js?v=25.63');
 SHELL.push('./expedition.js?v=25.145','./shipping-labels.css?v=25.129','./shipping-labels.js?v=25.145');
-SHELL.push('./label-lots.css?v=1','./label-lots.js?v=3');
+SHELL.push('./label-lots.css?v=2','./label-lots.js?v=4','./sagu-label.js?v=1','./shipping-labels/vendor/code128.js?v=25.129');
 SHELL.push('./financial-contracts-core.js?v=1','./financial-contracts-ai.js?v=1',
   './financial-contracts.js?v=1','./financial-contracts-ai.css?v=1',
   './financial-contracts.css?v=1');
