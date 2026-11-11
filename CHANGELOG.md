@@ -1,3 +1,8 @@
+## [v25.147] - 2026-11-11
+
+- Rótulo sagu: pictogramas vetoriais para uso, composição e precauções, símbolos de conservação e advertência, separadores ornamentais e rodapé em três blocos com corações e brilho.
+- Espaçamento entre ícones e textos conferido nas duas resoluções térmicas; preserva conteúdo, dimensões e código interno.
+
 ## [v25.146] - 2026-11-11
 
 - Lotes e etiquetas: rótulo de sagu perfumado em 10 × 15 cm, com conteúdo horizontal, fabricação opcional e saídas PDF e ZPL em 203/300 DPI.
