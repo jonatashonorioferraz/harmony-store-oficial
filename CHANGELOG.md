@@ -1,3 +1,9 @@
+## [v25.148] - 2026-11-12
+
+- Mercado Livre: etiquetas sem número da venda passam a vincular a ficha ao Excel pelo envio único e CEP explícito de entrega. Números de venda presentes continuam sendo conferidos e divergências ou ambiguidades são bloqueadas.
+- IDs de venda ausentes não são tratados como duplicados entre etiquetas diferentes. Mantém bloqueios de envios repetidos, CEP divergente, pacote incompleto e cancelamentos.
+- Conferência informa a origem do vínculo. DANFE permanece complementar no modo ficha do Excel; etiquetas e documentos originais não são alterados.
+
 ## [v25.147] - 2026-11-11
 
 - Rótulo sagu: pictogramas vetoriais para uso, composição e precauções, símbolos de conservação e advertência, separadores ornamentais e rodapé em três blocos com corações e brilho.

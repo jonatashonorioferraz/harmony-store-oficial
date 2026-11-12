@@ -141,7 +141,7 @@ test('DANFE gaps, custom SKU, quantity, variation and CEP disagreements are comp
 });
 
 test('Excel authority still rejects missing, ambiguous, conflicting and duplicate order identities',async()=>{
- for(const change of [l=>delete l.metadata.saleId,l=>l.metadata.saleIds=['2000000000000001','2000000000000002'],l=>l.metadata.shipmentId='99999999999',l=>l.metadata.saleId='2000000000000099',l=>l.metadata.postcode='99999999']){
+ for(const change of [l=>{delete l.metadata.saleId;delete l.metadata.postcode;},l=>l.metadata.saleIds=['2000000000000001','2000000000000002'],l=>l.metadata.shipmentId='99999999999',l=>l.metadata.saleId='2000000000000099',l=>l.metadata.postcode='99999999']){
   const c=env(),sales=c.LocalSales.parse([...headers(),row(7,data(1))]),l=label(1);change(l);
   const report=await c.LocalBatchRecovery.analyze([l],{sales,invoices:[]});assert.equal(report.ready,false);assert.equal(report.confirmedCount,0);
   await assert.rejects(c.LocalInvoices.createPairedPdf([l],{sales,invoices:[]},[],203,()=>{},'picking'));
@@ -172,4 +172,21 @@ test('missing label CEP uses only its explicit unique invoice after exact order 
  const paired=c.LocalSales.pair([l],{sales,invoices:[n]});assert.equal(paired.length,1);
  for(const notes of [[],[invoice(2)],[n,n],[{...n,postcode:'99999999'}]])assert.throws(()=>c.LocalSales.orderFor(l,sales,notes),/sem CEP/);
  for(const metadata of [{...l.metadata,invoiceNumber:null},{...l.metadata,postcodes:['01234567','99999999']},{...l.metadata,saleId:'2000000000000002'},{...l.metadata,shipmentId:'10000000002'},{...l.metadata,postcode:'99999999'}])assert.throws(()=>c.LocalSales.orderFor({...l,metadata},sales,[n]));
+});
+
+test('labels without sale IDs match independent unique shipments and explicit CEP, preserving Excel products',async()=>{
+ const c=env(),sales=c.LocalSales.parse([...headers(),row(7,data(1)),row(8,data(2))]),labels=[label(1),label(2)];
+ for(const l of labels){l.metadata.saleId=null;l.metadata.saleIds=[];}
+ const original=clone({labels,sales}),report=await c.LocalSales.review(labels,{sales,invoices:[]});
+ assert.equal(report.ready,true);assert.equal(report.counts.labels,2);assert.equal(report.counts.products,2);assert.equal(report.counts.pages,4);assert.equal(report.pendingCount,0);
+ assert.deepEqual(clone(report.rows.map(r=>r.order.id)),clone(sales.groups.map(g=>g.id)));assert.ok(report.rows.every(r=>r.order.identitySource==='shipment-postcode'));assert.match(report.warnings.join(' '),/2 etiqueta.*envio único/);
+ const paired=c.LocalSales.pair([...labels].reverse(),{sales,invoices:[]});assert.deepEqual(clone(paired.map(r=>r.order.shipmentId)),labels.map(l=>l.metadata.shipmentId).reverse());assert.deepEqual(clone({labels,sales}),original);
+ const duplicate=await c.LocalSales.review([labels[0],labels[0]],{sales,invoices:[]});assert.equal(duplicate.confirmedCount,0);assert.throws(()=>c.LocalSales.pair([labels[0],labels[0]],{sales,invoices:[]}),/repetido/);
+});
+
+test('shipment fallback refuses ambiguity, missing CEP even with DANFE, wrong CEP and explicit conflicting sale IDs',()=>{
+ const c=env(),sales=c.LocalSales.parse([...headers(),row(7,data(1))]),base=label(1);base.metadata.saleId=null;base.metadata.saleIds=[];
+ for(const change of [m=>m.postcode=null,m=>m.postcode='99999999',m=>m.postcodes=['01234567','99999999'],m=>m.shipmentId=null,m=>m.shipmentIds=['10000000001','10000000002'],m=>m.saleId='2000000000000099',m=>m.saleId='INVALID',m=>m.saleIds=['2000000000000001','2000000000000002']]){const l=clone(base);change(l.metadata);assert.throws(()=>c.LocalSales.orderFor(l,sales,[invoice(1)]));}
+ for(const group of [{...sales.groups[0],id:'2000000000000002'},{...sales.groups[0],shipmentId:'10000000002'}])assert.throws(()=>c.LocalSales.orderFor(base,{...sales,groups:[sales.groups[0],group]}));
+ const cancelled=clone(sales);cancelled.groups[0].products[0].status='Venda cancelada';assert.throws(()=>c.LocalSales.orderFor(base,cancelled),/cancelamento/);
 });
