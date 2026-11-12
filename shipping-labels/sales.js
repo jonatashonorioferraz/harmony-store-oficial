@@ -112,13 +112,16 @@
  }
  function apply(rows,labels,sales){return rows.map(row=>({...row,sales:productsFor(labels[row.labelIndex],row.invoice,sales)}));}
  // Picking from sales is an independent mode: an invoice is not its identity
- // or quantity source. Require both order and shipment IDs plus destination CEP.
+ // or quantity source. New label layouts omit the sale ID: accept only a unique
+ // shipment plus the explicit destination CEP, never a guessed order.
  function orderFor(label,sales,invoices=[]){
   const m=root.LocalInvoices.labelIdentity(label);
-  if(!/^\d{8,15}$/.test(m.shipmentId||'')||!/^\d{8,20}$/.test(m.saleId||'')||m.saleIds?.length>1)fail('A etiqueta precisa informar um único envio, pedido/pacote e CEP em texto para conferir com o Excel. Selecione o ZPL original.');
-  const shipments=sales.groups.filter(g=>g.shipmentId===m.shipmentId),orders=sales.groups.filter(g=>g.id===m.saleId);
+  const missingSale=!m.saleId&&!m.saleIds?.length;
+  if(!/^\d{8,15}$/.test(m.shipmentId||'')||m.shipmentIds?.length>1||(!missingSale&&!/^\d{8,20}$/.test(m.saleId||''))||m.saleIds?.length>1)fail('A etiqueta precisa informar um envio único e dados de pedido sem ambiguidade para conferir com o Excel. Selecione o ZPL original.');
+  if(missingSale&&(!/^\d{8}$/.test(m.postcode||'')||m.postcodes?.length>1))fail('Etiqueta sem número da venda: o envio e o CEP de entrega precisam estar explícitos e ser únicos para conferir com o Excel.');
+  const shipments=sales.groups.filter(g=>g.shipmentId===m.shipmentId);
   if(shipments.length!==1)fail(`Envio ${m.shipmentId}: ${shipments.length?'rastreamento repetido':'não encontrado'} no Excel. Selecione o relatório que contém este pedido.`);
-  const group=shipments[0];
+  const group=shipments[0],orders=sales.groups.filter(g=>g.id===(missingSale?group.id:m.saleId));
   if(orders.length!==1||orders[0]!==group)fail('O número de venda/pacote do Excel diverge da etiqueta ou está repetido. Selecione o relatório correto.');
 
   let postcodeEvidence=null;
@@ -133,7 +136,7 @@
    if(!/^MLB\d+$/.test(p.itemId)||!p.title?.trim()||!Number.isSafeInteger(p.quantity)||p.quantity<1)fail('Produto ou quantidade inválida no pedido do Excel. Exporte novamente.');
    return {description:p.title,quantity:String(p.quantity),unit:'UNID',code:p.sku||p.itemId,variation:root.LocalPicking.variation(p.variation||'')||p.variation,variationSource:'sales',orderId:p.orderId,source:p.source,sheet:p.sheet,sourceRow:p.row};
   });
-  return {key:'sales:'+group.id,id:group.id,shipmentId:group.shipmentId,postcode:group.postcode,postcodeEvidence,products,source:group.source,sheet:group.sheet,row:group.row};
+  return {key:'sales:'+group.id,id:group.id,shipmentId:group.shipmentId,postcode:group.postcode,postcodeEvidence,identitySource:missingSale?'shipment-postcode':'sale-shipment-postcode',products,source:group.source,sheet:group.sheet,row:group.row};
  }
  function fiscalCheck(label,read){
   if(!read.invoices?.length&&!read.problems?.length)return 'DANFE não fornecido; ficha baseada no Excel.';
@@ -167,7 +170,7 @@
    const label=labels[index],m=identities[index],item={labelIndex:index,shipmentId:m.shipmentId||'',invoiceNumber:m.invoiceNumber||'',labelPostcode:m.postcode||'',source:label.source||`Etiqueta ${index+1}`,ready:false};
    try{
     const order=orderFor(label,read.sales,read.invoices||[]);
-    if(identities.filter(other=>other.shipmentId===m.shipmentId||other.saleId===m.saleId).length!==1)fail('Envio ou pedido repetido nas etiquetas. Selecione um lote sem duplicidades.');
+    if(identities.filter(other=>other.shipmentId===m.shipmentId||(m.saleId&&other.saleId===m.saleId)).length!==1)fail('Envio ou pedido repetido nas etiquetas. Selecione um lote sem duplicidades.');
     rows.push({labelIndex:validLabels.length,order,sales:order,shipmentId:order.shipmentId,fiscalCheck:fiscalCheck(label,read)});
     validLabels.push(label);item.ready=true;
    }catch(error){Object.assign(item,{code:'sales',message:error.message});issues.push(`Etiqueta ${index+1}: ${error.message}`);}
@@ -188,6 +191,8 @@
   }
   const matched=new Set(rows.map(r=>r.order.id)),scope={total:read.sales.groups.length,matched:matched.size,ignored:read.sales.groups.filter(g=>!matched.has(g.id)).length};
   const products=rows.reduce((n,r)=>n+r.order.products.length,0),missing=rows.reduce((n,r)=>n+r.order.products.filter(p=>!p.variation).length,0);
+  const shipmentMatched=rows.filter(r=>r.order.identitySource==='shipment-postcode').length;
+  if(shipmentMatched)warnings.push(`${shipmentMatched} etiqueta(s) sem número de venda: vínculo confirmado pelo envio único e CEP de entrega. O número do pedido vem do Excel.`);
   if(missing)warnings.push(`${missing} item(ns) sem variação no Excel. ${root.LocalPicking.missingSalesVariation} Nenhuma cor ou aroma foi deduzido.`);
   if(read.invoices?.length||read.problems?.length){
    warnings.push('DANFEs usados apenas para conferência complementar. As fichas seguem produtos, quantidades e variações do Excel.');
