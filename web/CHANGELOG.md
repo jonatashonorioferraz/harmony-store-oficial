@@ -1,3 +1,7 @@
+## [v25.152] - 2026-11-16
+
+- Receitas por modelo do catálogo ou produto exclusivo da calculadora, com consulta aos custos dos pacotes padrão.
+
 ## [v25.151] - 2026-11-16
 
 - Calculadora de produção de sabonetes com insumos, receitas e custo por lote, unidade e embalagem.

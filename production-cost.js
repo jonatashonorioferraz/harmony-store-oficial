@@ -26,9 +26,10 @@
     const total = complete ? lines.reduce((sum,line)=>sum+line.cost,labor+packaging) : null;
     return {lines,bags,labor,packaging,total};
   }
-  function mount(root, original, {admin=false,save,demo=false}={}) {
+  function mount(root, original, {admin=false,save,demo=false,loadModels}={}) {
     let catalog=structuredClone(original), draft, tab='estimate', recipeId=catalog.recipes[0].id;
     let quantity=150, pack=catalog.recipes[0].pack, saving=false, message='';
+    let models;
     const option=(id,name,selected)=>`<option value="${escape(id)}" ${id===selected?'selected':''}>${escape(name)}</option>`;
     const field=(title,html)=>`<label>${title}${html}</label>`;
     const input=(key,value,type='number',step='any',min='0.001')=>`<input data-key="${key}" type="${type}" ${type==='number'?`min="${min}" max="1000000000" step="${step}"`:'maxlength="120"'} value="${escape(value??'')}" required>`;
@@ -42,16 +43,20 @@
       root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
         if(saving || tab===b.dataset.tab)return;
         if(tab==='editor' && JSON.stringify(draft)!==JSON.stringify(catalog) && !confirm('Descartar as alterações no cadastro?'))return;
-        if(!catalog.recipes.some(r=>r.id===recipeId)){recipeId=catalog.recipes[0].id;pack=catalog.recipes[0].pack;}tab=b.dataset.tab;message='';draft=structuredClone(catalog);render();
+        if(!catalog.recipes.some(r=>r.id===recipeId)){recipeId=catalog.recipes[0].id;pack=catalog.recipes[0].pack;}if(b.dataset.tab==='estimate')pack=recipe().pack;tab=b.dataset.tab;message='';draft=structuredClone(catalog);render();
       });
       if(tab==='estimate') estimate(); else editor();
     }
     function estimate() {
+      const saved = catalog.recipes.map(model=>{
+        const {total}=calculate(catalog,model,model.pack,model.pack);
+        return '<tr><th scope="row">'+escape(model.name)+'</th><td>'+num(model.pack)+' un</td><td>'+(total===null?'Preço pendente':brl(total))+'</td></tr>';
+      }).join('');
       node('[data-body]').innerHTML=`<div class="cost-grid"><section class="cost-card"><h2>Planejar lote</h2>
       ${field('Produto','<select data-product>'+catalog.recipes.map(r=>option(r.id,r.name,recipeId)).join('')+'</select>')}
       <div class="cost-fields">${field('Quantidade de sabonetes',input('quantity',quantity,'number','1','1'))}${field('Unidades por saquinho',input('pack',pack,'number','1','1'))}</div>
       <p class="cost-note">Rendimento da receita: <b>${num(recipe().yield)} unidades</b>, já considerando as perdas.</p></section>
-      <section class="cost-result" aria-live="polite"></section></div><section class="cost-card cost-details"></section>`;
+      <section class="cost-result" aria-live="polite"></section></div><section class="cost-card cost-details"></section><details class="cost-card cost-details"><summary>Custos dos modelos salvos (${catalog.recipes.length})</summary><table><thead><tr><th>Modelo</th><th>Pacote padrão</th><th>Custo do pacote</th></tr></thead><tbody>${saved}</tbody></table></details>`;
       node('[data-product]').onchange=e=>{recipeId=e.target.value;pack=recipe().pack;estimate();};
       node('[data-body]').oninput=()=>{quantity=node('[data-key=quantity]').valueAsNumber;pack=node('[data-key=pack]').valueAsNumber;result();};
       result();
@@ -89,7 +94,9 @@
       const body=node('[data-body]');body.oninput=null;
       body.innerHTML=`<form class="cost-form"><fieldset ${saving?'disabled':''}>
       <section class="cost-card"><h2>Insumos e preços de compra</h2>${supplyRows}<button type="button" data-add="supply">+ Adicionar insumo</button></section>
-      <section class="cost-card"><h2>Receitas</h2><div class="cost-fields">${field('Receita para editar','<select data-edit>'+draft.recipes.map(x=>option(x.id,x.name,r.id)).join('')+'</select>')}<button type="button" data-add="recipe">+ Nova receita</button></div>
+      <section class="cost-card"><h2>Receitas</h2><div class="cost-fields">${field('Receita para editar','<select data-edit>'+draft.recipes.map(x=>option(x.id,x.name||'Novo produto',r.id)).join('')+'</select>')}<button type="button" data-add="recipe">+ Produto exclusivo da calculadora</button></div>
+      ${loadModels ? (models ? '<div class="cost-fields">'+field('Modelo do catálogo de sabonetes','<select data-model><option value="">Selecione o modelo</option>'+models.map(m=>option(m.id,m.name,'')).join('')+'</select>')+'<button type="button" data-use-model>Usar modelo do catálogo</button></div>' : '<button type="button" data-load-models>Escolher modelo do catálogo de sabonetes</button>') : ''}
+      <p class="cost-note">${r.modelId?'Receita de um modelo do catálogo.':'Produto exclusivo da calculadora.'} Salve a receita para consultar o custo de outros lotes.</p>
       <div data-recipe><div class="cost-fields">${field('Nome do produto',input('name',r.name,'text'))}${field('Rendimento real (un)',input('yield',r.yield,'number','1','1'))}${field('Unidades por saquinho',input('pack',r.pack,'number','1','1'))}</div>${components}</div>
       <button type="button" data-add="line">+ Adicionar ingrediente</button></section>
       <section class="cost-card"><h2>Custos padrão dos sabonetes</h2><div class="cost-fields">${field('Mão de obra por 100 unidades (R$)',input('labor',draft.labor,'number','.01','0'))}${field('Saquinho com rótulo (R$)',input('packaging',draft.packaging,'number','.01','0'))}</div></section>
@@ -106,10 +113,31 @@
         if(key==='supply'||key==='unit')editor();
       };
       node('[data-edit]').onchange=e=>{recipeId=e.target.value;editor();};
+      function addRecipe(name,modelId){
+        recipeId=crypto.randomUUID();
+        draft.recipes.push({id:recipeId,name,modelId,yield:null,pack:100,ingredients:[{supply:draft.supplies[0].id,amount:null}]});
+      }
+      const load=node('[data-load-models]');
+      if(load)load.onclick=async()=>{
+        load.disabled=true;
+        try{
+          models=(await loadModels()).filter(m=>m.active);
+          if(form.isConnected){editor();node('[data-model]').focus();}
+        }catch{if(form.isConnected){load.disabled=false;node('.cost-message').textContent='Não foi possível carregar os modelos. Tente novamente.';}}
+      };
+      const use=node('[data-use-model]');
+      if(use)use.onclick=()=>{
+        const model=models.find(m=>m.id===node('[data-model]').value);
+        if(!model){node('[data-model]').focus();return;}
+        const existing=draft.recipes.find(item=>item.modelId===model.id);
+        if(existing)recipeId=existing.id;
+        else addRecipe(model.name,model.id);
+        editor();node('[data-key=yield]').focus();
+      };
       form.onclick=e=>{
         const b=e.target.closest('button');if(!b)return;const add=b.dataset.add;
         if(add==='supply') draft.supplies.push({id:crypto.randomUUID(),name:'Novo insumo',size:1,unit:'g',price:null});
-        else if(add==='recipe'){recipeId=crypto.randomUUID();draft.recipes.push({id:recipeId,name:'Nova receita',yield:400,pack:100,ingredients:[{supply:draft.supplies[0].id,amount:1}]});}
+        else if(add==='recipe')addRecipe('',null);
         else if(add==='line')r.ingredients.push({supply:draft.supplies[0].id,amount:1});
         else if(b.hasAttribute('data-remove'))r.ingredients.splice(Number(b.dataset.remove),1);
         else return;
@@ -138,7 +166,7 @@
       if(!slot.isConnected)return;
       if(!row)throw Error('Catálogo indisponível para este acesso.');
       let revision=row.revision;
-      mount(slot,row.catalog??initial(),{admin:S.profile.role==='admin',save:async draft=>{
+      mount(slot,row.catalog??initial(),{admin:S.profile.role==='admin',loadModels:()=>rpc('list_finished_product_models',{}),save:async draft=>{
         const changed=await rest('production_cost_catalog?id=eq.1&revision=eq.'+revision,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({catalog:draft,revision:revision+1})});
         if(!changed.length)throw Error('O cadastro foi atualizado em outro acesso. Reabra a calculadora antes de editar novamente.');
         revision=changed[0].revision;
