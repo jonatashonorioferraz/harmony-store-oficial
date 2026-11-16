@@ -1,3 +1,7 @@
+## [v25.151] - 2026-11-16
+
+- Calculadora de produção de sabonetes com insumos, receitas e custo por lote, unidade e embalagem.
+
 ## [v25.150] - 2026-11-16
 
 - Shopee compacta mantém até três linhas de produtos na etiqueta. A partir de quatro, imprime o checklist original imediatamente após o envio e contabiliza duas páginas para o mesmo pedido.

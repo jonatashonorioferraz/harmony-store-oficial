@@ -14,6 +14,8 @@ for (const filename of [
   "agenda-harmony.js",
   "bills.js",
   "app.js",
+  "production-cost.js",
+  "production-cost.css",
   "central-briefing.mjs",
   "operational-central.js",
   "operational-central.css",
