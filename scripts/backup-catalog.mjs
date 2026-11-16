@@ -3,9 +3,23 @@
 // Reviewed 2026-10-08: source_evidence JSONB adds no keys, grants, triggers or tables.
 // All retained event fields, including source evidence, remain in encrypted capture.
 // Reviewed 2026-11-03: bills.digit_line may be null until a valid payment code is confirmed; no new table or privilege.
-export const CATALOG_VERSION = 'harmony-public-2026-11-03-v1';
-export const MIGRATIONS_SHA256 = '1a5bf28aec2c890c8b4d1dee0dd49ff1571afee226ddf2c116764ca2954e8e22';
+export const CATALOG_VERSION = 'harmony-public-2026-11-16-v1';
+export const MIGRATIONS_SHA256 = '9b28ec04ad97aab3d9994774eef96b9ced101367a5a662be6c0e9d2cb774ca01';
 export const TABLE_CATALOG = [
+{
+  "name": "production_cost_catalog",
+  "primaryKey": [
+    "id"
+  ],
+  "foreignKeys": [],
+  "generated": [],
+  "triggers": [],
+  "serviceSelect": true,
+  "serviceInsert": false,
+  "capture": true,
+  "classification": "business",
+  "retention": "Capture shared ingredient prices, recipes and packaging defaults."
+},
 {
   "name": "expedition_accounts",
   "primaryKey": [

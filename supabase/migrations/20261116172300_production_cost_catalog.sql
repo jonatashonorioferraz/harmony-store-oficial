@@ -15,3 +15,4 @@ create policy cost_catalog_admin on public.production_cost_catalog for update to
 using (exists (select 1 from public.profiles where id = (select auth.uid()) and status = 'active' and role = 'admin' and not coalesce(must_change_password,false)))
 with check (exists (select 1 from public.profiles where id = (select auth.uid()) and status = 'active' and role = 'admin' and not coalesce(must_change_password,false)));
 
+grant select on public.production_cost_catalog to service_role;
