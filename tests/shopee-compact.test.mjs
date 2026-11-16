@@ -103,3 +103,17 @@ test('air DANFE keeps full barcode pixels and moves the entire numeric line into
 test('full 200-order batch is accepted with independent IDs and one page per order',()=>{
  const batch=Array.from({length:200},(_,i)=>pair('261110'+String(i).padStart(8,'0'),1));const results=C.convert([...batch.map(p=>p.label),...batch.map(p=>p.list).reverse()]);assert.equal(results.length,200);assert.equal(new Set(results.map(r=>r.id)).size,200);assert.ok(results.every(r=>r.items===1));
 });
+test('three rows fit on one page and four rows print on an adjacent original checklist matched by ID',async()=>{
+ const a=pair(),b=pair('261029IJKLMNOP',4);
+ const results=C.convert([a.label,b.label,b.list,a.list]);
+ assert.ok(!results[0].separateChecklist);
+ assert.equal(results[1].separateChecklist,true);
+ assert.equal(results[1].page,b.label);
+ assert.equal(results[1].checklist,b.list);
+ const pdf=await ctx.PDFLib.PDFDocument.load(await (await C.createPdf(results)).arrayBuffer());
+ assert.equal(pdf.getPageCount(),3);
+ for(const page of pdf.getPages()){
+  assert.ok(Math.abs(page.getWidth()-100/25.4*72)<.001);
+  assert.ok(Math.abs(page.getHeight()-150/25.4*72)<.001);
+ }
+});

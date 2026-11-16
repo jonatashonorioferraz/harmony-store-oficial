@@ -30,7 +30,7 @@
       const source_keys=await Promise.all([result.label,result.checklist].map(p=>root.LocalShopee.fingerprint(p)));
       orders.push({key:'shopee:'+id,identified:true,order_ref:id,shipment_ref:'',products:[],source_keys});
     }
-    return {request_id:crypto.randomUUID(),channel:'shopee',pages:results.length,total:results.length,included:results.length,orders};
+    return {request_id:crypto.randomUUID(),channel:'shopee',pages:results.reduce((count,r)=>count+(r.separateChecklist?2:1),0),total:results.length,included:results.length,orders};
   }
   root.LocalConversionHistory=Object.freeze({summary,compact});
 })(globalThis);
