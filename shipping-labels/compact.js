@@ -133,11 +133,25 @@
    if(map.has(id))throw Error('Pedido repetido no arquivo: '+id+'. Selecione uma única cópia.');map.set(id,table?{rotated:p,source:page}:p);
   }
   if(labels.size!==lists.size||!labels.size)throw Error('Falta etiqueta ou checklist no arquivo.');
-  return [...labels].map(([id,p])=>{if(!lists.has(id))throw Error('Checklist ausente para '+id);const list=lists.get(id);return {...compose(p,list.rotated),checklist:list.source};});
+  return [...labels].map(([id,label])=>{
+   const list=lists.get(id);
+   if(!list)throw Error('Checklist ausente para '+id);
+   const items=root.LocalShopee.layout(list.rotated).rows.length;
+   if(items>3){
+    return {id,label,page:label,checklist:list.source,separateChecklist:true,items};
+   }
+   return {...compose(label,list.rotated),checklist:list.source};
+  });
  }
  async function createPdf(results){
   const mm=72/25.4,doc=await root.PDFLib.PDFDocument.create();
   for(const result of results){
+   if(result.separateChecklist){
+    const pair=await root.LocalZpl.createPdf([result.label,result.checklist],203,'100x150');
+    const source=await root.PDFLib.PDFDocument.load(await pair.arrayBuffer());
+    for(const page of await doc.copyPages(source,[0,1]))doc.addPage(page);
+    continue;
+   }
    // Embed source at its final PDF scale, avoiding two successive raster reductions.
    const lower=cut(result.page,0,0,816,1224);lower.raw.fill(0,0,990*lower.stride);
    // Restore tracking bar widths too: 85% can collapse narrow modules at 203 dpi.

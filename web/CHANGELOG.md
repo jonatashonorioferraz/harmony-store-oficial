@@ -1,3 +1,7 @@
+## [v25.150] - 2026-11-16
+
+- Shopee compacta mantém até três linhas de produtos na etiqueta. A partir de quatro, imprime o checklist original imediatamente após o envio e contabiliza duas páginas para o mesmo pedido.
+
 ## [v25.149] - 2026-11-16
 
 - Shopee compacta aproveita melhor o espaço entre linhas de listas extensas e preserva o tamanho dos caracteres e a margem de impressão.
