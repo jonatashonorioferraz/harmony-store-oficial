@@ -47,7 +47,12 @@
  }
  function fitList(groups){
   for(const gaps of [{line:5,variant:7,group:4},{line:2,variant:3,group:3}]){const plan=planList(groups,gaps);if(plan.bottom<=1200&&plan.end<=1208)return plan;}
-  return inlineList(groups);
+  const inline = inlineList(groups);
+  if (inline) return inline;
+  // Keep the original glyphs, checkbox positions and bottom print margin.
+  // Only tighten the blank space between rows when both layouts overflow.
+  const dense = planList(groups, {line: 1, variant: 1, group: 2});
+  return dense.bottom <= 1200 && dense.end <= 1208 ? dense : null;
  }
  function barcodeModel(p){
   if(p.width!==816||p.height!==1218)throw Error('Tamanho de etiqueta ainda não suportado no beta. Use o conversor normal.');

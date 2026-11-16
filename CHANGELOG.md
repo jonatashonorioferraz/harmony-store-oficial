@@ -1,3 +1,7 @@
+## [v25.149] - 2026-11-16
+
+- Shopee compacta aproveita melhor o espaço entre linhas de listas extensas e preserva o tamanho dos caracteres e a margem de impressão.
+
 ## [v25.148] - 2026-11-12
 
 - Mercado Livre: etiquetas sem número da venda passam a vincular a ficha ao Excel pelo envio único e CEP explícito de entrega. Números de venda presentes continuam sendo conferidos e divergências ou ambiguidades são bloqueadas.
