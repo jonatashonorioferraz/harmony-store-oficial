@@ -51,7 +51,7 @@
     function products() {
       node('[data-body]').innerHTML = '<section class="cost-card"><h2>Meus sabonetes</h2><p>Abra um produto salvo para editar a receita ou calcular a quantidade desejada.</p>'+catalog.recipes.map(model=>{
         const {total}=calculate(catalog,model,model.pack,model.pack);
-        return '<article class="cost-card cost-details"><h2>'+escape(model.name)+'</h2><p>Rendimento da receita · '+num(model.yield)+' unidades</p><p>Pacote de '+num(model.pack)+' unidades · <b>'+(total===null?'Preço pendente':brl(total))+'</b></p><div class="cost-fields"><button data-calculate="'+escape(model.id)+'">Calcular custo</button>'+(admin?'<button data-edit-recipe="'+escape(model.id)+'">Editar receita</button>':'')+'</div></article>';
+        return '<article class="cost-card cost-details"><h2>'+escape(model.name)+'</h2><p><b>'+(total===null?'Preços pendentes':'Custo pronto')+'</b></p><p>Rendimento da receita · '+num(model.yield)+' unidades</p><p>Pacote de '+num(model.pack)+' unidades · <b>'+(total===null?'Preço pendente':brl(total))+'</b></p><div class="cost-fields"><button data-calculate="'+escape(model.id)+'">Calcular custo</button>'+(admin?'<button data-edit-recipe="'+escape(model.id)+'">Editar receita</button>':'')+'</div></article>';
       }).join('')+(admin?'<div class="cost-fields"><button data-new-product>Cadastrar sabonete</button></div>':'')+'</section>';
       node('[data-body]').onclick=event=>{
         const button=event.target.closest('button');
@@ -112,7 +112,7 @@
       body.innerHTML=`<form class="cost-form"><fieldset ${saving?'disabled':''}>
       <section class="cost-card"><h2>Insumos e preços de compra</h2>${supplyRows}<button type="button" data-add="supply">+ Adicionar insumo</button></section>
       <section class="cost-card"><h2>Receitas</h2><div class="cost-fields">${field('Receita para editar','<select data-edit>'+draft.recipes.map(x=>option(x.id,x.name||'Novo produto',r.id)).join('')+'</select>')}<button type="button" data-add="recipe">+ Produto exclusivo da calculadora</button></div>
-      ${loadModels ? (models ? '<div class="cost-fields">'+field('Modelo do catálogo de sabonetes','<select data-model><option value="">Selecione o modelo</option>'+models.map(m=>option(m.id,m.name,'')).join('')+'</select>')+'<button type="button" data-use-model>Usar modelo do catálogo</button></div>' : '<button type="button" data-load-models>Escolher modelo do catálogo de sabonetes</button>') : ''}
+      ${loadModels ? (models ? '<div class="cost-fields">'+field('Modelo do catálogo de sabonetes','<select data-model><option value="">Selecione o modelo</option>'+models.map(m=>option(m.id,m.name+(draft.recipes.some(r=>r.modelId===m.id)?' — Custo cadastrado':' — Cadastrar custo'),'')).join('')+'</select>')+'<button type="button" data-use-model>Usar modelo do catálogo</button></div>' : '<button type="button" data-load-models>Escolher modelo do catálogo de sabonetes</button>') : ''}
       <p class="cost-note">${r.modelId?'Receita de um modelo do catálogo.':'Produto exclusivo da calculadora.'} Salve a receita para consultar o custo de outros lotes.</p>
       <div data-recipe><div class="cost-fields">${field('Nome do produto',input('name',r.name,'text'))}${field('Rendimento real (un)',input('yield',r.yield,'number','1','1'))}${field('Unidades por saquinho',input('pack',r.pack,'number','1','1'))}</div>${components}</div>
       <button type="button" data-add="line">+ Adicionar ingrediente</button></section>
