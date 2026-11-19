@@ -1,3 +1,7 @@
+## [v25.153] - 2026-11-19
+
+- Calculadora abre em Meus sabonetes, com produtos salvos e acesso direto à edição da receita e cálculo do lote.
+
 ## [v25.152] - 2026-11-16
 
 - Receitas por modelo do catálogo ou produto exclusivo da calculadora, com consulta aos custos dos pacotes padrão.

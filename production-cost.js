@@ -27,7 +27,7 @@
     return {lines,bags,labor,packaging,total};
   }
   function mount(root, original, {admin=false,save,demo=false,loadModels}={}) {
-    let catalog=structuredClone(original), draft, tab='estimate', recipeId=catalog.recipes[0].id;
+    let catalog=structuredClone(original), draft, tab='products', recipeId=catalog.recipes[0].id;
     let quantity=150, pack=catalog.recipes[0].pack, saving=false, message='';
     let models;
     const option=(id,name,selected)=>`<option value="${escape(id)}" ${id===selected?'selected':''}>${escape(name)}</option>`;
@@ -38,14 +38,31 @@
     function render() {
       root.innerHTML=`<div class="cost-page"><header><p class="cost-kicker">HARMONY STORE OFICIAL · PRODUÇÃO</p><h1>Calculadora de produção</h1><p>Calcule o custo dos sabonetes pelo rendimento real da receita.</p></header>
       ${demo?'<p class="cost-demo">Demonstração com preços ilustrativos. As alterações valem apenas nesta prévia.</p>':''}
-      <nav aria-label="Calculadora"><button data-tab="estimate" aria-pressed="${tab==='estimate'}">Calcular produção</button>${admin?'<button data-tab="editor" aria-pressed="'+(tab==='editor')+'">Insumos e receitas</button>':''}</nav>
+      <nav aria-label="Calculadora"><button data-tab="products" aria-pressed="${tab==='products'}">Meus sabonetes</button><button data-tab="estimate" aria-pressed="${tab==='estimate'}">Calcular produção</button>${admin?'<button data-tab="editor" aria-pressed="'+(tab==='editor')+'">Insumos e receitas</button>':''}</nav>
       <p class="cost-message" role="status">${escape(message)}</p><div data-body></div></div>`;
       root.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
         if(saving || tab===b.dataset.tab)return;
         if(tab==='editor' && JSON.stringify(draft)!==JSON.stringify(catalog) && !confirm('Descartar as alterações no cadastro?'))return;
         if(!catalog.recipes.some(r=>r.id===recipeId)){recipeId=catalog.recipes[0].id;pack=catalog.recipes[0].pack;}if(b.dataset.tab==='estimate')pack=recipe().pack;tab=b.dataset.tab;message='';draft=structuredClone(catalog);render();
       });
-      if(tab==='estimate') estimate(); else editor();
+      node('[data-body]').onclick=null;
+      if(tab==='products') products(); else if(tab==='estimate') estimate(); else editor();
+    }
+    function products() {
+      node('[data-body]').innerHTML = '<section class="cost-card"><h2>Meus sabonetes</h2><p>Abra um produto salvo para editar a receita ou calcular a quantidade desejada.</p>'+catalog.recipes.map(model=>{
+        const {total}=calculate(catalog,model,model.pack,model.pack);
+        return '<article class="cost-card cost-details"><h2>'+escape(model.name)+'</h2><p><b>'+(total===null?'Preços pendentes':'Custo pronto')+'</b></p><p>Rendimento da receita · '+num(model.yield)+' unidades</p><p>Pacote de '+num(model.pack)+' unidades · <b>'+(total===null?'Preço pendente':brl(total))+'</b></p><div class="cost-fields"><button data-calculate="'+escape(model.id)+'">Calcular custo</button>'+(admin?'<button data-edit-recipe="'+escape(model.id)+'">Editar receita</button>':'')+'</div></article>';
+      }).join('')+(admin?'<div class="cost-fields"><button data-new-product>Cadastrar sabonete</button></div>':'')+'</section>';
+      node('[data-body]').onclick=event=>{
+        const button=event.target.closest('button');
+        if(!button)return;
+        const id=button.dataset.calculate||button.dataset.editRecipe;
+        if(id){recipeId=id;pack=recipe().pack;}
+        draft=structuredClone(catalog);
+        tab=button.hasAttribute('data-calculate')?'estimate':'editor';
+        render();
+        if(tab==='editor')node('[data-recipe]').scrollIntoView({block:'start'});
+      };
     }
     function estimate() {
       const saved = catalog.recipes.map(model=>{
@@ -95,7 +112,7 @@
       body.innerHTML=`<form class="cost-form"><fieldset ${saving?'disabled':''}>
       <section class="cost-card"><h2>Insumos e preços de compra</h2>${supplyRows}<button type="button" data-add="supply">+ Adicionar insumo</button></section>
       <section class="cost-card"><h2>Receitas</h2><div class="cost-fields">${field('Receita para editar','<select data-edit>'+draft.recipes.map(x=>option(x.id,x.name||'Novo produto',r.id)).join('')+'</select>')}<button type="button" data-add="recipe">+ Produto exclusivo da calculadora</button></div>
-      ${loadModels ? (models ? '<div class="cost-fields">'+field('Modelo do catálogo de sabonetes','<select data-model><option value="">Selecione o modelo</option>'+models.map(m=>option(m.id,m.name,'')).join('')+'</select>')+'<button type="button" data-use-model>Usar modelo do catálogo</button></div>' : '<button type="button" data-load-models>Escolher modelo do catálogo de sabonetes</button>') : ''}
+      ${loadModels ? (models ? '<div class="cost-fields">'+field('Modelo do catálogo de sabonetes','<select data-model><option value="">Selecione o modelo</option>'+models.map(m=>option(m.id,m.name+(draft.recipes.some(r=>r.modelId===m.id)?' — Custo cadastrado':' — Cadastrar custo'),'')).join('')+'</select>')+'<button type="button" data-use-model>Usar modelo do catálogo</button></div>' : '<button type="button" data-load-models>Escolher modelo do catálogo de sabonetes</button>') : ''}
       <p class="cost-note">${r.modelId?'Receita de um modelo do catálogo.':'Produto exclusivo da calculadora.'} Salve a receita para consultar o custo de outros lotes.</p>
       <div data-recipe><div class="cost-fields">${field('Nome do produto',input('name',r.name,'text'))}${field('Rendimento real (un)',input('yield',r.yield,'number','1','1'))}${field('Unidades por saquinho',input('pack',r.pack,'number','1','1'))}</div>${components}</div>
       <button type="button" data-add="line">+ Adicionar ingrediente</button></section>
@@ -151,7 +168,7 @@
           node('.cost-message').textContent='Confira os nomes, quantidades e rendimentos de todos os cadastros.';return;
         }
         saving=true;editor();
-        try{await save(draft);catalog=structuredClone(draft);pack=recipe().pack;tab='estimate';message='Cadastro salvo.';}
+        try{await save(draft);catalog=structuredClone(draft);pack=recipe().pack;tab='products';message='Cadastro salvo. Seu produto está em Meus sabonetes.';}
         catch(error){message=error.message;}
         finally{saving=false;render();}
       };
