@@ -49,10 +49,24 @@
       if(tab==='products') products(); else if(tab==='estimate') estimate(); else editor();
     }
     function products() {
-      node('[data-body]').innerHTML = '<section class="cost-card"><h2>Meus sabonetes</h2><p>Abra um produto salvo para editar a receita ou calcular a quantidade desejada.</p>'+catalog.recipes.map(model=>{
+      const cards=catalog.recipes.map(model=>{
         const {total}=calculate(catalog,model,model.pack,model.pack);
-        return '<article class="cost-card cost-details"><h2>'+escape(model.name)+'</h2><p><b>'+(total===null?'Preços pendentes':'Custo pronto')+'</b></p><p>Rendimento da receita · '+num(model.yield)+' unidades</p><p>Pacote de '+num(model.pack)+' unidades · <b>'+(total===null?'Preço pendente':brl(total))+'</b></p><div class="cost-fields"><button data-calculate="'+escape(model.id)+'">Calcular custo</button>'+(admin?'<button data-edit-recipe="'+escape(model.id)+'">Editar receita</button>':'')+'</div></article>';
-      }).join('')+(admin?'<div class="cost-fields"><button data-new-product>Cadastrar sabonete</button></div>':'')+'</section>';
+        const ready=total!==null;
+        return '<article class="cost-product-card">'+
+          '<div class="cost-product-heading"><div><p class="cost-product-eyebrow">RECEITA</p><h3>'+escape(model.name)+'</h3></div>'+
+          '<span class="cost-product-status '+(ready?'is-ready':'is-pending')+'">'+(ready?'Custo pronto':'Faltam preços')+'</span></div>'+
+          '<div class="cost-product-metrics"><div><span>Rendimento real</span><strong>'+num(model.yield)+'<small> unidades</small></strong></div>'+
+          '<div><span>Pacote padrão</span><strong>'+num(model.pack)+'<small> unidades</small></strong></div></div>'+
+          '<div class="cost-product-value"><div><small>CUSTO DO PACOTE</small><strong>'+(ready?brl(total):'Pendente')+'</strong></div>'+
+          '<p>'+(ready?'Inclui insumos, mão de obra e embalagem.':'Complete os preços de compra dos insumos.')+'</p></div>'+
+          '<div class="cost-product-actions"><button data-calculate="'+escape(model.id)+'" aria-label="Calcular produção de '+escape(model.name)+'">Calcular produção</button>'+
+          (admin?'<button data-edit-recipe="'+escape(model.id)+'" aria-label="Editar receita de '+escape(model.name)+'">Editar receita</button>':'')+'</div></article>';
+      }).join('');
+      node('[data-body]').innerHTML='<section class="cost-card cost-product-list">'+
+        '<div class="cost-product-intro"><p class="cost-product-eyebrow">SEUS PRODUTOS</p><h2>Meus sabonetes</h2>'+
+        '<p>Veja o rendimento e o custo estimado de cada receita.</p></div>'+
+        '<div class="cost-product-grid">'+cards+'</div>'+
+        (admin?'<button class="cost-new-product" data-new-product>＋ Cadastrar sabonete</button>':'')+'</section>';
       node('[data-body]').onclick=event=>{
         const button=event.target.closest('button');
         if(!button)return;
