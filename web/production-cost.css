@@ -53,8 +53,8 @@
 @media(max-width:740px){
   .cost-page{padding:12px}
   .cost-page>header{padding:23px 20px;border-radius:22px}
-  .cost-page nav{display:grid;grid-template-columns:1fr;gap:8px;margin:14px 0}
-  .cost-page nav button{width:100%;text-align:left}
+  .cost-page nav{display:flex;flex-wrap:nowrap;gap:8px;margin:14px 0 10px;padding:2px 2px 8px;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin}
+  .cost-page nav button{flex:0 0 auto;width:auto;white-space:nowrap;text-align:center}
   .cost-page .cost-product-list{padding:16px;border-radius:20px}
   .cost-page .cost-product-grid{grid-template-columns:1fr;gap:12px}
   .cost-page .cost-product-card{padding:18px;border-radius:18px;gap:15px}
