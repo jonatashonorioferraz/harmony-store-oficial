@@ -1,3 +1,7 @@
+## [v25.154] - 2026-11-20
+
+- Moderniza a Calculadora de produção com cards personalizados e apresentação responsiva dos sabonetes e custos.
+
 ## [v25.153] - 2026-11-19
 
 - Calculadora abre em Meus sabonetes, com produtos salvos e acesso direto à edição da receita e cálculo do lote.
