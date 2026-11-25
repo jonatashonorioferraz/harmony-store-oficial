@@ -1,4 +1,4 @@
-const CACHE='harmony-store-v25-154-r1';
+const CACHE='harmony-store-v25-154-r2';
 const PUBLIC_MEDIA_CACHE='harmony-public-media-v1';
 const PUBLIC_MEDIA_TTL=24*60*60*1000;
 const PUBLIC_MEDIA_MAX_BYTES=48*1024*1024;

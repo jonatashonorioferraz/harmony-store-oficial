@@ -120,3 +120,33 @@ test('near-fitting text overflow condenses only the field and preserves all word
  await assert.rejects(context.LocalZpl.parseZpl(zpl(field.replace('FB300','FB180'))),/limite de linhas/);
  await assert.rejects(context.LocalZpl.parseZpl(zpl(field.replace('Nome Exemplo','Nome\\&Exemplo\\&'))),/limite de linhas/);
 });
+
+test('long multiline body text fits uniformly without clipping words or altering barcode geometry',async()=>{
+ const drawn=[],rects=[];
+ const c=vm.createContext({Uint8Array,TextEncoder,TextDecoder,setTimeout});
+ c.ZplCanvasFactory=(width,height)=>({width,height,getContext:()=>({
+  font:'700 26px HarmonyZpl',fillRect(x,y,w,h){rects.push({x,y,w,h});},save(){},restore(){},translate(){},scale(){},
+  fillText(text){drawn.push({text,font:this.font});},
+  measureText(text){return {width:text.length*parseFloat(this.font.split(' ')[1])*.5};},
+  getImageData(){return {data:new Uint8Array(width*height*4).fill(255)};}
+ })});
+ for(const file of ['vendor/code128.js','zpl-drawing.js','engine.js'])vm.runInContext(await readFile(new URL('../shipping-labels/'+file,import.meta.url),'utf8'),c);
+ const text=Array(42).fill('casa').join(' '),code='^FO40,40^BY2^BCN,80,N,N,N^FD>:12345678901^FS';
+ const zpl=body=>'^XA^PW800^LL1300'+code+'^FO35,1125^A0N,26,26^FB440,5,-2,L^FD'+body+'^FS^XZ';
+ await c.LocalZpl.parseZpl(zpl('Curto'));const baseline=rects.filter(r=>r.y===40&&r.h===80);
+ drawn.length=0;rects.length=0;const [result]=await c.LocalZpl.parseZpl(zpl(text));
+ assert.equal(result.width,800);assert.equal(result.height,1300);assert.equal(drawn.length,5);assert.equal(drawn.map(d=>d.text).join(' '),text);
+ for(const d of drawn){const size=parseFloat(d.font.split(' ')[1]);assert.ok(size>=19.5&&size<26);}
+ assert.deepEqual(rects.filter(r=>r.y===40&&r.h===80),baseline);
+ drawn.length=0;
+ const caption='^FO35,1125^A0N,26,26^FDComplemento:^FS';
+ await c.LocalZpl.parseZpl(zpl('Complemento: '+text).replace('^FO35,1125^A0N,26,26^FB',caption+'^FO35,1125^A0N,26,26^FB'));
+ assert.equal(drawn.map(d=>d.text).join(' '),'Complemento: '+text);
+ assert.equal(drawn.filter(d=>d.text==='Complemento:').length,0);
+ drawn.length=0;
+ await c.LocalZpl.parseZpl(zpl('Curto').replace('^FO35,1125^A0N,26,26^FB',caption+'^FO35,1125^A0N,26,26^FB'));
+ assert.ok(drawn.some(d=>d.text==='Complemento:'));
+ await assert.rejects(c.LocalZpl.parseZpl(zpl(text+' '+text)),/limite de linhas/);
+ await assert.rejects(c.LocalZpl.parseZpl(zpl(Array(6).fill('casa').join('\\&'))),/limite de linhas/);
+ await assert.rejects(c.LocalZpl.parseZpl(zpl(text+' '+text).replace('A0N,26,26','A0N,20,20')),/limite de linhas/);
+});

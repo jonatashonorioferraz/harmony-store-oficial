@@ -81,6 +81,26 @@
         field.font={...original,width:original.width*low};return best;
       }
     }
+    // Long free-form delivery notes may exceed the Zebra substitute font's
+    // line count. Fit only multiline body text, uniformly and within a readable
+    // floor. Keep the original field bounds, all words and barcode geometry.
+    if(field.block.lines>=3 && field.block.align==='L' && !text.includes('\\&') && field.font.height>=24){
+      const original=field.font;
+      const at=ratio=>{
+        const font={height:original.height*ratio,width:original.width*ratio};
+        ctx.font='700 '+font.height+'px HarmonyZpl';
+        return wrapTextLines(ctx,text,{...field,font});
+      };
+      let low=Math.max(.75,18/original.height),high=1,best=at(low);
+      if(best.length<=field.block.lines){
+        for(let i=0;i<12;i++){const mid=(low+high)/2,candidate=at(mid);if(candidate.length<=field.block.lines){low=mid;best=candidate;}else high=mid;}
+        field.fittedBodyFont=original;
+        field.font={...original,height:original.height*low,width:original.width*low};
+        ctx.font='700 '+field.font.height+'px HarmonyZpl';
+        return best;
+      }
+      ctx.font='700 '+original.height+'px HarmonyZpl';
+    }
     fail('O texto excede o limite de linhas de um campo ZPL. A conversão foi interrompida para evitar sobreposição.');
   }
   async function render(block, graphics, decodeGraphic) {
@@ -193,6 +213,12 @@
     const c=canvas(width,height),ctx=c.getContext('2d');
     ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);ctx.imageSmoothingEnabled=false;
     for(const f of fields) {
+      // Some exports repeat the field caption at the exact same origin. Once
+      // body text is fitted, painting that old caption again would overlap it.
+      if(!f.barcode&&!f.drawing&&!f.block&&f.text?.endsWith(':')&&fields.some(body=>
+        body.fittedBodyFont&&body.x===f.x&&body.y===f.y&&body.reverse===f.reverse&&
+        body.fittedBodyFont.height===f.font.height&&body.fittedBodyFont.width===f.font.width&&
+        body.text.startsWith(f.text+' ')))continue;
       ctx.save();ctx.fillStyle=f.reverse?'#fff':'#000';
       if(f.reverse)ctx.globalCompositeOperation='difference';
       if(f.barcode?.type==='code128') {
