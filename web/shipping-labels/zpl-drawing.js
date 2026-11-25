@@ -84,7 +84,7 @@
     // Long free-form delivery notes may exceed the Zebra substitute font's
     // line count. Fit only multiline body text, uniformly and within a readable
     // floor. Keep the original field bounds, all words and barcode geometry.
-    if(field.block.lines>=3 && field.block.align==='L' && !text.includes('\\&') && field.font.height>=24){
+    if(field.block.lines>=3 && field.block.align==='L' && !text.includes('\\&') && field.font.height>=24 && field.block.spacing>=-field.font.height*.1){
       const original=field.font;
       const at=ratio=>{
         const font={height:original.height*ratio,width:original.width*ratio};
